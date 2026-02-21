@@ -1,4 +1,4 @@
-import { solveImage } from "../../lib/aiService";
+import { solveImage } from "../lib/aiService.js";
 
 export default async function handler(req, res) {
   if (req.method === "POST") {
