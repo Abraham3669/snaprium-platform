@@ -1,5 +1,7 @@
+// src/components/ResultPanel.jsx  (small cleanup – mostly already good)
+
 export default function ResultPanel({ result, loading, onClose }) {
-  if (!result) return null;
+  if (!result?.image) return null;   // safer guard
 
   return (
     <div className="result-panel">
@@ -9,13 +11,13 @@ export default function ResultPanel({ result, loading, onClose }) {
       </div>
       <div className="result-panel-content">
         {result.image && (
-          <img className="result-image" src={result.image} alt="Cropped result" />
+          <img className="result-image" src={result.image} alt="Cropped" />
         )}
         <div className="solution-area">
           {loading ? (
             <p>Processing your question...</p>
           ) : (
-            <p>{result.text}</p>
+            <p>{result.text || "No solution available yet."}</p>
           )}
         </div>
       </div>
