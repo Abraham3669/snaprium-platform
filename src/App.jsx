@@ -23,22 +23,29 @@ function App() {
     <div className="App min-h-screen">
 
       {/* Fixed header – always visible */}
-      <header className="snaprium-header">
+<header className="snaprium-header">
   <div className="snaprium-header-inner">
+    
+    {/* Brand – slightly right */}
+    <span className="snaprium-brand">
+      snaprium
+    </span>
 
-    {/* Brand */}
-    <div className="snaprium-brand">snaprium</div>
-
-    {/* Dashboard Button */}
-    <button
-      onClick={() => setIsDashboardOpen(true)}
-      className="snaprium-menu-btn"
-      aria-label="Open dashboard"
-    >
-      <svg viewBox="0 0 24 24" fill="none">
-        <line x1="4" y1="7" x2="20" y2="7" />
-        <line x1="4" y1="12" x2="20" y2="12" />
-        <line x1="4" y1="17" x2="20" y2="17" />
+    {/* Dashboard button – almost at right edge */}
+    <button className="snaprium-menu-btn" aria-label="Open dashboard">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.2"   // slightly bolder
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {/* Longer lines */}
+        <line x1="1" y1="6" x2="23" y2="6" />
+        <line x1="1" y1="12" x2="23" y2="12" />
+        <line x1="1" y1="18" x2="23" y2="18" />
       </svg>
     </button>
 
@@ -48,12 +55,8 @@ function App() {
       {/* Main content – pushed down so it's not hidden under fixed header */}
       <main className="pt-16">
 
-
-
-
-
-
         
+
 
         <Dashboard
           isOpen={isDashboardOpen}

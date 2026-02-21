@@ -454,7 +454,6 @@ header.header {
 
 
 
-
 /* ===== SNAPRIUM HEADER ===== */
 .snaprium-header {
   position: fixed;
@@ -463,8 +462,6 @@ header.header {
   right: 0;
   height: 76px;
 
-  /* Use your theme-aware blur & background variables */
-  
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
 
@@ -477,7 +474,7 @@ header.header {
 
 .snaprium-header-inner {
   height: 100%;
-  padding: 0 44px;
+  padding: 0 12px;  /* reduce padding so button is near edge */
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -491,13 +488,14 @@ header.header {
   color: var(--text-primary);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   cursor: default;
+  margin-left: 10px; /* push brand slightly right */
 }
 
 /* ===== DASHBOARD BUTTON ===== */
 .snaprium-menu-btn {
   background: none;
   border: none;
-  padding: 0;
+  padding: 10px;
   cursor: pointer;
   transition: transform 0.2s ease;
 }
@@ -511,11 +509,12 @@ header.header {
   transform: scale(0.96);
 }
 
+/* Hamburger icon */
 .snaprium-menu-btn svg {
-  width: 26px;
-  height: 26px;
-  stroke: var(--text-primary); /* auto adapts light/dark */
-  stroke-width: 1.8;
+  width: 28px;
+  height: 28px;
+  stroke: var(--text-primary);
+  stroke-width: 2.2; /* bolder */
   stroke-linecap: round;
   stroke-linejoin: round;
 }
