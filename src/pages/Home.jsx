@@ -4,6 +4,8 @@ import CropperModal from "../components/CropperModal";
 import ResultPanel from "../components/ResultPanel";
 import Dashboard from "../components/Dashboard";
 
+import { postAPI } from "../utils/apiClient";
+
 export default function Home() {
   const [file, setFile] = useState(null);
   const [showCropper, setShowCropper] = useState(false);
@@ -29,12 +31,24 @@ export default function Home() {
     setFile(null);
   };
 
-  const handleCropComplete = (croppedDataURL) => {
-    setShowCropper(false);
-    setResult({ image: croppedDataURL, text: "Cropped result placeholder" });
-  };
-
   const handleCloseResult = () => setResult(null);
+
+  // ✅ Must be inside the component
+  const handleCropComplete = async (croppedDataURL) => {
+    setShowCropper(false);
+    setResult({ image: croppedDataURL, text: "" }); // initially empty
+
+    try {
+      // send cropped image to backend
+      const res = await postAPI("/api/process", {
+        imageBase64: croppedDataURL.split(",")[1], // remove prefix
+      });
+      setResult({ image: croppedDataURL, text: res.answer });
+    } catch (err) {
+      console.error(err);
+      setResult({ image: croppedDataURL, text: "Failed to process image" });
+    }
+  };
 
   return (
     <div>
@@ -60,7 +74,3 @@ export default function Home() {
     </div>
   );
 }
-
-
-
-return <h1 style={{ color: "red" }}>Home Loaded</h1>;

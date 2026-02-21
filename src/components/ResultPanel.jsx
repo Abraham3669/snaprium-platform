@@ -1,5 +1,5 @@
-export default function ResultPanel({ isOpen, image, onClose }) {
-  if (!isOpen) return null;
+export default function ResultPanel({ result, onClose }) {
+  if (!result) return null;
 
   return (
     <div className="result-panel">
@@ -8,9 +8,11 @@ export default function ResultPanel({ isOpen, image, onClose }) {
         <button id="closeResult" className="close-btn" onClick={onClose}>✕</button>
       </div>
       <div className="result-panel-content">
-        <img className="result-image" src={image} alt="Cropped result" />
+        {result.image && (
+          <img className="result-image" src={result.image} alt="Cropped result" />
+        )}
         <div className="solution-area">
-          <p>Processing your question...</p>
+          {result.text ? <p>{result.text}</p> : <p>Processing your question...</p>}
         </div>
       </div>
     </div>

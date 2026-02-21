@@ -6,39 +6,13 @@ export default function CameraInput({ onFileSelect, onOpenDashboard }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleFileChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+const handleFileChange = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-    setLoading(true);
-    setError("");
-
-    try {
-      // Convert file to Base64
-      const reader = new FileReader();
-      reader.onload = async () => {
-  try {
-    const base64 = reader.result.split(",")[1];
-
-    const res = await postAPI("/api/process", {
-      imageBase64: base64,
-    });
-
-    onFileSelect(res.answer);
-  } catch (err) {
-    console.error(err);
-    setError("Failed to process image. Try again.");
-  } finally {
-    setLoading(false);
-    e.target.value = "";
-  }
+  onFileSelect(file); // send file to parent for cropping
+  e.target.value = ""; // reset input
 };
-      reader.readAsDataURL(file);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to process image. Try again.");
-    } 
-  };
 
   const handleCameraClick = () => {
     if (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
