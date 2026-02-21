@@ -1,5 +1,5 @@
 // api/process.js
-import { solveImage } from "../../lib/aiService.js"; // relative path from api folder
+import { solveImage } from "../lib/aiService.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
