@@ -17,20 +17,27 @@ export default function CameraInput({ onFileSelect, onOpenDashboard }) {
       // Convert file to Base64
       const reader = new FileReader();
       reader.onload = async () => {
-        const base64 = reader.result.split(",")[1]; // remove prefix
-        // Send to backend process endpoint
-        const res = await postAPI("/api/process", { imageBase64: base64 });
-        // Return solution to parent
-        onFileSelect(res.solution);
-      };
+  try {
+    const base64 = reader.result.split(",")[1];
+
+    const res = await postAPI("/api/process", {
+      imageBase64: base64,
+    });
+
+    onFileSelect(res.answer);
+  } catch (err) {
+    console.error(err);
+    setError("Failed to process image. Try again.");
+  } finally {
+    setLoading(false);
+    e.target.value = "";
+  }
+};
       reader.readAsDataURL(file);
     } catch (err) {
       console.error(err);
       setError("Failed to process image. Try again.");
-    } finally {
-      setLoading(false);
-      e.target.value = ""; // reset input
-    }
+    } 
   };
 
   const handleCameraClick = () => {

@@ -21,3 +21,6 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Failed to process image" });
   }
 }
+
+
+console.log("API KEY EXISTS:", !!process.env.OPENAI_API_KEY);
