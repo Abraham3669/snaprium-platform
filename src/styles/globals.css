@@ -495,12 +495,14 @@ header.header {
 .snaprium-menu-btn {
   background: none;
   border: none;
-  padding: 10px;
+  padding: 10px;          /* keeps button area large */
   cursor: pointer;
   transition: transform 0.2s ease;
+  display: flex;          /* ensures svg fills container */
+  align-items: center;
+  justify-content: center;
 }
 
-/* Hover effect: ONLY scale */
 .snaprium-menu-btn:hover {
   transform: scale(1.12);
 }
@@ -517,4 +519,5 @@ header.header {
   stroke-width: 2.2; /* bolder */
   stroke-linecap: round;
   stroke-linejoin: round;
+  pointer-events: none;  /* allows click to pass through to button */
 }
