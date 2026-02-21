@@ -7,6 +7,7 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
   return (
     <>
       <div className="overlay" onClick={onClose}></div>
+      
 
       <aside className="dashboard-panel open">
         <div className="dashboard-header">
@@ -24,5 +25,8 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
         </div>
       </aside>
     </>
+    
   );
 }
+
+

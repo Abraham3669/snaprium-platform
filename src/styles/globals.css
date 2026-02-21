@@ -260,8 +260,8 @@ header.header {
   position: fixed;
   inset: 0;
   background: var(--bg);
-  z-index: 2500;
-  display: none;
+  z-index: 3500; /* changed from 2500 */
+  display: flex; /* always flex, React controls visibility */
   flex-direction: column;
   overflow-y: auto;
 }
@@ -343,47 +343,86 @@ header.header {
   border-radius: var(--radius);
 }
 
+/* Modal background: still covers screen but content centers */
 .crop-body {
-  width: 100%;
-  max-width: 600px;
-  max-height: 80vh;
-  background: #000;
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 0;
+  background: rgba(0,0,0,0.35); /* semi-transparent overlay for darkening */
 }
 
+/* Wrapper fits the image exactly */
 .cropper-wrapper {
-  width: 100%;
-  max-width: 600px;
-  max-height: 80vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: #000;
+  display: inline-block;      /* shrink to fit image */
+  background: #000;           /* black tightly around image */
+  border-radius: var(--radius);
 }
 
+/* Image inside wrapper */
+.cropper-wrapper img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100vw;
+  max-height: 80vh;
+}
+
+/* ===== CROP FOOTER ===== */
 .crop-footer {
   width: 100%;
   display: flex;
   justify-content: center;
-  padding: 1rem;
+  gap: 1rem; /* spacing between buttons */
+  padding: 0.75rem; /* slightly reduced padding */
 }
 
-.solve-btn {
-  padding: 1rem 2.5rem;
-  font-size: 1.1rem;
+/* ===== BASE BUTTON STYLE ===== */
+.crop-footer button {
+  padding: 0.6rem 1.4rem; /* reduced size */
+  font-size: 0.95rem;
   font-weight: 600;
-  background: var(--accent);
-  color: white;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-pill); /* pill shape for modern look */
   cursor: pointer;
   transition: var(--transition);
+  min-width: 110px; /* keeps consistent width */
+}
+
+/* ===== BACK BUTTON ===== */
+/* Cancel Button – theme-aware text */
+.back-btn {
+  padding: 0.9rem 2.5rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+  background: white; /* stays white in both light & dark mode */
+  color: black; /* default text for light mode */
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: transform 0.22s ease, background 0.22s ease, color 0.22s ease, box-shadow 0.22s ease;
+}
+
+/* Hover: only subtle scale and shadow */
+.back-btn:hover {
+  transform: scale(1.06);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+/* Dark mode text adjustment */
+[data-theme="dark"] .back-btn {
+  color: rgb(0, 0, 0); /* text becomes white in dark mode */
+  background: white; /* background stays white even in dark mode */
+}
+/* ===== SOLVE BUTTON ===== */
+.solve-btn {
+  background: var(--accent);
+  color: #fff;
 }
 
 .solve-btn:hover {
   background: var(--accent-dark);
+  box-shadow: 0 0 12px var(--accent-glow);
 }
 
 /* CropperJS customizations */
@@ -409,4 +448,74 @@ header.header {
   box-shadow: 0 0 4px rgba(0,0,0,0.3);
   cursor: pointer;
   z-index: 9999;
+}
+
+
+
+
+
+
+/* ===== SNAPRIUM HEADER ===== */
+.snaprium-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 76px;
+
+  /* Use your theme-aware blur & background variables */
+  
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+
+  z-index: 1000;
+  transition: var(--transition);
+}
+
+.snaprium-header-inner {
+  height: 100%;
+  padding: 0 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ===== BRAND ===== */
+.snaprium-brand {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  cursor: default;
+}
+
+/* ===== DASHBOARD BUTTON ===== */
+.snaprium-menu-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+/* Hover effect: ONLY scale */
+.snaprium-menu-btn:hover {
+  transform: scale(1.12);
+}
+
+.snaprium-menu-btn:active {
+  transform: scale(0.96);
+}
+
+.snaprium-menu-btn svg {
+  width: 26px;
+  height: 26px;
+  stroke: var(--text-primary); /* auto adapts light/dark */
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }

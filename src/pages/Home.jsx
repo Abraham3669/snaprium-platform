@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import CameraInput from "../components/CameraInput";
 import CropperModal from "../components/CropperModal";
 import ResultPanel from "../components/ResultPanel";
@@ -6,12 +6,12 @@ import Dashboard from "../components/Dashboard";
 
 export default function Home() {
   const [file, setFile] = useState(null);
-  const [imageSrc, setImageSrc] = useState(null);
   const [showCropper, setShowCropper] = useState(false);
   const [result, setResult] = useState(null);
 
-  // Theme
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
+  const [isDashboardOpen, setDashboardOpen] = useState(false);
+
   const toggleTheme = () => {
     const next = theme === "dark" ? "light" : "dark";
     setTheme(next);
@@ -19,26 +19,18 @@ export default function Home() {
     document.documentElement.setAttribute("data-theme", next);
   };
 
-  // Dashboard
-  const [isDashboardOpen, setDashboardOpen] = useState(false);
-
   const handleFileSelect = (selectedFile) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      setImageSrc(reader.result);
-      setShowCropper(true);
-    };
-    reader.readAsDataURL(selectedFile);
+    setFile(selectedFile);
+    setShowCropper(true);
   };
 
   const handleCropCancel = () => {
     setShowCropper(false);
-    setImageSrc(null);
+    setFile(null);
   };
 
   const handleCropComplete = (croppedDataURL) => {
     setShowCropper(false);
-    setImageSrc(croppedDataURL);
     setResult({ image: croppedDataURL, text: "Cropped result placeholder" });
   };
 
@@ -58,8 +50,9 @@ export default function Home() {
       />
       {showCropper && (
         <CropperModal
-          src={imageSrc}
-          onCancel={handleCropCancel}
+          file={file}
+          isOpen={showCropper}
+          onClose={handleCropCancel}
           onCrop={handleCropComplete}
         />
       )}
@@ -67,3 +60,7 @@ export default function Home() {
     </div>
   );
 }
+
+
+
+return <h1 style={{ color: "red" }}>Home Loaded</h1>;

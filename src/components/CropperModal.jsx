@@ -1,10 +1,10 @@
 import { useEffect, useRef } from "react";
-import Cropper from "cropperjs"; // Note: default import (not named)
+import Cropper from "cropperjs";
 import "cropperjs/dist/cropper.css";
 
 export default function CropperModal({ file, isOpen, onClose, onCrop }) {
   const imageRef = useRef(null);
-  const cropperRef = useRef(null); // renamed for clarity
+  const cropperRef = useRef(null);
 
   useEffect(() => {
     if (!isOpen || !file || !imageRef.current) return;
@@ -15,12 +15,8 @@ export default function CropperModal({ file, isOpen, onClose, onCrop }) {
       if (img) {
         img.src = e.target.result;
 
-        // Wait for image to load before initializing Cropper
         const onImageLoad = () => {
-          // Destroy previous instance if exists
-          if (cropperRef.current) {
-            cropperRef.current.destroy();
-          }
+          if (cropperRef.current) cropperRef.current.destroy();
 
           cropperRef.current = new Cropper(img, {
             viewMode: 1,
@@ -30,23 +26,18 @@ export default function CropperModal({ file, isOpen, onClose, onCrop }) {
             movable: true,
             zoomable: true,
             cropBoxResizable: true,
-            // Optional: better defaults for mobile/touch
             touchDragZoom: true,
-            mouseScrollZoom: false, // optional
+            mouseScrollZoom: false,
           });
         };
 
-        if (img.complete) {
-          onImageLoad();
-        } else {
-          img.onload = onImageLoad;
-        }
+        if (img.complete) onImageLoad();
+        else img.onload = onImageLoad;
       }
     };
 
     reader.readAsDataURL(file);
 
-    // Cleanup
     return () => {
       if (cropperRef.current) {
         cropperRef.current.destroy();
@@ -59,35 +50,25 @@ export default function CropperModal({ file, isOpen, onClose, onCrop }) {
     if (!cropperRef.current) return;
 
     const canvas = cropperRef.current.getCroppedCanvas({
-      fillColor: "#fff", // optional: white background for JPEG
+      fillColor: "#fff",
       imageSmoothingQuality: "high",
     });
 
-    if (canvas) {
-      const croppedDataUrl = canvas.toDataURL("image/jpeg", 0.92);
-      onCrop(croppedDataUrl);
-    }
+    if (canvas) onCrop(canvas.toDataURL("image/jpeg", 0.92));
 
-    // Cleanup & close
     if (cropperRef.current) {
       cropperRef.current.destroy();
       cropperRef.current = null;
     }
+
     onClose();
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="crop-modal"> {/* Add global styles or use modal library */}
-      <div className="crop-header">
-        <button className="back-btn" onClick={onClose}>
-          Cancel
-        </button>
-        <h3>Adjust & Solve</h3>
-        <div /> {/* spacer */}
-      </div>
-
+    <div className="crop-modal">
+      {/* Cropper Body */}
       <div className="crop-body">
         <div className="cropper-wrapper">
           <img
@@ -98,11 +79,15 @@ export default function CropperModal({ file, isOpen, onClose, onCrop }) {
         </div>
       </div>
 
-      <div className="crop-footer">
-        <button className="solve-btn" onClick={handleCrop}>
-          Solve
-        </button>
-      </div>
+      {/* Footer: Cancel + Solve */}
+<div className="crop-footer">
+  <button className="back-btn" onClick={onClose}>
+    Cancel
+  </button>
+  <button className="solve-btn" onClick={handleCrop}>
+    Solve
+  </button>
+</div>
     </div>
   );
 }

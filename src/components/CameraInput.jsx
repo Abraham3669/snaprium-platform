@@ -1,13 +1,12 @@
 import { useRef } from "react";
 
-export default function CameraInput({ onFileSelected, openCropper, openDashboard }) {
+export default function CameraInput({ onFileSelect, onOpenDashboard }) {
   const fileInputRef = useRef();
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      onFileSelected(file);
-      openCropper();
+      onFileSelect(file); // match App.jsx
       e.target.value = "";
     }
   };

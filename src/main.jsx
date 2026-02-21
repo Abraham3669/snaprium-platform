@@ -1,11 +1,16 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
 
+// Global styles
+import "./index.css";           // base resets
+import "./App.css";             // app-level styles
+import "./styles/globals.css";  // your custom design system
 
-createRoot(document.getElementById('root')).render(
+// Root component
+import App from "./App.jsx";
+
+createRoot(document.getElementById("root")).render(
   <StrictMode>
     <App />
-  </StrictMode>,
-)
+  </StrictMode>
+);
