@@ -10,6 +10,7 @@ export default function Home() {
   const [file, setFile] = useState(null);
   const [showCropper, setShowCropper] = useState(false);
   const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false); // ✅ loading for API
 
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
   const [isDashboardOpen, setDashboardOpen] = useState(false);
@@ -33,20 +34,24 @@ export default function Home() {
 
   const handleCloseResult = () => setResult(null);
 
-  // ✅ Must be inside the component
+  // ✅ Must be inside component
   const handleCropComplete = async (croppedDataURL) => {
     setShowCropper(false);
-    setResult({ image: croppedDataURL, text: "" }); // initially empty
+    setResult({ image: croppedDataURL, text: "" });
+    setLoading(true);
 
     try {
-      // send cropped image to backend
+      console.log("Sending image to API...");
       const res = await postAPI("/api/process", {
-        imageBase64: croppedDataURL.split(",")[1], // remove prefix
+        imageBase64: croppedDataURL.split(",")[1],
       });
+      console.log("API response:", res);
       setResult({ image: croppedDataURL, text: res.answer });
     } catch (err) {
       console.error(err);
       setResult({ image: croppedDataURL, text: "Failed to process image" });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -70,7 +75,7 @@ export default function Home() {
           onCrop={handleCropComplete}
         />
       )}
-      <ResultPanel result={result} onClose={handleCloseResult} />
+      <ResultPanel result={result} loading={loading} onClose={handleCloseResult} />
     </div>
   );
 }
