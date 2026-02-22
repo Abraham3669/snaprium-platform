@@ -11,11 +11,16 @@
   },
   "dependencies": {
     "cropperjs": "^1.6.2",
+    "katex": "^0.16.28",
     "openai": "^6.22.0",
     "react": "^19.2.4",
     "react-cropper": "^2.3.3",
     "react-dom": "^19.2.4",
-    "react-router-dom": "^7.13.0"
+    "react-katex": "^3.1.0",
+    "react-markdown": "^10.1.0",
+    "react-router-dom": "^7.13.0",
+    "rehype-katex": "^7.0.1",
+    "remark-math": "^6.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

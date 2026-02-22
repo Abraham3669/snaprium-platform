@@ -1029,3 +1029,46 @@ header.header {
   90% { opacity: 0.8; }
   92% { opacity: 0; }
 }
+
+
+
+
+
+
+
+
+
+
+/* Make math look bigger and more student-friendly */
+.katex {
+  font-size: 1.15em;          /* slightly larger than default */
+  margin: 0.8em 0;            /* spacing around display equations */
+}
+
+/* Better vertical fractions and alignment */
+.katex-display {
+  margin: 1.2em 0;
+  overflow-x: auto;           /* prevents overflow on small screens */
+}
+
+/* If you want inline math to stand out a bit more */
+.katex-inline {
+  vertical-align: baseline;   /* better alignment with text */
+}
+
+/* Optional: make the whole solution area nicer */
+.solution-area {
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  line-height: 1.6;
+}
+
+.markdown-solution p {
+  margin-bottom: 1em;
+}
+
+.markdown-solution h3, .markdown-solution h4 {
+  margin: 1.5em 0 0.8em;
+  color: #1e40af;
+}

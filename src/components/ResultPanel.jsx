@@ -1,5 +1,11 @@
 // src/components/ResultPanel.jsx
 
+import React from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css'; // ← this is required for beautiful vertical fractions & math styling
+
 export default function ResultPanel({ result, loading, onClose }) {
   if (!result?.image) return null;
 
@@ -29,7 +35,14 @@ export default function ResultPanel({ result, loading, onClose }) {
           {loading ? (
             <p className="processing-text">Analyzing...</p>
           ) : (
-            <p>{result.text || "No solution available yet."}</p>
+            <div className="markdown-solution">
+              <ReactMarkdown
+                remarkPlugins={[remarkMath]}
+                rehypePlugins={[rehypeKatex]}
+              >
+                {result.text || 'No solution available yet.'}
+              </ReactMarkdown>
+            </div>
           )}
         </div>
       </div>
