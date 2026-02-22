@@ -36,11 +36,11 @@ export default function ResultPanel({ result, loading, onClose }) {
           {loading ? (
             <p className="processing-text">Analyzing...</p>
           ) : (
-            <ReactMarkdown
+<ReactMarkdown
   remarkPlugins={[remarkMath]}
   rehypePlugins={[rehypeKatex]}
 >
-  {sanitizeLatex(formatMath(result.text || 'No solution available yet.'))}
+  {prepareMathForKaTeX(result.text || 'No solution yet...')}
 </ReactMarkdown>
           )}
         </div>
@@ -49,44 +49,42 @@ export default function ResultPanel({ result, loading, onClose }) {
   );
 }
 
-/* ------------------------------------------
-   Helper: Format LaTeX (brackets, fractions, ASCII)
-------------------------------------------- */
-function formatMath(text) {
-  if (!text) return '';
+// Helper: Prepare text so KaTeX renders nicely
+function prepareMathForKaTeX(rawText) {
+  if (!rawText) return '';
 
-  // Convert ASCII fractions 3/4 → \frac{3}{4}
-  text = text.replace(/(\b\d+)\s*\/\s*(\d+\b)/g, '\\\\frac{$1}{$2}');
+  let text = rawText;
 
-  // Replace all inline $...$ with $$...$$
-  text = text.replace(/\$(.*?)\$/g, (_, mathContent) => {
-    const singleLine = mathContent.replace(/\n/g, ' ').trim();
-    return `$$${singleLine}$$`;
-  });
+  // 1. Convert plain ASCII fractions 3/4 → \frac{3}{4}  (only when it looks safe)
+  text = text.replace(
+    /(\b\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?\b)(?!\s*\/)/g,
+    '\\frac{$1}{$2}'
+  );
 
-  // Replace [ ... ] or ( ... ) → $$ ... $$
-  text = text.replace(/[\[\(]\s*([\s\S]*?)\s*[\]\)]/g, (_, mathContent) => {
-    const singleLine = mathContent.replace(/\n/g, ' ').trim();
-    return `$$${singleLine}$$`;
-  });
+  // 2. Convert ugly ASCII stacked fractions (common in some model outputs)
+  text = text.replace(
+    /(\d+)\s*\n\s*_{2,}\s*\n\s*(\d+)/g,
+    '\\frac{$1}{$2}'
+  );
 
-  // Convert ASCII fractions like
-  // 1
-  // __
-  // 2
-  text = text.replace(/(\d+)\s*\n\s*_{2,}\s*\n\s*(\d+)/g, '\\\\frac{$1}{$2}');
+  // 3. Fix common model mistakes: single $ delimiters that should be display
+  //    We keep inline $…$ as inline, only force display when it makes sense
+  //    But most math tutors output display math with $$ already — so we preserve them
 
-  return text;
-}
+  // Optional: If you *really* want ALL math blocks to be display math:
+  // text = text.replace(/\$([^\$]+)\$/g, '$$$$$1$$$$');
 
-/* ------------------------------------------
-   Helper: Sanitize LaTeX for KaTeX rendering
-------------------------------------------- */
-function sanitizeLatex(text) {
-  if (!text) return '';
+  // But better: only upgrade when it contains \frac, \sqrt, sum, etc.
+  text = text.replace(
+    /\$([^$]*?(?:\\frac|\\sqrt|\\sum|\\int|\\lim)[^$]*?)\$/g,
+    '$$$$$1$$$$'
+  );
 
-  // Remove spaces inside display math
-  text = text.replace(/\$\$\s*([\s\S]*?)\s*\$\$/g, '$$$1$$');
+  // 4. Clean up extra spaces inside delimiters (helps KaTeX sometimes)
+  text = text.replace(/\$\$[\s\n]+/g, '$$').replace(/[\s\n]+\$\$/g, '$$');
+
+  // 5. Replace any stray \[ \] delimiters with $$ (some models use them)
+  text = text.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$');
 
   return text;
 }
