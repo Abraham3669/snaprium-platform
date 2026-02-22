@@ -1117,13 +1117,17 @@ header.header {
 
 /* ---------- Solution Container ---------- */
 
+/* ---------- Solution Container (Theme Aware) ---------- */
 .solution-area {
   padding: 1.2rem;
-  background: #f8fafc;
-  border-radius: 12px;
+  background: var(--surface);   /* ✅ Uses dark/light automatically */
+  border-radius: var(--radius);
   line-height: 1.75;
   font-size: 1.08rem;
   color: var(--text-primary);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 /* Paragraph spacing */
