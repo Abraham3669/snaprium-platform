@@ -1191,9 +1191,3 @@ header.header {
 
 
 
-.final-answer-title {
-  font-weight: 700;
-  color: var(--accent);      /* your brand blue */
-  font-size: 1.12rem;
-  margin-right: 0.25rem;
-}
