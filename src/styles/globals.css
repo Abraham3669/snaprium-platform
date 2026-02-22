@@ -303,35 +303,77 @@ header.header {
 /* ─────────────────────────────────────────────
    Result Panel
 ───────────────────────────────────────────── */
+/* ─────────────────────────────────────────────
+   Refined Result Panel (Professional)
+───────────────────────────────────────────── */
+
+/* Panel overlay */
 .result-panel {
   position: fixed;
   inset: 0;
-  background: var(--bg);
-  z-index: 3500; /* changed from 2500 */
-  display: flex; /* always flex, React controls visibility */
+  background: rgba(255,255,255,0.95); /* light mode dim */
+  z-index: 3500;
+  display: flex;
   flex-direction: column;
   overflow-y: auto;
+  transition: background 0.3s ease;
 }
 
-.result-panel:not(.hidden) {
-  display: flex;
+[data-theme="dark"] .result-panel {
+  background: rgba(15,23,42,0.95); /* dark mode dim */
 }
 
+/* Panel header */
 .result-panel-header {
-  padding: 1rem 1.5rem;
+  padding: 1.2rem 1.5rem;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius) var(--radius) 0 0; /* rounded top corners */
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+[data-theme="dark"] .result-panel-header {
+  background: var(--surface);
 }
 
 .result-panel-header h2 {
   margin: 0;
-  font-size: 1.6rem;
+  font-size: 1.7rem;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
+/* Close button refinement */
+.result-panel-header .close-btn {
+  font-size: 1.8rem;
+  background: rgba(0,0,0,0.05);
+  color: var(--text-primary);
+  border: none;
+  border-radius: 8px;
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.result-panel-header .close-btn:hover {
+  background: rgba(0,0,0,0.12);
+  transform: scale(1.08);
+}
+
+[data-theme="dark"] .result-panel-header .close-btn {
+  background: rgba(255,255,255,0.08);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .result-panel-header .close-btn:hover {
+  background: rgba(255,255,255,0.15);
+}
+
+/* Panel content */
 .result-panel-content {
   flex: 1;
   padding: 2rem 1.5rem;
@@ -341,23 +383,48 @@ header.header {
   align-items: center;
 }
 
+/* Image styling */
 .result-image {
   max-width: 100%;
   max-height: 60vh;
   border-radius: var(--radius);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 12px 36px rgba(0,0,0,0.15); /* subtle floating effect */
   border: 1px solid var(--border);
+  transition: box-shadow 0.3s ease;
 }
 
+.result-image:hover {
+  box-shadow: 0 16px 48px rgba(0,0,0,0.25);
+}
+
+/* Solution card */
 .solution-area {
   width: 100%;
-  max-width: 600px;
+  max-width: 640px;
   background: var(--surface);
-  padding: 1.8rem;
+  padding: 2rem;
   border-radius: var(--radius);
   box-shadow: var(--shadow-md);
-  line-height: 1.7;
-  text-align: center;
+  line-height: 1.75;
+  text-align: left;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+[data-theme="dark"] .solution-area {
+  background: var(--surface);
+  color: var(--text-primary);
+}
+
+/* Optional: subtle gradient accent line on top of solution card */
+.solution-area::before {
+  content: "";
+  display: block;
+  width: 60px;
+  height: 4px;
+  border-radius: 2px;
+  margin-bottom: 1rem;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
 }
 
 /* ─────────────────────────────────────────────
@@ -833,6 +900,7 @@ header.header {
 
 
 
+/* ───── Demo Phone Animation ───── */
 .demo-animation {
   margin-top: 20px; /* bring phone closer to top */
   display: flex;
@@ -853,8 +921,8 @@ header.header {
 }
 
 @keyframes floatPhone {
-  0%,100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); } /* subtle float */
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
 /* Screen inside the phone */
@@ -867,15 +935,16 @@ header.header {
   position: relative;
   padding: 20px;
   display: flex;
-  justify-content: center;
+  flex-direction: column; /* stack items vertically */
+  justify-content: flex-start; /* push content to top */
   align-items: center;
+  gap: 12px; /* space between car & question */
 }
 
 /* Question card with horizontal background */
 .question-card {
   width: 100%;
   padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.95); /* stands out a little */
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   display: flex;
@@ -883,6 +952,14 @@ header.header {
   justify-content: center;
   align-items: center;
   position: relative; /* for scan line inside */
+  background: rgba(255, 255, 255, 0.95); /* light mode */
+  transition: background 0.3s ease; /* smooth dark mode change */
+}
+
+/* Dark mode for question card */
+[data-theme="dark"] .question-card {
+  background: rgba(15, 23, 42, 0.9);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
 }
 
 /* Question text */
@@ -895,6 +972,11 @@ header.header {
   word-break: break-word;
   margin: 0;
   animation: fadeIn 1s ease forwards;
+}
+
+/* Adjust text color in dark mode */
+[data-theme="dark"] .question {
+  color: #e2e8f0;
 }
 
 @keyframes fadeIn {
@@ -934,6 +1016,12 @@ header.header {
   background: white;
   opacity: 0;
   animation: flash 4s infinite;
+  transition: background 0.3s ease;
+}
+
+/* Dark mode flash effect: slightly dimmer white flash for contrast */
+[data-theme="dark"] .screen::after {
+  background: rgba(255,255,255,0.85);
 }
 
 @keyframes flash {
