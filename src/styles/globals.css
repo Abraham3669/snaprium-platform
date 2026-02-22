@@ -119,16 +119,30 @@ header.header {
   fill: none;
 }
 
+/* ========================
+   Close Button
+======================== */
 #closeDashboard {
-  font-size: 1.6rem;
+  font-size: 2rem;                /* bigger */
   font-weight: 700;
   line-height: 1;
-  background: transparent;
+  padding: 0.25rem 0.6rem;        /* bigger click area */
+  border-radius: 8px;
+  background: rgba(0,0,0,0.05);   /* subtle background */
   border: none;
   cursor: pointer;
   color: var(--text-primary);
+  transition: all 0.25s ease;
 }
 
+#closeDashboard:hover {
+  background: rgba(0,0,0,0.12);
+  transform: scale(1.08);
+}
+
+/* ========================
+   Dashboard Header
+======================== */
 .dashboard-header {
   display: flex;
   justify-content: space-between;
@@ -137,27 +151,44 @@ header.header {
   border-bottom: 1px solid var(--border);
 }
 
-/* Dashboard panel */
+/* ========================
+   Dashboard Panel
+======================== */
 .dashboard-panel {
   position: fixed;
   top: 0;
-  right: -100%;
-  width: 50%;
-  max-width: 400px;
+  right: 0;
+  width: 50%;                   /* desktop default */
+  max-width: 400px;             /* desktop max width */
   height: 100dvh;
   background: var(--surface);
   box-shadow: var(--shadow-md);
   border-left: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   z-index: 2000;
+  transform: translateX(100%);  /* hidden by default */
 }
 
 .dashboard-panel.open {
-  right: 0;
+  transform: translateX(0);    /* slide in */
 }
 
+/* ========================
+   Mobile Adjustments
+======================== */
+@media (max-width: 768px) {
+  .dashboard-panel {
+    width: 70%;                /* covers 70% of mobile screen */
+    max-width: none;
+    border-left: none;
+  }
+}
+
+/* ========================
+   Dashboard Content
+======================== */
 .dashboard-content {
   padding: 1.5rem;
   flex: 1;
@@ -167,11 +198,13 @@ header.header {
   overflow-y: auto;
 }
 
-/* Overlay */
+/* ========================
+   Overlay for dimming background
+======================== */
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.38);
+  background: rgba(0,0,0,0.38);  /* default dim for light mode */
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.4s ease;
@@ -183,7 +216,21 @@ header.header {
   pointer-events: all;
 }
 
-/* Header right buttons */
+/* Slightly stronger dim on mobile */
+@media (max-width: 768px) {
+  .overlay.active {
+    background: rgba(0,0,0,0.45);
+  }
+}
+
+/* Dark mode overlay */
+[data-theme="dark"] .overlay {
+  background: rgba(0,0,0,0.55);
+}
+
+/* ========================
+   Header Right Buttons
+======================== */
 .header-right {
   display: flex;
   align-items: center;
@@ -224,7 +271,6 @@ header.header {
   transform: translateY(-1.5px);
   box-shadow: 0 6px 20px var(--accent-glow);
 }
-
 /* ─────────────────────────────────────────────
    Camera Input
 ───────────────────────────────────────────── */
@@ -539,20 +585,64 @@ header.header {
   }
 }
 
-/* Camera hover animation */
+/* ───────── Premium Floating Camera Animation ───────── */
+
 .camera-icon {
-  transition: transform 0.2s ease;
-  animation: pulse 2s infinite;
+  width: 200px;
+  height: 200px;
+  padding: 2.5rem;
+  border-radius: var(--radius-pill);
+  color: var(--accent);
+  background: var(--icon-bg);
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+
+  animation: float 4.5s ease-in-out infinite;
+  position: relative;
 }
 
-.camera-icon:hover,
-.camera-icon:active {
-  transform: scale(1.08);
+/* Subtle floating motion */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+/* Soft breathing glow ring */
+.camera-icon::before {
+  content: "";
+  position: absolute;
+  inset: -12px;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle,
+    var(--accent-glow) 0%,
+    transparent 70%
+  );
+  opacity: 0.5;
+  z-index: -1;
+  animation: glow-breathe 3.5s ease-in-out infinite;
+}
+
+@keyframes glow-breathe {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(1.05);
+  }
+}
+
+/* Hover interaction */
+.camera-icon:hover {
+  transform: translateY(-6px) scale(1.08);
+  box-shadow: 0 20px 60px var(--accent-glow);
 }
 
 
@@ -678,8 +768,8 @@ header.header {
 .hero {
   width: 100%;
   max-width: 1200px;
-  margin: 0 auto 40px auto;
-  padding: 40px 20px 10px;
+  margin: 0 auto 24px auto; /* reduced bottom spacing */
+  padding: 70px 20px 10px;  /* increased TOP padding */
   text-align: center;
 }
 
@@ -741,3 +831,113 @@ header.header {
 
 
 
+
+
+.demo-animation {
+  margin-top: 20px; /* bring phone closer to top */
+  display: flex;
+  justify-content: center;
+}
+
+/* Phone container with thin black border */
+.phone {
+  width: 220px;
+  height: 420px;
+  border-radius: 32px;
+  background: var(--surface);
+  border: 1.5px solid #000; /* thin visible border */
+  box-shadow: var(--shadow-md);
+  padding: 16px;
+  position: relative;
+  animation: floatPhone 5s ease-in-out infinite;
+}
+
+@keyframes floatPhone {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); } /* subtle float */
+}
+
+/* Screen inside the phone */
+.screen {
+  width: 100%;
+  height: 100%;
+  border-radius: 24px;
+  background: var(--bg);
+  overflow: hidden;
+  position: relative;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Question card with horizontal background */
+.question-card {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.95); /* stands out a little */
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative; /* for scan line inside */
+}
+
+/* Question text */
+.question {
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  word-break: break-word;
+  margin: 0;
+  animation: fadeIn 1s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Scan line restricted to question card */
+.scan-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--accent),
+    transparent
+  );
+  box-shadow: 0 0 12px var(--accent-glow);
+  animation: scanMove 2.5s ease-in-out infinite;
+}
+
+@keyframes scanMove {
+  0% { top: -5%; opacity: 0; }
+  10% { opacity: 1; }
+  50% { top: 100%; opacity: 1; }
+  60% { opacity: 0; }
+  100% { top: 105%; opacity: 0; }
+}
+
+/* Flash effect on entire screen */
+.screen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: white;
+  opacity: 0;
+  animation: flash 4s infinite;
+}
+
+@keyframes flash {
+  0%, 85%, 100% { opacity: 0; }
+  90% { opacity: 0.8; }
+  92% { opacity: 0; }
+}

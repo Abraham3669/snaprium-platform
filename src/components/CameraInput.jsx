@@ -60,7 +60,7 @@ export default function CameraInput({ onFileSelect, onOpenDashboard }) {
           alignItems: "center",
           justifyContent: "flex-start",
           minHeight: "320px",           // reduced
-         padding: "10px 20px 30px",         // reduced padding
+        padding: "0px 20px 20px",         // reduced padding
           gap: "12px",                  // ← this controls the vertical distance
         }}
       >
@@ -143,6 +143,25 @@ height: "180px",
         ref={galleryInputRef}
         onChange={handleFileChange}
       />
+
+
+
+<div className="demo-animation">
+  <div className="phone">
+    <div className="screen">
+      <div className="question-card">
+        <p className="question">
+          ∫ (2x³ - 5x² + 4) dx = ?
+        </p>
+        <div className="scan-line"></div> 
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
     </main>
   );
 }
