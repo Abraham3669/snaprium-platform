@@ -308,14 +308,14 @@ header.header {
 ───────────────────────────────────────────── */
 
 /* ===============================
-   RESULT PANEL – PROFESSIONAL DESIGN
+   RESULT PANEL – PROFESSIONAL UNIQUE STYLE
    =============================== */
 
-/* Panel overlay – fully opaque */
+/* Panel overlay – opaque background */
 .result-panel {
   position: fixed;
   inset: 0;
-  background: var(--surface);   /* opaque light mode */
+  background: var(--surface);
   z-index: 3500;
   display: flex;
   flex-direction: column;
@@ -324,7 +324,7 @@ header.header {
 }
 
 [data-theme="dark"] .result-panel {
-  background: var(--surface); /* opaque dark mode */
+  background: var(--surface);
 }
 
 /* Panel header */
@@ -336,15 +336,15 @@ header.header {
   justify-content: space-between;
   align-items: center;
   box-shadow: var(--shadow-sm);
-  border-radius: var(--radius) var(--radius) 0 0; /* rounded top corners */
-  transition: background 0.3s ease, color 0.3s ease;
+  border-radius: var(--radius) var(--radius) 0 0;
 }
 
 .result-panel-header h2 {
   margin: 0;
-  font-size: 1.7rem;
-  font-weight: 700;
+  font-size: 1.85rem;
+  font-weight: 800;
   color: var(--text-primary);
+  letter-spacing: -0.5px;
 }
 
 /* Close button refinement */
@@ -353,7 +353,7 @@ header.header {
   background: rgba(0,0,0,0.05);
   color: var(--text-primary);
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 0.25rem 0.6rem;
   cursor: pointer;
   transition: all 0.25s ease;
@@ -379,7 +379,7 @@ header.header {
   padding: 2rem 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 3rem;
   align-items: center;
   justify-content: flex-start;
 }
@@ -392,10 +392,9 @@ header.header {
   margin: 0 auto;
   overflow: hidden;
   border-radius: var(--radius);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  box-shadow: 0 6px 28px rgba(0,0,0,0.14);
 }
 
-/* Remove blue line under image preview */
 .result-image {
   display: block;
   width: 100%;
@@ -403,71 +402,101 @@ header.header {
   object-fit: contain;
   border-radius: var(--radius);
   border: 1px solid var(--border);
-  box-shadow: 0 12px 36px rgba(0,0,0,0.15);
-  transition: box-shadow 0.3s ease;
+  box-shadow: 0 14px 40px rgba(0,0,0,0.18);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 
 .result-image:hover {
-  box-shadow: 0 16px 48px rgba(0,0,0,0.25);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  transform: scale(1.01);
 }
 
-/* Solution card */
+/* ===== Solution card – Unique professional style ===== */
 .solution-area {
   width: 100%;
-  max-width: 720px;
+  max-width: 760px;
   background: var(--surface);
-  padding: 2rem;
+  padding: 2.5rem;
   border-radius: var(--radius);
-  box-shadow: var(--shadow-md);
-  line-height: 1.75;
-  font-size: 1.1rem;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.15);
+  line-height: 1.85;
+  font-size: 1.14rem;
   text-align: left;
   color: var(--text-primary);
-  transition: background 0.3s ease, color 0.3s ease;
+  transition: background 0.3s ease, color 0.3s ease, transform 0.25s ease;
   position: relative;
 }
 
-/* Accent line on top of solution card */
+/* Floating subtle lift on hover */
+.solution-area:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.22);
+}
+
+/* Gradient accent header inside solution card */
 .solution-area::before {
   content: "";
   display: block;
-  width: 60px;
-  height: 4px;
-  border-radius: 2px;
-  margin-bottom: 1rem;
-  background: var(--accent);
-  box-shadow: 0 0 8px var(--accent-glow);
+  width: 80px;
+  height: 6px;
+  border-radius: 3px;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  box-shadow: 0 0 12px rgba(59,130,246,0.25);
 }
 
-/* KaTeX styling for math rendering */
+/* Headings inside solution (Step 1, Step 2, Example, etc.) */
+.solution-area h3,
+.solution-area h4 {
+  margin: 1.8rem 0 0.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 1.3rem;
+  letter-spacing: -0.5px;
+  border-left: 4px solid var(--accent);
+  padding-left: 0.8rem;
+}
+
+/* Paragraph spacing inside solution */
+.solution-area p {
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+  line-height: 1.75;
+}
+
+/* KaTeX styling */
 .katex {
-  font-size: 1.18em;
+  font-size: 1.22em;
 }
 
 .katex-display {
-  margin: 1.6rem 0;
+  margin: 1.8rem 0;
   text-align: center;
   overflow-x: auto;
-  padding: 0.3rem 0;
+  padding: 0.4rem 0;
 }
 
 .katex-inline {
   vertical-align: -0.2em;
 }
 
-/* Slightly bigger fraction lines */
+/* Fraction lines slightly thicker */
 .katex .mfrac .frac-line {
-  border-bottom-width: 0.06em;
+  border-bottom-width: 0.07em;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .solution-area {
-    font-size: 1rem;
-    padding: 1.5rem;
+    font-size: 1.04rem;
+    padding: 1.8rem;
   }
   .katex {
-    font-size: 1.12em;
+    font-size: 1.14em;
+  }
+  .solution-area h3,
+  .solution-area h4 {
+    font-size: 1.18rem;
   }
 }
 
