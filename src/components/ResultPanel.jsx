@@ -4,7 +4,6 @@ import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import rehypeRaw from 'rehype-raw';
 import 'katex/dist/katex.min.css';
 
 export default function ResultPanel({ result, loading, onClose }) {
@@ -40,7 +39,6 @@ export default function ResultPanel({ result, loading, onClose }) {
             <ReactMarkdown
               remarkPlugins={[remarkMath]}
               rehypePlugins={[rehypeKatex]}
-              rehypeRaw={true}
             >
               {formatMath(result.text || 'No solution available yet.')}
             </ReactMarkdown>
@@ -52,15 +50,13 @@ export default function ResultPanel({ result, loading, onClose }) {
 }
 
 /* ------------------------------------------
-   Auto-format helper (IMPORTANT)
-   Converts bad fractions like 3/4 → \frac{3}{4}
+   Auto-format helper
+   Converts simple fractions like 3/4 → \frac{3}{4}
+   (Only applies to basic numeric fractions)
 ------------------------------------------- */
 function formatMath(text) {
   if (!text) return '';
 
-  // Convert simple fractions like 3/4 into \frac{3}{4}
   const fractionRegex = /(\b\d+)\s*\/\s*(\d+\b)/g;
-  text = text.replace(fractionRegex, '\\\\frac{$1}{$2}');
-
-  return text;
+  return text.replace(fractionRegex, '\\\\frac{$1}{$2}');
 }
