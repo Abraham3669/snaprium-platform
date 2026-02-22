@@ -55,16 +55,25 @@ export default function ResultPanel({ result, loading, onClose }) {
 function formatMath(text) {
   if (!text) return '';
 
-  // Convert 3/4 → \frac{3}{4}
+  // Convert ASCII fractions 3/4 → \frac{3}{4}
   text = text.replace(/(\b\d+)\s*\/\s*(\d+\b)/g, '\\\\frac{$1}{$2}');
 
-  // Convert [ ... ] or ( ... ) → $$ ... $$
-  text = text.replace(/[\[\(]\s*([\s\S]*?)\s*[\]\)]/g, (_, mathContent) => {
-    const singleLine = mathContent.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+  // Replace all inline $...$ with $$...$$
+  text = text.replace(/\$(.*?)\$/g, (_, mathContent) => {
+    const singleLine = mathContent.replace(/\n/g, ' ').trim();
     return `$$${singleLine}$$`;
   });
 
-  // Convert ASCII-style fractions
+  // Replace [ ... ] or ( ... ) → $$ ... $$
+  text = text.replace(/[\[\(]\s*([\s\S]*?)\s*[\]\)]/g, (_, mathContent) => {
+    const singleLine = mathContent.replace(/\n/g, ' ').trim();
+    return `$$${singleLine}$$`;
+  });
+
+  // Convert ASCII fractions like
+  // 1
+  // __
+  // 2
   text = text.replace(/(\d+)\s*\n\s*_{2,}\s*\n\s*(\d+)/g, '\\\\frac{$1}{$2}');
 
   return text;
@@ -76,11 +85,8 @@ function formatMath(text) {
 function sanitizeLatex(text) {
   if (!text) return '';
 
-  // Remove extra spaces inside display math $$ ... $$
+  // Remove spaces inside display math
   text = text.replace(/\$\$\s*([\s\S]*?)\s*\$\$/g, '$$$1$$');
-
-  // Normalize spaces for inline math $ ... $
-  text = text.replace(/\$\s*([^\$]+?)\s*\$/g, '$$$1$');
 
   return text;
 }
