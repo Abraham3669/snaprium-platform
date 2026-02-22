@@ -57,11 +57,15 @@ export default function ResultPanel({ result, loading, onClose }) {
 function formatMath(text) {
   if (!text) return '';
 
-  // 1️⃣ Fractions
+  // 1️⃣ Convert simple fractions like 3/4 → \frac{3}{4}
   text = text.replace(/(\b\d+)\s*\/\s*(\d+\b)/g, '\\\\frac{$1}{$2}');
 
-  // 2️⃣ Brackets [ ... ] → $$ ... $$
-  text = text.replace(/\[\s*(.*?)\s*\]/g, '$$$1$$');
+  // 2️⃣ Replace any [ ... ] or ( ... ) with $$ ... $$
+  // Remove any internal newlines for KaTeX safety
+  text = text.replace(/[\[\(]\s*([\s\S]*?)\s*[\]\)]/g, (_, mathContent) => {
+    const singleLine = mathContent.replace(/\n/g, ' ');
+    return `$$${singleLine}$$`;
+  });
 
   return text;
 }
