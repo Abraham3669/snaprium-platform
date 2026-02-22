@@ -307,20 +307,24 @@ header.header {
    Refined Result Panel (Professional)
 ───────────────────────────────────────────── */
 
-/* Panel overlay */
+/* ===============================
+   RESULT PANEL – PROFESSIONAL DESIGN
+   =============================== */
+
+/* Panel overlay – fully opaque */
 .result-panel {
   position: fixed;
   inset: 0;
-  background: rgba(255,255,255,0.95); /* light mode dim */
+  background: var(--surface);   /* opaque light mode */
   z-index: 3500;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  transition: background 0.3s ease;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 [data-theme="dark"] .result-panel {
-  background: rgba(15,23,42,0.95); /* dark mode dim */
+  background: var(--surface); /* opaque dark mode */
 }
 
 /* Panel header */
@@ -334,10 +338,6 @@ header.header {
   box-shadow: var(--shadow-sm);
   border-radius: var(--radius) var(--radius) 0 0; /* rounded top corners */
   transition: background 0.3s ease, color 0.3s ease;
-}
-
-[data-theme="dark"] .result-panel-header {
-  background: var(--surface);
 }
 
 .result-panel-header h2 {
@@ -381,15 +381,29 @@ header.header {
   flex-direction: column;
   gap: 2rem;
   align-items: center;
+  justify-content: flex-start;
 }
 
 /* Image styling */
-.result-image {
-  max-width: 100%;
-  max-height: 60vh;
+.image-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  overflow: hidden;
   border-radius: var(--radius);
-  box-shadow: 0 12px 36px rgba(0,0,0,0.15); /* subtle floating effect */
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+}
+
+/* Remove blue line under image preview */
+.result-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: var(--radius);
   border: 1px solid var(--border);
+  box-shadow: 0 12px 36px rgba(0,0,0,0.15);
   transition: box-shadow 0.3s ease;
 }
 
@@ -400,22 +414,20 @@ header.header {
 /* Solution card */
 .solution-area {
   width: 100%;
-  max-width: 640px;
+  max-width: 720px;
   background: var(--surface);
   padding: 2rem;
   border-radius: var(--radius);
   box-shadow: var(--shadow-md);
   line-height: 1.75;
+  font-size: 1.1rem;
   text-align: left;
-  transition: background 0.3s ease, color 0.3s ease;
-}
-
-[data-theme="dark"] .solution-area {
-  background: var(--surface);
   color: var(--text-primary);
+  transition: background 0.3s ease, color 0.3s ease;
+  position: relative;
 }
 
-/* Optional: subtle gradient accent line on top of solution card */
+/* Accent line on top of solution card */
 .solution-area::before {
   content: "";
   display: block;
@@ -425,6 +437,38 @@ header.header {
   margin-bottom: 1rem;
   background: var(--accent);
   box-shadow: 0 0 8px var(--accent-glow);
+}
+
+/* KaTeX styling for math rendering */
+.katex {
+  font-size: 1.18em;
+}
+
+.katex-display {
+  margin: 1.6rem 0;
+  text-align: center;
+  overflow-x: auto;
+  padding: 0.3rem 0;
+}
+
+.katex-inline {
+  vertical-align: -0.2em;
+}
+
+/* Slightly bigger fraction lines */
+.katex .mfrac .frac-line {
+  border-bottom-width: 0.06em;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .solution-area {
+    font-size: 1rem;
+    padding: 1.5rem;
+  }
+  .katex {
+    font-size: 1.12em;
+  }
 }
 
 /* ─────────────────────────────────────────────
