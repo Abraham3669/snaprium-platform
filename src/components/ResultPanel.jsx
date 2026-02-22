@@ -52,33 +52,35 @@ export default function ResultPanel({ result, loading, onClose }) {
 </ReactMarkdown>
 
 
-<div className="feedback-bar">
-  <button
-    className={`feedback-btn ${feedback === 'up' ? 'active' : ''}`}
-    onClick={() => handleFeedback('up')}
-  >
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-      <path d="M14 9V5a3 3 0 0 0-6 0v4H5v11h14V9h-5z" stroke="currentColor" strokeWidth="2"/>
-    </svg>
-    Helpful
-  </button>
+{!loading && result?.text && (
+  <div className="feedback-bar">
+    <button
+      className={`feedback-btn ${feedback === 'up' ? 'active' : ''}`}
+      onClick={() => handleFeedback('up')}
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M14 9V5a3 3 0 0 0-6 0v4H5v11h14V9h-5z"
+          stroke="currentColor"
+          strokeWidth="2"
+        />
+      </svg>
+      Helpful
+    </button>
 
-  <button
-    className={`feedback-btn ${feedback === 'down' ? 'active' : ''}`}
-    onClick={() => handleFeedback('down')}
-  >
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-      <path d="M10 15v4a3 3 0 0 0 6 0v-4h3V4H5v11h5z" stroke="currentColor" strokeWidth="2"/>
-    </svg>
-    Not Helpful
-  </button>
-
-  {feedback && (
-    <span className="feedback-confirmation">
-      Thank you for your feedback.
-    </span>
-  )}
-</div>
+    <button
+      className={`feedback-btn ${feedback === 'down' ? 'active' : ''}`}
+      onClick={() => handleFeedback('down')}
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M10 15v4a3 3 0 0 0 6 0v-4h3V4H5v11h5z"
+          stroke="currentColor"
+          strokeWidth="2"
+        />
+      </svg>
+      Not Helpful
+    </button>
+  </div>
+)}
 
 
 </div>
