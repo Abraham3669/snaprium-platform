@@ -36,7 +36,7 @@ export default function ResultPanel({ result, loading, onClose }) {
           {loading ? (
             <p className="processing-text">Analyzing...</p>
           ) : (
-            <ReactMarkdown
+  <ReactMarkdown
   remarkPlugins={[remarkMath]}
   rehypePlugins={[rehypeKatex]}
 >
@@ -49,3 +49,44 @@ export default function ResultPanel({ result, loading, onClose }) {
   );
 }
 
+/* ------------------------------------------
+   Helper: Format LaTeX (brackets, fractions, ASCII)
+------------------------------------------- */
+function formatMath(text) {
+  if (!text) return '';
+
+  // Convert ASCII fractions 3/4 → \frac{3}{4}
+  text = text.replace(/(\b\d+)\s*\/\s*(\d+\b)/g, '\\\\frac{$1}{$2}');
+
+  // Replace all inline $...$ with $$...$$
+  text = text.replace(/\$(.*?)\$/g, (_, mathContent) => {
+    const singleLine = mathContent.replace(/\n/g, ' ').trim();
+    return `$$${singleLine}$$`;
+  });
+
+  // Replace [ ... ] or ( ... ) → $$ ... $$
+  text = text.replace(/[\[\(]\s*([\s\S]*?)\s*[\]\)]/g, (_, mathContent) => {
+    const singleLine = mathContent.replace(/\n/g, ' ').trim();
+    return `$$${singleLine}$$`;
+  });
+
+  // Convert ASCII fractions like
+  // 1
+  // __
+  // 2
+  text = text.replace(/(\d+)\s*\n\s*_{2,}\s*\n\s*(\d+)/g, '\\\\frac{$1}{$2}');
+
+  return text;
+}
+
+/* ------------------------------------------
+   Helper: Sanitize LaTeX for KaTeX rendering
+------------------------------------------- */
+function sanitizeLatex(text) {
+  if (!text) return '';
+
+  // Remove spaces inside display math
+  text = text.replace(/\$\$\s*([\s\S]*?)\s*\$\$/g, '$$$1$$');
+
+  return text;
+}
