@@ -51,12 +51,17 @@ export default function ResultPanel({ result, loading, onClose }) {
 
 /* ------------------------------------------
    Auto-format helper
-   Converts simple fractions like 3/4 → \frac{3}{4}
-   (Only applies to basic numeric fractions)
+   1️⃣ Converts simple fractions like 3/4 → \frac{3}{4}
+   2️⃣ Converts any [ ... ] → $$ ... $$ for KaTeX
 ------------------------------------------- */
 function formatMath(text) {
   if (!text) return '';
 
-  const fractionRegex = /(\b\d+)\s*\/\s*(\d+\b)/g;
-  return text.replace(fractionRegex, '\\\\frac{$1}{$2}');
+  // 1️⃣ Fractions
+  text = text.replace(/(\b\d+)\s*\/\s*(\d+\b)/g, '\\\\frac{$1}{$2}');
+
+  // 2️⃣ Brackets [ ... ] → $$ ... $$
+  text = text.replace(/\[\s*(.*?)\s*\]/g, '$$$1$$');
+
+  return text;
 }
