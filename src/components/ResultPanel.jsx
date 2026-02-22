@@ -34,11 +34,17 @@ export default function ResultPanel({ result, loading, onClose }) {
         {/* Solution Section */}
 <div className="solution-area">
   <ReactMarkdown
-    remarkPlugins={[remarkMath]}
-    rehypePlugins={[rehypeKatex]}
-  >
-    {prepareMathForKaTeX(result.text || 'No solution yet...')}
-  </ReactMarkdown>
+  remarkPlugins={[remarkMath]}
+  rehypePlugins={[rehypeKatex]}
+>
+  {prepareMathForKaTeX(
+    // only replace Final answer: with a styled span
+    result.text?.replace(
+      /Final answer:/g,
+      '<span class="final-answer-title">Final answer:</span>'
+    ) || ''
+  )}
+</ReactMarkdown>
 </div>
       </div>
     </div>

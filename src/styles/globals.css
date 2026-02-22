@@ -434,16 +434,16 @@ header.header {
 }
 
 /* Gradient accent header inside solution card */
-.solution-area::before {
-  content: "";
-  display: block;
-  width: 80px;
-  height: 6px;
-  border-radius: 3px;
-  margin-bottom: 1.5rem;
-  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-  box-shadow: 0 0 12px rgba(59,130,246,0.25);
-}
+/*.solution-area::before { */
+  /*content: ""; */
+  /*display: block; */
+ /* width: 80px; */
+  /*height: 6px; */
+  /*border-radius: 3px; */
+ /* margin-bottom: 1.5rem; */
+  /*background: linear-gradient(135deg, var(--accent), var(--accent-dark)); */
+  /*box-shadow: 0 0 12px rgba(59,130,246,0.25); */
+/*}  */
 
 /* Headings inside solution (Step 1, Step 2, Example, etc.) */
 .solution-area h3,
@@ -1184,4 +1184,16 @@ header.header {
 .katex-display,
 .katex {
   transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+
+
+
+
+
+.final-answer-title {
+  font-weight: 700;
+  color: var(--accent);      /* your brand blue */
+  font-size: 1.12rem;
+  margin-right: 0.25rem;
 }
