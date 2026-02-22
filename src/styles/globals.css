@@ -1072,3 +1072,7 @@ header.header {
   margin: 1.5em 0 0.8em;
   color: #1e40af;
 }
+
+.solution-area .katex {
+  font-size: 1.2rem;
+}

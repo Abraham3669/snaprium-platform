@@ -1,10 +1,9 @@
 // src/components/ResultPanel.jsx
-
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import 'katex/dist/katex.min.css'; // ← this is required for beautiful vertical fractions & math styling
+import 'katex/dist/katex.min.css'; // required for proper math styling
 
 export default function ResultPanel({ result, loading, onClose }) {
   if (!result?.image) return null;
@@ -23,7 +22,6 @@ export default function ResultPanel({ result, loading, onClose }) {
             src={result.image}
             alt="Cropped preview"
           />
-
           {loading && (
             <div className="scan-overlay">
               <div className="scan-line"></div>
@@ -35,14 +33,12 @@ export default function ResultPanel({ result, loading, onClose }) {
           {loading ? (
             <p className="processing-text">Analyzing...</p>
           ) : (
-            <div className="markdown-solution">
-              <ReactMarkdown
-                remarkPlugins={[remarkMath]}
-                rehypePlugins={[rehypeKatex]}
-              >
-                {result.text || 'No solution available yet.'}
-              </ReactMarkdown>
-            </div>
+            <ReactMarkdown
+              remarkPlugins={[remarkMath]}
+              rehypePlugins={[rehypeKatex]}
+            >
+              {result.text || 'No solution available yet.'}
+            </ReactMarkdown>
           )}
         </div>
       </div>
