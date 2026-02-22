@@ -36,11 +36,11 @@ export default function ResultPanel({ result, loading, onClose }) {
           {loading ? (
             <p className="processing-text">Analyzing...</p>
           ) : (
-  <ReactMarkdown
+            <ReactMarkdown
   remarkPlugins={[remarkMath]}
   rehypePlugins={[rehypeKatex]}
 >
-  {result.text || 'No solution available yet.'}
+  {sanitizeLatex(formatMath(result.text || 'No solution available yet.'))}
 </ReactMarkdown>
           )}
         </div>
