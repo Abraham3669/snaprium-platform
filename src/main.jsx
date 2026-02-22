@@ -9,6 +9,8 @@ import "./styles/globals.css";  // your custom design system
 // Root component
 import App from "./App.jsx";
 
+import 'katex/dist/katex.min.css';
+
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <App />

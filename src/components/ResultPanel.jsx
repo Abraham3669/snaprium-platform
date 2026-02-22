@@ -1,9 +1,11 @@
 // src/components/ResultPanel.jsx
+
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import 'katex/dist/katex.min.css'; // required for proper math styling
+import rehypeRaw from 'rehype-raw';
+import 'katex/dist/katex.min.css';
 
 export default function ResultPanel({ result, loading, onClose }) {
   if (!result?.image) return null;
@@ -16,6 +18,7 @@ export default function ResultPanel({ result, loading, onClose }) {
       </div>
 
       <div className="result-panel-content">
+        {/* Image Section */}
         <div className="image-wrapper">
           <img
             className="result-image"
@@ -29,6 +32,7 @@ export default function ResultPanel({ result, loading, onClose }) {
           )}
         </div>
 
+        {/* Solution Section */}
         <div className="solution-area">
           {loading ? (
             <p className="processing-text">Analyzing...</p>
@@ -36,12 +40,27 @@ export default function ResultPanel({ result, loading, onClose }) {
             <ReactMarkdown
               remarkPlugins={[remarkMath]}
               rehypePlugins={[rehypeKatex]}
+              rehypeRaw={true}
             >
-              {result.text || 'No solution available yet.'}
+              {formatMath(result.text || 'No solution available yet.')}
             </ReactMarkdown>
           )}
         </div>
       </div>
     </div>
   );
+}
+
+/* ------------------------------------------
+   Auto-format helper (IMPORTANT)
+   Converts bad fractions like 3/4 → \frac{3}{4}
+------------------------------------------- */
+function formatMath(text) {
+  if (!text) return '';
+
+  // Convert simple fractions like 3/4 into \frac{3}{4}
+  const fractionRegex = /(\b\d+)\s*\/\s*(\d+\b)/g;
+  text = text.replace(fractionRegex, '\\\\frac{$1}{$2}');
+
+  return text;
 }
