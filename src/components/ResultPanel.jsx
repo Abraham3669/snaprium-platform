@@ -32,14 +32,18 @@ export default function ResultPanel({ result, loading, onClose }) {
         </div>
 
         {/* Solution Section */}
-<div className="solution-area">
-  <ReactMarkdown
-    remarkPlugins={[remarkMath]}
-    rehypePlugins={[rehypeKatex]}
-  >
-    {prepareMathForKaTeX(result.text || 'No solution yet...')}
-  </ReactMarkdown>
-</div>
+        <div className="solution-area">
+          {loading ? (
+            <p className="processing-text">Analyzing...</p>
+          ) : (
+<ReactMarkdown
+  remarkPlugins={[remarkMath]}
+  rehypePlugins={[rehypeKatex]}
+>
+  {prepareMathForKaTeX(result.text || 'No solution yet...')}
+</ReactMarkdown>
+          )}
+        </div>
       </div>
     </div>
   );
