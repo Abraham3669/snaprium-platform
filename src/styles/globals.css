@@ -427,17 +427,7 @@ header.header {
   position: relative;
 }
 
-/* Accent line on top of solution card */
-.solution-area::before {
-  content: "";
-  display: block;
-  width: 60px;
-  height: 4px;
-  border-radius: 2px;
-  margin-bottom: 1rem;
-  background: var(--accent);
-  box-shadow: 0 0 8px var(--accent-glow);
-}
+
 
 /* KaTeX styling for math rendering */
 .katex {
@@ -1088,13 +1078,26 @@ header.header {
 
 /* ---------- Solution Container ---------- */
 
+/* ---------- Solution Container (FINAL CLEAN VERSION) ---------- */
+
 .solution-area {
-  padding: 1.2rem;
-  background: #f8fafc;
-  border-radius: 12px;
-  line-height: 1.75;
-  font-size: 1.08rem;
+  width: 100%;
+  max-width: 720px;
+  padding: 2rem;
+  border-radius: var(--radius);
+  background: var(--surface); /* now theme controlled */
   color: var(--text-primary);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border);
+  line-height: 1.8;
+  font-size: 1.08rem;
+  transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+/* Dark mode enhancement */
+[data-theme="dark"] .solution-area {
+  background: #111827; /* slightly deeper than panel */
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6);
 }
 
 /* Paragraph spacing */
@@ -1109,6 +1112,123 @@ header.header {
   font-weight: 600;
   color: #1e40af;
 }
+
+
+
+
+/* ---------- Feedback Buttons (Professional Toggle) ---------- */
+.feedback-bar {
+  width: 100%;
+  margin-top: 2rem;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.8rem;
+
+  flex-wrap: wrap;        /* allows clean wrapping */
+  text-align: center;
+}
+
+/* ---------- Feedback Buttons (Responsive Professional) ---------- */
+
+.feedback-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+
+  padding: 0.55rem 1.2rem;
+  min-width: 120px;
+
+  font-size: 0.85rem;
+  font-weight: 600;
+
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--border);
+
+  background: transparent;
+  color: var(--text-secondary);
+
+  cursor: pointer;
+  transition: all 0.22s ease;
+  white-space: nowrap;
+}
+
+/* Hover */
+.feedback-btn:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 6px 16px var(--accent-glow);
+}
+
+/* Active (stays blue) */
+.feedback-btn.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  box-shadow: 0 6px 20px var(--accent-glow);
+}
+
+/* Dark mode */
+[data-theme="dark"] .feedback-btn {
+  border-color: rgba(255,255,255,0.08);
+  color: var(--text-secondary);
+}
+
+
+@media (max-width: 480px) {
+  .feedback-bar {
+    gap: 0.6rem;
+  }
+
+  .feedback-btn {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.8rem;
+  }
+}
+
+
+
+/* Hover effect */
+.feedback-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px var(--accent-glow);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Active (clicked) — stays blue */
+.feedback-btn.active {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+  box-shadow: 0 8px 24px var(--accent-glow);
+  transform: translateY(-1px);
+}
+
+/* Dark mode refinement */
+[data-theme="dark"] .feedback-btn {
+  border-color: rgba(255,255,255,0.08);
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .feedback-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+[data-theme="dark"] .feedback-btn.active {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+
+
+
 
 /* ---------- KaTeX Core Styling ---------- */
 
