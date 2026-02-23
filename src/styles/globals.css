@@ -317,9 +317,13 @@ header.header {
   inset: 0;
   background: var(--surface);
   z-index: 3500;
+
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+
+  height: 100dvh;      /* ensures full height */
+  overflow: hidden;    /* ✅ stop whole panel scrolling */
+
   transition: background 0.3s ease, color 0.3s ease;
 }
 
@@ -329,14 +333,24 @@ header.header {
 
 /* Panel header */
 .result-panel-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+
   padding: 1.2rem 1.5rem;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
+
   display: flex;
   justify-content: space-between;
   align-items: center;
+
   box-shadow: var(--shadow-sm);
-  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.result-panel-header {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .result-panel-header h2 {
@@ -376,7 +390,10 @@ header.header {
 /* Panel content */
 .result-panel-content {
   flex: 1;
+  overflow-y: auto;   /* ✅ only this scrolls */
+
   padding: 2rem 1.5rem;
+
   display: flex;
   flex-direction: column;
   gap: 3rem;
