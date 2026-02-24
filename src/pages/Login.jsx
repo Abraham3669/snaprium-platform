@@ -1,12 +1,12 @@
 // src/pages/Login.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext'; // adjust path if needed
+import { useAuth } from '../context/AuthContext';
 import { signInWithPopup, signInWithEmailAndPassword } from 'firebase/auth';
-import { auth, googleProvider } from '../lib/firebase'; // adjust path
+import { auth, googleProvider } from '../lib/firebase';
 
 export default function Login() {
-  const { user } = useAuth(); // If already logged in → redirect
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
@@ -15,21 +15,22 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // If user is already logged in, redirect to home
   if (user) {
     navigate('/');
     return null;
   }
 
   const handleGoogleSignIn = async () => {
+    // console.log('Google button clicked'); // keep for debug - remove later
     setLoading(true);
     setError('');
     try {
+      // console.log('Calling signInWithPopup...');
       await signInWithPopup(auth, googleProvider);
-      // onAuthStateChanged in AuthContext will handle user update & Firestore doc
-      navigate('/'); // redirect to home after success
+      // console.log('Google sign-in success');
+      navigate('/');
     } catch (err) {
-      console.error('Google sign-in error:', err);
+      console.error('Google sign-in error:', err.code, err.message);
       setError(getFriendlyErrorMessage(err.code));
     } finally {
       setLoading(false);
@@ -38,8 +39,9 @@ export default function Login() {
 
   const handleEmailSignIn = async (e) => {
     e.preventDefault();
+    // console.log('Email form submitted');
     if (!email || !password) {
-      setError('Please enter both email and password');
+      setError('Please fill in email and password');
       return;
     }
 
@@ -47,33 +49,30 @@ export default function Login() {
     setError('');
 
     try {
+      // console.log('Calling signInWithEmailAndPassword...');
       await signInWithEmailAndPassword(auth, email.trim(), password);
       navigate('/');
     } catch (err) {
-      console.error('Email sign-in error:', err);
+      console.error('Email sign-in error:', err.code, err.message);
       setError(getFriendlyErrorMessage(err.code));
     } finally {
       setLoading(false);
     }
   };
 
-  // Map Firebase error codes to nice messages
   const getFriendlyErrorMessage = (code) => {
-    switch (code) {
-      case 'auth/invalid-email':
-        return 'Invalid email format';
-      case 'auth/user-not-found':
-      case 'auth/wrong-password':
-        return 'Incorrect email or password';
-      case 'auth/too-many-requests':
-        return 'Too many attempts. Try again later or reset password';
-      case 'auth/user-disabled':
-        return 'This account has been disabled';
-      case 'auth/popup-closed-by-user':
-        return 'Google sign-in was cancelled';
-      default:
-        return 'Something went wrong. Please try again';
-    }
+    const messages = {
+      'auth/invalid-email': 'Please enter a valid email address',
+      'auth/user-not-found': 'No account found with this email',
+      'auth/wrong-password': 'Incorrect password',
+      'auth/too-many-requests': 'Too many attempts — please wait a moment or reset your password',
+      'auth/user-disabled': 'This account has been disabled',
+      'auth/popup-closed-by-user': 'Google sign-in was cancelled',
+      'auth/operation-not-allowed': 'Google sign-in is not available right now',
+      'auth/popup-blocked': 'Popup blocked — please allow popups for this site',
+      'auth/network-request-failed': 'Network error — check your internet connection',
+    };
+    return messages[code] || 'Unable to sign in. Please try again.';
   };
 
   return (
@@ -105,7 +104,7 @@ export default function Login() {
           border: 'none',
           borderRadius: '6px',
           fontSize: '16px',
-          cursor: 'pointer',
+          cursor: loading ? 'not-allowed' : 'pointer',
           marginBottom: '1.5rem',
           display: 'flex',
           alignItems: 'center',
@@ -113,7 +112,7 @@ export default function Login() {
           gap: '10px',
         }}
       >
-        {loading ? 'Signing in...' : 'Continue with Google'}
+        {loading ? 'Connecting...' : 'Continue with Google'}
         {!loading && (
           <img
             src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
@@ -124,18 +123,10 @@ export default function Login() {
         )}
       </button>
 
-      <div
-        style={{
-          textAlign: 'center',
-          margin: '1.5rem 0',
-          color: '#888',
-          fontSize: '14px',
-        }}
-      >
+      <div style={{ textAlign: 'center', margin: '1.5rem 0', color: '#888', fontSize: '14px' }}>
         ───────── or ─────────
       </div>
 
-      {/* Email/Password Form */}
       <form onSubmit={handleEmailSignIn}>
         <input
           type="email"
@@ -201,7 +192,7 @@ export default function Login() {
             border: 'none',
             borderRadius: '6px',
             fontSize: '16px',
-            cursor: 'pointer',
+            cursor: loading ? 'not-allowed' : 'pointer',
             marginTop: '1rem',
           }}
         >
@@ -224,10 +215,7 @@ export default function Login() {
 
       <p style={{ textAlign: 'center', marginTop: '2rem', fontSize: '14px' }}>
         Don't have an account?{' '}
-        <Link
-          to="/signup"
-          style={{ color: '#007bff', textDecoration: 'none', fontWeight: '500' }}
-        >
+        <Link to="/signup" style={{ color: '#007bff', textDecoration: 'none', fontWeight: '500' }}>
           Sign up
         </Link>
       </p>
