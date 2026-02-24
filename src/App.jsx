@@ -1,9 +1,15 @@
 // src/App.jsx
 import { useState } from "react";
+import { Routes, Route, Navigate } from "react-router-dom"; // ← remove BrowserRouter from here
+
 import CameraInput from "./components/CameraInput";
 import CropperModal from "./components/CropperModal";
 import ResultPanel from "./components/ResultPanel";
 import Dashboard from "./components/Dashboard";
+
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+
 import { postAPI } from "./utils/apiClient";
 
 function App() {
@@ -68,7 +74,7 @@ function App() {
         </div>
       </header>
 
-      {/* Main content */}
+      {/* Main content with routes */}
       <main className="pt-16">
         <Dashboard
           isOpen={isDashboardOpen}
@@ -77,36 +83,53 @@ function App() {
           theme={theme}
         />
 
-        <CameraInput
-          onFileSelect={(selectedFile) => {
-            setFile(selectedFile);
-            setIsCropperOpen(true);
-          }}
-          onOpenDashboard={() => setIsDashboardOpen(true)}
-        />
+        <Routes>
+          {/* Home route: camera + result flow */}
+          <Route
+            path="/"
+            element={
+              <>
+                <CameraInput
+                  onFileSelect={(selectedFile) => {
+                    setFile(selectedFile);
+                    setIsCropperOpen(true);
+                  }}
+                  onOpenDashboard={() => setIsDashboardOpen(true)}
+                />
 
-        <CropperModal
-          file={file}
-          isOpen={isCropperOpen}
-          onClose={() => {
-            setIsCropperOpen(false);
-            setFile(null);
-          }}
-          onCrop={handleCropComplete}
-        />
+                <CropperModal
+                  file={file}
+                  isOpen={isCropperOpen}
+                  onClose={() => {
+                    setIsCropperOpen(false);
+                    setFile(null);
+                  }}
+                  onCrop={handleCropComplete}
+                />
 
-        {isResultOpen && (
-          <ResultPanel
-            result={{ image: croppedImage, text: resultText }}
-            loading={isProcessing}
-            onClose={() => {
-              setIsResultOpen(false);
-              // Optional: uncomment if you want to clear old data when closing
-              // setCroppedImage(null);
-              // setResultText("");
-            }}
+                {isResultOpen && (
+                  <ResultPanel
+                    result={{ image: croppedImage, text: resultText }}
+                    loading={isProcessing}
+                    onClose={() => {
+                      setIsResultOpen(false);
+                      // Optional: uncomment if you want to clear old data when closing
+                      // setCroppedImage(null);
+                      // setResultText("");
+                    }}
+                  />
+                )}
+              </>
+            }
           />
-        )}
+
+          {/* Login & Signup pages */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+
+          {/* Catch-all: redirect unknown paths to home */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </main>
     </div>
   );

@@ -1,18 +1,23 @@
+// src/main.jsx
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { BrowserRouter } from "react-router-dom"; // ← keep this
 
-// Global styles
-import "./index.css";           // base resets
-import "./App.css";             // app-level styles
-import "./styles/globals.css";  // your custom design system
+import "./index.css";
+import "./App.css";
+import "./styles/globals.css";
 
-// Root component
 import App from "./App.jsx";
-
 import 'katex/dist/katex.min.css';
+
+import { AuthProvider } from "./context/AuthContext.jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <App />
+    <BrowserRouter>  {/* ← ONLY here */}
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </BrowserRouter>
   </StrictMode>
 );
