@@ -12,10 +12,9 @@ import Signup from "./pages/Signup";
 
 import { postAPI } from "./utils/apiClient";
 
-// NEW imports for Firestore upload count increment
+// Firestore & auth imports for upload count increment
 import { doc, updateDoc, increment, serverTimestamp } from "firebase/firestore";
-import { auth } from "./lib/firebase"; // adjust path if your firebase.js is elsewhere
-
+import { auth, db } from "./lib/firebase";  // ← FIXED: added db here
 function App() {
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
   const [file, setFile] = useState(null);
