@@ -11,40 +11,42 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log("Auth listener starting...");
+    console.log("[Auth] Starting listener...");
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      console.log("onAuthStateChanged fired → user:", firebaseUser ? firebaseUser.uid : "null");
+      console.log("[Auth] onAuthStateChanged triggered. User:", firebaseUser ? firebaseUser.uid : "null");
 
       if (firebaseUser) {
         try {
           const userRef = doc(db, "users", firebaseUser.uid);
+          console.log("[Auth] Checking Firestore doc for UID:", firebaseUser.uid);
+
           const userSnap = await getDoc(userRef);
 
           let userData = {
             uid: firebaseUser.uid,
-            email: firebaseUser.email,
+            email: firebaseUser.email || "",
             displayName: firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "User",
             photoURL: firebaseUser.photoURL || "",
             createdAt: new Date().toISOString(),
           };
 
           if (!userSnap.exists()) {
-            console.log("Creating new user doc in Firestore for UID:", firebaseUser.uid);
+            console.log("[Auth] No doc exists → creating new user document...");
             await setDoc(userRef, userData);
-            console.log("Firestore user doc created successfully");
+            console.log("[Auth] User document CREATED successfully in Firestore");
           } else {
-            console.log("User doc already exists, merging data");
+            console.log("[Auth] Doc already exists → loading existing data");
             userData = { ...userData, ...userSnap.data() };
           }
 
           setUser(userData);
-          console.log("User state updated in context:", userData.uid);
+          console.log("[Auth] User state SET in context:", userData.uid);
         } catch (error) {
-          console.error("Firestore user creation/fetch error:", error);
-          setUser(null); // fallback
+          console.error("[Auth] Firestore error during user setup:", error.code, error.message);
+          setUser(null);
         }
       } else {
-        console.log("User signed out");
+        console.log("[Auth] User signed out");
         setUser(null);
       }
 
@@ -52,7 +54,7 @@ export function AuthProvider({ children }) {
     });
 
     return () => {
-      console.log("Auth listener unsubscribing");
+      console.log("[Auth] Listener unsubscribed");
       unsubscribe();
     };
   }, []);
@@ -60,9 +62,9 @@ export function AuthProvider({ children }) {
   const signOutUser = async () => {
     try {
       await auth.signOut();
-      console.log("Sign out successful");
+      console.log("[Auth] Sign out successful");
     } catch (error) {
-      console.error("Sign out failed:", error);
+      console.error("[Auth] Sign out failed:", error);
     }
   };
 
@@ -73,8 +75,6 @@ export function AuthProvider({ children }) {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within AuthProvider");
-  }
+  if (!context) throw new Error("useAuth must be used within AuthProvider");
   return context;
 };
