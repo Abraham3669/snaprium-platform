@@ -52,7 +52,7 @@ export default function Login() {
   e.preventDefault();
 
   if (!email || !password) {
-    setError('Please enter both email and password');
+    setError('Please enter email and password');
     return;
   }
 
@@ -60,21 +60,18 @@ export default function Login() {
   setError('');
 
   try {
-    console.log('Starting email sign-in...');
     await signInWithEmailAndPassword(auth, email.trim(), password);
-    console.log('Email sign-in success – redirecting');
-
-    // Primary: use router navigate
+    console.log('Email login success → redirecting');
     navigate('/', { replace: true });
 
-    // Fallback: force reload if navigate doesn't trigger (common in auth flows)
+    // Fallback if router doesn't catch it
     setTimeout(() => {
       if (window.location.pathname !== '/') {
         window.location.href = '/';
       }
-    }, 500); // small delay to let state update
+    }, 800);
   } catch (err) {
-    console.error('Email sign-in error:', err.code, err.message);
+    console.error('Email login error:', err.code, err.message);
     setError(getFriendlyErrorMessage(err.code));
   } finally {
     setLoading(false);

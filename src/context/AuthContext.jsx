@@ -32,8 +32,12 @@ export function AuthProvider({ children }) {
 
           if (!userSnap.exists()) {
             console.log("[Auth] No doc exists → creating new user document...");
-            await setDoc(userRef, userData);
-            console.log("[Auth] User document CREATED successfully in Firestore");
+            await setDoc(userRef, {
+              ...userData,
+              uploadCount: 0,           // ← added here
+              lastUpload: null,         // ← optional, tracks last upload time
+            });
+            console.log("[Auth] User document CREATED successfully in Firestore with uploadCount: 0");
           } else {
             console.log("[Auth] Doc already exists → loading existing data");
             userData = { ...userData, ...userSnap.data() };

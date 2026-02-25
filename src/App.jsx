@@ -1,6 +1,6 @@
 // src/App.jsx
 import { useState } from "react";
-import { Routes, Route, Navigate } from "react-router-dom"; // ← remove BrowserRouter from here
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import CameraInput from "./components/CameraInput";
 import CropperModal from "./components/CropperModal";
@@ -11,6 +11,10 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 
 import { postAPI } from "./utils/apiClient";
+
+// NEW imports for Firestore upload count increment
+import { doc, updateDoc, increment, serverTimestamp } from "firebase/firestore";
+import { auth } from "./lib/firebase"; // adjust path if your firebase.js is elsewhere
 
 function App() {
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
@@ -43,6 +47,17 @@ function App() {
       });
       console.log("API response:", res);
       setResultText(res.answer || res.text || JSON.stringify(res) || "No answer received");
+
+      // NEW: Increment upload count in Firestore after successful process
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const userRef = doc(db, "users", currentUser.uid);
+        await updateDoc(userRef, {
+          uploadCount: increment(1),
+          lastUpload: serverTimestamp(),
+        });
+        console.log("Upload count incremented for user:", currentUser.uid);
+      }
     } catch (err) {
       console.error("Process error:", err);
       setResultText("Failed to get solution – please try again");
