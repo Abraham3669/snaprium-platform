@@ -15,6 +15,11 @@ import { postAPI } from "./utils/apiClient";
 // Firestore & auth imports for upload count increment
 import { doc, updateDoc, increment, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "./lib/firebase";  // ← FIXED: added db here
+
+import ForgotPassword from "./pages/ForgotPassword";
+
+
+
 function App() {
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
   const [file, setFile] = useState(null);
