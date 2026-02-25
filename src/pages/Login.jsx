@@ -21,44 +21,65 @@ export default function Login() {
   }
 
   const handleGoogleSignIn = async () => {
-    // console.log('Google button clicked'); // keep for debug - remove later
-    setLoading(true);
-    setError('');
-    try {
-      // console.log('Calling signInWithPopup...');
-      await signInWithPopup(auth, googleProvider);
-      // console.log('Google sign-in success');
-      navigate('/');
-    } catch (err) {
-      console.error('Google sign-in error:', err.code, err.message);
-      setError(getFriendlyErrorMessage(err.code));
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  setError('');
+  try {
+    console.log('Starting Google sign-in...'); // temporary debug
+    await signInWithPopup(auth, googleProvider);
+    console.log('Google sign-in success – redirecting');
+
+    // Primary redirect via router
+    navigate('/', { replace: true });
+
+    // Fallback: force page reload if navigate doesn't trigger (auth timing issue)
+    setTimeout(() => {
+      if (window.location.pathname !== '/') {
+        console.log('Router navigate missed – forcing window redirect');
+        window.location.href = '/';
+      }
+    }, 800); // give auth listener ~800ms to update state
+  } catch (err) {
+    console.error('Google sign-in error:', err.code, err.message);
+    setError(getFriendlyErrorMessage(err.code));
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   const handleEmailSignIn = async (e) => {
-    e.preventDefault();
-    // console.log('Email form submitted');
-    if (!email || !password) {
-      setError('Please fill in email and password');
-      return;
-    }
+  e.preventDefault();
 
-    setLoading(true);
-    setError('');
+  if (!email || !password) {
+    setError('Please enter both email and password');
+    return;
+  }
 
-    try {
-      // console.log('Calling signInWithEmailAndPassword...');
-      await signInWithEmailAndPassword(auth, email.trim(), password);
-      navigate('/');
-    } catch (err) {
-      console.error('Email sign-in error:', err.code, err.message);
-      setError(getFriendlyErrorMessage(err.code));
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  setError('');
+
+  try {
+    console.log('Starting email sign-in...');
+    await signInWithEmailAndPassword(auth, email.trim(), password);
+    console.log('Email sign-in success – redirecting');
+
+    // Primary: use router navigate
+    navigate('/', { replace: true });
+
+    // Fallback: force reload if navigate doesn't trigger (common in auth flows)
+    setTimeout(() => {
+      if (window.location.pathname !== '/') {
+        window.location.href = '/';
+      }
+    }, 500); // small delay to let state update
+  } catch (err) {
+    console.error('Email sign-in error:', err.code, err.message);
+    setError(getFriendlyErrorMessage(err.code));
+  } finally {
+    setLoading(false);
+  }
+};
 
   const getFriendlyErrorMessage = (code) => {
     const messages = {

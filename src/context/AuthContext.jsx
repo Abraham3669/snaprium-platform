@@ -1,6 +1,6 @@
 // src/context/AuthContext.jsx
 import { createContext, useContext, useEffect, useState } from "react";
-import { auth, db } from "../lib/firebase"; // adjust path if your firebase.js is elsewhere
+import { auth, db } from "../lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
@@ -11,58 +11,62 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log("Auth listener starting...");
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      try {
-        if (firebaseUser) {
-          // Fetch or create user profile in Firestore
+      console.log("onAuthStateChanged fired → user:", firebaseUser ? firebaseUser.uid : "null");
+
+      if (firebaseUser) {
+        try {
           const userRef = doc(db, "users", firebaseUser.uid);
           const userSnap = await getDoc(userRef);
 
           let userData = {
             uid: firebaseUser.uid,
             email: firebaseUser.email,
-            displayName: firebaseUser.displayName || firebaseUser.email.split("@")[0],
+            displayName: firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "User",
             photoURL: firebaseUser.photoURL || "",
+            createdAt: new Date().toISOString(),
           };
 
           if (!userSnap.exists()) {
-            // New user → create minimal profile
-            await setDoc(userRef, {
-              ...userData,
-              createdAt: new Date().toISOString(),
-            });
+            console.log("Creating new user doc in Firestore for UID:", firebaseUser.uid);
+            await setDoc(userRef, userData);
+            console.log("Firestore user doc created successfully");
           } else {
+            console.log("User doc already exists, merging data");
             userData = { ...userData, ...userSnap.data() };
           }
 
           setUser(userData);
-        } else {
-          setUser(null);
+          console.log("User state updated in context:", userData.uid);
+        } catch (error) {
+          console.error("Firestore user creation/fetch error:", error);
+          setUser(null); // fallback
         }
-      } catch (error) {
-        console.error("Auth state error:", error);
+      } else {
+        console.log("User signed out");
         setUser(null);
-      } finally {
-        setLoading(false);
       }
+
+      setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      console.log("Auth listener unsubscribing");
+      unsubscribe();
+    };
   }, []);
 
   const signOutUser = async () => {
     try {
       await auth.signOut();
+      console.log("Sign out successful");
     } catch (error) {
-      console.error("Sign out error:", error);
+      console.error("Sign out failed:", error);
     }
   };
 
-  const value = {
-    user,
-    loading,
-    signOutUser,
-  };
+  const value = { user, loading, signOutUser };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
