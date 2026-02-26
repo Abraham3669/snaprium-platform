@@ -19,6 +19,10 @@ import { auth, db } from "./lib/firebase";  // ← FIXED: added db here
 import ForgotPassword from "./pages/ForgotPassword";
 
 
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+
+
 
 function App() {
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
@@ -146,6 +150,9 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />  {/* ← add this */}
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
+
 
           {/* Catch-all: redirect unknown paths to home */}
           <Route path="*" element={<Navigate to="/" replace />} />
