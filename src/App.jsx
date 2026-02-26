@@ -1,6 +1,6 @@
 // src/App.jsx
 import { useState } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -8,7 +8,7 @@ import CameraInput from "./components/CameraInput";
 import CropperModal from "./components/CropperModal";
 import ResultPanel from "./components/ResultPanel";
 import Dashboard from "./components/Dashboard";
-import UpgradeModal from "./components/UpgradeModal"; // ← your existing modal
+import UpgradeModal from "./components/UpgradeModal";
 
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -24,6 +24,7 @@ import { useAuth } from "./context/AuthContext";
 
 function App() {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
   const [file, setFile] = useState(null);
@@ -33,7 +34,7 @@ function App() {
   const [isCropperOpen, setIsCropperOpen] = useState(false);
   const [isResultOpen, setIsResultOpen] = useState(false);
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
-  const [showUpgrade, setShowUpgrade] = useState(false); // ← added for modal
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   const toggleTheme = () => {
     const nextTheme = theme === "dark" ? "light" : "dark";
@@ -87,7 +88,10 @@ function App() {
               Sign in to unlock more expert solutions and unlimited access.
             </p>
             <button
-              onClick={() => navigate('/login')}
+              onClick={() => {
+                navigate('/login');
+                toast.dismiss(); // optional: close toast after click
+              }}
               style={{
                 background: 'var(--accent)',
                 color: 'white',
@@ -132,7 +136,7 @@ function App() {
         {
           position: "bottom-center",
           autoClose: 6000,
-          onClose: () => setShowUpgrade(true), // open modal after toast
+          onClose: () => setShowUpgrade(true),
         }
       );
       return false;
@@ -238,7 +242,7 @@ function App() {
         </Routes>
       </main>
 
-      {/* Upgrade Modal – your existing one */}
+      {/* Upgrade Modal */}
       {showUpgrade && <UpgradeModal isOpen={showUpgrade} onClose={() => setShowUpgrade(false)} />}
     </div>
   );
