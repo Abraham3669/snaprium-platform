@@ -1901,61 +1901,7 @@ header.header {
 
 
 
-/* ─────────────────────────────────────────────
-   Final Answer Visual Highlight – No Box, Pure Style
-───────────────────────────────────────────── */
 
-/* Target the "Final Answer" title (usually h2/h3 or strong/p) */
-.solution-area :where(h2, h3, h4, p, strong):is(:contains("Final Answer"), :contains("final answer")) {
-  color: var(--accent) !important;        /* your blue color */
-  font-weight: 800 !important;
-  font-size: 2rem !important;
-  margin: 2.5rem 0 1.5rem !important;
-  text-align: center !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.05em !important;
-  position: relative;
-}
-
-/* Bigger & bolder math right after Final Answer */
-.solution-area :where(h2, h3, h4, p, strong):is(:contains("Final Answer"), :contains("final answer")) + * .katex,
-.solution-area :where(h2, h3, h4, p, strong):is(:contains("Final Answer"), :contains("final answer")) ~ .katex-display {
-  font-size: 1.9em !important;            /* much bigger math */
-  font-weight: 700 !important;
-  color: var(--text-primary) !important;
-  margin: 1.2rem 0 !important;
-  text-align: center !important;
-  display: block !important;
-}
-
-/* Subtle underline glow under the title */
-.solution-area :where(h2, h3, h4, p, strong):is(:contains("Final Answer"), :contains("final answer"))::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -6px;
-  width: 120px;
-  height: 5px;
-  background: var(--accent-glow);
-  filter: blur(10px);
-  opacity: 0.7;
-  transform: translateX(-50%);
-  border-radius: 50%;
-  z-index: -1;
-}
-
-/* Mobile – slightly smaller but still stands out */
-@media (max-width: 768px) {
-  .solution-area :where(h2, h3, h4, p, strong):is(:contains("Final Answer"), :contains("final answer")) {
-    font-size: 1.8rem !important;
-    margin: 2rem 0 1rem !important;
-  }
-
-  .solution-area :where(h2, h3, h4, p, strong):is(:contains("Final Answer"), :contains("final answer")) + * .katex,
-  .solution-area :where(h2, h3, h4, p, strong):is(:contains("Final Answer"), :contains("final answer")) ~ .katex-display {
-    font-size: 1.6em !important;
-  }
-}
 
 
 
