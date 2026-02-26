@@ -2268,84 +2268,173 @@ header.header {
 
 
 
-/* Force styling on all headings inside solution */
+/* ─────────────────────────────────────────────
+   ResultPanel – Clean Titles & Final Answer (No Boxes)
+───────────────────────────────────────────── */
+
+/* Remove ALL backgrounds, borders, shadows from solution area & math */
+.solution-area,
+.solution-area .katex,
+.solution-area .katex-display,
+.solution-area .katex-html,
+.solution-area .base,
+.solution-area .mord,
+.solution-area .mord.mfenced,
+.solution-area .mspace,
+.solution-area .mfrac,
+.solution-area .mrow,
+.solution-area .mtable,
+.solution-area .mtd,
+.solution-area .mtr,
+.solution-area .mstyle,
+.solution-area .msubsup,
+.solution-area .msupsub,
+.solution-area .msqrt,
+.solution-area .mroot,
+.solution-area .munderover,
+.solution-area .munder,
+.solution-area .mover,
+.solution-area .munderover,
+.solution-area .munder,
+.solution-area .mover {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  padding: 0 !important;
+  margin: 0.8rem 0 !important;
+}
+
+/* Normal math – just bold, no size increase */
+.solution-area .katex,
+.solution-area .katex-display {
+  font-size: 1.1em !important;  /* default KaTeX size */
+  font-weight: 700 !important;  /* bold math everywhere */
+  color: var(--text-primary) !important;
+  line-height: 1.6 !important;
+  text-align: left !important;
+}
+
+/* Headings – bigger, bold, accent underline (no background/box) */
 .solution-area h1,
 .solution-area h2,
 .solution-area h3,
-.solution-area h4,
-.solution-area p strong,
-.solution-area p b {
-  font-size: 1.8rem !important;
+.solution-area h4 {
   font-weight: 800 !important;
-  color: var(--accent) !important;
-  margin: 2.5rem 0 1.2rem !important;
+  margin: 2.8rem 0 1.2rem !important;
+  color: var(--text-primary) !important;
+  position: relative !important;
   padding-bottom: 0.6rem !important;
   border-bottom: 3px solid var(--accent) !important;
-  text-align: left !important;
-  position: relative !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
-/* Glow under every heading */
-.solution-area h1::after,
-.solution-area h2::after,
-.solution-area h3::after,
-.solution-area h4::after,
-.solution-area p strong::after,
-.solution-area p b::after {
+.solution-area h1, .solution-area h2 {
+  font-size: 2rem !important;
+}
+
+.solution-area h3, .solution-area h4 {
+  font-size: 1.6rem !important;
+}
+
+/* Final Answer – blue title + bigger bold math (no box) */
+.solution-area :where(p, h1, h2, h3, strong, span):is(
+  :contains("Final Answer"),
+  :contains("final answer"),
+  :contains("Answer:"),
+  :contains("Result:")
+) {
+  color: var(--accent) !important;
+  font-weight: 900 !important;
+  font-size: 2.3rem !important;
+  text-align: center !important;
+  margin: 3.5rem 0 1.5rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* Glow underline under Final Answer title (no box) */
+.solution-area :where(p, h1, h2, h3, strong, span):is(
+  :contains("Final Answer"),
+  :contains("final answer"),
+  :contains("Answer:"),
+  :contains("Result:")
+)::after {
   content: "" !important;
   position: absolute !important;
-  left: 0 !important;
-  bottom: -4px !important;
-  width: 80px !important;
-  height: 4px !important;
+  left: 50% !important;
+  bottom: -10px !important;
+  width: 160px !important;
+  height: 6px !important;
   background: var(--accent-glow) !important;
-  filter: blur(8px) !important;
-  opacity: 0.7 !important;
+  filter: blur(14px) !important;
+  opacity: 0.75 !important;
+  transform: translateX(-50%) !important;
   border-radius: 50% !important;
+  z-index: -1 !important;
 }
 
-/* Make ALL math blocks bigger & bolder (safe fallback) */
-.solution-area .katex,
-.solution-area .katex-display {
-  font-size: 1.45em !important;
-  font-weight: 700 !important;
-  margin: 1.5rem 0 !important;
-  color: var(--text-primary) !important;
-}
-
-/* Extra emphasis on the last math block (likely final answer) */
-.solution-area .katex-display:last-of-type,
-.solution-area .katex:last-of-type {
-  font-size: 1.9em !important;
+/* Final Answer math – bigger & bolder (no box) */
+.solution-area :where(p, h1, h2, h3, strong, span):is(
+  :contains("Final Answer"),
+  :contains("final answer"),
+  :contains("Answer:"),
+  :contains("Result:")
+) ~ .katex-display,
+.solution-area :where(p, h1, h2, h3, strong, span):is(
+  :contains("Final Answer"),
+  :contains("final answer"),
+  :contains("Answer:"),
+  :contains("Result:")
+) ~ .katex {
+  font-size: 1.7em !important;
   font-weight: 900 !important;
-  background: rgba(var(--accent), 0.08) !important;
-  padding: 1.2rem !important;
-  border-radius: 12px !important;
-  border: 2px solid var(--accent) !important;
-  box-shadow: 0 8px 24px var(--accent-glow) !important;
-  margin: 2.5rem 0 1.5rem !important;
+  color: var(--text-primary) !important;
+  margin: 1.5rem 0 2.5rem !important;
   text-align: center !important;
+  display: block !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
 }
 
-/* Mobile scaling */
+/* Mobile – keep clean & readable */
 @media (max-width: 768px) {
-  .solution-area h1,
-  .solution-area h2,
-  .solution-area h3,
-  .solution-area h4,
-  .solution-area p strong,
-  .solution-area p b {
-    font-size: 1.5rem !important;
+  .solution-area h1, .solution-area h2 {
+    font-size: 1.7rem !important;
   }
 
-  .solution-area .katex,
-  .solution-area .katex-display {
-    font-size: 1.3em !important;
+  .solution-area h3, .solution-area h4 {
+    font-size: 1.45rem !important;
   }
 
-  .solution-area .katex-display:last-of-type,
-  .solution-area .katex:last-of-type {
-    font-size: 1.6em !important;
-    padding: 1rem !important;
+  .solution-area :where(p, h1, h2, h3, strong, span):is(
+    :contains("Final Answer"),
+    :contains("final answer"),
+    :contains("Answer:"),
+    :contains("Result:")
+  ) {
+    font-size: 1.9rem !important;
+  }
+
+  .solution-area :where(p, h1, h2, h3, strong, span):is(
+    :contains("Final Answer"),
+    :contains("final answer"),
+    :contains("Answer:"),
+    :contains("Result:")
+  ) ~ .katex-display,
+  .solution-area :where(p, h1, h2, h3, strong, span):is(
+    :contains("Final Answer"),
+    :contains("final answer"),
+    :contains("Answer:"),
+    :contains("Result:")
+  ) ~ .katex {
+    font-size: 1.45em !important;
   }
 }
