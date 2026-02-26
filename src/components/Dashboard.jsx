@@ -1,102 +1,115 @@
 // src/components/Dashboard.jsx
 import React from "react";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useNavigate } from "react-router-dom";
 
 export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
   const { user, signOutUser } = useAuth();
-
-  // Debug log – shows every time the dashboard opens / re-renders
-  console.log('Dashboard rendering - current user:', user ? user.uid : 'none');
+  const navigate = useNavigate();
 
   if (!isOpen) return null;
 
+  const handleNavigate = (path) => {
+    onClose();
+    navigate(path);
+  };
+
   return (
     <>
-      <div className="overlay" onClick={onClose}></div>
+      <div className="overlay active" onClick={onClose}></div>
 
-      <aside className="dashboard-panel open">
+      <aside className="dashboard-panel open" key={user ? user.uid : "guest"}>
         <div className="dashboard-header">
           <h2>Dashboard</h2>
-          <button onClick={onClose} className="nav-icon">✕</button>
+
+          {/* Close Button */}
+          <button id="closeDashboard" onClick={onClose} aria-label="Close">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
         </div>
 
         <div className="dashboard-content">
-          <button className="theme-btn" onClick={toggleTheme}>
-            {theme === "dark" ? "Light Mode" : "Dark Mode"}
-          </button>
-
+          {/* 1️⃣ User Section or Sign In */}
           {user ? (
-            <div
-              className="user-section"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                flexWrap: "wrap",
-                gap: "12px",
-                marginTop: "16px",
-                padding: "12px 0",
-              }}
-            >
+            <div className="user-section">
               {user.photoURL && (
                 <img
                   src={user.photoURL}
                   alt="Profile"
                   className="user-avatar"
-                  width={40}
-                  height={40}
-                  style={{ borderRadius: "50%", objectFit: "cover" }}
+                  width={48}
+                  height={48}
                 />
               )}
-              <span
-                className="user-name"
-                style={{
-                  fontWeight: "500",
-                  fontSize: "16px",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  maxWidth: "180px",
-                }}
-              >
-                {user.displayName || user.email}
-              </span>
-              <button
-                className="signout-btn"
-                onClick={signOutUser}
-                style={{
-                  background: "rgba(255, 68, 68, 0.1)",
-                  color: "#ff4444",
-                  border: "1px solid #ff4444",
-                  padding: "8px 16px",
-                  borderRadius: "6px",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                  fontWeight: "500",
-                }}
-              >
-                Sign Out
-              </button>
+
+              <div className="user-info">
+                <span className="user-name">
+                  {user.displayName || user.email}
+                </span>
+
+                <button
+                  className="signout-btn dashboard-btn"
+                  onClick={() => {
+                    signOutUser();
+                    onClose();
+                  }}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                  </svg>
+                  Sign Out
+                </button>
+              </div>
             </div>
           ) : (
             <button
-              className="signin-btn"
-              onClick={() => (window.location.href = "/login")}
-              style={{
-                width: "100%",
-                marginTop: "16px",
-                padding: "12px",
-                background: "#007bff",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                fontSize: "16px",
-                cursor: "pointer",
-                fontWeight: "500",
-              }}
+              className="signin-btn dashboard-btn"
+              onClick={() => handleNavigate("/login")}
             >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                <polyline points="10 17 15 12 10 7" />
+                <line x1="15" y1="12" x2="3" y2="12" />
+              </svg>
               Sign In
             </button>
           )}
+
+          {/* 2️⃣ Home */}
+          <button
+            className="home-btn dashboard-btn"
+            onClick={() => handleNavigate("/")}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+            Home
+          </button>
+
+          {/* 3️⃣ Theme Toggle */}
+          <button
+            className="theme-btn dashboard-btn"
+            onClick={toggleTheme}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="5" />
+              <line x1="12" y1="1" x2="12" y2="3" />
+              <line x1="12" y1="21" x2="12" y2="23" />
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+              <line x1="1" y1="12" x2="3" y2="12" />
+              <line x1="21" y1="12" x2="23" y2="12" />
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+            </svg>
+            {theme === "dark" ? "Light Mode" : "Dark Mode"}
+          </button>
         </div>
       </aside>
     </>

@@ -25,7 +25,7 @@ export default function ForgotPassword() {
     try {
       await sendPasswordResetEmail(auth, email.trim());
       setMessage('Password reset email sent! Check your inbox (including spam).');
-      setTimeout(() => navigate('/login'), 5000); // auto-redirect after 5s
+      setTimeout(() => navigate('/login'), 5000);
     } catch (err) {
       console.error('Reset error:', err.code, err.message);
       const msg = {
@@ -40,20 +40,9 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div
-      style={{
-        padding: '2rem',
-        maxWidth: '420px',
-        margin: '4rem auto',
-        background: 'var(--card-bg, #fff)',
-        borderRadius: '12px',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-      }}
-    >
-      <h1 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Reset Password</h1>
-      <p style={{ textAlign: 'center', marginBottom: '2rem', color: '#666' }}>
-        Enter your email and we'll send you a reset link
-      </p>
+    <div className="auth-container">
+      <h1>Reset Password</h1>
+      <p>Enter your email and we'll send you a reset link</p>
 
       <form onSubmit={handleReset}>
         <input
@@ -63,47 +52,23 @@ export default function ForgotPassword() {
           onChange={(e) => setEmail(e.target.value)}
           disabled={loading}
           required
-          style={{
-            width: '100%',
-            padding: '12px',
-            marginBottom: '1rem',
-            border: '1px solid #ccc',
-            borderRadius: '6px',
-            fontSize: '16px',
-          }}
+          className="input-field"
         />
 
         <button
           type="submit"
           disabled={loading}
-          style={{
-            width: '100%',
-            padding: '12px',
-            background: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            fontSize: '16px',
-            cursor: loading ? 'not-allowed' : 'pointer',
-          }}
+          className="btn-primary"
         >
           {loading ? 'Sending...' : 'Send Reset Link'}
         </button>
       </form>
 
-      {message && (
-        <p style={{ color: 'green', textAlign: 'center', margin: '1rem 0', fontSize: '14px' }}>
-          {message}
-        </p>
-      )}
-      {error && (
-        <p style={{ color: 'red', textAlign: 'center', margin: '1rem 0', fontSize: '14px' }}>
-          {error}
-        </p>
-      )}
+      {message && <p className="success-message">{message}</p>}
+      {error && <p className="error-message">{error}</p>}
 
-      <p style={{ textAlign: 'center', marginTop: '2rem', fontSize: '14px' }}>
-        Back to <Link to="/login" style={{ color: '#007bff' }}>Sign In</Link>
+      <p className="auth-link">
+        Back to <Link to="/login">Sign In</Link>
       </p>
     </div>
   );

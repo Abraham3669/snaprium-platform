@@ -21,114 +21,61 @@ export default function Login() {
   }
 
   const handleGoogleSignIn = async () => {
-  setLoading(true);
-  setError('');
-  try {
-    console.log('Starting Google sign-in...'); // temporary debug
-    await signInWithPopup(auth, googleProvider);
-    console.log('Google sign-in success – redirecting');
-
-    // Primary redirect via router
-    navigate('/', { replace: true });
-
-    // Fallback: force page reload if navigate doesn't trigger (auth timing issue)
-    setTimeout(() => {
-      if (window.location.pathname !== '/') {
-        console.log('Router navigate missed – forcing window redirect');
-        window.location.href = '/';
-      }
-    }, 800); // give auth listener ~800ms to update state
-  } catch (err) {
-    console.error('Google sign-in error:', err.code, err.message);
-    setError(getFriendlyErrorMessage(err.code));
-  } finally {
-    setLoading(false);
-  }
-};
-
-
+    setLoading(true);
+    setError('');
+    try {
+      await signInWithPopup(auth, googleProvider);
+      navigate('/');
+    } catch (err) {
+      console.error('Google sign-in error:', err.code, err.message);
+      setError(getFriendlyErrorMessage(err.code));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleEmailSignIn = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
+    if (!email || !password) {
+      setError('Please enter email and password');
+      return;
+    }
 
-  if (!email || !password) {
-    setError('Please enter email and password');
-    return;
-  }
+    setLoading(true);
+    setError('');
 
-  setLoading(true);
-  setError('');
-
-  try {
-    await signInWithEmailAndPassword(auth, email.trim(), password);
-    console.log('Email login success → redirecting');
-    navigate('/', { replace: true });
-
-    // Fallback if router doesn't catch it
-    setTimeout(() => {
-      if (window.location.pathname !== '/') {
-        window.location.href = '/';
-      }
-    }, 800);
-  } catch (err) {
-    console.error('Email login error:', err.code, err.message);
-    setError(getFriendlyErrorMessage(err.code));
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      await signInWithEmailAndPassword(auth, email.trim(), password);
+      navigate('/');
+    } catch (err) {
+      console.error('Email sign-in error:', err.code, err.message);
+      setError(getFriendlyErrorMessage(err.code));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getFriendlyErrorMessage = (code) => {
     const messages = {
-      'auth/invalid-email': 'Please enter a valid email address',
+      'auth/invalid-email': 'Invalid email format',
       'auth/user-not-found': 'No account found with this email',
       'auth/wrong-password': 'Incorrect password',
-      'auth/too-many-requests': 'Too many attempts — please wait a moment or reset your password',
-      'auth/user-disabled': 'This account has been disabled',
-      'auth/popup-closed-by-user': 'Google sign-in was cancelled',
-      'auth/operation-not-allowed': 'Google sign-in is not available right now',
-      'auth/popup-blocked': 'Popup blocked — please allow popups for this site',
-      'auth/network-request-failed': 'Network error — check your internet connection',
+      'auth/too-many-requests': 'Too many attempts — wait a bit or reset password',
+      'auth/user-disabled': 'Account disabled',
+      'auth/popup-closed-by-user': 'Google sign-in cancelled',
     };
     return messages[code] || 'Unable to sign in. Please try again.';
   };
 
   return (
-    <div
-      style={{
-        padding: '2rem',
-        maxWidth: '420px',
-        margin: '4rem auto',
-        background: 'var(--card-bg, #fff)',
-        borderRadius: '12px',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-        color: 'var(--text-color, #000)',
-      }}
-    >
-      <h1 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Welcome Back</h1>
-      <p style={{ textAlign: 'center', marginBottom: '2rem', color: '#666' }}>
-        Sign in to continue to Snaprium
-      </p>
+    <div className="auth-container">
+      <h1>Welcome Back</h1>
+      <p>Sign in to continue to Snaprium</p>
 
-      {/* Google Button */}
       <button
         onClick={handleGoogleSignIn}
         disabled={loading}
-        style={{
-          width: '100%',
-          padding: '12px',
-          background: '#4285F4',
-          color: 'white',
-          border: 'none',
-          borderRadius: '6px',
-          fontSize: '16px',
-          cursor: loading ? 'not-allowed' : 'pointer',
-          marginBottom: '1.5rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '10px',
-        }}
+        className="btn-google"
       >
         {loading ? 'Connecting...' : 'Continue with Google'}
         {!loading && (
@@ -141,9 +88,7 @@ export default function Login() {
         )}
       </button>
 
-      <div style={{ textAlign: 'center', margin: '1.5rem 0', color: '#888', fontSize: '14px' }}>
-        ───────── or ─────────
-      </div>
+      <div className="divider">───────── or ─────────</div>
 
       <form onSubmit={handleEmailSignIn}>
         <input
@@ -153,17 +98,10 @@ export default function Login() {
           onChange={(e) => setEmail(e.target.value)}
           disabled={loading}
           required
-          style={{
-            width: '100%',
-            padding: '12px',
-            marginBottom: '1rem',
-            border: '1px solid #ccc',
-            borderRadius: '6px',
-            fontSize: '16px',
-          }}
+          className="input-field"
         />
 
-        <div style={{ position: 'relative' }}>
+        <div className="password-wrapper">
           <input
             type={showPassword ? 'text' : 'password'}
             placeholder="Password"
@@ -171,29 +109,12 @@ export default function Login() {
             onChange={(e) => setPassword(e.target.value)}
             disabled={loading}
             required
-            style={{
-              width: '100%',
-              padding: '12px',
-              marginBottom: '0.5rem',
-              border: '1px solid #ccc',
-              borderRadius: '6px',
-              fontSize: '16px',
-            }}
+            className="input-field"
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            style={{
-              position: 'absolute',
-              right: '12px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '14px',
-              color: '#666',
-            }}
+            className="show-password-btn"
           >
             {showPassword ? 'Hide' : 'Show'}
           </button>
@@ -202,46 +123,20 @@ export default function Login() {
         <button
           type="submit"
           disabled={loading}
-          style={{
-            width: '100%',
-            padding: '12px',
-            background: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            fontSize: '16px',
-            cursor: loading ? 'not-allowed' : 'pointer',
-            marginTop: '1rem',
-          }}
+          className="btn-primary"
         >
           {loading ? 'Signing in...' : 'Sign In with Email'}
         </button>
       </form>
 
-      {error && (
-        <p
-          style={{
-            color: 'red',
-            textAlign: 'center',
-            margin: '1rem 0',
-            fontSize: '14px',
-          }}
-        >
-          {error}
-        </p>
-      )}
+      {error && <p className="error-message">{error}</p>}
 
-      <p style={{ textAlign: 'center', marginTop: '2rem', fontSize: '14px' }}>
-        Don't have an account?{' '}
-        <Link to="/signup" style={{ color: '#007bff', textDecoration: 'none', fontWeight: '500' }}>
-          Sign up
-        </Link>
+      <p className="auth-link">
+        Don't have an account? <Link to="/signup">Sign up</Link>
       </p>
 
-      <p style={{ textAlign: 'center', marginTop: '1rem', fontSize: '13px', color: '#888' }}>
-        <Link to="/forgot-password" style={{ color: '#007bff' }}>
-          Forgot password?
-        </Link>
+      <p className="auth-link small">
+        <Link to="/forgot-password">Forgot password?</Link>
       </p>
     </div>
   );

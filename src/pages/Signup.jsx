@@ -25,7 +25,6 @@ export default function Signup() {
 
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
-      // Optional: set display name
       await updateProfile(userCredential.user, { displayName: name.trim() });
       navigate('/');
     } catch (err) {
@@ -42,9 +41,9 @@ export default function Signup() {
   };
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '420px', margin: '4rem auto', background: '#fff', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
-      <h1 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Create Account</h1>
-      <p style={{ textAlign: 'center', marginBottom: '2rem', color: '#666' }}>Join Snaprium</p>
+    <div className="auth-container">
+      <h1>Create Account</h1>
+      <p>Join Snaprium</p>
 
       <form onSubmit={handleSignup}>
         <input
@@ -53,7 +52,7 @@ export default function Signup() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
-          style={{ width: '100%', padding: '12px', marginBottom: '1rem', border: '1px solid #ccc', borderRadius: '6px' }}
+          className="input-field"
         />
 
         <input
@@ -62,7 +61,7 @@ export default function Signup() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          style={{ width: '100%', padding: '12px', marginBottom: '1rem', border: '1px solid #ccc', borderRadius: '6px' }}
+          className="input-field"
         />
 
         <input
@@ -71,31 +70,22 @@ export default function Signup() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          style={{ width: '100%', padding: '12px', marginBottom: '1rem', border: '1px solid #ccc', borderRadius: '6px' }}
+          className="input-field"
         />
 
         <button
           type="submit"
           disabled={loading}
-          style={{
-            width: '100%',
-            padding: '12px',
-            background: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            fontSize: '16px',
-            cursor: loading ? 'not-allowed' : 'pointer',
-          }}
+          className="btn-primary"
         >
           {loading ? 'Creating...' : 'Sign Up'}
         </button>
       </form>
 
-      {error && <p style={{ color: 'red', textAlign: 'center', margin: '1rem 0' }}>{error}</p>}
+      {error && <p className="error-message">{error}</p>}
 
-      <p style={{ textAlign: 'center', marginTop: '2rem' }}>
-        Already have an account? <Link to="/login" style={{ color: '#007bff' }}>Sign in</Link>
+      <p className="auth-link">
+        Already have an account? <Link to="/login">Sign in</Link>
       </p>
     </div>
   );
