@@ -2269,58 +2269,25 @@ header.header {
 
 
 /* ─────────────────────────────────────────────
-   ResultPanel – Clean Titles & Final Answer (No Boxes)
+   ResultPanel – Step Titles Only (Clean & No Boxes)
 ───────────────────────────────────────────── */
 
-/* Remove ALL backgrounds, borders, shadows from solution area & math */
-.solution-area,
-.solution-area .katex,
-.solution-area .katex-display,
-.solution-area .katex-html,
-.solution-area .base,
-.solution-area .mord,
-.solution-area .mord.mfenced,
-.solution-area .mspace,
-.solution-area .mfrac,
-.solution-area .mrow,
-.solution-area .mtable,
-.solution-area .mtd,
-.solution-area .mtr,
-.solution-area .mstyle,
-.solution-area .msubsup,
-.solution-area .msupsub,
-.solution-area .msqrt,
-.solution-area .mroot,
-.solution-area .munderover,
-.solution-area .munder,
-.solution-area .mover,
-.solution-area .munderover,
-.solution-area .munder,
-.solution-area .mover {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  outline: none !important;
-  padding: 0 !important;
-  margin: 0.8rem 0 !important;
-}
-
-/* Normal math – just bold, no size increase */
+/* Normal math – no changes, no forced bold/size */
 .solution-area .katex,
 .solution-area .katex-display {
-  font-size: 1.1em !important;  /* default KaTeX size */
-  font-weight: 700 !important;  /* bold math everywhere */
+  font-size: 1.1em !important;   /* default KaTeX size */
+  font-weight: normal !important;
+  margin: 1.4rem 0 !important;
   color: var(--text-primary) !important;
   line-height: 1.6 !important;
-  text-align: left !important;
 }
 
-/* Headings – bigger, bold, accent underline (no background/box) */
+/* Step titles – make them stand out */
 .solution-area h1,
 .solution-area h2,
 .solution-area h3,
 .solution-area h4 {
-  font-weight: 800 !important;
+  font-weight: 700 !important;
   margin: 2.8rem 0 1.2rem !important;
   color: var(--text-primary) !important;
   position: relative !important;
@@ -2328,17 +2295,65 @@ header.header {
   border-bottom: 3px solid var(--accent) !important;
   background: transparent !important;
   box-shadow: none !important;
+  padding-left: 0 !important;
 }
 
-.solution-area h1, .solution-area h2 {
+/* Larger main titles */
+.solution-area h1,
+.solution-area h2 {
   font-size: 2rem !important;
 }
 
-.solution-area h3, .solution-area h4 {
-  font-size: 1.6rem !important;
+/* Sub titles */
+.solution-area h3,
+.solution-area h4 {
+  font-size: 1.65rem !important;
 }
 
-/* Final Answer – blue title + bigger bold math (no box) */
+/* Auto-add "Step" or contextual prefix to headings */
+.solution-area h1:first-of-type::before,
+.solution-area h2:first-of-type::before,
+.solution-area h3:first-of-type::before,
+.solution-area h4:first-of-type::before {
+  content: "First, write the problem:" !important;
+  font-size: 1rem !important;
+  color: var(--text-secondary) !important;
+  display: block !important;
+  margin-bottom: 0.5rem !important;
+  font-weight: 500 !important;
+}
+
+/* For subsequent headings – simple "Step" prefix */
+.solution-area h1:not(:first-of-type)::before,
+.solution-area h2:not(:first-of-type)::before,
+.solution-area h3:not(:first-of-type)::before,
+.solution-area h4:not(:first-of-type)::before {
+  content: "Step:" !important;
+  font-size: 1rem !important;
+  color: var(--text-secondary) !important;
+  display: block !important;
+  margin-bottom: 0.5rem !important;
+  font-weight: 500 !important;
+}
+
+/* Glow underline under every heading */
+.solution-area h1::after,
+.solution-area h2::after,
+.solution-area h3::after,
+.solution-area h4::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 0 !important;
+  bottom: -6px !important;
+  width: 100px !important;
+  height: 4px !important;
+  background: var(--accent-glow) !important;
+  filter: blur(10px) !important;
+  opacity: 0.65 !important;
+  border-radius: 50% !important;
+}
+
+/* Final Answer – blue + big + bold (no box) */
 .solution-area :where(p, h1, h2, h3, strong, span):is(
   :contains("Final Answer"),
   :contains("final answer"),
@@ -2349,7 +2364,7 @@ header.header {
   font-weight: 900 !important;
   font-size: 2.3rem !important;
   text-align: center !important;
-  margin: 3.5rem 0 1.5rem !important;
+  margin: 3.5rem 0 1.8rem !important;
   text-transform: uppercase !important;
   letter-spacing: 0.06em !important;
   background: transparent !important;
@@ -2358,7 +2373,7 @@ header.header {
   padding: 0 !important;
 }
 
-/* Glow underline under Final Answer title (no box) */
+/* Glow underline under Final Answer title */
 .solution-area :where(p, h1, h2, h3, strong, span):is(
   :contains("Final Answer"),
   :contains("final answer"),
@@ -2376,10 +2391,9 @@ header.header {
   opacity: 0.75 !important;
   transform: translateX(-50%) !important;
   border-radius: 50% !important;
-  z-index: -1 !important;
 }
 
-/* Final Answer math – bigger & bolder (no box) */
+/* Final Answer math – slightly bigger & bolder (no box) */
 .solution-area :where(p, h1, h2, h3, strong, span):is(
   :contains("Final Answer"),
   :contains("final answer"),
@@ -2392,22 +2406,20 @@ header.header {
   :contains("Answer:"),
   :contains("Result:")
 ) ~ .katex {
-  font-size: 1.7em !important;
-  font-weight: 900 !important;
-  color: var(--text-primary) !important;
+  font-size: 1.5em !important;
+  font-weight: 800 !important;
   margin: 1.5rem 0 2.5rem !important;
   text-align: center !important;
   display: block !important;
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
-  padding: 0 !important;
 }
 
-/* Mobile – keep clean & readable */
+/* Mobile adjustments */
 @media (max-width: 768px) {
   .solution-area h1, .solution-area h2 {
-    font-size: 1.7rem !important;
+    font-size: 1.8rem !important;
   }
 
   .solution-area h3, .solution-area h4 {
@@ -2435,6 +2447,6 @@ header.header {
     :contains("Answer:"),
     :contains("Result:")
   ) ~ .katex {
-    font-size: 1.45em !important;
+    font-size: 1.35em !important;
   }
 }
