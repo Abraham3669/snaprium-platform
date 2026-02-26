@@ -1907,6 +1907,414 @@ header.header {
 
 
 
+/* Upgrade Button – same style as other dashboard buttons */
+.upgrade-btn {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: white;
+  border: none;
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35);
+}
+
+.upgrade-btn svg {
+  background: rgba(255,255,255,0.18);
+}
+
+.upgrade-btn:hover {
+  box-shadow: 0 14px 38px rgba(59, 130, 246, 0.45);
+  transform: translateY(-2px);
+}
+
+.upgrade-btn:hover svg {
+  background: rgba(255,255,255,0.28);
+}
+
+/* Upgrade Modal Overlay */
+.upgrade-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+}
+
+/* Modal Container */
+.upgrade-modal {
+  position: relative;
+  width: 90%;
+  max-width: 1100px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  padding: 2.5rem 2rem;
+  color: var(--text-primary);
+  overflow-y: auto;
+  max-height: 90vh;
+}
+
+/* Close Button */
+.upgrade-close {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.upgrade-close:hover {
+  color: var(--accent);
+  transform: scale(1.1);
+}
+
+/* Header */
+.upgrade-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.upgrade-title {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 800;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.upgrade-subtitle {
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
+  color: var(--text-secondary);
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+/* Pricing Grid */
+.pricing-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .pricing-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+}
+
+/* Pricing Card */
+.pricing-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2rem 1.5rem;
+  text-align: center;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.pricing-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.15);
+}
+
+/* Highlight Pro */
+.pricing-card.pro {
+  border: 2px solid var(--accent);
+  background: rgba(var(--accent), 0.03);
+  transform: scale(1.05);
+}
+
+.pricing-card.pro:hover {
+  transform: scale(1.08);
+}
+
+/* Popular Badge */
+.popular-badge {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent);
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 0.35rem 1.2rem;
+  border-radius: 999px;
+  box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+/* Plan Text */
+.plan-name {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.plan-desc {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 1rem;
+}
+
+.plan-detail {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 1.75rem;
+}
+
+/* CTA Button */
+.plan-cta {
+  width: 100%;
+  padding: 1rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.plan-cta.primary {
+  background: var(--accent);
+  color: white;
+  border: none;
+}
+
+.plan-cta.primary:hover {
+  background: var(--accent-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px var(--accent-glow);
+}
+
+.plan-cta.disabled {
+  background: var(--border);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .upgrade-modal {
+    padding: 2rem 1.25rem;
+  }
+
+  .pricing-grid {
+    gap: 1.25rem;
+  }
+
+  .pricing-card {
+    padding: 1.5rem 1rem;
+  }
+}
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+/* Guest Toast */
+.guest-toast {
+  font-size: 1rem;
+  background: var(--surface);
+  color: var(--text-primary);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.guest-toast p {
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.toast-btn {
+  padding: 0.7rem 1.4rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.96rem;
+  font-weight: 550;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.toast-btn:hover {
+  background: var(--accent-dark);
+  transform: translateY(-1.5px);
+  box-shadow: 0 6px 20px var(--accent-glow);
+}
+
+/* Dark mode toast */
+[data-theme="dark"] .guest-toast {
+  background: var(--surface);
+  color: var(--text-primary);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+.upgrade-page {
+  min-height: 100vh;
+  background: var(--bg);
+  padding: 6rem 1.5rem 4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.upgrade-header {
+  text-align: center;
+  margin-bottom: 4rem;
+  max-width: 800px;
+}
+
+.upgrade-header h2 {
+  font-size: 2.8rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.upgrade-header p {
+  font-size: 1.25rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* Pricing Grid */
+.pricing-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  max-width: 1200px;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .pricing-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Card */
+.pricing-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2.5rem 1.8rem;
+  text-align: center;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.pricing-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.15);
+}
+
+/* Pro highlight */
+.pricing-card.pro {
+  border: 2px solid var(--accent);
+  background: rgba(var(--accent), 0.03);
+  transform: scale(1.05);
+}
+
+.pricing-card.pro:hover {
+  transform: scale(1.08);
+}
+
+/* Popular Badge */
+.popular-badge {
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent);
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 0.4rem 1.2rem;
+  border-radius: 999px;
+  box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+/* Plan Text */
+.plan-name {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.plan-price {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+.plan-desc {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.plan-detail {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 1.75rem;
+}
+
+/* CTA */
+.plan-cta {
+  width: 100%;
+  padding: 1.1rem;
+  border-radius: 10px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.plan-cta.primary {
+  background: var(--accent);
+  color: white;
+  border: none;
+}
+
+.plan-cta.primary:hover {
+  background: var(--accent-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px var(--accent-glow);
+}
+
+.plan-cta.disabled {
+  background: var(--border);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}

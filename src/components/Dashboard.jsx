@@ -1,11 +1,12 @@
 // src/components/Dashboard.jsx
-import React from "react";
+import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useNavigate } from "react-router-dom";
 
 export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
   const { user, signOutUser } = useAuth();
   const navigate = useNavigate();
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   if (!isOpen) return null;
 
@@ -32,7 +33,7 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
         </div>
 
         <div className="dashboard-content">
-          {/* 1️⃣ User Section or Sign In */}
+          {/* 1. User Section or Sign In */}
           {user ? (
             <div className="user-section">
               {user.photoURL && (
@@ -80,7 +81,18 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
             </button>
           )}
 
-          {/* 2️⃣ Home */}
+          {/* Upgrade Plan – added right here, same style as others */}
+          <button
+            className="upgrade-btn dashboard-btn"
+            onClick={() => setShowUpgrade(true)}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+            </svg>
+            Upgrade Plan
+          </button>
+
+          {/* Home */}
           <button
             className="home-btn dashboard-btn"
             onClick={() => handleNavigate("/")}
@@ -92,7 +104,7 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
             Home
           </button>
 
-          {/* 3️⃣ Theme Toggle */}
+          {/* Theme Toggle */}
           <button
             className="theme-btn dashboard-btn"
             onClick={toggleTheme}
@@ -112,6 +124,57 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
           </button>
         </div>
       </aside>
+
+      {/* Upgrade Modal */}
+      {showUpgrade && (
+        <div className="upgrade-overlay" onClick={() => setShowUpgrade(false)}>
+          <div className="upgrade-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="upgrade-close" onClick={() => setShowUpgrade(false)}>
+              ✕
+            </button>
+
+            <div className="upgrade-header">
+              <h2 className="upgrade-title">Unlock More Expert-Level Solutions</h2>
+              <p className="upgrade-subtitle">
+                Get more high-quality, exam-ready step-by-step solutions every month.
+              </p>
+            </div>
+
+            <div className="pricing-grid">
+              {/* Free */}
+              <div className="pricing-card free">
+                <h3 className="plan-name">Free</h3>
+                <p className="plan-desc">15 Solutions Every Month</p>
+                <p className="plan-detail">
+                  Perfect for light study and quick homework help.
+                </p>
+                <button className="plan-cta disabled">Current Plan</button>
+              </div>
+
+              {/* Pro – Highlighted */}
+              <div className="pricing-card pro">
+                <div className="popular-badge">MOST POPULAR</div>
+                <h3 className="plan-name">Pro</h3>
+                <p className="plan-desc">75 Expert-Level Solutions Every Month</p>
+                <p className="plan-detail">
+                  Built for serious students who solve consistently and prepare with confidence.
+                </p>
+                <button className="plan-cta primary">Upgrade to Pro</button>
+              </div>
+
+              {/* Premium */}
+              <div className="pricing-card premium">
+                <h3 className="plan-name">Premium</h3>
+                <p className="plan-desc">150 Advanced Solutions Every Month</p>
+                <p className="plan-detail">
+                  Maximum solving power for exam season and heavy coursework.
+                </p>
+                <button className="plan-cta">Upgrade to Premium</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

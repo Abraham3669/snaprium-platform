@@ -1,30 +1,30 @@
 // src/App.jsx
 import { useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 import CameraInput from "./components/CameraInput";
 import CropperModal from "./components/CropperModal";
 import ResultPanel from "./components/ResultPanel";
 import Dashboard from "./components/Dashboard";
+import UpgradeModal from "./components/UpgradeModal"; // ← your existing modal
 
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-
-import { postAPI } from "./utils/apiClient";
-
-// Firestore & auth imports for upload count increment
-import { doc, updateDoc, increment, serverTimestamp } from "firebase/firestore";
-import { auth, db } from "./lib/firebase";  // ← FIXED: added db here
-
 import ForgotPassword from "./pages/ForgotPassword";
-
-
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 
+import { postAPI } from "./utils/apiClient";
 
+import { doc, updateDoc, increment, serverTimestamp, getDoc } from "firebase/firestore";
+import { auth, db } from "./lib/firebase";
+import { useAuth } from "./context/AuthContext";
 
 function App() {
+  const { user } = useAuth();
+
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
   const [file, setFile] = useState(null);
   const [croppedImage, setCroppedImage] = useState(null);
@@ -33,6 +33,7 @@ function App() {
   const [isCropperOpen, setIsCropperOpen] = useState(false);
   const [isResultOpen, setIsResultOpen] = useState(false);
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false); // ← added for modal
 
   const toggleTheme = () => {
     const nextTheme = theme === "dark" ? "light" : "dark";
@@ -46,9 +47,11 @@ function App() {
     setIsCropperOpen(false);
     setIsResultOpen(true);
     setIsProcessing(true);
-    setResultText(""); // reset previous result
+    setResultText("");
 
     try {
+      if (!(await checkSolveLimit())) return;
+
       console.log("Sending to API...");
       const res = await postAPI("/api/process", {
         imageBase64: dataUrl.split(",")[1],
@@ -56,7 +59,7 @@ function App() {
       console.log("API response:", res);
       setResultText(res.answer || res.text || JSON.stringify(res) || "No answer received");
 
-      // NEW: Increment upload count in Firestore after successful process
+      await incrementSolveCount();
       const currentUser = auth.currentUser;
       if (currentUser) {
         const userRef = doc(db, "users", currentUser.uid);
@@ -64,7 +67,7 @@ function App() {
           uploadCount: increment(1),
           lastUpload: serverTimestamp(),
         });
-        console.log("Upload count incremented for user:", currentUser.uid);
+        console.log("Upload count incremented");
       }
     } catch (err) {
       console.error("Process error:", err);
@@ -74,15 +77,101 @@ function App() {
     }
   };
 
+  const checkSolveLimit = async () => {
+    if (!user) {
+      let guestSolves = parseInt(localStorage.getItem('guestSolves') || '0', 10);
+      if (guestSolves >= 2) {
+        toast(
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ marginBottom: '12px', fontWeight: 500 }}>
+              Sign in to unlock more expert solutions and unlimited access.
+            </p>
+            <button
+              onClick={() => navigate('/login')}
+              style={{
+                background: 'var(--accent)',
+                color: 'white',
+                border: 'none',
+                padding: '10px 24px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: '0.95rem',
+              }}
+            >
+              Sign In Now
+            </button>
+          </div>,
+          {
+            position: "bottom-center",
+            autoClose: 10000,
+            closeOnClick: false,
+            pauseOnHover: true,
+            className: 'guest-limit-toast',
+          }
+        );
+        return false;
+      }
+      return true;
+    }
+
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) return true;
+
+    const data = userSnap.data();
+    const plan = data.subscription || 'free';
+    const solves = data.solves || 0;
+
+    const limits = { free: 15, pro: 75, premium: 150 };
+    const currentLimit = limits[plan] || Infinity;
+
+    if (solves >= currentLimit) {
+      toast.info(
+        `You've reached your ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan limit. Upgrade for more solves.`,
+        {
+          position: "bottom-center",
+          autoClose: 6000,
+          onClose: () => setShowUpgrade(true), // open modal after toast
+        }
+      );
+      return false;
+    }
+
+    return true;
+  };
+
+  const incrementSolveCount = async () => {
+    if (!user) {
+      let guestSolves = parseInt(localStorage.getItem('guestSolves') || '0', 10);
+      localStorage.setItem('guestSolves', guestSolves + 1);
+    } else {
+      const userRef = doc(db, "users", user.uid);
+      await updateDoc(userRef, {
+        solves: increment(1),
+        lastSolve: serverTimestamp(),
+      });
+    }
+  };
+
   return (
     <div className="App min-h-screen">
-      {/* Fixed header – always visible */}
+      <ToastContainer
+        position="bottom-center"
+        autoClose={5000}
+        hideProgressBar
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme={theme}
+      />
+
       <header className="snaprium-header">
         <div className="snaprium-header-inner">
-          {/* Brand */}
           <div className="snaprium-brand">snaprium</div>
-
-          {/* Dashboard Button */}
           <button
             onClick={() => setIsDashboardOpen(true)}
             className="snaprium-menu-btn"
@@ -97,7 +186,6 @@ function App() {
         </div>
       </header>
 
-      {/* Main content with routes */}
       <main className="pt-16">
         <Dashboard
           isOpen={isDashboardOpen}
@@ -107,7 +195,6 @@ function App() {
         />
 
         <Routes>
-          {/* Home route: camera + result flow */}
           <Route
             path="/"
             element={
@@ -134,30 +221,25 @@ function App() {
                   <ResultPanel
                     result={{ image: croppedImage, text: resultText }}
                     loading={isProcessing}
-                    onClose={() => {
-                      setIsResultOpen(false);
-                      // Optional: uncomment if you want to clear old data when closing
-                      // setCroppedImage(null);
-                      // setResultText("");
-                    }}
+                    onClose={() => setIsResultOpen(false)}
                   />
                 )}
               </>
             }
           />
 
-          {/* Login & Signup pages */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />  {/* ← add this */}
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
 
-
-          {/* Catch-all: redirect unknown paths to home */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+
+      {/* Upgrade Modal – your existing one */}
+      {showUpgrade && <UpgradeModal isOpen={showUpgrade} onClose={() => setShowUpgrade(false)} />}
     </div>
   );
 }
