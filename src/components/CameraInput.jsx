@@ -1,3 +1,4 @@
+// src/components/CameraInput.jsx
 import { useRef, useState } from "react";
 
 export default function CameraInput({ onFileSelect, onOpenDashboard }) {
@@ -35,48 +36,25 @@ export default function CameraInput({ onFileSelect, onOpenDashboard }) {
   };
 
   return (
-    <main>
+    <main className="camera-main">
+      {/* Hero Section */}
+      <section className="hero">
+        <h1 className="hero-title">
+          Master Any Problem —
+          <span className="hero-accent"> Just Snap It.</span>
+        </h1>
 
+        <p className="hero-subtitle">
+          Turn any problem into a solution with a single snap.
+        </p>
+      </section>
 
-<section className="hero">
-  <h1 className="hero-title">
-    Master Any Problem —
-    <span className="hero-accent"> Just Snap It.</span>
-  </h1>
-
-  <p className="hero-subtitle">
-     Turn any problem into a solution with a single snap.
-  </p>
-</section>
-
-
-
-
-      <div
-        className="camera-container"
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "flex-start",
-          minHeight: "320px",           // reduced
-        padding: "0px 20px 20px",         // reduced padding
-          gap: "12px",                  // ← this controls the vertical distance
-        }}
-      >
-        {/* Main camera button – size unchanged */}
+      {/* Camera & Gallery Buttons */}
+      <div className="camera-container">
+        {/* Main camera button */}
         <div
           onClick={handleCameraClick}
-          style={{
-            cursor: "pointer",
-            padding: "20px",
-            borderRadius: "20px",
-            transition: "transform 0.15s ease",
-          }}
-          onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.95)")}
-          onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
-          onTouchStart={(e) => (e.currentTarget.style.transform = "scale(0.95)")}
-          onTouchEnd={(e) => (e.currentTarget.style.transform = "scale(1)")}
+          className="camera-btn"
         >
           <svg
             id="cameraBtn"
@@ -84,30 +62,15 @@ export default function CameraInput({ onFileSelect, onOpenDashboard }) {
             xmlns="http://www.w3.org/2000/svg"
             fill="currentColor"
             viewBox="0 0 24 24"
-            style={{
-             width: "180px",
-height: "180px",
-              color: "var(--accent)",
-            }}
           >
             <path d="M20 5h-3.17l-1.84-2H8.99L7.17 5H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1zm-8 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10z" />
           </svg>
         </div>
 
-        {/* Gallery – much smaller, no label, very close to camera */}
+        {/* Gallery button */}
         <div
-          className="gallery-btn-mobile-only"
+          className="gallery-btn"
           onClick={handleGalleryClick}
-          style={{
-            cursor: "pointer",
-            padding: "8px",
-            borderRadius: "12px",
-            transition: "transform 0.15s ease",
-          }}
-          onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.92)")}
-          onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
-          onTouchStart={(e) => (e.currentTarget.style.transform = "scale(0.92)")}
-          onTouchEnd={(e) => (e.currentTarget.style.transform = "scale(1)")}
         >
           <svg
             id="galleryBtn"
@@ -115,11 +78,6 @@ height: "180px",
             xmlns="http://www.w3.org/2000/svg"
             fill="currentColor"
             viewBox="0 0 24 24"
-            style={{
-              width: "24px",          // ← made significantly smaller
-              height: "24px",
-              color: "#555",
-            }}
           >
             <path d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4 2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z"/>
           </svg>
@@ -135,7 +93,6 @@ height: "180px",
         ref={cameraInputRef}
         onChange={handleFileChange}
       />
-
       <input
         type="file"
         accept="image/*"
@@ -145,23 +102,51 @@ height: "180px",
       />
 
 
+     <h2 className="section-heading">
+  Why Students Love Snaprium
+</h2>
 
-<div className="demo-animation">
-  <div className="phone">
-    <div className="screen">
-      <div className="question-card">
-        <p className="question">
-          ∫ (2x³ - 5x² + 4) dx = ?
-        </p>
-        <div className="scan-line"></div> 
+
+
+      {/* Gallery text */}
+      <div className="gallery-text">
+        Snap your question and get <strong>step-by-step, exam-ready solutions</strong> instantly — no confusion, no messy answers.
       </div>
-    </div>
-  </div>
-</div>
+
+      {/* Demo animation */}
+      <div className="demo-animation">
+        <div className="phone">
+          <div className="screen">
+            <div className="question-card">
+              <p className="question">
+                ∫ (2x³ - 5x² + 4) dx = ?
+              </p>
+              <div className="scan-line"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+  <h2 className="cta-heading">
+  Study Smarter. Perform Better.
+</h2>
 
 
 
 
+      {/* Post-animation text */}
+      <div className="post-animation-text">
+        Join thousands of students mastering math, physics, and chemistry with Snaprium — <strong>study smarter, not harder</strong>.
+      </div>
+
+      {/* Footer */}
+      <footer className="footer">
+        <div className="footer-links">
+          <a href="/terms">Terms of Service</a>
+          <a href="/privacy">Privacy Policy</a>
+        </div>
+        <p>© {new Date().getFullYear()} Snaprium. All rights reserved.</p>
+      </footer>
     </main>
   );
 }

@@ -1709,3 +1709,101 @@ header.header {
 .signin-btn:hover {
   background: var(--accent-dark);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================
+   UNIFIED HEADING SYSTEM
+========================================= */
+
+.section-heading,
+.cta-heading {
+  width: 100%;
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 2rem;
+  padding-right: 2rem;
+
+  font-weight: 800;                 /* consistent bold */
+  letter-spacing: -0.04em;          /* consistent tightening */
+  line-height: 1.08;                /* strong compact feel */
+  text-align: left;
+}
+
+/* Top Section Heading */
+.section-heading {
+  font-size: clamp(2.2rem, 3vw, 2.8rem);
+  margin-top: 6rem;
+  margin-bottom: 1.75rem;
+}
+
+/* Bottom CTA Heading */
+.cta-heading {
+  font-size: clamp(2.6rem, 4vw, 3.6rem);
+  margin-top: 7rem;
+  margin-bottom: 2rem;
+}
+
+/* =========================================
+   BODY TEXT SYSTEM (MATCHING STYLE)
+========================================= */
+
+.gallery-text,
+.post-animation-text {
+  width: 100%;
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 2rem;
+  padding-right: 2rem;
+
+  font-size: clamp(1.25rem, 1.6vw, 1.55rem);
+  font-weight: 400;
+  line-height: 1.85;
+  letter-spacing: -0.015em;
+  text-align: left;
+  color: var(--text-primary);
+}
+
+/* spacing differences only */
+.gallery-text {
+  margin-bottom: 6rem;
+}
+
+.post-animation-text {
+  margin-bottom: 7rem;
+}
+
+/* Strong highlight consistent */
+.gallery-text strong,
+.post-animation-text strong {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* =========================================
+   MOBILE BEHAVIOR
+========================================= */
+
+@media (max-width: 768px) {
+  .section-heading,
+  .cta-heading,
+  .gallery-text,
+  .post-animation-text {
+    text-align: center;
+  }
+}
