@@ -95,39 +95,36 @@ function prepareMathForKaTeX(rawText) {
 
   let text = rawText;
 
-  // 1. Convert plain ASCII fractions
+  // 1. Convert plain ASCII fractions 3/4 → \frac{3}{4}  (only when it looks safe)
   text = text.replace(
     /(\b\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?\b)(?!\s*\/)/g,
     '\\frac{$1}{$2}'
   );
 
-  // 2. Convert stacked ASCII fractions
+  // 2. Convert ugly ASCII stacked fractions (common in some model outputs)
   text = text.replace(
     /(\d+)\s*\n\s*_{2,}\s*\n\s*(\d+)/g,
     '\\frac{$1}{$2}'
   );
 
-  // 3. Upgrade inline to display for complex math
+  // 3. Fix common model mistakes: single $ delimiters that should be display
+  //    We keep inline $…$ as inline, only force display when it makes sense
+  //    But most math tutors output display math with $$ already — so we preserve them
+
+  // Optional: If you *really* want ALL math blocks to be display math:
+  // text = text.replace(/\$([^\$]+)\$/g, '$$$$$1$$$$');
+
+  // But better: only upgrade when it contains \frac, \sqrt, sum, etc.
   text = text.replace(
     /\$([^$]*?(?:\\frac|\\sqrt|\\sum|\\int|\\lim)[^$]*?)\$/g,
     '$$$$$1$$$$'
   );
 
-  // 4. Clean extra spaces in delimiters
+  // 4. Clean up extra spaces inside delimiters (helps KaTeX sometimes)
   text = text.replace(/\$\$[\s\n]+/g, '$$').replace(/[\s\n]+\$\$/g, '$$');
 
-  // 5. Replace \[ \] with $$
+  // 5. Replace any stray \[ \] delimiters with $$ (some models use them)
   text = text.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$');
-
-  // NEW: Clean repeated/broken junk (this fixes Next, find$v'$$: etc.)
-  text = text.replace(/Next,\s*find\s*\$v'\$\$:/gi, 'Next, find $v$:');
-  text = text.replace(/\$\$:/g, '$');
-  text = text.replace(/v'\$\$/g, "v'$");
-  text = text.replace(/(\$\$|\$)\s*\1/g, '$');
-  text = text.replace(/\$\$[\s\n]*$/g, '');
-  text = text.replace(/\\\$/g, '$');
-  text = text.replace(/\n\s*\n/g, '\n');
-  text = text.trim();
 
   return text;
 }
