@@ -1,6 +1,6 @@
 // src/components/UpgradeModal.jsx
 import React from 'react';
-import { X } from 'lucide-react'; // or use your close icon
+import { X } from 'lucide-react';
 
 export default function UpgradeModal({ isOpen, onClose }) {
   if (!isOpen) return null;
@@ -13,46 +13,28 @@ export default function UpgradeModal({ isOpen, onClose }) {
           <X size={28} />
         </button>
 
-        {/* Heading & subheadline */}
+        {/* Heading */}
         <div className="upgrade-header">
-          <h2 className="upgrade-title">Unlock More Expert-Level Solutions</h2>
+          <h2 className="upgrade-title">You've reached your limit</h2>
           <p className="upgrade-subtitle">
-            Get more high-quality, exam-ready step-by-step solutions every month.
+            Upgrade your plan to continue solving more questions.
           </p>
         </div>
 
-        {/* Pricing cards */}
-        <div className="pricing-grid">
-          {/* Free */}
-          <div className="pricing-card free">
-            <h3 className="plan-name">Free</h3>
-            <p className="plan-desc">15 Solutions Every Month</p>
-            <p className="plan-detail">
-              Perfect for light study and quick homework help.
-            </p>
-            <button className="plan-cta disabled">Current Plan</button>
-          </div>
-
-          {/* Pro – highlighted */}
-          <div className="pricing-card pro">
-            <div className="popular-badge">MOST POPULAR</div>
-            <h3 className="plan-name">Pro</h3>
-            <p className="plan-desc">75 Expert-Level Solutions Every Month</p>
-            <p className="plan-detail">
-              Built for serious students who solve consistently and prepare with confidence.
-            </p>
-            <button className="plan-cta primary">Upgrade to Pro</button>
-          </div>
-
-          {/* Premium */}
-          <div className="pricing-card premium">
-            <h3 className="plan-name">Premium</h3>
-            <p className="plan-desc">150 Advanced Solutions Every Month</p>
-            <p className="plan-detail">
-              Maximum solving power for exam season and heavy coursework.
-            </p>
-            <button className="plan-cta">Upgrade to Premium</button>
-          </div>
+        {/* Actions */}
+        <div className="upgrade-actions">
+          <button 
+            className="upgrade-btn secondary"
+            onClick={() => window.location.href = '/login'}
+          >
+            Sign In
+          </button>
+          <button 
+            className="upgrade-btn primary"
+            onClick={() => window.location.href = '/upgrade'}
+          >
+            Upgrade Now
+          </button>
         </div>
       </div>
     </div>

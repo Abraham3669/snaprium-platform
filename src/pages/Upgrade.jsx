@@ -4,6 +4,9 @@ import React, { useState } from 'react';
 export default function Upgrade() {
   const [billing, setBilling] = useState('monthly');
 
+  const proPrice = billing === 'monthly' ? '9.99' : '99.99';
+  const premiumPrice = billing === 'monthly' ? '14.99' : '149.99';
+
   return (
     <div className="upgrade-page">
       <div className="upgrade-header">
@@ -31,8 +34,8 @@ export default function Upgrade() {
         {/* Free */}
         <div className="pricing-card">
           <h3>Free</h3>
-          <div className="plan-price">$0</div>
-          <p className="plan-desc">15 solutions / month</p>
+          <div className="plan-price">$0 <span>per month</span></div>
+          <p className="plan-desc">15 solutions per month</p>
           <ul className="plan-features">
             <li>Basic step-by-step solutions</li>
             <li>Quick homework help</li>
@@ -46,10 +49,9 @@ export default function Upgrade() {
           <div className="popular-badge">MOST POPULAR</div>
           <h3>Pro</h3>
           <div className="plan-price">
-            {billing === 'monthly' ? '$4.99' : '$49.99'} 
-            <span>/ {billing === 'monthly' ? 'month' : 'year'}</span>
+            ${proPrice} <span>per {billing === 'monthly' ? 'month' : 'year'}</span>
           </div>
-          <p className="plan-desc">75 expert solutions / month</p>
+          <p className="plan-desc">75 expert solutions per month</p>
           <ul className="plan-features">
             <li>Full expert step-by-step solutions</li>
             <li>Priority processing</li>
@@ -63,10 +65,9 @@ export default function Upgrade() {
         <div className="pricing-card premium">
           <h3>Premium</h3>
           <div className="plan-price">
-            {billing === 'monthly' ? '$9.99' : '$99.99'} 
-            <span>/ {billing === 'monthly' ? 'month' : 'year'}</span>
+            ${premiumPrice} <span>per {billing === 'monthly' ? 'month' : 'year'}</span>
           </div>
-          <p className="plan-desc">150 advanced solutions / month</p>
+          <p className="plan-desc">150 advanced solutions per month</p>
           <ul className="plan-features">
             <li>Unlimited expert solutions</li>
             <li>Fastest priority processing</li>
@@ -78,7 +79,7 @@ export default function Upgrade() {
         </div>
       </div>
 
-      {/* FAQ or extra info */}
+      {/* FAQ section */}
       <div className="upgrade-faq">
         <h3>Frequently Asked Questions</h3>
         <p>Have questions? <a href="mailto:support@snaprium.com">Contact support</a>.</p>

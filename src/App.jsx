@@ -8,13 +8,14 @@ import CameraInput from "./components/CameraInput";
 import CropperModal from "./components/CropperModal";
 import ResultPanel from "./components/ResultPanel";
 import Dashboard from "./components/Dashboard";
-import UpgradeModal from "./components/UpgradeModal";
+import UpgradeModal from "./components/UpgradeModal"; // limit popup
 
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
+import Upgrade from "./pages/Upgrade"; // full upgrade page
 
 import { postAPI } from "./utils/apiClient";
 
@@ -34,7 +35,7 @@ function App() {
   const [isCropperOpen, setIsCropperOpen] = useState(false);
   const [isResultOpen, setIsResultOpen] = useState(false);
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
-  const [showUpgrade, setShowUpgrade] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false); // only for limit popup
 
   const toggleTheme = () => {
     const nextTheme = theme === "dark" ? "light" : "dark";
@@ -90,7 +91,7 @@ function App() {
             <button
               onClick={() => {
                 navigate('/login');
-                toast.dismiss(); // optional: close toast after click
+                toast.dismiss();
               }}
               style={{
                 background: 'var(--accent)',
@@ -127,18 +128,23 @@ function App() {
     const plan = data.subscription || 'free';
     const solves = data.solves || 0;
 
-    const limits = { free: 50, pro: 75, premium: 150 };
+    const limits = { free: 15, pro: 75, premium: 150 };
     const currentLimit = limits[plan] || Infinity;
 
     if (solves >= currentLimit) {
-      toast.info(
-        `You've reached your ${plan.charAt(0).toUpperCase() + plan.slice(1)} plan limit. Upgrade for more solves.`,
-        {
-          position: "bottom-center",
-          autoClose: 6000,
-          onClose: () => setShowUpgrade(true),
-        }
-      );
+      // Modal only for free and pro
+      if (plan === 'free' || plan === 'pro') {
+        setShowUpgradeModal(true);
+      } else {
+        // Premium - just toast
+        toast.info(
+          "You've reached the maximum solves available. Contact support@snaprium.com for more options.",
+          {
+            position: "bottom-center",
+            autoClose: 8000,
+          }
+        );
+      }
       return false;
     }
 
@@ -237,13 +243,14 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
+          <Route path="/upgrade" element={<Upgrade />} /> {/* full upgrade page */}
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
 
-      {/* Upgrade Modal */}
-      {showUpgrade && <UpgradeModal isOpen={showUpgrade} onClose={() => setShowUpgrade(false)} />}
+      {/* Limit-hit modal – only for free (15) and pro (75) */}
+      {showUpgradeModal && <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />}
     </div>
   );
 }
