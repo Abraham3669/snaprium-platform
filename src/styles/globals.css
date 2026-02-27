@@ -2247,6 +2247,29 @@ header.header {
   }
 }
 
+
+
+.upgrade-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.upgrade-btn.full-width {
+  width: 100%;
+  max-width: 400px;
+  padding: 1.2rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+
+
+
+
+
+
+
 /* ─────────────────────────────────────────────
    ResultPanel – Fix Color on Final Answer (Broad Match)
 ───────────────────────────────────────────── */

@@ -21,16 +21,10 @@ export default function UpgradeModal({ isOpen, onClose }) {
           </p>
         </div>
 
-        {/* Actions */}
+        {/* Single action button */}
         <div className="upgrade-actions">
           <button 
-            className="upgrade-btn secondary"
-            onClick={() => window.location.href = '/login'}
-          >
-            Sign In
-          </button>
-          <button 
-            className="upgrade-btn primary"
+            className="upgrade-btn primary full-width"
             onClick={() => window.location.href = '/upgrade'}
           >
             Upgrade Now
