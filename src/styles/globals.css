@@ -2269,46 +2269,31 @@ header.header {
 
 
 /* ─────────────────────────────────────────────
-   ResultPanel – Step Intro Lines & Final Answer (No Headings Needed)
+   ResultPanel – Force Step Intro Styling (Broad Match)
 ───────────────────────────────────────────── */
 
-/* Make normal math clean & readable */
+/* Normal math – keep default size & weight (no bold forced) */
 .solution-area .katex,
 .solution-area .katex-display {
   font-size: 1.1em !important;
-  font-weight: 500 !important;
+  font-weight: normal !important;
   margin: 1.4rem 0 !important;
   color: var(--text-primary) !important;
+  line-height: 1.6 !important;
 }
 
-/* Target step intro lines (common patterns in plain text) */
+/* Every paragraph – slight spacing */
 .solution-area p {
   margin: 1.2rem 0 !important;
   line-height: 1.8 !important;
   color: var(--text-primary) !important;
 }
 
-/* Make lines that look like step intros stand out */
-.solution-area p:is(
-  :contains("Step"),
-  :contains("step"),
-  :contains("Now "),
-  :contains("First"),
-  :contains("Second"),
-  :contains("Third"),
-  :contains("Then"),
-  :contains("Add"),
-  :contains("Subtract"),
-  :contains("Multiply"),
-  :contains("Divide"),
-  :contains("Solve"),
-  :contains("Find"),
-  :contains("Calculate")
-) {
-  font-size: 1.45rem !important;
+/* Force ALL paragraphs to look like step intros (big + bold + underline) */
+.solution-area p {
+  font-size: 1.35rem !important;
   font-weight: 700 !important;
-  color: var(--text-primary) !important;
-  margin: 2.5rem 0 1rem !important;
+  margin: 2.2rem 0 1rem !important;
   padding-bottom: 0.6rem !important;
   border-bottom: 3px solid var(--accent) !important;
   position: relative !important;
@@ -2316,49 +2301,36 @@ header.header {
   box-shadow: none !important;
 }
 
-/* Glow underline on step intros */
-.solution-area p:is(
-  :contains("Step"),
-  :contains("step"),
-  :contains("Now "),
-  :contains("First"),
-  :contains("Second"),
-  :contains("Third"),
-  :contains("Then"),
-  :contains("Add"),
-  :contains("Subtract"),
-  :contains("Multiply"),
-  :contains("Divide"),
-  :contains("Solve"),
-  :contains("Find"),
-  :contains("Calculate")
-)::after {
+/* Glow underline on every paragraph (step-like feel) */
+.solution-area p::after {
   content: "" !important;
   position: absolute !important;
   left: 0 !important;
   bottom: -6px !important;
-  width: 120px !important;
+  width: 100px !important;
   height: 4px !important;
   background: var(--accent-glow) !important;
   filter: blur(10px) !important;
-  opacity: 0.7 !important;
+  opacity: 0.65 !important;
   border-radius: 50% !important;
 }
 
-/* Final Answer – blue + big + bold (no box) */
+/* Final Answer – blue + big + bold + centered (no box) */
 .solution-area p:is(
   :contains("Final Answer"),
   :contains("final answer"),
-  :contains("Answer:"),
-  :contains("Result:"),
-  :contains("answer ="),
-  :contains("therefore")
+  :contains("Answer"),
+  :contains("answer"),
+  :contains("Result"),
+  :contains("result"),
+  :contains("therefore"),
+  :contains("so the answer is")
 ) {
   color: var(--accent) !important;
   font-weight: 900 !important;
   font-size: 2.3rem !important;
   text-align: center !important;
-  margin: 3.5rem 0 1.5rem !important;
+  margin: 3.5rem 0 1.8rem !important;
   text-transform: uppercase !important;
   letter-spacing: 0.06em !important;
   background: transparent !important;
@@ -2371,10 +2343,12 @@ header.header {
 .solution-area p:is(
   :contains("Final Answer"),
   :contains("final answer"),
-  :contains("Answer:"),
-  :contains("Result:"),
-  :contains("answer ="),
-  :contains("therefore")
+  :contains("Answer"),
+  :contains("answer"),
+  :contains("Result"),
+  :contains("result"),
+  :contains("therefore"),
+  :contains("so the answer is")
 )::after {
   content: "" !important;
   position: absolute !important;
@@ -2393,57 +2367,45 @@ header.header {
 .solution-area p:is(
   :contains("Final Answer"),
   :contains("final answer"),
-  :contains("Answer:"),
-  :contains("Result:"),
-  :contains("answer ="),
-  :contains("therefore")
+  :contains("Answer"),
+  :contains("answer"),
+  :contains("Result"),
+  :contains("result"),
+  :contains("therefore"),
+  :contains("so the answer is")
 ) + .katex-display,
 .solution-area p:is(
   :contains("Final Answer"),
   :contains("final answer"),
-  :contains("Answer:"),
-  :contains("Result:"),
-  :contains("answer ="),
-  :contains("therefore")
+  :contains("Answer"),
+  :contains("answer"),
+  :contains("Result"),
+  :contains("result"),
+  :contains("therefore"),
+  :contains("so the answer is")
 ) + .katex {
   font-size: 1.45em !important;
   font-weight: 700 !important;
   margin: 1.5rem 0 2.5rem !important;
   text-align: center !important;
   display: block !important;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
 }
 
 /* Mobile */
 @media (max-width: 768px) {
-  .solution-area p:is(
-    :contains("Step"),
-    :contains("step"),
-    :contains("Now "),
-    :contains("First"),
-    :contains("Second"),
-    :contains("Third"),
-    :contains("Then"),
-    :contains("Add"),
-    :contains("Subtract"),
-    :contains("Multiply"),
-    :contains("Divide"),
-    :contains("Solve"),
-    :contains("Find"),
-    :contains("Calculate")
-  ) {
-    font-size: 1.3rem !important;
+  .solution-area p {
+    font-size: 1.25rem !important;
   }
 
   .solution-area p:is(
     :contains("Final Answer"),
     :contains("final answer"),
-    :contains("Answer:"),
-    :contains("Result:"),
-    :contains("answer ="),
-    :contains("therefore")
+    :contains("Answer"),
+    :contains("answer"),
+    :contains("Result"),
+    :contains("result"),
+    :contains("therefore"),
+    :contains("so the answer is")
   ) {
     font-size: 1.9rem !important;
   }
@@ -2451,18 +2413,22 @@ header.header {
   .solution-area p:is(
     :contains("Final Answer"),
     :contains("final answer"),
-    :contains("Answer:"),
-    :contains("Result:"),
-    :contains("answer ="),
-    :contains("therefore")
+    :contains("Answer"),
+    :contains("answer"),
+    :contains("Result"),
+    :contains("result"),
+    :contains("therefore"),
+    :contains("so the answer is")
   ) + .katex-display,
   .solution-area p:is(
     :contains("Final Answer"),
     :contains("final answer"),
-    :contains("Answer:"),
-    :contains("Result:"),
-    :contains("answer ="),
-    :contains("therefore")
+    :contains("Answer"),
+    :contains("answer"),
+    :contains("Result"),
+    :contains("result"),
+    :contains("therefore"),
+    :contains("so the answer is")
   ) + .katex {
     font-size: 1.3em !important;
   }
