@@ -2269,49 +2269,42 @@ header.header {
 
 
 /* ─────────────────────────────────────────────
-   ResultPanel – Fix Color on Final Answer (Broad Match)
+   ResultPanel – Final Tweaks (No Bold Titles, Faded Intros, Blue Final Answer)
 ───────────────────────────────────────────── */
 
-/* Keep math normal + bold where you want */
+/* Normal math – default size, no bold */
 .solution-area .katex,
 .solution-area .katex-display {
-  font-size: 1.1em !important;
-  font-weight: 600 !important; /* keep your bold if you like it */
+  font-size: 1em !important;          /* normal KaTeX size */
+  font-weight: normal !important;     /* no forced bold */
   margin: 1.4rem 0 !important;
   color: var(--text-primary) !important;
+  line-height: 1.6 !important;
 }
 
-/* All paragraphs – normal size */
+/* All paragraphs – normal size & weight */
 .solution-area p {
-  font-size: 1rem !important;
+  font-size: 1rem !important;         /* your previous/normal size */
+  font-weight: normal !important;     /* remove boldness */
   line-height: 1.8 !important;
   margin: 1.2rem 0 !important;
-  color: var(--text-primary) !important;
+  color: var(--text-secondary) !important; /* faded grayish */
 }
 
-/* Bold step titles (keep what worked) */
-.solution-area p {
-  font-weight: 700 !important;
-}
-
-/* FINAL ANSWER COLOR – super broad match + forced */
-.solution-area p {
-  color: var(--text-primary) !important; /* fallback */
-}
-
-/* Target ANY paragraph containing final/answer/result words */
+/* Final Answer sentence – accent blue + bold */
 .solution-area p:is(
-  :contains("final"),
+  :contains("Final Answer"),
+  :contains("final answer"),
+  :contains("Answer"),
   :contains("answer"),
+  :contains("Result"),
   :contains("result"),
   :contains("therefore"),
-  :contains("so the"),
-  :contains("thus"),
-  :contains("=")
+  :contains("so the")
 ) {
-  color: var(--accent) !important;       /* your blue */
-  font-weight: 800 !important;
-  font-size: 1.25rem !important;         /* slightly bigger */
+  color: var(--accent) !important;     /* your blue, auto dark/light */
+  font-weight: 800 !important;         /* bold */
+  font-size: 1.25rem !important;       /* slightly bigger than normal */
   text-align: center !important;
   margin: 3rem 0 1.5rem !important;
   letter-spacing: 0.03em !important;
@@ -2321,51 +2314,29 @@ header.header {
   padding: 0 !important;
 }
 
-/* Glow underline on final answer line */
+/* Math right after Final Answer – bold + bigger */
 .solution-area p:is(
-  :contains("final"),
+  :contains("Final Answer"),
+  :contains("final answer"),
+  :contains("Answer"),
   :contains("answer"),
+  :contains("Result"),
   :contains("result"),
   :contains("therefore"),
-  :contains("so the"),
-  :contains("thus"),
-  :contains("=")
-)::after {
-  content: "" !important;
-  position: absolute !important;
-  left: 50% !important;
-  bottom: -8px !important;
-  width: 120px !important;
-  height: 4px !important;
-  background: var(--accent-glow) !important;
-  filter: blur(10px) !important;
-  opacity: 0.6 !important;
-  transform: translateX(-50%) !important;
-  border-radius: 50% !important;
-  z-index: -1 !important;
-}
-
-/* Math after final answer – bold + slightly bigger */
-.solution-area p:is(
-  :contains("final"),
-  :contains("answer"),
-  :contains("result"),
-  :contains("therefore"),
-  :contains("so the"),
-  :contains("thus"),
-  :contains("=")
+  :contains("so the")
 ) ~ .katex-display,
 .solution-area p:is(
-  :contains("final"),
+  :contains("Final Answer"),
+  :contains("final answer"),
+  :contains("Answer"),
   :contains("answer"),
+  :contains("Result"),
   :contains("result"),
   :contains("therefore"),
-  :contains("so the"),
-  :contains("thus"),
-  :contains("=")
+  :contains("so the")
 ) ~ .katex {
-  font-size: 1.35em !important;
-  font-weight: 800 !important;
+  font-size: 1.35em !important;        /* bigger than normal math */
+  font-weight: 800 !important;         /* bold */
   margin: 1.5rem 0 2rem !important;
   text-align: center !important;
   display: block !important;
@@ -2374,37 +2345,44 @@ header.header {
   box-shadow: none !important;
 }
 
-/* Mobile */
+/* Mobile – scale down slightly */
 @media (max-width: 768px) {
+  .solution-area p {
+    font-size: 0.95rem !important;
+  }
+
   .solution-area p:is(
-    :contains("final"),
+    :contains("Final Answer"),
+    :contains("final answer"),
+    :contains("Answer"),
     :contains("answer"),
+    :contains("Result"),
     :contains("result"),
     :contains("therefore"),
-    :contains("so the"),
-    :contains("thus"),
-    :contains("=")
+    :contains("so the")
   ) {
     font-size: 1.15rem !important;
   }
 
   .solution-area p:is(
-    :contains("final"),
+    :contains("Final Answer"),
+    :contains("final answer"),
+    :contains("Answer"),
     :contains("answer"),
+    :contains("Result"),
     :contains("result"),
     :contains("therefore"),
-    :contains("so the"),
-    :contains("thus"),
-    :contains("=")
+    :contains("so the")
   ) ~ .katex-display,
   .solution-area p:is(
-    :contains("final"),
+    :contains("Final Answer"),
+    :contains("final answer"),
+    :contains("Answer"),
     :contains("answer"),
+    :contains("Result"),
     :contains("result"),
     :contains("therefore"),
-    :contains("so the"),
-    :contains("thus"),
-    :contains("=")
+    :contains("so the")
   ) ~ .katex {
     font-size: 1.25em !important;
   }
