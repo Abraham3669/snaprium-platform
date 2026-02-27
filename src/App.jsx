@@ -52,31 +52,33 @@ function App() {
     setResultText("");
 
     try {
-      if (!(await checkSolveLimit())) return;
+  if (!(await checkSolveLimit())) return;
 
-      console.log("Sending to API...");
-      const res = await postAPI("/api/process", {
-        imageBase64: dataUrl.split(",")[1],
-      });
-      console.log("API response:", res);
-      setResultText(res.answer || res.text || JSON.stringify(res) || "No answer received");
+  console.log("Sending to API...");
+  const res = await postAPI("/api/process", {
+    imageBase64: dataUrl.split(",")[1],
+  });
+  console.log("API response:", res);
+  setResultText(res.answer || res.text || JSON.stringify(res) || "No answer received");
 
-      await incrementSolveCount();
-      const currentUser = auth.currentUser;
-      if (currentUser) {
-        const userRef = doc(db, "users", currentUser.uid);
-        await updateDoc(userRef, {
-          uploadCount: increment(1),
-          lastUpload: serverTimestamp(),
-        });
-        console.log("Upload count incremented");
-      }
-    } catch (err) {
-      console.error("Process error:", err);
-      setResultText("Failed to get solution – please try again");
-    } finally {
-      setIsProcessing(false);
-    }
+  // Stop loading animation IMMEDIATELY after response
+  setIsProcessing(false);  // ← moved here
+
+  await incrementSolveCount();
+  const currentUser = auth.currentUser;
+  if (currentUser) {
+    const userRef = doc(db, "users", currentUser.uid);
+    await updateDoc(userRef, {
+      uploadCount: increment(1),
+      lastUpload: serverTimestamp(),
+    });
+    console.log("Upload count incremented");
+  }
+} catch (err) {
+  console.error("Process error:", err);
+  setResultText("Failed to get solution – please try again");
+  setIsProcessing(false);  // still here for error case
+}
   };
 
   const checkSolveLimit = async () => {
