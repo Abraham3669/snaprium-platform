@@ -37,9 +37,7 @@ function App() {
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
-  // Refs for triggering camera/gallery from anywhere (including ResultPanel)
-  const cameraInputRef = useRef(null);
-  const galleryInputRef = useRef(null);
+ 
 
   const toggleTheme = () => {
     const nextTheme = theme === "dark" ? "light" : "dark";
@@ -182,36 +180,7 @@ function App() {
         theme={theme}
       />
 
-      {/* Hidden file inputs – shared for main screen & ResultPanel */}
-      <input
-        type="file"
-        accept="image/*"
-        capture="environment"
-        style={{ display: "none" }}
-        ref={cameraInputRef}
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) {
-            setFile(file);
-            setIsCropperOpen(true);
-            e.target.value = "";
-          }
-        }}
-      />
-      <input
-        type="file"
-        accept="image/*"
-        style={{ display: "none" }}
-        ref={galleryInputRef}
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) {
-            setFile(file);
-            setIsCropperOpen(true);
-            e.target.value = "";
-          }
-        }}
-      />
+      
 
       <header className="snaprium-header">
         <div className="snaprium-header-inner">
@@ -262,21 +231,12 @@ function App() {
                 />
 
                 {isResultOpen && (
-                  <ResultPanel
-                    result={{ image: croppedImage, text: resultText }}
-                    loading={isProcessing}
-                    onClose={() => setIsResultOpen(false)}
-                    onNewSnap={(type) => {
-                      // Do NOT close ResultPanel here
-                      // Trigger camera or gallery directly
-                      if (type === 'camera') {
-                        cameraInputRef.current?.click();
-                      } else if (type === 'gallery') {
-                        galleryInputRef.current?.click();
-                      }
-                    }}
-                  />
-                )}
+  <ResultPanel
+    result={{ image: croppedImage, text: resultText }}
+    loading={isProcessing}
+    onClose={() => setIsResultOpen(false)}
+  />
+)}
               </>
             }
           />

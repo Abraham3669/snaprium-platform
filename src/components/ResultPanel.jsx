@@ -80,20 +80,6 @@ export default function ResultPanel({ result, loading, onClose, onNewSnap }) {  
           )}
         </div>
 
-        {/* Small Camera + Gallery Buttons – horizontal, centered, at bottom */}
-<div className="result-snap-box">
-  <div className="snap-btn camera" onClick={() => onNewSnap('camera')}>
-    <svg className="snap-icon" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M20 5h-3.17l-1.84-2H8.99L7.17 5H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1zm-8 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10z" />
-    </svg>
-  </div>
-
-  <div className="snap-btn gallery" onClick={() => onNewSnap('gallery')}>
-    <svg className="snap-icon" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4 2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z"/>
-    </svg>
-  </div>
-</div>
       </div>
     </div>
   );
