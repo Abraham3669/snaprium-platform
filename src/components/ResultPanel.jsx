@@ -89,25 +89,25 @@ export default function ResultPanel({ result, loading, onClose }) {
   );
 }
 
-// Helper: Prepare text so KaTeX renders nicely
+// Helper: Prepare text so KaTeX renders nicely (stronger version)
 function prepareMathForKaTeX(rawText) {
   if (!rawText) return '';
 
   let text = rawText;
 
-  // 1. Convert plain ASCII fractions 3/4 → \frac{3}{4}
+  // 1. Convert plain ASCII fractions
   text = text.replace(
     /(\b\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?\b)(?!\s*\/)/g,
     '\\frac{$1}{$2}'
   );
 
-  // 2. Convert ugly ASCII stacked fractions
+  // 2. Convert stacked ASCII fractions
   text = text.replace(
     /(\d+)\s*\n\s*_{2,}\s*\n\s*(\d+)/g,
     '\\frac{$1}{$2}'
   );
 
-  // 3. Upgrade inline complex math to display $$
+  // 3. Upgrade complex inline to display $$
   text = text.replace(
     /\$([^$]*?(?:\\frac|\\sqrt|\\sum|\\int|\\lim)[^$]*?)\$/g,
     '$$$$$1$$$$'
@@ -119,17 +119,31 @@ function prepareMathForKaTeX(rawText) {
   // 5. Replace \[ \] with $$
   text = text.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$');
 
-  // FIX: Convert broken ( math expression ) to real $math expression$
-  // Only when it contains math indicators (safer than blanket replace)
+  // FIX A: Wrap plain math-like text in $...$ (no delimiters)
   text = text.replace(
-    /\(\s*([^)]*?(?:=|\^|_|\\frac|\\sqrt|\\int|\\sum|\\lim|\\sin|\\cos|\\tan|\\sec|\\csc|\\cot|\\sinh|\\cosh|\\tanh|\\log|\\ln|\\exp|\\mathrm{d}|\\mathrm{d}x|\\partial)[^)]*?)\s*\)/g,
-    (match, inner) => `$${inner.trim()}$`
+    /([^\s$([{][^$)]*?(?:=|\^|_|\\frac|\\sqrt|\\int|\\sum|\\lim|\\sin|\\cos|\\tan|\\sec|\\csc|\\cot|\\sinh|\\cosh|\\tanh|\\log|\\ln|\\exp|\\theta|\\phi|\\pi|\\infty|\\approx|\\neq|\\leq|\\geq|\\mathrm{d}|\\mathrm{d}x|\\partial)[^$)]*[^\s$])}])/g,
+    (match) => {
+      // Only wrap if it looks like math and isn't already delimited
+      if (!match.match(/^\$/) && !match.match(/\$$/)) {
+        return `$${match.trim()}$`;
+      }
+      return match;
+    }
   );
 
-  // Clean trailing junk like $f'(x)$$. or double $$
+  // FIX B: Fix broken/mixed delimiters like $\frac{...}$$ or $...$$
+  text = text.replace(/\$([^$]*?)\$\$/g, '$$$$$1$$$$');
+  text = text.replace(/\$\$([^$]*?)\$/g, '$$$$$1$$$$');
+  text = text.replace(/\$([^$]*?)\$/g, '$$$$$1$$$$'); // force display for safety
+
+  // FIX C: Remove duplicates like u=tanθu=tanθ
+  text = text.replace(/([a-zA-Z0-9=\\]+)(?=\1)/g, '$1');
+
+  // FIX D: Clean trailing junk
   text = text.replace(/\$\$?\s*\$f'\(x\)\$\$?\.?/gi, '');
   text = text.replace(/\$\$?\s*\$\s*\$/g, '');
-  text = text.replace(/\s*\.\s*$/, ''); // remove trailing dot if junk
+  text = text.replace(/\s*\.\s*$/, '');
+  text = text.replace(/\s{2,}/g, ' '); // extra spaces
   text = text.trim();
 
   return text;
