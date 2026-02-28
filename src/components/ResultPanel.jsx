@@ -6,13 +6,11 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 
-export default function ResultPanel({ result, loading, onClose }) {
+export default function ResultPanel({ result, loading, onClose, onNewSnap }) {  // ← new prop for callback
   const [feedback, setFeedback] = React.useState(null);
 
   const handleFeedback = (type) => {
     setFeedback(type);
-    // Later you can send to backend here
-    // fetch('/api/feedback', { method: 'POST', body: JSON.stringify({ type }) })
   };
 
   if (!result?.image) return null;
@@ -26,22 +24,21 @@ export default function ResultPanel({ result, loading, onClose }) {
 
       <div className="result-panel-content">
         {/* Image Section */}
-        {/* Image Section */}
-<div 
-  className="image-wrapper"
-  key={loading ? 'loading' : 'loaded'}  // ← forces React to remove overlay instantly
->
-  <img
-    className="result-image"
-    src={result.image}
-    alt="Cropped preview"
-  />
-  {loading && (
-    <div className="scan-overlay">
-      <div className="scan-line"></div>
-    </div>
-  )}
-</div>
+        <div 
+          className="image-wrapper"
+          key={loading ? 'loading' : 'loaded'}
+        >
+          <img
+            className="result-image"
+            src={result.image}
+            alt="Cropped preview"
+          />
+          {loading && (
+            <div className="scan-overlay">
+              <div className="scan-line"></div>
+            </div>
+          )}
+        </div>
 
         {/* Solution Section */}
         <div className="solution-area">
@@ -82,12 +79,27 @@ export default function ResultPanel({ result, loading, onClose }) {
             </div>
           )}
         </div>
+
+        {/* Small Camera + Gallery Buttons – horizontal, centered, at bottom */}
+<div className="result-snap-box">
+  <div className="snap-btn camera" onClick={() => onNewSnap('camera')}>
+    <svg className="snap-icon" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M20 5h-3.17l-1.84-2H8.99L7.17 5H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1zm-8 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10z" />
+    </svg>
+  </div>
+
+  <div className="snap-btn gallery" onClick={() => onNewSnap('gallery')}>
+    <svg className="snap-icon" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4 2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z"/>
+    </svg>
+  </div>
+</div>
       </div>
     </div>
   );
 }
 
-// Helper: Prepare text so KaTeX renders nicely (unchanged)
+// Helper unchanged
 function prepareMathForKaTeX(rawText) {
   if (!rawText) return '';
 

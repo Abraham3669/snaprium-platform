@@ -1,5 +1,5 @@
 // src/App.jsx
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
@@ -8,14 +8,14 @@ import CameraInput from "./components/CameraInput";
 import CropperModal from "./components/CropperModal";
 import ResultPanel from "./components/ResultPanel";
 import Dashboard from "./components/Dashboard";
-import UpgradeModal from "./components/UpgradeModal"; // limit popup
+import UpgradeModal from "./components/UpgradeModal";
 
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
-import Upgrade from "./pages/Upgrade"; // full upgrade page
+import Upgrade from "./pages/Upgrade";
 
 import { postAPI } from "./utils/apiClient";
 
@@ -35,7 +35,11 @@ function App() {
   const [isCropperOpen, setIsCropperOpen] = useState(false);
   const [isResultOpen, setIsResultOpen] = useState(false);
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false); // only for limit popup
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+  // Refs for triggering camera/gallery from anywhere (including ResultPanel)
+  const cameraInputRef = useRef(null);
+  const galleryInputRef = useRef(null);
 
   const toggleTheme = () => {
     const nextTheme = theme === "dark" ? "light" : "dark";
@@ -52,33 +56,32 @@ function App() {
     setResultText("");
 
     try {
-  if (!(await checkSolveLimit())) return;
+      if (!(await checkSolveLimit())) return;
 
-  console.log("Sending to API...");
-  const res = await postAPI("/api/process", {
-    imageBase64: dataUrl.split(",")[1],
-  });
-  console.log("API response:", res);
-  setResultText(res.answer || res.text || JSON.stringify(res) || "No answer received");
+      console.log("Sending to API...");
+      const res = await postAPI("/api/process", {
+        imageBase64: dataUrl.split(",")[1],
+      });
+      console.log("API response:", res);
+      setResultText(res.answer || res.text || JSON.stringify(res) || "No answer received");
 
-  // Stop loading animation IMMEDIATELY after response
-  setIsProcessing(false);  // ← moved here
+      setIsProcessing(false);
 
-  await incrementSolveCount();
-  const currentUser = auth.currentUser;
-  if (currentUser) {
-    const userRef = doc(db, "users", currentUser.uid);
-    await updateDoc(userRef, {
-      uploadCount: increment(1),
-      lastUpload: serverTimestamp(),
-    });
-    console.log("Upload count incremented");
-  }
-} catch (err) {
-  console.error("Process error:", err);
-  setResultText("Failed to get solution – please try again");
-  setIsProcessing(false);  // still here for error case
-}
+      await incrementSolveCount();
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const userRef = doc(db, "users", currentUser.uid);
+        await updateDoc(userRef, {
+          uploadCount: increment(1),
+          lastUpload: serverTimestamp(),
+        });
+        console.log("Upload count incremented");
+      }
+    } catch (err) {
+      console.error("Process error:", err);
+      setResultText("Failed to get solution – please try again");
+      setIsProcessing(false);
+    }
   };
 
   const checkSolveLimit = async () => {
@@ -134,11 +137,9 @@ function App() {
     const currentLimit = limits[plan] || Infinity;
 
     if (solves >= currentLimit) {
-      // Modal only for free and pro
       if (plan === 'free' || plan === 'pro') {
         setShowUpgradeModal(true);
       } else {
-        // Premium - just toast
         toast.info(
           "You've reached the maximum solves available. Contact support@snaprium.com for more options.",
           {
@@ -179,6 +180,37 @@ function App() {
         draggable
         pauseOnHover
         theme={theme}
+      />
+
+      {/* Hidden file inputs – shared for main screen & ResultPanel */}
+      <input
+        type="file"
+        accept="image/*"
+        capture="environment"
+        style={{ display: "none" }}
+        ref={cameraInputRef}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            setFile(file);
+            setIsCropperOpen(true);
+            e.target.value = "";
+          }
+        }}
+      />
+      <input
+        type="file"
+        accept="image/*"
+        style={{ display: "none" }}
+        ref={galleryInputRef}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            setFile(file);
+            setIsCropperOpen(true);
+            e.target.value = "";
+          }
+        }}
       />
 
       <header className="snaprium-header">
@@ -234,6 +266,15 @@ function App() {
                     result={{ image: croppedImage, text: resultText }}
                     loading={isProcessing}
                     onClose={() => setIsResultOpen(false)}
+                    onNewSnap={(type) => {
+                      // Do NOT close ResultPanel here
+                      // Trigger camera or gallery directly
+                      if (type === 'camera') {
+                        cameraInputRef.current?.click();
+                      } else if (type === 'gallery') {
+                        galleryInputRef.current?.click();
+                      }
+                    }}
                   />
                 )}
               </>
@@ -245,13 +286,13 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
-          <Route path="/upgrade" element={<Upgrade />} /> {/* full upgrade page */}
+          <Route path="/upgrade" element={<Upgrade />} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
 
-      {/* Limit-hit modal – only for free (15) and pro (75) */}
+      {/* Limit-hit modal */}
       {showUpgradeModal && <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />}
     </div>
   );
