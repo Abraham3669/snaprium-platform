@@ -89,7 +89,7 @@ export default function ResultPanel({ result, loading, onClose }) {
   );
 }
 
-// Helper: Prepare text so KaTeX renders nicely (stronger version)
+// Helper: Prepare text so KaTeX renders nicely
 function prepareMathForKaTeX(rawText) {
   if (!rawText) return '';
 
@@ -107,7 +107,7 @@ function prepareMathForKaTeX(rawText) {
     '\\frac{$1}{$2}'
   );
 
-  // 3. Upgrade complex inline to display $$
+  // 3. Upgrade inline complex math to display $$
   text = text.replace(
     /\$([^$]*?(?:\\frac|\\sqrt|\\sum|\\int|\\lim)[^$]*?)\$/g,
     '$$$$$1$$$$'
@@ -119,16 +119,10 @@ function prepareMathForKaTeX(rawText) {
   // 5. Replace \[ \] with $$
   text = text.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$');
 
-  // FIX A: Wrap plain math-like text in $...$ (no delimiters)
+  // FIX A: Convert ( math ) to $math$ – safe match for math-like content
   text = text.replace(
-    /([^\s$([{][^$)]*?(?:=|\^|_|\\frac|\\sqrt|\\int|\\sum|\\lim|\\sin|\\cos|\\tan|\\sec|\\csc|\\cot|\\sinh|\\cosh|\\tanh|\\log|\\ln|\\exp|\\theta|\\phi|\\pi|\\infty|\\approx|\\neq|\\leq|\\geq|\\mathrm{d}|\\mathrm{d}x|\\partial)[^$)]*[^\s$])}])/g,
-    (match) => {
-      // Only wrap if it looks like math and isn't already delimited
-      if (!match.match(/^\$/) && !match.match(/\$$/)) {
-        return `$${match.trim()}$`;
-      }
-      return match;
-    }
+    /\(\s*([^)]*?(?:=|\^|_|\\frac|\\sqrt|\\int|\\sum|\\lim|\\sin|\\cos|\\tan|\\sec|\\csc|\\cot|\\sinh|\\cosh|\\tanh|\\log|\\ln|\\exp|\\theta|\\phi|\\pi|\\infty|\\approx|\\neq|\\leq|\\geq|\\mathrm{d}|\\mathrm{d}x|\\partial)[^)]*?)\s*\)/g,
+    (match, inner) => `$${inner.trim()}$`
   );
 
   // FIX B: Fix broken/mixed delimiters like $\frac{...}$$ or $...$$
@@ -143,7 +137,7 @@ function prepareMathForKaTeX(rawText) {
   text = text.replace(/\$\$?\s*\$f'\(x\)\$\$?\.?/gi, '');
   text = text.replace(/\$\$?\s*\$\s*\$/g, '');
   text = text.replace(/\s*\.\s*$/, '');
-  text = text.replace(/\s{2,}/g, ' '); // extra spaces
+  text = text.replace(/\s{2,}/g, ' ');
   text = text.trim();
 
   return text;
