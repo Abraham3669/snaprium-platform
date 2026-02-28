@@ -95,36 +95,42 @@ function prepareMathForKaTeX(rawText) {
 
   let text = rawText;
 
-  // 1. Convert plain ASCII fractions 3/4 → \frac{3}{4}  (only when it looks safe)
+  // 1. Convert plain ASCII fractions 3/4 → \frac{3}{4}
   text = text.replace(
     /(\b\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?\b)(?!\s*\/)/g,
     '\\frac{$1}{$2}'
   );
 
-  // 2. Convert ugly ASCII stacked fractions (common in some model outputs)
+  // 2. Convert ugly ASCII stacked fractions
   text = text.replace(
     /(\d+)\s*\n\s*_{2,}\s*\n\s*(\d+)/g,
     '\\frac{$1}{$2}'
   );
 
-  // 3. Fix common model mistakes: single $ delimiters that should be display
-  //    We keep inline $…$ as inline, only force display when it makes sense
-  //    But most math tutors output display math with $$ already — so we preserve them
-
-  // Optional: If you *really* want ALL math blocks to be display math:
-  // text = text.replace(/\$([^\$]+)\$/g, '$$$$$1$$$$');
-
-  // But better: only upgrade when it contains \frac, \sqrt, sum, etc.
+  // 3. Upgrade inline complex math to display $$
   text = text.replace(
     /\$([^$]*?(?:\\frac|\\sqrt|\\sum|\\int|\\lim)[^$]*?)\$/g,
     '$$$$$1$$$$'
   );
 
-  // 4. Clean up extra spaces inside delimiters (helps KaTeX sometimes)
+  // 4. Clean extra spaces inside delimiters
   text = text.replace(/\$\$[\s\n]+/g, '$$').replace(/[\s\n]+\$\$/g, '$$');
 
-  // 5. Replace any stray \[ \] delimiters with $$ (some models use them)
+  // 5. Replace \[ \] with $$
   text = text.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$');
+
+  // FIX: Convert broken ( math expression ) to real $math expression$
+  // Only when it contains math indicators (safer than blanket replace)
+  text = text.replace(
+    /\(\s*([^)]*?(?:=|\^|_|\\frac|\\sqrt|\\int|\\sum|\\lim|\\sin|\\cos|\\tan|\\sec|\\csc|\\cot|\\sinh|\\cosh|\\tanh|\\log|\\ln|\\exp|\\mathrm{d}|\\mathrm{d}x|\\partial)[^)]*?)\s*\)/g,
+    (match, inner) => `$${inner.trim()}$`
+  );
+
+  // Clean trailing junk like $f'(x)$$. or double $$
+  text = text.replace(/\$\$?\s*\$f'\(x\)\$\$?\.?/gi, '');
+  text = text.replace(/\$\$?\s*\$\s*\$/g, '');
+  text = text.replace(/\s*\.\s*$/, ''); // remove trailing dot if junk
+  text = text.trim();
 
   return text;
 }
