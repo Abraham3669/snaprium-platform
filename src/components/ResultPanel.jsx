@@ -95,50 +95,36 @@ function prepareMathForKaTeX(rawText) {
 
   let text = rawText;
 
-  // 1. Convert plain ASCII fractions
+  // 1. Convert plain ASCII fractions 3/4 → \frac{3}{4}  (only when it looks safe)
   text = text.replace(
     /(\b\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?\b)(?!\s*\/)/g,
     '\\frac{$1}{$2}'
   );
 
-  // 2. Convert stacked ASCII fractions
+  // 2. Convert ugly ASCII stacked fractions (common in some model outputs)
   text = text.replace(
     /(\d+)\s*\n\s*_{2,}\s*\n\s*(\d+)/g,
     '\\frac{$1}{$2}'
   );
 
-  // 3. Upgrade inline complex math to display $$
+  // 3. Fix common model mistakes: single $ delimiters that should be display
+  //    We keep inline $…$ as inline, only force display when it makes sense
+  //    But most math tutors output display math with $$ already — so we preserve them
+
+  // Optional: If you *really* want ALL math blocks to be display math:
+  // text = text.replace(/\$([^\$]+)\$/g, '$$$$$1$$$$');
+
+  // But better: only upgrade when it contains \frac, \sqrt, sum, etc.
   text = text.replace(
     /\$([^$]*?(?:\\frac|\\sqrt|\\sum|\\int|\\lim)[^$]*?)\$/g,
     '$$$$$1$$$$'
   );
 
-  // 4. Clean extra spaces inside delimiters
+  // 4. Clean up extra spaces inside delimiters (helps KaTeX sometimes)
   text = text.replace(/\$\$[\s\n]+/g, '$$').replace(/[\s\n]+\$\$/g, '$$');
 
-  // 5. Replace \[ \] with $$
+  // 5. Replace any stray \[ \] delimiters with $$ (some models use them)
   text = text.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$');
-
-  // FIX A: Convert ( math ) to $math$ – safe match for math-like content
-  text = text.replace(
-    /\(\s*([^)]*?(?:=|\^|_|\\frac|\\sqrt|\\int|\\sum|\\lim|\\sin|\\cos|\\tan|\\sec|\\csc|\\cot|\\sinh|\\cosh|\\tanh|\\log|\\ln|\\exp|\\theta|\\phi|\\pi|\\infty|\\approx|\\neq|\\leq|\\geq|\\mathrm{d}|\\mathrm{d}x|\\partial)[^)]*?)\s*\)/g,
-    (match, inner) => `$${inner.trim()}$`
-  );
-
-  // FIX B: Fix broken/mixed delimiters like $\frac{...}$$ or $...$$
-  text = text.replace(/\$([^$]*?)\$\$/g, '$$$$$1$$$$');
-  text = text.replace(/\$\$([^$]*?)\$/g, '$$$$$1$$$$');
-  text = text.replace(/\$([^$]*?)\$/g, '$$$$$1$$$$'); // force display for safety
-
-  // FIX C: Remove duplicates like u=tanθu=tanθ
-  text = text.replace(/([a-zA-Z0-9=\\]+)(?=\1)/g, '$1');
-
-  // FIX D: Clean trailing junk
-  text = text.replace(/\$\$?\s*\$f'\(x\)\$\$?\.?/gi, '');
-  text = text.replace(/\$\$?\s*\$\s*\$/g, '');
-  text = text.replace(/\s*\.\s*$/, '');
-  text = text.replace(/\s{2,}/g, ' ');
-  text = text.trim();
 
   return text;
 }
