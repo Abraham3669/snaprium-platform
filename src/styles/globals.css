@@ -2292,7 +2292,14 @@ header.header {
 
 
 
-
+/* Math solution itself – bold + normal size */
+.solution-area .katex,
+.solution-area .katex-display {
+  font-size: 1.1em !important;
+  font-weight: 600 !important;   /* ← this is what makes all math bold */
+  margin: 1.4rem 0 !important;
+  color: var(--text-primary) !important;
+}
 
 
 
