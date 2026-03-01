@@ -599,11 +599,11 @@ header.header {
 
 .result-panel-header h2 {
   margin: 0;
-  font-size: 2.8rem;          /* clearly bigger */
-  font-weight: 900;           /* strongest Montserrat weight */
+  font-size: 2.2rem;          /* smaller */
+  font-weight: 900;           /* max bold */
   font-family: 'Montserrat', sans-serif;
-  letter-spacing: 0.4px;      /* slight width without looking spaced out */
-  line-height: 1.05;          /* compact and strong */
+  letter-spacing: -0.3px;     /* tighter = visually bolder */
+  line-height: 1.05;
   color: var(--text-primary);
 }
 
