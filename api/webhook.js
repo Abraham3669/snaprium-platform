@@ -1,5 +1,4 @@
-// api/webhook.js
-import { buffer } from 'micro';
+// api/webhook.js – NO MICRO dependency
 import crypto from 'crypto';
 import admin from 'firebase-admin';
 
@@ -15,13 +14,11 @@ if (!admin.apps.length) {
     });
     console.log('Firebase Admin initialized successfully');
   } catch (err) {
-    console.error('Firebase Admin init failed:', err.message);
+    console.error('Firebase Admin init failed:', err.message, err.stack);
   }
 }
 
 const db = admin.firestore();
-
-export const config = { api: { bodyParser: false } };
 
 export default async function handler(req, res) {
   console.log('Webhook hit! Method:', req.method);
@@ -30,16 +27,20 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const buf = await buffer(req);
-  const rawBody = buf.toString('utf8');
+  // Read raw body manually (no micro needed)
+  let rawBody = '';
+  const stream = req;
+  for await (const chunk of stream) {
+    rawBody += chunk.toString();
+  }
 
   // Verify signature
   const signature = req.headers['x-signature'];
   const hmac = crypto.createHmac('sha256', process.env.LEMON_SQUEEZY_WEBHOOK_SECRET);
-  const digest = hmac.update(buf).digest('hex');
+  const digest = hmac.update(rawBody).digest('hex');
 
   if (signature !== digest) {
-    console.error('Signature mismatch. Received:', signature, 'Expected:', digest);
+    console.error('Signature mismatch');
     return res.status(401).json({ error: 'Invalid signature' });
   }
 
@@ -48,7 +49,7 @@ export default async function handler(req, res) {
   try {
     const event = JSON.parse(rawBody);
     console.log('Event name:', event.meta.event_name);
-    console.log('Full event data:', JSON.stringify(event, null, 2));
+    console.log('Full event:', JSON.stringify(event, null, 2));
 
     if (event.meta.event_name === 'subscription_created' || 
         event.meta.event_name === 'subscription_updated' ||
@@ -57,10 +58,10 @@ export default async function handler(req, res) {
       const subscription = event.data;
       const userId = subscription.meta?.custom_fields?.user_id;
 
-      console.log('User ID from webhook:', userId);
+      console.log('User ID:', userId);
 
       if (!userId) {
-        console.error('No user_id in custom_fields');
+        console.error('No user_id');
         return res.status(400).json({ error: 'Missing user_id' });
       }
 
@@ -75,12 +76,12 @@ export default async function handler(req, res) {
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
-      console.log(`User ${userId} updated to ${plan}`);
+      console.log(`Updated user ${userId} to ${plan}`);
     }
 
-    return res.status(200).json({ received: true });
+    res.status(200).json({ received: true });
   } catch (err) {
     console.error('Webhook error:', err.message, err.stack);
-    return res.status(400).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 }
