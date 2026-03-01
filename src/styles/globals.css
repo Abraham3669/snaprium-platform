@@ -583,6 +583,9 @@ header.header {
 
 /* Panel header */
 .result-panel-header {
+  position: sticky;   /* keeps it at the top of scroll */
+  top: 0;             /* stick to top */
+  z-index: 10;        /* above content */
   padding: 1.2rem 1.5rem;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -596,37 +599,54 @@ header.header {
 
 .result-panel-header h2 {
   margin: 0;
-  font-size: 1.7rem;
-  font-weight: 700;
+  font-size: 2rem;          /* bigger for emphasis */
+  font-weight: 800;         /* bold but clean */
+  font-family: 'Inter', 'Roboto', 'Arial', sans-serif; /* professional sans-serif */
+  letter-spacing: -0.5px;   /* tight, modern look */
   color: var(--text-primary);
 }
 
-/* Close button refinement */
+
+.result-panel-header {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+
+/* ================= Close Button – Professional ================= */
 .result-panel-header .close-btn {
   font-size: 1.8rem;
-  background: rgba(0,0,0,0.05);
+  width: 36px;                  /* fixed square size */
+  height: 36px;                 /* makes it perfectly circular */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.06);  /* subtle default bg */
   color: var(--text-primary);
   border: none;
-  border-radius: 8px;
-  padding: 0.25rem 0.6rem;
+  border-radius: 50%;           /* fully circular */
   cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);  /* subtle shadow for depth */
   transition: all 0.25s ease;
 }
 
 .result-panel-header .close-btn:hover {
-  background: rgba(0,0,0,0.12);
-  transform: scale(1.08);
+  background: var(--accent);    /* accent color on hover */
+  color: #fff;                  /* white icon for contrast */
+  transform: scale(1.1);        /* smooth pop effect */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 [data-theme="dark"] .result-panel-header .close-btn {
-  background: rgba(255,255,255,0.08);
+  background: rgba(255, 255, 255, 0.08);
   color: var(--text-primary);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
 [data-theme="dark"] .result-panel-header .close-btn:hover {
-  background: rgba(255,255,255,0.15);
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
-
 /* Panel content */
 .result-panel-content {
   flex: 1;
