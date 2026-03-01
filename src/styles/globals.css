@@ -2292,18 +2292,81 @@ header.header {
 
 
 
-/* Subtext (non-math paragraphs under step titles) – black + bold + close spacing */
-.solution-area p:not(:has(.katex)),
-.solution-area div:not(.katex-display):not(:has(.katex)),
-.solution-area .solution-text:not(:has(.katex)),
-.solution-area .explanation:not(:has(.katex)),
-.solution-area li:not(:has(.katex)) {
-  font-size: 0.95rem !important;
-  line-height: 1.62 !important;
-  margin: 0.4rem 0 0.7rem !important;     /* tight vertical spacing */
-  color: var(--text-primary) !important;   /* full black */
-  font-weight: 600 !important;             /* bold */
-  padding-left: 0.9rem !important;
+/* ─────────────────────────────────────────────
+   New Clean Solution Styling – 2026 Professional Style
+───────────────────────────────────────────── */
+
+/* Step titles – bold & clear */
+.solution-area h1,
+.solution-area h2,
+.solution-area h3,
+.solution-area h4,
+.solution-area strong,
+.solution-area b {
+  color: var(--text-primary) !important;
+  font-weight: 700 !important;
+  font-size: 1.05rem !important;
+  margin: 1.8rem 0 0.9rem !important;
+}
+
+/* Subtext / explanations – normal weight, soft grey */
+.solution-area p,
+.solution-area div:not(.katex-display),
+.solution-area .solution-text,
+.solution-area .explanation {
+  font-size: 0.97rem !important;
+  line-height: 1.68 !important;
+  margin: 0.55rem 0 1rem !important;
+  color: #64748b !important;           /* soft professional grey */
+  font-weight: 400 !important;         /* normal weight */
+}
+
+/* Math itself – normal weight (not bold), slightly larger for clarity */
+.solution-area .katex,
+.solution-area .katex-display {
+  font-size: 1.12em !important;
+  font-weight: 500 !important;         /* normal / medium weight – clean modern look */
+  color: var(--text-primary) !important;
+  margin: 1rem 0 1.2rem !important;
+}
+
+/* Thin professional separator after each step */
+.solution-area p::after,
+.solution-area div:not(.katex-display)::after,
+.solution-area .solution-text::after,
+.solution-area .explanation::after {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 1px;
+  background: #e2e8f0;
+  margin: 1.1rem 0 0.8rem !important;
+  opacity: 0.65;
+}
+
+/* Final answer – kept clean and prominent (but no heavy styling) */
+.solution-area p:is(
+  :contains("final"),
+  :contains("answer"),
+  :contains("result"),
+  :contains("therefore"),
+  :contains("so the"),
+  :contains("thus"),
+  :contains("=")
+) {
+  color: var(--accent) !important;
+  font-weight: 700 !important;
+  font-size: 1.22rem !important;
+  text-align: center !important;
+  margin: 2.4rem 0 1.6rem !important;
+}
+
+/* Mobile – slightly tighter */
+@media (max-width: 768px) {
+  .solution-area p,
+  .solution-area div:not(.katex-display) {
+    margin: 0.45rem 0 0.85rem !important;
+  }
 }
 
 
