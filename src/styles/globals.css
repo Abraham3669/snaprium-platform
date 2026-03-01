@@ -1928,9 +1928,15 @@ header.header {
 }
 
 .upgrade-btn svg {
+  width: 16px;              /* SVG size stays the same */
+  height: 16px;
   background: rgba(255, 255, 255, 0.18);
-  border-radius: 8px;
-  padding: 4px; /* keeping your original size */
+  border-radius: 40%;       /* perfect circle */
+  padding: 8px;            /* keep the large circle */
+  box-sizing: content-box;  /* ensures padding doesn’t shrink the SVG */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.25s ease;
 }
 
@@ -1945,120 +1951,93 @@ header.header {
 
 
 /* =========================================
-   UPGRADE MODAL & FULL PAGE (Refined)
+   SNAPRIUM UPGRADE SYSTEM (Professional v2)
 ========================================= */
 
-/* UPGRADE MODAL (limit popup) */
+/* ================= Overlay ================= */
+
 .upgrade-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(6px);
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(10px);
   z-index: 5000;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
+  padding: 1.2rem;
 }
+
+/* ================= Modal ================= */
 
 .upgrade-modal {
   position: relative;
   width: 100%;
-  max-width: 1050px;
-  max-height: 90vh;
+  max-width: 980px;
+  max-height: 92vh;
   overflow-y: auto;
   background: var(--surface);
-  border-radius: var(--radius);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-  padding: 2.8rem 2rem;
-  color: var(--text-primary);
+  border-radius: 22px;
+  padding: clamp(2rem, 4vw, 3rem);
+  border: 1px solid var(--border);
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.55);
+  animation: modalFade 0.35s ease;
 }
 
-/* Close Button */
+@keyframes modalFade {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ================= Close Button ================= */
+
 .upgrade-close {
   position: absolute;
-  top: 1.25rem;
-  right: 1.25rem;
-  background: none;
+  top: 1.2rem;
+  right: 1.2rem;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
   border: none;
-  font-size: 1.8rem;
-  color: var(--text-secondary);
+  background: rgba(255,255,255,0.06);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: 0.25s ease;
 }
 
 .upgrade-close:hover {
-  color: var(--accent);
-  transform: scale(1.1);
+  background: var(--accent);
+  color: #fff;
+  transform: rotate(90deg);
 }
 
-/* Modal Header */
+/* ================= Header ================= */
+
 .upgrade-header {
   text-align: center;
-  max-width: 760px;
+  max-width: 680px;
   margin: 0 auto 3rem;
 }
 
-.upgrade-title,
 .upgrade-header h2 {
-  font-size: clamp(1.9rem, 4.2vw, 2.6rem);
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
   font-weight: 800;
   margin-bottom: 1rem;
-  line-height: 1.25;
-  letter-spacing: -0.3px;
-  color: var(--text-primary);
+  letter-spacing: -0.4px;
 }
 
-.upgrade-subtitle,
 .upgrade-header p {
-  font-size: clamp(1rem, 2.2vw, 1.15rem);
+  font-size: 1.05rem;
   color: var(--text-secondary);
   line-height: 1.6;
 }
 
-/* Billing Toggle (for full page) */
-.billing-toggle {
-  display: inline-flex;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 0.4rem;
-  margin: 2rem 0;
-  box-shadow: var(--shadow-sm);
-}
+/* ================= Pricing Grid ================= */
 
-.billing-toggle button {
-  padding: 0.65rem 1.4rem;
-  border: none;
-  background: transparent;
-  font-weight: 600;
-  color: var(--text-secondary);
-  cursor: pointer;
-  border-radius: 999px;
-  transition: all 0.25s ease;
-}
-
-.billing-toggle button.active {
-  background: var(--accent);
-  color: #fff;
-}
-
-.save-badge {
-  font-size: 0.8rem;
-  background: #10b981;
-  color: #fff;
-  padding: 0.25rem 0.7rem;
-  border-radius: 999px;
-  margin-left: 0.5rem;
-}
-
-/* Pricing Grid (full page) */
 .pricing-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 2rem;
-  width: 100%;
-  max-width: 1150px;
+  max-width: 1100px;
   margin: 0 auto;
 }
 
@@ -2068,52 +2047,122 @@ header.header {
   }
 }
 
-/* Pricing Card */
+/* ================= Pricing Card ================= */
+
 .pricing-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 2.4rem 1.8rem;
-  text-align: center;
   position: relative;
-  transition: all 0.3s ease;
+  border-radius: 20px;
+  padding: 2.2rem 1.8rem;
+  text-align: center;
+
+  /* Strong visual separation */
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.05),
+    rgba(255,255,255,0.02)
+  );
+  backdrop-filter: blur(6px);
+
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: 
+    0 15px 35px rgba(0,0,0,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+
+  transition: all 0.35s ease;
 }
 
 .pricing-card:hover {
   transform: translateY(-8px);
-  box-shadow: var(--shadow-md);
+  box-shadow: 
+    0 25px 55px rgba(0,0,0,0.45),
+    inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
-/* Pro Highlight */
+/* Subtle premium edge glow */
+.pricing-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(255,255,255,0.15),
+    transparent 60%
+  );
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  pointer-events: none;
+}
+
+/* ================= Pro Highlight ================= */
+
 .pricing-card.pro {
   border: 2px solid var(--accent);
-  background: rgba(var(--accent-rgb), 0.04);
-  transform: scale(1.04);
+  box-shadow:
+    0 20px 60px rgba(var(--accent-rgb), 0.35),
+    0 15px 35px rgba(0,0,0,0.4);
+  transform: scale(1.05);
 }
 
 .pricing-card.pro:hover {
-  transform: scale(1.06);
+  transform: scale(1.07);
 }
 
-/* Popular Badge */
+/* ================= Premium Styling ================= */
+
+.pricing-card.premium .plan-cta {
+  background: transparent;
+  border: 2px solid var(--accent);
+  color: var(--accent);
+}
+
+.pricing-card.premium .plan-cta:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ================= Popular Badge ================= */
+
 .popular-badge {
   position: absolute;
-  top: -15px;
+  top: -14px;
   left: 50%;
   transform: translateX(-50%);
   background: var(--accent);
   color: #fff;
-  font-size: 0.85rem;
+
+  font-size: 0.75rem;
   font-weight: 700;
-  padding: 0.4rem 1.2rem;
+  letter-spacing: 0.5px;
+
+  padding: 0.4rem 1.1rem;
   border-radius: 999px;
+
+  box-shadow: 0 8px 20px rgba(var(--accent-rgb), 0.35);
+
+  /* 🔥 Prevent wrapping */
+  white-space: nowrap;
+  display: inline-block;
 }
 
-/* Plan Text */
+@media (max-width: 480px) {
+  .popular-badge {
+    font-size: 0.7rem;
+    padding: 0.35rem 0.9rem;
+  }
+}
+
+
+
+/* ================= Plan Text ================= */
+
 .plan-name {
-  font-size: 1.7rem;
+  font-size: 1.4rem;
   font-weight: 700;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.6rem;
 }
 
 .plan-price {
@@ -2124,145 +2173,114 @@ header.header {
 }
 
 .plan-price span {
-  font-size: 0.95rem;
-  font-weight: 500;
+  font-size: 0.9rem;
   color: var(--text-secondary);
 }
 
 .plan-desc {
   font-size: 1.05rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.6rem;
+  color: var(--text-primary);
 }
 
 .plan-detail {
   font-size: 0.95rem;
   color: var(--text-secondary);
   line-height: 1.6;
-  margin-bottom: 1.8rem;
+  margin-bottom: 1.6rem;
+  max-width: 280px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-/* CTA Button */
+/* ================= CTA Buttons ================= */
+
 .plan-cta {
   width: 100%;
-  padding: 1.05rem;
-  border-radius: 10px;
-  font-size: 1rem;
+  padding: 1rem;
+  border-radius: 14px;
   font-weight: 600;
+  font-size: 1rem;
   cursor: pointer;
-  transition: all 0.25s ease;
   border: none;
+  transition: 0.25s ease;
 }
 
 .plan-cta.primary {
-  background: var(--accent);
+  background: linear-gradient(
+    135deg,
+    var(--accent),
+    var(--accent-dark)
+  );
   color: #fff;
+  box-shadow: 0 10px 25px rgba(var(--accent-rgb), 0.4);
 }
 
 .plan-cta.primary:hover {
-  background: var(--accent-dark);
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: 0 16px 35px rgba(var(--accent-rgb), 0.5);
 }
 
 .plan-cta.disabled {
-  background: var(--border);
+  background: rgba(255,255,255,0.08);
   color: var(--text-secondary);
   cursor: not-allowed;
 }
 
-/* Full Upgrade Page Wrapper */
+/* ================= Upgrade Page ================= */
+
 .upgrade-page {
   min-height: 100vh;
   background: var(--bg);
-  padding: clamp(4rem, 8vw, 6rem) 1.5rem 4rem;
+  padding: clamp(3rem, 6vw, 6rem) 1.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-/* FAQ Section */
+/* ================= FAQ ================= */
+
 .upgrade-faq {
   margin-top: 4rem;
   text-align: center;
+  max-width: 700px;
   color: var(--text-secondary);
-  max-width: 750px;
 }
 
 .upgrade-faq h3 {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   margin-bottom: 1rem;
 }
 
-/* Guest Toast (for sign-in nudge) */
-.guest-toast {
-  background: var(--surface);
-  color: var(--text-primary);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-md);
-  padding: 1.5rem;
-  text-align: center;
-  font-size: 1rem;
-}
+/* ================= Mobile Optimization ================= */
 
-.guest-toast p {
-  margin-bottom: 1rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.toast-btn {
-  padding: 0.75rem 1.4rem;
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.25s ease;
-}
-
-.toast-btn:hover {
-  background: var(--accent-dark);
-  transform: translateY(-1.5px);
-}
-
-/* Mobile Adjustments for Full Page */
 @media (max-width: 768px) {
-  .pricing-grid {
-    gap: 1.5rem;
-  }
 
   .pricing-card {
-    padding: 2rem 1.5rem;
+    padding: 1.8rem 1.4rem;
   }
 
   .plan-price {
-    font-size: 2rem;
+    font-size: 1.9rem;
   }
 
-  .billing-toggle button {
-    padding: 0.6rem 1.2rem;
-    font-size: 0.95rem;
+  .plan-desc {
+    font-size: 1rem;
+  }
+
+  .plan-detail {
+    font-size: 0.9rem;
+  }
+
+  .pricing-card.pro {
+    transform: none;
+  }
+
+  .plan-cta {
+    padding: 0.9rem;
   }
 }
-
-
-
-.upgrade-actions {
-  display: flex;
-  justify-content: center;
-  margin-top: 2rem;
-}
-
-.upgrade-btn.full-width {
-  width: 100%;
-  max-width: 400px;
-  padding: 1.2rem 2rem;
-  font-size: 1.1rem;
-  font-weight: 600;
-}
-
 
 
 
