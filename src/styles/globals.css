@@ -599,13 +599,13 @@ header.header {
 
 .result-panel-header h2 {
   margin: 0;
-  font-size: 2rem;          /* bigger for emphasis */
-  font-weight: 800;         /* bold but clean */
-  font-family: 'Inter', 'Roboto', 'Arial', sans-serif; /* professional sans-serif */
-  letter-spacing: -0.5px;   /* tight, modern look */
+  font-size: 2.8rem;          /* clearly bigger */
+  font-weight: 900;           /* strongest Montserrat weight */
+  font-family: 'Montserrat', sans-serif;
+  letter-spacing: 0.4px;      /* slight width without looking spaced out */
+  line-height: 1.05;          /* compact and strong */
   color: var(--text-primary);
 }
-
 
 .result-panel-header {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
