@@ -131,7 +131,7 @@ function App() {
     const plan = data.subscription || 'free';
     const solves = data.solves || 0;
 
-    const limits = { free: 100, pro: 75, premium: 150 };
+    const limits = { free: 15, pro: 75, premium: 150 };
     const currentLimit = limits[plan] || Infinity;
 
     if (solves >= currentLimit) {
