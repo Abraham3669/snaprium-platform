@@ -599,11 +599,11 @@ header.header {
 
 .result-panel-header h2 {
   margin: 0;
-  font-size: 2rem;            /* a little smaller */
-  font-weight: 900;           /* strongest weight */
+  font-size: clamp(1.6rem, 5vw, 2rem);  /* scales between 1.6rem (mobile) and 2rem (desktop) */
+  font-weight: 900;                     /* strongest weight, bold and clean */
   font-family: 'Montserrat', sans-serif;
-  letter-spacing: -0.6px;     /* tighter = denser = bolder feel */
-  line-height: 1.02;          /* compact and strong */
+  letter-spacing: -0.5px;               /* slightly tighter but not cramped */
+  line-height: 1.1;                     /* better spacing for mobile */
   color: var(--text-primary);
 }
 
@@ -613,20 +613,25 @@ header.header {
 
 
 
-/* ================= Close Button – Clean Accent Style ================= */
+/* ================= Close Button – Clean Black ================= */
 .result-panel-header .close-btn {
-  font-size: 2.2rem;          /* bigger */
-  background: none;           /* remove background */
+  font-size: 2.2rem;        /* slightly bigger */
+  background: none;         
   border: none;
   padding: 0;
-  color: var(--accent);       /* your blue */
+  color: #000;              /* solid black */
   cursor: pointer;
   transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
 .result-panel-header .close-btn:hover {
-  transform: scale(1.15);     /* smooth pop */
-  opacity: 0.8;               /* subtle interaction */
+  transform: scale(1.15);
+  opacity: 0.7;
+}
+
+/* Dark mode adjustment so it’s visible */
+[data-theme="dark"] .result-panel-header .close-btn {
+  color: #fff;
 }
 /* Panel content */
 .result-panel-content {
@@ -1303,12 +1308,11 @@ header.header {
   align-items: center;
   gap: 0.8rem;
 
-  flex-wrap: wrap;        /* allows clean wrapping */
+  flex-wrap: wrap;
   text-align: center;
 }
 
 /* ---------- Feedback Buttons (Responsive Professional) ---------- */
-
 .feedback-btn {
   display: inline-flex;
   align-items: center;
@@ -1322,7 +1326,7 @@ header.header {
   font-weight: 600;
 
   border-radius: var(--radius-pill);
-  border: 1.5px solid var(--border);
+  border: 1.5px solid var(--accent);  /* always blue border */
 
   background: transparent;
   color: var(--text-secondary);
@@ -1335,26 +1339,36 @@ header.header {
 /* Hover */
 .feedback-btn:hover {
   transform: translateY(-2px);
-  border-color: var(--accent);
-  color: var(--accent);
+  color: var(--accent);               /* text turns accent blue */
   box-shadow: 0 6px 16px var(--accent-glow);
 }
 
-/* Active (stays blue) */
+/* Active (clicked) — filled blue */
 .feedback-btn.active {
-  background: var(--accent);
-  color: #fff;
-  border-color: var(--accent);
-  box-shadow: 0 6px 20px var(--accent-glow);
+  background: var(--accent);          /* blue fill */
+  color: #ffffff;                      /* white text */
+  border-color: var(--accent);        /* accent border stays */
+  box-shadow: 0 8px 24px var(--accent-glow);
+  transform: translateY(-1px);
 }
 
 /* Dark mode */
 [data-theme="dark"] .feedback-btn {
-  border-color: rgba(255,255,255,0.08);
+  border-color: var(--accent);        /* always blue border in dark mode too */
   color: var(--text-secondary);
 }
 
+[data-theme="dark"] .feedback-btn:hover {
+  color: var(--accent);
+}
 
+[data-theme="dark"] .feedback-btn.active {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+}
+
+/* Mobile adjustments */
 @media (max-width: 480px) {
   .feedback-bar {
     gap: 0.6rem;
@@ -1367,42 +1381,6 @@ header.header {
     font-size: 0.8rem;
   }
 }
-
-
-
-/* Hover effect */
-.feedback-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px var(--accent-glow);
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-/* Active (clicked) — stays blue */
-.feedback-btn.active {
-  background: var(--accent);
-  color: #ffffff;
-  border-color: var(--accent);
-  box-shadow: 0 8px 24px var(--accent-glow);
-  transform: translateY(-1px);
-}
-
-/* Dark mode refinement */
-[data-theme="dark"] .feedback-btn {
-  border-color: rgba(255,255,255,0.08);
-  color: var(--text-secondary);
-}
-
-[data-theme="dark"] .feedback-btn:hover {
-  color: var(--accent);
-  border-color: var(--accent);
-}
-
-[data-theme="dark"] .feedback-btn.active {
-  background: var(--accent);
-  color: #ffffff;
-}
-
 
 
 
@@ -2290,33 +2268,72 @@ header.header {
 
 
 /* ─────────────────────────────────────────────
-   ResultPanel – Fix Color on Final Answer (Broad Match)
+   ResultPanel – Step-by-Step Improvements
 ───────────────────────────────────────────── */
 
-/* Keep math normal + bold where you want */
-.solution-area .katex,
-.solution-area .katex-display {
-  font-size: 1.1em !important;
-  font-weight: 600 !important; /* keep your bold math */
-  margin: 1.4rem 0 !important;
-  color: var(--text-primary) !important;
+/* Step titles – more grey/faded */
+.solution-area h1,
+.solution-area h2,
+.solution-area h3,
+.solution-area h4,
+.solution-area strong,
+.solution-area b,
+.solution-area .step-title,
+.solution-area p:has(strong:first-child) {
+  color: var(--text-secondary) !important; /* faded grey */
+  opacity: 0.85 !important;                /* slightly transparent for fade effect */
+  font-weight: 600 !important;
+  margin: 1.8rem 0 0.8rem !important;      /* closer top/bottom spacing */
+  padding-bottom: 0.6rem !important;
+  position: relative;
 }
 
-/* All paragraphs – normal size */
-.solution-area p {
+/* Thin horizontal line after every step title */
+.solution-area h1::after,
+.solution-area h2::after,
+.solution-area h3::after,
+.solution-area h4::after,
+.solution-area strong::after,
+.solution-area b::after,
+.solution-area .step-title::after,
+.solution-area p:has(strong:first-child)::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 60px;
+  height: 1px;
+  background: var(--border-light);         /* thin grey line */
+  opacity: 0.6;
+}
+
+/* Paragraphs / solutions – normal color, closer spacing */
+.solution-area p,
+.solution-area div,
+.solution-area .solution-text,
+.solution-area .explanation {
   font-size: 1rem !important;
-  line-height: 1.8 !important;
-  margin: 1.2rem 0 !important;
-  color: var(--text-secondary) !important; /* greyish */
-  font-weight: 400 !important; /* remove bold */
+  line-height: 1.7 !important;             /* slightly tighter line height */
+  margin: 0.9rem 0 1.4rem !important;      /* reduced vertical spacing */
+  color: var(--text-primary) !important;
+  padding-left: 0.8rem !important;         /* tiny left indent for readability */
 }
 
-/* FINAL ANSWER COLOR – super broad match + forced */
-.solution-area p {
-  color: var(--text-secondary) !important; /* fallback grey */
+/* Add thin line after each paragraph/solution (before next step) */
+.solution-area p::after,
+.solution-area div::after,
+.solution-area .solution-text::after,
+.solution-area .explanation::after {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 1px;
+  background: var(--border-light);
+  margin: 1.2rem 0 0.8rem !important;      /* space above/below line */
+  opacity: 0.5;
 }
 
-/* Target ANY paragraph containing final/answer/result words */
+/* Final answer stays bold/accented – no change here */
 .solution-area p:is(
   :contains("final"),
   :contains("answer"),
@@ -2326,156 +2343,43 @@ header.header {
   :contains("thus"),
   :contains("=")
 ) {
-  color: var(--accent) !important;       
-  font-weight: 800 !important;
-  font-size: 1.25rem !important;         
-  text-align: center !important;
-  margin: 3rem 0 1.5rem !important;
-  letter-spacing: 0.03em !important;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-}
-
-/* Glow underline on final answer line */
-.solution-area p:is(
-  :contains("final"),
-  :contains("answer"),
-  :contains("result"),
-  :contains("therefore"),
-  :contains("so the"),
-  :contains("thus"),
-  :contains("=")
-)::after {
-  content: "" !important;
-  position: absolute !important;
-  left: 50% !important;
-  bottom: -8px !important;
-  width: 120px !important;
-  height: 4px !important;
-  background: var(--accent-glow) !important;
-  filter: blur(10px) !important;
-  opacity: 0.6 !important;
-  transform: translateX(-50%) !important;
-  border-radius: 50% !important;
-  z-index: -1 !important;
-}
-
-/* Math after final answer – bold + slightly bigger */
-.solution-area p:is(
-  :contains("final"),
-  :contains("answer"),
-  :contains("result"),
-  :contains("therefore"),
-  :contains("so the"),
-  :contains("thus"),
-  :contains("=")
-) ~ .katex-display,
-.solution-area p:is(
-  :contains("final"),
-  :contains("answer"),
-  :contains("result"),
-  :contains("therefore"),
-  :contains("so the"),
-  :contains("thus"),
-  :contains("=")
-) ~ .katex {
-  font-size: 1.35em !important;
-  font-weight: 800 !important;
-  margin: 1.5rem 0 2rem !important;
-  text-align: center !important;
-  display: block !important;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* Mobile */
-@media (max-width: 768px) {
-  .solution-area p:is(
-    :contains("final"),
-    :contains("answer"),
-    :contains("result"),
-    :contains("therefore"),
-    :contains("so the"),
-    :contains("thus"),
-    :contains("=")
-  ) {
-    font-size: 1.15rem !important;
-  }
-
-  .solution-area p:is(
-    :contains("final"),
-    :contains("answer"),
-    :contains("result"),
-    :contains("therefore"),
-    :contains("so the"),
-    :contains("thus"),
-    :contains("=")
-  ) ~ .katex-display,
-  .solution-area p:is(
-    :contains("final"),
-    :contains("answer"),
-    :contains("result"),
-    :contains("therefore"),
-    :contains("so the"),
-    :contains("thus"),
-    :contains("=")
-  ) ~ .katex {
-    font-size: 1.25em !important;
-  }
-}
-
-
-
-/* FINAL MATH ANSWER – bigger + no box completely */
-.solution-area p:is(
-  :contains("final answer"),
-  :contains("Final Answer"),
-  :contains("result"),
-  :contains("Result")
-) ~ .katex-display,
-.solution-area p:is(
-  :contains("final answer"),
-  :contains("Final Answer"),
-  :contains("result"),
-  :contains("Result")
-) ~ .katex {
-  font-size: 1.5em !important;
-  font-weight: 800 !important;
-  margin: 1.5rem 0 2rem !important;
-  text-align: center !important;
-  display: block !important;
   color: var(--accent) !important;
-
-  /* Remove box completely */
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-
-  /* Target inner spans KaTeX uses */
-}
-.solution-area p:is(
-  :contains("final answer"),
-  :contains("Final Answer"),
-  :contains("result"),
-  :contains("Result")
-) ~ .katex-display *,
-.solution-area p:is(
-  :contains("final answer"),
-  :contains("Final Answer"),
-  :contains("result"),
-  :contains("Result")
-) ~ .katex * {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
+  font-weight: 800 !important;
+  font-size: 1.25rem !important;
+  text-align: center !important;
+  margin: 2.5rem 0 1.8rem !important;
 }
 
+/* Math remains bold */
+.solution-area .katex,
+.solution-area .katex-display {
+  font-size: 1.1em !important;
+  font-weight: 600 !important;
+  margin: 1.2rem 0 !important;
+  color: var(--text-primary) !important;
+}
+
+/* Mobile – even tighter spacing */
+@media (max-width: 768px) {
+  .solution-area p,
+  .solution-area div,
+  .solution-area .solution-text {
+    margin: 0.7rem 0 1.1rem !important;
+  }
+
+  .solution-area h1,
+  .solution-area h2,
+  .solution-area h3,
+  .solution-area h4,
+  .solution-area strong {
+    margin: 1.4rem 0 0.6rem !important;
+  }
+
+  .solution-area p::after,
+  .solution-area div::after {
+    margin: 0.9rem 0 0.6rem !important;
+  }
+}
 
 
 
