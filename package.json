@@ -12,6 +12,7 @@
   "dependencies": {
     "cropperjs": "^1.6.2",
     "firebase": "^12.9.0",
+    "firebase-admin": "^13.7.0",
     "katex": "^0.16.28",
     "lucide-react": "^0.575.0",
     "micro": "^10.0.1",
