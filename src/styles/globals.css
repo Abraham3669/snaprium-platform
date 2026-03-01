@@ -2292,13 +2292,18 @@ header.header {
 
 
 
-/* Math solution itself – bold + normal size */
-.solution-area .katex,
-.solution-area .katex-display {
-  font-size: 1.1em !important;
-  font-weight: 600 !important;   /* ← this is what makes all math bold */
-  margin: 1.4rem 0 !important;
-  color: var(--text-primary) !important;
+/* Subtext (non-math paragraphs under step titles) – black + bold + close spacing */
+.solution-area p:not(:has(.katex)),
+.solution-area div:not(.katex-display):not(:has(.katex)),
+.solution-area .solution-text:not(:has(.katex)),
+.solution-area .explanation:not(:has(.katex)),
+.solution-area li:not(:has(.katex)) {
+  font-size: 0.95rem !important;
+  line-height: 1.62 !important;
+  margin: 0.4rem 0 0.7rem !important;     /* tight vertical spacing */
+  color: var(--text-primary) !important;   /* full black */
+  font-weight: 600 !important;             /* bold */
+  padding-left: 0.9rem !important;
 }
 
 
