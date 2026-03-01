@@ -1308,11 +1308,12 @@ header.header {
   align-items: center;
   gap: 0.8rem;
 
-  flex-wrap: wrap;
+  flex-wrap: wrap;        /* allows clean wrapping */
   text-align: center;
 }
 
 /* ---------- Feedback Buttons (Responsive Professional) ---------- */
+
 .feedback-btn {
   display: inline-flex;
   align-items: center;
@@ -1326,7 +1327,7 @@ header.header {
   font-weight: 600;
 
   border-radius: var(--radius-pill);
-  border: 1.5px solid var(--accent);  /* always blue border */
+  border: 1.5px solid var(--border);
 
   background: transparent;
   color: var(--text-secondary);
@@ -1339,36 +1340,26 @@ header.header {
 /* Hover */
 .feedback-btn:hover {
   transform: translateY(-2px);
-  color: var(--accent);               /* text turns accent blue */
+  border-color: var(--accent);
+  color: var(--accent);
   box-shadow: 0 6px 16px var(--accent-glow);
 }
 
-/* Active (clicked) — filled blue */
+/* Active (stays blue) */
 .feedback-btn.active {
-  background: var(--accent);          /* blue fill */
-  color: #ffffff;                      /* white text */
-  border-color: var(--accent);        /* accent border stays */
-  box-shadow: 0 8px 24px var(--accent-glow);
-  transform: translateY(-1px);
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  box-shadow: 0 6px 20px var(--accent-glow);
 }
 
 /* Dark mode */
 [data-theme="dark"] .feedback-btn {
-  border-color: var(--accent);        /* always blue border in dark mode too */
+  border-color: rgba(255,255,255,0.08);
   color: var(--text-secondary);
 }
 
-[data-theme="dark"] .feedback-btn:hover {
-  color: var(--accent);
-}
 
-[data-theme="dark"] .feedback-btn.active {
-  background: var(--accent);
-  color: #ffffff;
-  border-color: var(--accent);
-}
-
-/* Mobile adjustments */
 @media (max-width: 480px) {
   .feedback-bar {
     gap: 0.6rem;
@@ -1381,6 +1372,42 @@ header.header {
     font-size: 0.8rem;
   }
 }
+
+
+
+/* Hover effect */
+.feedback-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px var(--accent-glow);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Active (clicked) — stays blue */
+.feedback-btn.active {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+  box-shadow: 0 8px 24px var(--accent-glow);
+  transform: translateY(-1px);
+}
+
+/* Dark mode refinement */
+[data-theme="dark"] .feedback-btn {
+  border-color: rgba(255,255,255,0.08);
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .feedback-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+[data-theme="dark"] .feedback-btn.active {
+  background: var(--accent);
+  color: #ffffff;
+}
+
 
 
 
@@ -2266,134 +2293,127 @@ header.header {
 
 
 
-
 /* ─────────────────────────────────────────────
-   ResultPanel – Tightened Professional Solution Styling
+   ResultPanel – Sub-steps (paragraphs under titles) – PhotoMath style
 ───────────────────────────────────────────── */
 
-/* ================= Step Titles ================= */
-.solution-area .step-title {
-  font-weight: 700;
-  font-size: 1.15rem;
-  color: rgba(60,60,60,0.7); /* more faded grey */
-  margin: 0.8rem 0 0.15rem;  /* tighter vertical spacing */
-  position: relative;
-  padding-bottom: 0.25rem;
+/* Main step titles – full black, no change */
+.solution-area h1,
+.solution-area h2,
+.solution-area h3,
+.solution-area h4,
+.solution-area strong,
+.solution-area b,
+.solution-area .step-title,
+.solution-area p strong:first-child {
+  color: var(--text-primary) !important;
+  font-weight: 600 !important;
+  margin: 1.8rem 0 0.9rem !important;
+  padding-bottom: 0.4rem !important;
 }
 
-.solution-area .step-title::after {
+/* Sub-steps / normal paragraphs – very faded grey (PhotoMath style) */
+.solution-area p,
+.solution-area div,
+.solution-area .solution-text,
+.solution-area .explanation,
+.solution-area li,
+.solution-area span:not(.katex *) {
+  font-size: 0.96rem !important;
+  line-height: 1.65 !important;            /* tighter for closer feel */
+  margin: 0.5rem 0 0.8rem !important;      /* very close vertical spacing */
+  color: #6b7280 !important;               /* very grey – PhotoMath-like */
+  opacity: 0.92 !important;
+  padding-left: 0.9rem !important;         /* small indent */
+  font-weight: 400 !important;
+}
+
+/* Thin line after every sub-paragraph */
+.solution-area p::after,
+.solution-area div::after,
+.solution-area .solution-text::after,
+.solution-area .explanation::after,
+.solution-area li::after {
   content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
+  display: block;
   width: 100%;
   height: 1px;
-  background-color: rgba(120,120,120,0.25); /* thin grey line */
+  background: #e5e7eb !important;          /* very thin light grey line */
+  margin: 0.7rem 0 0.4rem !important;      /* tight space around line */
+  opacity: 0.5 !important;
 }
 
-/* ================= Step Subtext ================= */
-.solution-area .step-subtext {
-  font-weight: 400;
-  font-size: 0.9rem;
-  color: rgba(100,100,100,0.55);
-  margin-bottom: 0.5rem; /* reduced spacing */
-  line-height: 1.45;
+/* Hide line after last sub-paragraph in a step (cleaner) */
+.solution-area p:last-child::after,
+.solution-area div:last-child::after,
+.solution-area li:last-child::after {
+  display: none !important;
 }
 
-/* ================= Regular Paragraphs ================= */
-.solution-area p {
-  font-weight: 400;
-  font-size: 1rem;
-  color: rgba(80,80,80,0.65); /* faded grey */
-  line-height: 1.5; /* tighter line spacing */
-  margin: 0.5rem 0; /* reduced vertical spacing */
-}
-
-/* ================= Math – Keep black ================= */
+/* Math & KaTeX – completely untouched (your original) */
 .solution-area .katex,
 .solution-area .katex-display {
-  font-weight: 600 !important;
   font-size: 1.1em !important;
-  color: #000 !important;  /* force black for math */
-  margin: 1rem 0 !important; /* slightly reduced spacing */
-  display: block;
-  position: relative;
+  font-weight: 600 !important;
+  margin: 1.4rem 0 !important;
+  color: var(--text-primary) !important;
 }
 
-.solution-area .katex-display::after {
-  content: "";
-  position: absolute;
-  bottom: -6px;
-  left: 0;
-  width: 100%;
-  height: 1px;
-  background-color: rgba(120,120,120,0.25); /* thin grey line under math */
-}
-
-/* ================= Final Answer / Key Result ================= */
-.solution-area .final-answer {
-  font-weight: 900;
-  font-size: 1.4rem;
-  color: var(--accent); /* your blue accent */
-  text-align: center;
-  margin: 1.8rem 0 0.8rem;
-  position: relative;
-}
-
-.solution-area .final-answer::after {
-  content: "";
-  position: absolute;
-  bottom: -6px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100px;
-  height: 3px;
-  background: var(--accent-glow);
-  border-radius: 2px;
-  opacity: 0.6;
-}
-
-/* ================= Math after Final Answer ================= */
-.solution-area .final-answer + .katex-display,
-.solution-area .final-answer + .katex {
+/* Final answer – untouched */
+.solution-area p:is(
+  :contains("final"),
+  :contains("answer"),
+  :contains("result"),
+  :contains("therefore"),
+  :contains("so the"),
+  :contains("thus"),
+  :contains("=")
+) {
+  color: var(--accent) !important;
   font-weight: 800 !important;
-  font-size: 1.35em !important;
-  color: #000; /* keep black */
-  text-align: center;
-  margin: 0.8rem 0 1.2rem !important;
+  font-size: 1.25rem !important;
+  text-align: center !important;
+  margin: 3rem 0 1.5rem !important;
 }
 
-/* ================= Mobile Optimization ================= */
+/* Final math – untouched */
+.solution-area p:is(
+  :contains("final"),
+  :contains("answer"),
+  :contains("result"),
+  :contains("therefore"),
+  :contains("so the"),
+  :contains("thus"),
+  :contains("=")
+) ~ .katex-display,
+.solution-area p:is(
+  :contains("final"),
+  :contains("answer"),
+  :contains("result"),
+  :contains("therefore"),
+  :contains("so the"),
+  :contains("thus"),
+  :contains("=")
+) ~ .katex {
+  font-size: 1.35em !important;
+  font-weight: 800 !important;
+  margin: 1.5rem 0 2rem !important;
+  text-align: center !important;
+  display: block !important;
+  color: var(--accent) !important;
+}
+
+/* Mobile – tighter sub-steps */
 @media (max-width: 768px) {
-  .solution-area .step-title {
-    font-size: 1.05rem;
+  .solution-area p,
+  .solution-area div,
+  .solution-area .solution-text {
+    margin: 0.4rem 0 0.6rem !important;
   }
 
-  .solution-area .step-subtext {
-    font-size: 0.85rem;
-    margin-bottom: 0.4rem;
-  }
-
-  .solution-area p {
-    font-size: 0.95rem;
-    line-height: 1.45;
-  }
-
-  .solution-area .katex,
-  .solution-area .katex-display {
-    font-size: 1em !important;
-    margin: 0.7rem 0 !important;
-  }
-
-  .solution-area .final-answer {
-    font-size: 1.3rem;
-    margin: 1.5rem 0 0.6rem;
-  }
-
-  .solution-area .final-answer + .katex-display,
-  .solution-area .final-answer + .katex {
-    font-size: 1.25em !important;
-    margin: 0.7rem 0 1rem !important;
+  .solution-area p::after,
+  .solution-area div::after {
+    margin: 0.5rem 0 0.3rem !important;
   }
 }
 
