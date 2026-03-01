@@ -2268,24 +2268,15 @@ header.header {
 
 
 /* ─────────────────────────────────────────────
-   ResultPanel – Professional Solution Design
+   ResultPanel – Tightened Professional Solution Styling
 ───────────────────────────────────────────── */
-
-/* ================= Solution Area ================= */
-.solution-area {
-  font-family: 'Montserrat', sans-serif;
-  color: rgba(70,70,70,0.85);
-  line-height: 1.6;
-  margin: 0;
-  padding: 0;
-}
 
 /* ================= Step Titles ================= */
 .solution-area .step-title {
   font-weight: 700;
   font-size: 1.15rem;
-  color: rgba(60,60,60,0.75);
-  margin: 1.2rem 0 0.25rem; /* tighter vertical spacing */
+  color: rgba(60,60,60,0.7); /* more faded grey */
+  margin: 0.8rem 0 0.15rem;  /* tighter vertical spacing */
   position: relative;
   padding-bottom: 0.25rem;
 }
@@ -2300,31 +2291,31 @@ header.header {
   background-color: rgba(120,120,120,0.25); /* thin grey line */
 }
 
-/* ================= Step Subtext / Small Text ================= */
+/* ================= Step Subtext ================= */
 .solution-area .step-subtext {
   font-weight: 400;
   font-size: 0.9rem;
   color: rgba(100,100,100,0.55);
-  margin-bottom: 0.8rem; /* slightly smaller spacing after subtext */
-  line-height: 1.5;
+  margin-bottom: 0.5rem; /* reduced spacing */
+  line-height: 1.45;
 }
 
 /* ================= Regular Paragraphs ================= */
 .solution-area p {
   font-weight: 400;
   font-size: 1rem;
-  color: rgba(80,80,80,0.7); /* more faded grey for less emphasis */
-  line-height: 1.55; /* slightly tighter than before */
-  margin: 0.75rem 0; /* closer spacing */
+  color: rgba(80,80,80,0.65); /* faded grey */
+  line-height: 1.5; /* tighter line spacing */
+  margin: 0.5rem 0; /* reduced vertical spacing */
 }
 
-/* ================= Math – Regular & Display ================= */
+/* ================= Math – Keep black ================= */
 .solution-area .katex,
 .solution-area .katex-display {
   font-weight: 600 !important;
   font-size: 1.1em !important;
-  color: rgba(60,60,60,0.85) !important;
-  margin: 1rem 0 !important; /* closer spacing */
+  color: #000 !important;  /* force black for math */
+  margin: 1rem 0 !important; /* slightly reduced spacing */
   display: block;
   position: relative;
 }
@@ -2342,10 +2333,10 @@ header.header {
 /* ================= Final Answer / Key Result ================= */
 .solution-area .final-answer {
   font-weight: 900;
-  font-size: 1.45rem;
+  font-size: 1.4rem;
   color: var(--accent); /* your blue accent */
   text-align: center;
-  margin: 2rem 0 1rem;
+  margin: 1.8rem 0 0.8rem;
   position: relative;
 }
 
@@ -2367,9 +2358,9 @@ header.header {
 .solution-area .final-answer + .katex {
   font-weight: 800 !important;
   font-size: 1.35em !important;
-  color: var(--accent);
+  color: #000; /* keep black */
   text-align: center;
-  margin: 1rem 0 1.5rem !important;
+  margin: 0.8rem 0 1.2rem !important;
 }
 
 /* ================= Mobile Optimization ================= */
@@ -2380,7 +2371,7 @@ header.header {
 
   .solution-area .step-subtext {
     font-size: 0.85rem;
-    margin-bottom: 0.6rem;
+    margin-bottom: 0.4rem;
   }
 
   .solution-area p {
@@ -2391,18 +2382,18 @@ header.header {
   .solution-area .katex,
   .solution-area .katex-display {
     font-size: 1em !important;
-    margin: 0.8rem 0 !important;
+    margin: 0.7rem 0 !important;
   }
 
   .solution-area .final-answer {
     font-size: 1.3rem;
-    margin: 1.8rem 0 0.8rem;
+    margin: 1.5rem 0 0.6rem;
   }
 
   .solution-area .final-answer + .katex-display,
   .solution-area .final-answer + .katex {
     font-size: 1.25em !important;
-    margin: 0.8rem 0 1rem !important;
+    margin: 0.7rem 0 1rem !important;
   }
 }
 
