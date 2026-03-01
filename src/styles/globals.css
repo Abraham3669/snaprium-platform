@@ -2268,97 +2268,141 @@ header.header {
 
 
 /* ─────────────────────────────────────────────
-   ResultPanel – Sub-steps (paragraphs under titles) Improvements
+   ResultPanel – Professional Solution Design
 ───────────────────────────────────────────── */
 
-/* Main step titles – keep your existing (bold, primary color) */
-.solution-area h1,
-.solution-area h2,
-.solution-area h3,
-.solution-area h4,
-.solution-area strong,
-.solution-area b,
+/* ================= Solution Area ================= */
+.solution-area {
+  font-family: 'Montserrat', sans-serif;
+  color: rgba(70,70,70,0.85);
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+}
+
+/* ================= Step Titles ================= */
 .solution-area .step-title {
-  color: var(--text-primary) !important;
-  font-weight: 600 !important;
-  margin: 1.8rem 0 0.8rem !important;
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: rgba(60,60,60,0.75);
+  margin: 1.2rem 0 0.25rem; /* tighter vertical spacing */
+  position: relative;
+  padding-bottom: 0.25rem;
 }
 
-/* Sub-steps / normal paragraphs – faded grey, closer spacing */
-.solution-area p,
-.solution-area div,
-.solution-area .solution-text,
-.solution-area .explanation,
-.solution-area li,
-.solution-area span {
-  font-size: 0.96rem !important;           /* slightly smaller than main text */
-  line-height: 1.65 !important;            /* tighter line height */
-  margin: 0.6rem 0 0.9rem !important;      /* very close vertical spacing */
-  color: var(--text-secondary) !important; /* faded grey */
-  opacity: 0.9 !important;                 /* subtle fade */
-  padding-left: 0.8rem !important;         /* small indent for sub feel */
-}
-
-/* Thin horizontal line after EVERY sub-paragraph */
-.solution-area p::after,
-.solution-area div::after,
-.solution-area .solution-text::after,
-.solution-area .explanation::after,
-.solution-area li::after,
-.solution-area span::after {
+.solution-area .step-title::after {
   content: "";
-  display: block;
+  position: absolute;
+  bottom: 0;
+  left: 0;
   width: 100%;
   height: 1px;
-  background: var(--border-light);         /* thin light grey line */
-  margin: 0.8rem 0 0.5rem !important;      /* space above/below line */
-  opacity: 0.4 !important;
+  background-color: rgba(120,120,120,0.25); /* thin grey line */
 }
 
-/* Remove line from last paragraph in a step (optional – cleaner look) */
-.solution-area p:last-child::after,
-.solution-area div:last-child::after {
-  display: none !important;
+/* ================= Step Subtext / Small Text ================= */
+.solution-area .step-subtext {
+  font-weight: 400;
+  font-size: 0.9rem;
+  color: rgba(100,100,100,0.55);
+  margin-bottom: 0.8rem; /* slightly smaller spacing after subtext */
+  line-height: 1.5;
 }
 
-/* Final answer stays untouched – bold/accented */
-.solution-area p:is(
-  :contains("final"),
-  :contains("answer"),
-  :contains("result"),
-  :contains("therefore"),
-  :contains("so the"),
-  :contains("thus"),
-  :contains("=")
-) {
-  color: var(--accent) !important;
-  font-weight: 800 !important;
-  font-size: 1.25rem !important;
-  text-align: center !important;
-  margin: 2.5rem 0 1.8rem !important;
-  opacity: 1 !important; /* full opacity for final */
+/* ================= Regular Paragraphs ================= */
+.solution-area p {
+  font-weight: 400;
+  font-size: 1rem;
+  color: rgba(80,80,80,0.7); /* more faded grey for less emphasis */
+  line-height: 1.55; /* slightly tighter than before */
+  margin: 0.75rem 0; /* closer spacing */
 }
 
-/* Math remains bold */
+/* ================= Math – Regular & Display ================= */
 .solution-area .katex,
 .solution-area .katex-display {
-  font-size: 1.1em !important;
   font-weight: 600 !important;
-  margin: 1.2rem 0 !important;
-  color: var(--text-primary) !important;
+  font-size: 1.1em !important;
+  color: rgba(60,60,60,0.85) !important;
+  margin: 1rem 0 !important; /* closer spacing */
+  display: block;
+  position: relative;
 }
 
-/* Mobile – even tighter for sub-steps */
+.solution-area .katex-display::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background-color: rgba(120,120,120,0.25); /* thin grey line under math */
+}
+
+/* ================= Final Answer / Key Result ================= */
+.solution-area .final-answer {
+  font-weight: 900;
+  font-size: 1.45rem;
+  color: var(--accent); /* your blue accent */
+  text-align: center;
+  margin: 2rem 0 1rem;
+  position: relative;
+}
+
+.solution-area .final-answer::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 3px;
+  background: var(--accent-glow);
+  border-radius: 2px;
+  opacity: 0.6;
+}
+
+/* ================= Math after Final Answer ================= */
+.solution-area .final-answer + .katex-display,
+.solution-area .final-answer + .katex {
+  font-weight: 800 !important;
+  font-size: 1.35em !important;
+  color: var(--accent);
+  text-align: center;
+  margin: 1rem 0 1.5rem !important;
+}
+
+/* ================= Mobile Optimization ================= */
 @media (max-width: 768px) {
-  .solution-area p,
-  .solution-area div,
-  .solution-area .solution-text {
-    margin: 0.5rem 0 0.7rem !important;
+  .solution-area .step-title {
+    font-size: 1.05rem;
   }
 
-  .solution-area p::after,
-  .solution-area div::after {
-    margin: 0.6rem 0 0.4rem !important;
+  .solution-area .step-subtext {
+    font-size: 0.85rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .solution-area p {
+    font-size: 0.95rem;
+    line-height: 1.45;
+  }
+
+  .solution-area .katex,
+  .solution-area .katex-display {
+    font-size: 1em !important;
+    margin: 0.8rem 0 !important;
+  }
+
+  .solution-area .final-answer {
+    font-size: 1.3rem;
+    margin: 1.8rem 0 0.8rem;
+  }
+
+  .solution-area .final-answer + .katex-display,
+  .solution-area .final-answer + .katex {
+    font-size: 1.25em !important;
+    margin: 0.8rem 0 1rem !important;
   }
 }
 
