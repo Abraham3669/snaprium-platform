@@ -2268,72 +2268,60 @@ header.header {
 
 
 /* ─────────────────────────────────────────────
-   ResultPanel – Step-by-Step Improvements
+   ResultPanel – Sub-steps (paragraphs under titles) Improvements
 ───────────────────────────────────────────── */
 
-/* Step titles – more grey/faded */
+/* Main step titles – keep your existing (bold, primary color) */
 .solution-area h1,
 .solution-area h2,
 .solution-area h3,
 .solution-area h4,
 .solution-area strong,
 .solution-area b,
-.solution-area .step-title,
-.solution-area p:has(strong:first-child) {
-  color: var(--text-secondary) !important; /* faded grey */
-  opacity: 0.85 !important;                /* slightly transparent for fade effect */
+.solution-area .step-title {
+  color: var(--text-primary) !important;
   font-weight: 600 !important;
-  margin: 1.8rem 0 0.8rem !important;      /* closer top/bottom spacing */
-  padding-bottom: 0.6rem !important;
-  position: relative;
+  margin: 1.8rem 0 0.8rem !important;
 }
 
-/* Thin horizontal line after every step title */
-.solution-area h1::after,
-.solution-area h2::after,
-.solution-area h3::after,
-.solution-area h4::after,
-.solution-area strong::after,
-.solution-area b::after,
-.solution-area .step-title::after,
-.solution-area p:has(strong:first-child)::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 60px;
-  height: 1px;
-  background: var(--border-light);         /* thin grey line */
-  opacity: 0.6;
-}
-
-/* Paragraphs / solutions – normal color, closer spacing */
+/* Sub-steps / normal paragraphs – faded grey, closer spacing */
 .solution-area p,
 .solution-area div,
 .solution-area .solution-text,
-.solution-area .explanation {
-  font-size: 1rem !important;
-  line-height: 1.7 !important;             /* slightly tighter line height */
-  margin: 0.9rem 0 1.4rem !important;      /* reduced vertical spacing */
-  color: var(--text-primary) !important;
-  padding-left: 0.8rem !important;         /* tiny left indent for readability */
+.solution-area .explanation,
+.solution-area li,
+.solution-area span {
+  font-size: 0.96rem !important;           /* slightly smaller than main text */
+  line-height: 1.65 !important;            /* tighter line height */
+  margin: 0.6rem 0 0.9rem !important;      /* very close vertical spacing */
+  color: var(--text-secondary) !important; /* faded grey */
+  opacity: 0.9 !important;                 /* subtle fade */
+  padding-left: 0.8rem !important;         /* small indent for sub feel */
 }
 
-/* Add thin line after each paragraph/solution (before next step) */
+/* Thin horizontal line after EVERY sub-paragraph */
 .solution-area p::after,
 .solution-area div::after,
 .solution-area .solution-text::after,
-.solution-area .explanation::after {
+.solution-area .explanation::after,
+.solution-area li::after,
+.solution-area span::after {
   content: "";
   display: block;
   width: 100%;
   height: 1px;
-  background: var(--border-light);
-  margin: 1.2rem 0 0.8rem !important;      /* space above/below line */
-  opacity: 0.5;
+  background: var(--border-light);         /* thin light grey line */
+  margin: 0.8rem 0 0.5rem !important;      /* space above/below line */
+  opacity: 0.4 !important;
 }
 
-/* Final answer stays bold/accented – no change here */
+/* Remove line from last paragraph in a step (optional – cleaner look) */
+.solution-area p:last-child::after,
+.solution-area div:last-child::after {
+  display: none !important;
+}
+
+/* Final answer stays untouched – bold/accented */
 .solution-area p:is(
   :contains("final"),
   :contains("answer"),
@@ -2348,6 +2336,7 @@ header.header {
   font-size: 1.25rem !important;
   text-align: center !important;
   margin: 2.5rem 0 1.8rem !important;
+  opacity: 1 !important; /* full opacity for final */
 }
 
 /* Math remains bold */
@@ -2359,25 +2348,17 @@ header.header {
   color: var(--text-primary) !important;
 }
 
-/* Mobile – even tighter spacing */
+/* Mobile – even tighter for sub-steps */
 @media (max-width: 768px) {
   .solution-area p,
   .solution-area div,
   .solution-area .solution-text {
-    margin: 0.7rem 0 1.1rem !important;
-  }
-
-  .solution-area h1,
-  .solution-area h2,
-  .solution-area h3,
-  .solution-area h4,
-  .solution-area strong {
-    margin: 1.4rem 0 0.6rem !important;
+    margin: 0.5rem 0 0.7rem !important;
   }
 
   .solution-area p::after,
   .solution-area div::after {
-    margin: 0.9rem 0 0.6rem !important;
+    margin: 0.6rem 0 0.4rem !important;
   }
 }
 
