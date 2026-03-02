@@ -43,13 +43,13 @@ export default function ResultPanel({ result, loading, onClose }) {
         </div>
 
         {/* Solution Section */}
-<div className="solution-area">
- <ReactMarkdown
-  remarkPlugins={[remarkMath]}
-  rehypePlugins={[rehypeKatex]}
->
-  {prepareMathForKaTeX(result.text || '')}
-</ReactMarkdown>
+<div className="solution-area prose prose-lg dark:prose-invert max-w-none">
+  <ReactMarkdown
+    remarkPlugins={[remarkMath]}
+    rehypePlugins={[rehypeKatex]}
+  >
+    {prepareMathForKaTeX(result.text || '')}
+  </ReactMarkdown>
 
 
 {!loading && result?.text && (
@@ -90,6 +90,7 @@ export default function ResultPanel({ result, loading, onClose }) {
 }
 
 // Helper: Prepare text so KaTeX renders nicely
+// Helper: Prepare text so KaTeX renders nicely
 function prepareMathForKaTeX(rawText) {
   if (!rawText) return '';
 
@@ -107,18 +108,19 @@ function prepareMathForKaTeX(rawText) {
     '\\frac{$1}{$2}'
   );
 
-  // 3. Fix common model mistakes: single $ delimiters that should be display
-  //    We keep inline $…$ as inline, only force display when it makes sense
-  //    But most math tutors output display math with $$ already — so we preserve them
-
-  // Optional: If you *really* want ALL math blocks to be display math:
-  // text = text.replace(/\$([^\$]+)\$/g, '$$$$$1$$$$');
-
-  // But better: only upgrade when it contains \frac, \sqrt, sum, etc.
+  // ────────────────────────────────────────────────────────────────
+  // ADD YOUR NEW BLOCK HERE (or adjust if you already have something similar)
+  // This upgrades inline math → display math for sentences that look like
+  // they contain important explanatory steps / rules
   text = text.replace(
-    /\$([^$]*?(?:\\frac|\\sqrt|\\sum|\\int|\\lim)[^$]*?)\$/g,
+    /\$([^$]*?(?:derivative|rule|product rule|quotient|chain|integral|limit|sum|equals|therefore)[^$]*?)\$/gi,
     '$$$$$1$$$$'
   );
+  // ────────────────────────────────────────────────────────────────
+
+  // 3. Fix common model mistakes: single $ delimiters that should be display
+  //    (your existing optional block)
+  // text = text.replace(/\$([^\$]+)\$/g, '$$$$$1$$$$');
 
   // 4. Clean up extra spaces inside delimiters (helps KaTeX sometimes)
   text = text.replace(/\$\$[\s\n]+/g, '$$').replace(/[\s\n]+\$\$/g, '$$');
