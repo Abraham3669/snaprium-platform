@@ -2448,3 +2448,33 @@ header.header {
   align-items: center;
   height: 60px; /* Adjust as needed */
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Sign In with Email - Only color, theme-aware */
+.btn-primary {
+  background-color: var(--text-primary); /* adapts to light/dark theme */
+  color: var(--surface); /* text contrasts background */
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--accent); /* subtle hover color */
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
