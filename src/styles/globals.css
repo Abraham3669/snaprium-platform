@@ -2369,6 +2369,27 @@ header.header {
   }
 }
 
+/* ─────────────────────────────────────────────
+   FIX FOR INLINE MATH IN DESCRIPTIVE TEXT
+   (only affects text flowing into short inline math like $f'(x)$)
+───────────────────────────────────────────── */
+.solution-area .katex-html {
+  vertical-align: baseline !important;
+  /* If still slightly off → try one of these instead: */
+  /* vertical-align: middle; */
+  /* vertical-align: text-bottom; */
+  /* vertical-align: -0.06em; */
+}
+
+.solution-area .katex {
+  margin: 0 0.11em;                     /* tiny horizontal breathing room */
+  line-height: 1;
+}
+
+/* Helps paragraphs feel less jagged around inline math */
+.solution-area p {
+  line-height: 1.68 !important;         /* already set above — reinforcing */
+}
 
 
 
