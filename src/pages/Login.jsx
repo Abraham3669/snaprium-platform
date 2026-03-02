@@ -1,5 +1,4 @@
-// src/pages/Login.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { signInWithPopup, signInWithEmailAndPassword } from 'firebase/auth';
@@ -15,17 +14,19 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  if (user) {
-    navigate('/');
-    return null;
-  }
+  // ✅ Navigate to home if user is already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
     setError('');
     try {
       await signInWithPopup(auth, googleProvider);
-      navigate('/');
+      // navigate handled by useEffect
     } catch (err) {
       console.error('Google sign-in error:', err.code, err.message);
       setError(getFriendlyErrorMessage(err.code));
@@ -46,7 +47,7 @@ export default function Login() {
 
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password);
-      navigate('/');
+      // navigate handled by useEffect
     } catch (err) {
       console.error('Email sign-in error:', err.code, err.message);
       setError(getFriendlyErrorMessage(err.code));
