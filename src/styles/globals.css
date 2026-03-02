@@ -2330,23 +2330,22 @@ header.header {
 }
 
 /* ─────────────────────────────────────────────
-   IMPROVED THIN SEPARATOR – only between major steps
-   (appears after description + math group, not under every line)
+   THIN SEPARATOR – placed AFTER math blocks
+   (line appears right after each display math, before next text/title)
 ───────────────────────────────────────────── */
-.solution-area p:has(+ .katex-display)::after,
-.solution-area p:last-child::after {
+.solution-area .katex-display::after {
   content: "";
   display: block;
   width: 100%;
   height: 1px;
-  background: #e2e8f0;
-  margin: 1.4rem 0 1.8rem !important;  /* good space after the step */
-  opacity: 0.65;
+  background: #cbd5e1;                 /* slightly darker than #e2e8f0 for better visibility */
+  margin: 1.6rem 0 2rem !important;   /* more space below math → line → next step */
+  opacity: 0.8;                        /* more visible (was 0.65) */
 }
 
-/* Give breathing room after display math so steps feel separated */
-.solution-area .katex-display {
-  margin-bottom: 1.6rem !important;
+/* Extra breathing room before next title/description after the line */
+.solution-area .katex-display + * {
+  margin-top: 1.2rem !important;
 }
 
 /* Final answer – kept clean and prominent (but no heavy styling) */
@@ -2372,9 +2371,11 @@ header.header {
   .solution-area div:not(.katex-display) {
     margin: 0.45rem 0 0.85rem !important;
   }
-
   .solution-area .katex-display {
-    margin-bottom: 1.2rem !important;
+    margin: 0.8rem 0 1.2rem !important;
+  }
+  .solution-area .katex-display::after {
+    margin: 1.2rem 0 1.6rem !important;
   }
 }
 
@@ -2399,10 +2400,6 @@ header.header {
 .solution-area p {
   line-height: 1.68 !important;         /* already set above — reinforcing */
 }
-
-
-
-
 
 
 
