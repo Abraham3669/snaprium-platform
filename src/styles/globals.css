@@ -2291,7 +2291,6 @@ header.header {
 
 
 
-
 /* ─────────────────────────────────────────────
    New Clean Solution Styling – 2026 Professional Style
 ───────────────────────────────────────────── */
@@ -2327,21 +2326,27 @@ header.header {
   font-size: 1.12em !important;
   font-weight: 500 !important;         /* normal / medium weight – clean modern look */
   color: var(--text-primary) !important;
-  margin: 1rem 0 1.2rem !important;
+  margin: 1rem 0 1.2rem !important;    /* vertical spacing around math blocks */
 }
 
-/* Thin professional separator after each step */
-.solution-area p::after,
-.solution-area div:not(.katex-display)::after,
-.solution-area .solution-text::after,
-.solution-area .explanation::after {
+/* ─────────────────────────────────────────────
+   IMPROVED THIN SEPARATOR – only between major steps
+   (appears after description + math group, not under every line)
+───────────────────────────────────────────── */
+.solution-area p:has(+ .katex-display)::after,
+.solution-area p:last-child::after {
   content: "";
   display: block;
   width: 100%;
   height: 1px;
   background: #e2e8f0;
-  margin: 1.1rem 0 0.8rem !important;
+  margin: 1.4rem 0 1.8rem !important;  /* good space after the step */
   opacity: 0.65;
+}
+
+/* Give breathing room after display math so steps feel separated */
+.solution-area .katex-display {
+  margin-bottom: 1.6rem !important;
 }
 
 /* Final answer – kept clean and prominent (but no heavy styling) */
@@ -2367,7 +2372,34 @@ header.header {
   .solution-area div:not(.katex-display) {
     margin: 0.45rem 0 0.85rem !important;
   }
+
+  .solution-area .katex-display {
+    margin-bottom: 1.2rem !important;
+  }
 }
+
+/* ─────────────────────────────────────────────
+   FIX FOR INLINE MATH IN DESCRIPTIVE TEXT
+   (only affects text flowing into short inline math like $f'(x)$)
+───────────────────────────────────────────── */
+.solution-area .katex-html {
+  vertical-align: baseline !important;
+  /* If still slightly off → try one of these instead: */
+  /* vertical-align: middle; */
+  /* vertical-align: text-bottom; */
+  /* vertical-align: -0.06em; */
+}
+
+.solution-area .katex {
+  margin: 0 0.11em;                     /* tiny horizontal breathing room */
+  line-height: 1;
+}
+
+/* Helps paragraphs feel less jagged around inline math */
+.solution-area p {
+  line-height: 1.68 !important;         /* already set above — reinforcing */
+}
+
 
 
 
