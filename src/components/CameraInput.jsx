@@ -104,7 +104,7 @@ export default function CameraInput({ onFileSelect, onOpenDashboard }) {
     <section>
       <div className="container">
         <h2 className="section-heading">
-          Why Students Love Snaprium
+         Build Confidence in Learning
         </h2>
 
         <div className="gallery-text">
@@ -135,7 +135,7 @@ export default function CameraInput({ onFileSelect, onOpenDashboard }) {
         </h2>
 
         <div className="post-animation-text">
-          Join thousands of students mastering math, physics, and chemistry with Snaprium — <strong>study smarter, not harder</strong>.
+          Improve your problem-solving skills in math, physics, and chemistry with Snaprium — <strong>study smarter and achieve more</strong>.
         </div>
       </div>
     </section>

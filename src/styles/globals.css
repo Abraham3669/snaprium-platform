@@ -2421,3 +2421,30 @@ header.header {
   border-radius: 6px;     /* optional: slight rounding */
   object-fit: contain;
 }
+
+
+
+
+
+
+
+
+
+
+
+/* ─── Demo Question Styling ─── */
+.question-card .question {
+  font-size: 0.875rem;      /* Smaller font */
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;      /* Keep it in one line */
+  overflow-x: auto;         /* Scroll if too long */
+  text-align: center;
+}
+
+.question-card {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60px; /* Adjust as needed */
+}
