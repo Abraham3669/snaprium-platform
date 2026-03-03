@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { useNavigate } from "react-router-dom";
 
 export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
-  const { user, signOutUser } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   if (!isOpen) return null;
@@ -13,6 +13,16 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
     onClose();
     navigate(path);
   };
+
+  // Lemon Squeezy customer portal link (replace with your real one)
+  const CUSTOMER_PORTAL_URL = 'https://snaprium.lemonsqueezy.com/my-orders'; // ← CHANGE THIS
+
+  // Determine button text & action based on subscription
+  const isSubscribed = user && (user.subscription === 'pro' || user.subscription === 'premium');
+  const buttonText = isSubscribed ? 'Manage Subscription' : 'Upgrade Plan';
+  const buttonAction = isSubscribed 
+    ? () => window.location.href = CUSTOMER_PORTAL_URL
+    : () => handleNavigate("/upgrade");
 
   return (
     <>
@@ -80,18 +90,18 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
             </button>
           )}
 
-         {user && (
-  /* Upgrade Plan – only shown to signed-in users */
-  <button
-    className="upgrade-btn dashboard-btn"
-    onClick={() => handleNavigate("/upgrade")}
-  >
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-    </svg>
-    Upgrade Plan
-  </button>
-)}
+          {/* Upgrade / Manage Subscription Button – changes based on plan */}
+          {user && (
+            <button
+              className="upgrade-btn dashboard-btn"
+              onClick={buttonAction}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+              </svg>
+              {buttonText}
+            </button>
+          )}
 
           {/* Home */}
           <button
