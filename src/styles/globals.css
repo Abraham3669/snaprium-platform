@@ -2293,10 +2293,46 @@ header.header {
 
 /* ─────────────────────────────────────────────
    Snaprium Solution Display – Clean Professional 2026
-   Fixed light-mode math cards + strong floating effect
+   Light mode: strong card standout + visible shadow at rest
+   Dark mode: untouched
+   Inline math seamless | Display math card-like
 ───────────────────────────────────────────── */
 
-/* INLINE MATH – unchanged, blends well */
+.solution-area {
+  padding: 1.6rem 1.2rem;
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Step titles – bold & clear */
+.solution-area h1,
+.solution-area h2,
+.solution-area h3,
+.solution-area h4,
+.solution-area strong,
+.solution-area b {
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 1.08rem;
+  margin: 2rem 0 1rem;
+  line-height: 1.4;
+}
+
+/* Subtext / explanations – soft & readable */
+.solution-area p,
+.solution-area div:not(.katex-display),
+.solution-area .solution-text,
+.solution-area .explanation {
+  font-size: 0.98rem;
+  line-height: 1.75;
+  margin: 0.7rem 0 1.4rem;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+/* INLINE MATH – blends perfectly into text/titles */
 .solution-area .katex {
   font-size: 1.05em;
   font-weight: 500;
@@ -2310,80 +2346,65 @@ header.header {
   box-shadow: none;
 }
 
-/* DISPLAY MATH – card style base (shared rules) */
+/* DISPLAY MATH – card style */
 .solution-area .katex-display {
   display: block !important;
   font-size: 1.14em;
   font-weight: 500;
   color: var(--text-primary);
-  margin: 2rem auto;
-  padding: 1.2rem 1.4rem;
+  margin: 1.6rem auto;
+  padding: 1.1rem 1.3rem;
   border-radius: var(--radius);
   border-left: 5px solid var(--accent);
   overflow-x: auto;
   transition: var(--transition);
-  position: relative;          /* helps with perceived depth */
-  z-index: 1;                  /* minor stacking context lift */
 }
 
-/* ─── Light mode (most important fix) ─── */
+/* Light mode: stronger card pop + visible shadow at rest */
 @media (prefers-color-scheme: light) {
   .solution-area .katex-display {
-    background: var(--surface);           /* #ffffff – clean white */
-    border: 1px solid var(--border);      /* using your existing subtle border */
+    background: #f8fbff;                    /* pale cool blue-white – distinct from page */
+    border: 1px solid rgba(203, 213, 225, 0.85); /* visible outline */
     box-shadow: 
-      0 10px 28px rgba(0, 0, 0, 0.09),
-      0  4px 12px rgba(0, 0, 0, 0.06),
-      inset 0 1px 3px rgba(59, 130, 246, 0.08);  /* very subtle inner accent */
+      0 8px 24px rgba(0, 0, 0, 0.10),        /* stronger base shadow – visible even at rest */
+      inset 0 1px 4px rgba(59, 130, 246, 0.10); /* faint inner depth */
   }
 }
 
-/* ─── Dark mode – darker surface + stronger shadow for depth ─── */
-@media (prefers-color-scheme: dark) {
-  .solution-area .katex-display {
-    background: #172038;                    /* noticeably darker than --surface #0f172a */
-    border: 1px solid rgba(51, 65, 85, 0.70);
-    box-shadow: 
-      0 12px 36px rgba(0, 0, 0, 0.58),
-      0  4px 16px rgba(0, 0, 0, 0.42),
-      inset 0 1px 4px rgba(96, 165, 250, 0.14);
-  }
-}
-
-/* Hover – extra floating effect in both themes */
+/* Hover – extra lift & glow */
 .solution-area .katex-display:hover {
-  transform: translateY(-5px);
   box-shadow: 
-    0 18px 44px rgba(0, 0, 0, 0.16),     /* light mode gets stronger */
-    0  6px 20px rgba(0, 0, 0, 0.10),
+    0 12px 32px rgba(0, 0, 0, 0.14),         /* deeper hover shadow */
     inset 0 2px 6px rgba(59, 130, 246, 0.12);
-  border-left-color: var(--accent-dark);
+  transform: translateY(-3px);
+  border-left-color: var(--accent);            /* stays your accent */
 }
 
-/* Optional: even stronger "card" feeling – remove if too much */
-.solution-area .katex-display {
-  /* Uncomment if you want more separation between cards */
-  /* margin: 2.4rem auto; */
-}
-
-/* Separator – looks better when cards are white & floating */
+/* Separator after display math */
 .solution-area .katex-display::after {
   content: "";
   display: block;
-  width: 60%;
+  width: 100%;
   height: 1px;
   background: var(--border);
-  margin: 1.8rem auto 2.2rem;
-  opacity: 0.65;
-  border-radius: 2px;
+  margin: 1.8rem 0 2.2rem;
+  opacity: 0.7;
 }
 
-/* Mobile adjustments */
+/* Extra space after separator */
+.solution-area .katex-display + * {
+  margin-top: 1.4rem;
+}
+
+/* Mobile tweaks */
 @media (max-width: 768px) {
+  .solution-area {
+    padding: 1.3rem 1rem;
+  }
   .solution-area .katex-display {
-    margin: 1.8rem auto;
-    padding: 1rem 1.1rem;
-    font-size: 1.11em;
+    font-size: 1.1em;
+    padding: 0.9rem 1rem;
+    margin: 1.4rem 0;
   }
 }
 
