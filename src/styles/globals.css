@@ -2292,217 +2292,192 @@ header.header {
 
 
 /* ─────────────────────────────────────────────
-   Snaprium Solution Display – Premium Guided Style 2026
-   Professional, tutor-like, scannable, interactive
+   Snaprium Solution – Premium Guided Flow 2026
+   Full light/dark support using your palette
+   Math structure preserved – design via spacing & accents
 ───────────────────────────────────────────── */
 
 .solution-area {
-  padding: 1.5rem 1rem;
-  border-radius: 12px;
-  background: var(--card-bg, #ffffff); /* or #0f172a in dark */
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  border: 1px solid var(--border, #e2e8f0);
-  counter-reset: step-counter; /* For step numbering */
+  padding: 1.8rem 1.4rem;
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  counter-reset: step-counter;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.75;
+  color: var(--text-secondary);
 }
 
-/* Step container – wraps each logical step */
-.solution-area > h1,
-.solution-area > h2,
-.solution-area > h3,
-.solution-area > h4,
-.solution-area > h5,
-.solution-area > h6 {
+/* Step headings with floating numbered badge */
+.solution-area h1,
+.solution-area h2,
+.solution-area h3,
+.solution-area h4,
+.solution-area h5,
+.solution-area h6 {
   counter-increment: step-counter;
   position: relative;
-  padding-left: 3.2rem; /* Space for badge */
-  margin: 2.4rem 0 1.2rem !important;
+  padding-left: 3.8rem;
+  margin: 2.8rem 0 1.4rem;
   font-weight: 700;
-  font-size: 1.18rem;
+  font-size: 1.22rem;
   color: var(--text-primary);
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
-/* Step number badge – floating left */
-.solution-area > h1::before,
-.solution-area > h2::before,
-.solution-area > h3::before,
-.solution-area > h4::before,
-.solution-area > h5::before,
-.solution-area > h6::before {
+/* Step badge – accent circle with glow */
+.solution-area h1::before,
+.solution-area h2::before,
+.solution-area h3::before,
+.solution-area h4::before,
+.solution-area h5::before,
+.solution-area h6::before {
   content: counter(step-counter);
   position: absolute;
   left: 0;
-  top: 0.2rem;
-  width: 2.4rem;
-  height: 2.4rem;
-  background: var(--accent-light, rgba(99, 102, 241, 0.1)); /* indigo tint */
+  top: 0.1rem;
+  width: 2.6rem;
+  height: 2.6rem;
+  background: var(--icon-bg);
   color: var(--accent);
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   border: 2px solid var(--accent);
-  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 0 14px var(--accent-glow);
+  transition: var(--transition);
 }
 
-/* Explanations & normal text */
+/* Badge hover lift */
+.solution-area h1:hover::before,
+.solution-area h2:hover::before,
+.solution-area h3:hover::before {
+  transform: translateY(-2px);
+  box-shadow: 0 0 24px var(--accent-glow);
+}
+
+/* Normal text / explanations */
 .solution-area p,
 .solution-area div:not(.katex-display),
 .solution-area .solution-text,
-.solution-area .explanation {
-  font-size: 0.98rem;
-  line-height: 1.72;
-  margin: 0.6rem 0 1.4rem;
-  color: #64748b; /* slate-500 */
-  font-weight: 400;
+.solution-area .explanation,
+.solution-area li {
+  font-size: 0.99rem;
+  margin: 0.8rem 0 1.5rem;
+  color: var(--text-secondary);
 }
 
-/* Alternating step backgrounds for scanability */
-.solution-area > *:nth-child(odd) {
-  background: var(--step-bg-odd, rgba(249, 250, 251, 0.5)); /* very light grey */
-  padding: 1.2rem 1.5rem;
-  border-radius: 10px;
-  margin: 1.2rem 0;
-}
-
-.solution-area > *:nth-child(even) {
-  background: transparent;
-}
-
-/* Math blocks – clean, hover interactive */
+/* Math blocks – subtle container + hover glow */
 .solution-area .katex,
 .solution-area .katex-display {
-  font-size: 1.14em;
+  display: block;
+  font-size: 1.16em;
   font-weight: 500;
   color: var(--text-primary);
-  margin: 1.4rem 0;
-  padding: 0.8rem 1rem;
-  background: var(--math-bg, rgba(241, 245, 249, 0.6)); /* slate-100 */
-  border-radius: 8px;
-  border-left: 4px solid var(--accent-light);
-  transition: all 0.2s ease;
+  margin: 1.6rem 0;
+  padding: 1rem 1.2rem;
+  background: var(--surface-mobile);
+  border-radius: var(--radius);
+  border-left: 4px solid var(--accent);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
 }
 
-.solution-area .katex-display:hover,
-.solution-area .katex:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  transform: translateY(-1px);
+/* Hover interaction on math */
+.solution-area .katex:hover,
+.solution-area .katex-display:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  border-left-color: var(--accent-dark);
 }
 
-/* Copy button on math blocks (appears on hover) */
-.solution-area .katex-display,
-.solution-area .katex {
-  position: relative;
-}
-
-.solution-area .katex-display::after,
-.solution-area .katex::after {
-  content: "Copy";
-  position: absolute;
-  top: 8px;
-  right: 12px;
-  background: rgba(0,0,0,0.6);
-  color: white;
-  font-size: 0.75rem;
-  padding: 0.3rem 0.7rem;
-  border-radius: 6px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s;
-  cursor: pointer;
-}
-
-.solution-area .katex-display:hover::after,
-.solution-area .katex:hover::after {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* Thin connector line between steps (replaces old separator) */
+/* Soft connector gradient between steps */
 .solution-area .katex-display + * {
   position: relative;
-  margin-top: 2rem !important;
+  margin-top: 2.4rem !important;
 }
 
 .solution-area .katex-display + *::before {
   content: "";
   position: absolute;
-  left: 1.2rem;
-  top: -1.8rem;
-  bottom: 100%;
+  left: 1.3rem;
+  top: -2.2rem;
+  height: 2.2rem;
   width: 2px;
-  background: linear-gradient(to bottom, var(--accent-light), transparent);
-  opacity: 0.6;
+  background: linear-gradient(to bottom, var(--accent), transparent);
+  opacity: 0.45;
 }
 
-/* Final answer – prominent pill/box */
-.solution-area p:where(
-  :contains("final"),
-  :contains("answer"),
-  :contains("result"),
-  :contains("therefore"),
-  :contains("so the"),
-  :contains("thus"),
-  :contains("=")
-) {
-  background: linear-gradient(135deg, var(--accent), #6366f1);
+/* Final answer – pill with glow (add class="final-answer" in JS) */
+.solution-area .final-answer {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
   color: white;
   font-weight: 700;
-  font-size: 1.28rem;
+  font-size: 1.35rem;
   text-align: center;
-  padding: 1.2rem 2rem;
-  border-radius: 16px;
-  margin: 2.8rem auto 2rem;
+  padding: 1.5rem 2.4rem;
+  border-radius: var(--radius-pill);
+  margin: 3.2rem auto 2.8rem;
   max-width: 90%;
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.25);
+  box-shadow: 0 10px 40px var(--accent-glow);
   position: relative;
+  overflow: hidden;
+}
+
+/* Optional subtle shine effect on final answer */
+.solution-area .final-answer::after {
+  content: "";
+  position: absolute;
+  top: -60%;
+  left: -60%;
+  width: 220%;
+  height: 220%;
+  background: linear-gradient(
+    135deg,
+    transparent 40%,
+    rgba(255,255,255,0.3) 50%,
+    transparent 60%
+  );
+  animation: shine 8s infinite linear;
+  pointer-events: none;
+}
+
+@keyframes shine {
+  0%   { transform: translateX(-100%) translateY(-100%); }
+  100% { transform: translateX(100%) translateY(100%); }
 }
 
 /* Mobile adjustments */
 @media (max-width: 768px) {
   .solution-area {
-    padding: 1.2rem 0.8rem;
+    padding: 1.4rem 1rem;
   }
-  .solution-area > h1,
-  .solution-area > h2,
-  .solution-area > h3 {
-    padding-left: 2.8rem;
-    font-size: 1.12rem;
+  .solution-area h1,
+  .solution-area h2,
+  .solution-area h3 {
+    padding-left: 3.2rem;
+    font-size: 1.14rem;
   }
-  .solution-area > h1::before,
-  .solution-area > h2::before,
-  .solution-area > h3::before {
-    width: 2.2rem;
-    height: 2.2rem;
-    font-size: 1rem;
+  .solution-area h1::before,
+  .solution-area h2::before,
+  .solution-area h3::before {
+    width: 2.4rem;
+    height: 2.4rem;
+    font-size: 1.05rem;
   }
-  .solution-area .katex-display,
-  .solution-area .katex {
-    font-size: 1.08em;
-    padding: 0.7rem 0.9rem;
+  .solution-area .katex,
+  .solution-area .katex-display {
+    font-size: 1.1em;
+    padding: 0.9rem 1rem;
   }
-  .solution-area p:where(:contains("final"), ...) {
-    font-size: 1.18rem;
-    padding: 1rem 1.5rem;
-  }
-}
-
-/* Optional dark mode tweaks */
-@media (prefers-color-scheme: dark) {
-  .solution-area {
-    background: #0f172a;
-    border-color: #334155;
-  }
-  .solution-area p,
-  .solution-area div:not(.katex-display) {
-    color: #94a3b8;
-  }
-  .solution-area .katex-display,
-  .solution-area .katex {
-    background: #1e293b;
-    border-left-color: var(--accent);
+  .solution-area .final-answer {
+    font-size: 1.24rem;
+    padding: 1.2rem 1.8rem;
+    margin: 2.8rem auto 2.2rem;
   }
 }
 
