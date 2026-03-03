@@ -2293,9 +2293,8 @@ header.header {
 
 /* ─────────────────────────────────────────────
    Snaprium Solution Display – Clean Professional 2026
-   Light mode: strong card standout + visible shadow at rest
-   Dark mode: untouched
-   Inline math seamless | Display math card-like
+   Both modes: cards float visibly at rest with strong base shadow
+   Hover: slight extra lift | Inline math seamless
 ───────────────────────────────────────────── */
 
 .solution-area {
@@ -2332,7 +2331,7 @@ header.header {
   font-weight: 400;
 }
 
-/* INLINE MATH – blends perfectly into text/titles */
+/* INLINE MATH – blends perfectly */
 .solution-area .katex {
   font-size: 1.05em;
   font-weight: 500;
@@ -2346,7 +2345,7 @@ header.header {
   box-shadow: none;
 }
 
-/* DISPLAY MATH – card style */
+/* DISPLAY MATH – card style base */
 .solution-area .katex-display {
   display: block !important;
   font-size: 1.14em;
@@ -2360,24 +2359,37 @@ header.header {
   transition: var(--transition);
 }
 
-/* Light mode: stronger card pop + visible shadow at rest */
+/* Light mode: strong floating card at rest */
 @media (prefers-color-scheme: light) {
   .solution-area .katex-display {
-    background: #f8fbff;                    /* pale cool blue-white – distinct from page */
-    border: 1px solid rgba(203, 213, 225, 0.85); /* visible outline */
+    background: #f5faff;                    /* cool off-white – distinct from page */
+    border: 1px solid rgba(203, 213, 225, 0.9); /* clear outline */
     box-shadow: 
-      0 8px 24px rgba(0, 0, 0, 0.10),        /* stronger base shadow – visible even at rest */
-      inset 0 1px 4px rgba(59, 130, 246, 0.10); /* faint inner depth */
+      0 12px 32px rgba(0, 0, 0, 0.12),       /* strong base elevation */
+      0 4px 16px rgba(0, 0, 0, 0.08),        /* mid-layer depth */
+      inset 0 2px 8px rgba(59, 130, 246, 0.12); /* inner glow/depth */
   }
 }
 
-/* Hover – extra lift & glow */
+/* Dark mode: strong floating card at rest */
+@media (prefers-color-scheme: dark) {
+  .solution-area .katex-display {
+    background: #111827;                    /* slightly darker slate – pops from #0f172a surface */
+    border: 1px solid rgba(51, 65, 85, 0.8); /* visible dark outline */
+    box-shadow: 
+      0 12px 32px rgba(0, 0, 0, 0.5),        /* deep base shadow for dark mode */
+      0 4px 16px rgba(0, 0, 0, 0.4),         /* mid-layer */
+      inset 0 2px 8px rgba(96, 165, 250, 0.12); /* faint blue inner glow */
+  }
+}
+
+/* Hover – extra lift in both modes (subtle boost) */
 .solution-area .katex-display:hover {
   box-shadow: 
-    0 12px 32px rgba(0, 0, 0, 0.14),         /* deeper hover shadow */
-    inset 0 2px 6px rgba(59, 130, 246, 0.12);
-  transform: translateY(-3px);
-  border-left-color: var(--accent);            /* stays your accent */
+    0 16px 40px rgba(0, 0, 0, 0.18),         /* stronger hover in light */
+    inset 0 3px 10px rgba(59, 130, 246, 0.15);
+  transform: translateY(-4px);
+  border-left-color: var(--accent);            /* unchanged accent */
 }
 
 /* Separator after display math */
@@ -2407,6 +2419,56 @@ header.header {
     margin: 1.4rem 0;
   }
 }
+
+
+
+
+
+
+
+
+
+/* Fade-in reveal for the entire solution area */
+.solution-area {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: solutionReveal 0.8s ease-out forwards;
+  animation-delay: 0.3s; /* small delay after panel opens */
+}
+
+@keyframes solutionReveal {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Optional: Stagger individual paragraphs/math blocks for step-by-step feel */
+.solution-area p,
+.solution-area .katex-display {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: fadeUp 0.6s ease-out forwards;
+}
+
+/* Stagger delay – each paragraph/math appears a bit after the previous */
+.solution-area p:nth-child(1),
+.solution-area .katex-display:nth-child(1) { animation-delay: 0.4s; }
+.solution-area p:nth-child(2),
+.solution-area .katex-display:nth-child(2) { animation-delay: 0.55s; }
+.solution-area p:nth-child(3),
+.solution-area .katex-display:nth-child(3) { animation-delay: 0.7s; }
+.solution-area p:nth-child(4),
+.solution-area .katex-display:nth-child(4) { animation-delay: 0.85s; }
+/* Add more if you have longer answers */
+
+
+
+
+
+
+
+
 
 /* ─────────────────────────────────────────────
    FIX FOR INLINE MATH IN DESCRIPTIVE TEXT
