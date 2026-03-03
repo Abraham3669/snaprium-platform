@@ -2293,7 +2293,8 @@ header.header {
 
 /* ─────────────────────────────────────────────
    Snaprium Solution Display – Clean Professional 2026
-   Light mode: stronger card standout | Dark mode: untouched
+   Light mode: strong card standout + visible shadow at rest
+   Dark mode: untouched
    Inline math seamless | Display math card-like
 ───────────────────────────────────────────── */
 
@@ -2331,7 +2332,7 @@ header.header {
   font-weight: 400;
 }
 
-/* INLINE MATH – must blend perfectly into text/titles (no card, no space) */
+/* INLINE MATH – blends perfectly into text/titles */
 .solution-area .katex {
   font-size: 1.05em;
   font-weight: 500;
@@ -2345,7 +2346,7 @@ header.header {
   box-shadow: none;
 }
 
-/* DISPLAY MATH – card style with stronger standout in LIGHT MODE */
+/* DISPLAY MATH – card style */
 .solution-area .katex-display {
   display: block !important;
   font-size: 1.14em;
@@ -2359,25 +2360,27 @@ header.header {
   transition: var(--transition);
 }
 
-/* Light mode only: make display math card pop more from background */
+/* Light mode: stronger card pop + visible shadow at rest */
 @media (prefers-color-scheme: light) {
   .solution-area .katex-display {
-    background: #f8fbff;                    /* cooler off-white – clearly distinct from #fafcff page */
-    border: 1px solid rgba(203, 213, 225, 0.85); /* visible outline using your border var */
+    background: #f8fbff;                    /* pale cool blue-white – distinct from page */
+    border: 1px solid rgba(203, 213, 225, 0.85); /* visible outline */
     box-shadow: 
-      0 6px 20px rgba(0, 0, 0, 0.09),        /* stronger outer shadow */
-      inset 0 1px 4px rgba(59, 130, 246, 0.08); /* subtle inner depth */
+      0 8px 24px rgba(0, 0, 0, 0.10),        /* stronger base shadow – visible even at rest */
+      inset 0 1px 4px rgba(59, 130, 246, 0.10); /* faint inner depth */
   }
 }
 
-/* Hover lift on display math cards */
+/* Hover – extra lift & glow */
 .solution-area .katex-display:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
-  border-left-color: var(--accent);          /* keep your accent – untouched */
+  box-shadow: 
+    0 12px 32px rgba(0, 0, 0, 0.14),         /* deeper hover shadow */
+    inset 0 2px 6px rgba(59, 130, 246, 0.12);
+  transform: translateY(-3px);
+  border-left-color: var(--accent);            /* stays your accent */
 }
 
-/* Thin separator after display math blocks */
+/* Separator after display math */
 .solution-area .katex-display::after {
   content: "";
   display: block;
@@ -2388,34 +2391,15 @@ header.header {
   opacity: 0.7;
 }
 
-/* Extra breathing room after separator */
+/* Extra space after separator */
 .solution-area .katex-display + * {
   margin-top: 1.4rem;
 }
 
-/* Mobile – tighter but readable */
+/* Mobile tweaks */
 @media (max-width: 768px) {
   .solution-area {
     padding: 1.3rem 1rem;
-  }
-  .solution-area h1,
-  .solution-area h2,
-  .solution-area h3,
-  .solution-area strong,
-  .solution-area b {
-    font-size: 1.04rem;
-    margin: 1.8rem 0 0.9rem;
-  }
-  .solution-area p,
-  .solution-area div:not(.katex-display),
-  .solution-area .solution-text,
-  .solution-area .explanation {
-    font-size: 0.96rem;
-    margin: 0.6rem 0 1.2rem;
-  }
-  .solution-area .katex {
-    font-size: 1.02em;
-    margin: 0 0.1em;
   }
   .solution-area .katex-display {
     font-size: 1.1em;
@@ -2423,10 +2407,6 @@ header.header {
     margin: 1.4rem 0;
   }
 }
-
-
-
-
 
 /* ─────────────────────────────────────────────
    FIX FOR INLINE MATH IN DESCRIPTIVE TEXT
