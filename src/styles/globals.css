@@ -2336,7 +2336,6 @@ header.header {
 .solution-area .katex {
   font-size: 1.05em;
   font-weight: 500;
-  color: var(--text-primary);
   vertical-align: baseline;
   line-height: 1.1;
   margin: 0 0.12em;
@@ -2351,7 +2350,6 @@ header.header {
   display: block !important;
   font-size: 1.14em;
   font-weight: 500;
-  color: var(--text-primary);
   margin: 1.6rem auto;
   padding: 1.1rem 1.3rem;
   border-radius: var(--radius);
@@ -2360,34 +2358,44 @@ header.header {
   transition: var(--transition);
 }
 
-/* Light mode: clean white cards with visible soft shadow at rest */
+/* Light mode: white floating cards + black math text */
 @media (prefers-color-scheme: light) {
   .solution-area .katex-display {
-    background: #ffffff;                    /* pure white – clean & not merged */
-    border: 1px solid rgba(203, 213, 225, 0.95); /* very visible outline */
+    background: #ffffff;
+    color: #000000;
+    border: 1px solid rgba(203, 213, 225, 0.95);
     box-shadow: 
-      0 6px 18px rgba(0, 0, 0, 0.10),        /* soft but visible base shadow */
-      0 2px 8px rgba(0, 0, 0, 0.06);         /* subtle mid-layer – no over-float */
+      0 8px 22px rgba(0, 0, 0, 0.10),
+      0 3px 10px rgba(0, 0, 0, 0.06);
+  }
+
+  .solution-area .katex-display .katex {
+    color: #000000;
   }
 }
 
-/* Dark mode: subtle dark cards with matching soft shadow at rest */
+/* Dark mode: dark cards + white math text */
 @media (prefers-color-scheme: dark) {
   .solution-area .katex-display {
-    background: #111827;                    /* subtle darker than surface – clean separation */
-    border: 1px solid rgba(51, 65, 85, 0.75); /* visible but not heavy outline */
+    background: #111827;
+    color: #ffffff;
+    border: 1px solid rgba(51, 65, 85, 0.75);
     box-shadow: 
-      0 6px 18px rgba(0, 0, 0, 0.45),        /* soft dark-mode base shadow */
-      0 2px 8px rgba(0, 0, 0, 0.35);         /* subtle mid-layer – no deep float */
+      0 6px 18px rgba(0, 0, 0, 0.45),
+      0 2px 8px rgba(0, 0, 0, 0.35);
+  }
+
+  .solution-area .katex-display .katex {
+    color: #ffffff;
   }
 }
 
 /* Hover – minimal extra lift in both modes */
 .solution-area .katex-display:hover {
   box-shadow: 
-    0 10px 28px rgba(0, 0, 0, 0.14),         /* slight boost */
+    0 12px 30px rgba(0, 0, 0, 0.16),
     inset 0 1px 4px rgba(0, 0, 0, 0.04);
-  transform: translateY(-2px);                 /* tiny lift – not dramatic */
+  transform: translateY(-2px);
 }
 
 /* Separator after display math */
