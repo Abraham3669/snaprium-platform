@@ -2292,16 +2292,17 @@ header.header {
 
 
 /* ─────────────────────────────────────────────
-   Snaprium Solution Display – Clean Professional 2026
-   Very subtle shadow at rest | Shadow grows nicely on hover
-   Accent left bar untouched | No extra borders or tints
+   Snaprium Solution Display – Clean Pro 2026
+   Single soft shadow | Subtle hover lift | No forced separators
+   Math normal weight | Consistent spacing
 ───────────────────────────────────────────── */
 
 .solution-area {
-  padding: 1.6rem 1.2rem;
+  padding: 1.5rem 1.2rem;
   background: var(--surface);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); /* single clean shadow */
+  transition: box-shadow 0.3s ease;
 }
 
 /* Step titles – bold & clear */
@@ -2313,8 +2314,8 @@ header.header {
 .solution-area b {
   color: var(--text-primary);
   font-weight: 700;
-  font-size: 1.08rem;
-  margin: 2rem 0 1rem;
+  font-size: 1.05rem;
+  margin: 1.6rem 0 0.8rem;
   line-height: 1.4;
 }
 
@@ -2323,97 +2324,47 @@ header.header {
 .solution-area div:not(.katex-display),
 .solution-area .solution-text,
 .solution-area .explanation {
-  font-size: 0.98rem;
-  line-height: 1.75;
-  margin: 0.7rem 0 1.4rem;
+  font-size: 0.97rem;
+  line-height: 1.68;
+  margin: 0.6rem 0 1.2rem;
   color: var(--text-secondary);
   font-weight: 400;
 }
 
-/* INLINE MATH – blends perfectly */
-.solution-area .katex {
-  font-size: 1.05em;
-  font-weight: 500;
-  color: var(--text-primary);
-  vertical-align: baseline;
-  line-height: 1.1;
-  margin: 0 0.12em;
-  padding: 0;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-}
-
-/* DISPLAY MATH – card style base */
+/* Math – normal weight (modern clean) */
+.solution-area .katex,
 .solution-area .katex-display {
-  display: block !important;
-  font-size: 1.14em;
-  font-weight: 500;
+  font-size: 1.12em;
+  font-weight: 500 !important;     /* normal / medium – not bold */
   color: var(--text-primary);
-  margin: 1.6rem auto;
-  padding: 1.1rem 1.3rem;
-  border-radius: var(--radius);
-  border-left: 5px solid var(--accent);  /* your blue accent bar – untouched */
-  overflow-x: auto;
-  transition: var(--transition);
-}
-
-/* Light mode: very subtle shadow at rest */
-@media (prefers-color-scheme: light) {
-  .solution-area .katex-display {
-    background: var(--surface);  /* pure white */
-    box-shadow: 
-      0 2px 8px rgba(0, 0, 0, 0.06),     /* very soft base elevation – barely there */
-      0 1px 4px rgba(0, 0, 0, 0.04);     /* tiny depth layer */
-  }
-}
-
-/* Dark mode: very subtle shadow at rest */
-@media (prefers-color-scheme: dark) {
-  .solution-area .katex-display {
-    background: var(--surface);  /* your dark surface */
-    box-shadow: 
-      0 2px 8px rgba(0, 0, 0, 0.30),     /* very soft dark elevation */
-      0 1px 4px rgba(0, 0, 0, 0.20);     /* tiny depth layer */
-  }
-}
-
-/* Hover – shadow grows nicely (deeper & wider) + small lift */
-.solution-area .katex-display:hover {
-  box-shadow: 
-    0 8px 24px rgba(0, 0, 0, 0.14),      /* noticeable grow in light */
-    inset 0 1px 4px rgba(0, 0, 0, 0.05);
-  transform: translateY(-4px);             /* gentle but visible lift */
-}
-
-/* Separator after display math */
-.solution-area .katex-display::after {
-  content: "";
+  margin: 1.1rem 0 1.3rem;
   display: block;
-  width: 100%;
-  height: 1px;
-  background: var(--border);
-  margin: 1.8rem 0 2.2rem;
-  opacity: 0.7;
 }
 
-/* Extra space after separator */
-.solution-area .katex-display + * {
-  margin-top: 1.4rem;
+/* Accent bar on math blocks – your signature style */
+.solution-area .katex-display {
+  border-left: 5px solid var(--accent);
+  padding-left: 1.2rem;
+  background: var(--surface-light); /* subtle lift */
 }
 
-/* Mobile tweaks */
+/* Hover – subtle lift + shadow grow */
+.solution-area .katex-display:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+/* Mobile – tighter & readable */
 @media (max-width: 768px) {
   .solution-area {
-    padding: 1.3rem 1rem;
+    padding: 1.2rem 1rem;
   }
   .solution-area .katex-display {
-    font-size: 1.1em;
-    padding: 0.9rem 1rem;
-    margin: 1.4rem 0;
+    font-size: 1.08em;
+    padding-left: 1rem;
+    margin: 1rem 0;
   }
 }
-
 
 
 
