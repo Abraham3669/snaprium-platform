@@ -2401,51 +2401,32 @@ header.header {
 
 
 
-/* ─────────────────────────────────────────────
-   Inline & Display Math – Clean, No Messy Wrapping (Final Fix)
-───────────────────────────────────────────── */
-
-/* Inline math ($...$) – tight, no awkward breaks */
-.solution-area .katex:not(.katex-display),
+/* Inline math – clean, tight, no messy wrapping */
+.solution-area .katex-inline,
 .solution-area p .katex,
-.solution-area .katex-inline {
-  display: inline !important;
+.solution-area .katex:not(.katex-display) {
   font-size: 1.05em !important;
   font-weight: 500 !important;
   vertical-align: baseline !important;
-  margin: 0 0.18em !important;
-  line-height: 1 !important;
-  white-space: nowrap !important;
+  margin: 0 0.15em !important;           /* tiny breathing room left/right */
+  line-height: 1.1 !important;            /* prevents vertical jump */
+  display: inline !important;
+  white-space: nowrap !important;         /* prevents mid-equation wrapping */
 }
 
-/* Prevent double $$ from forcing block mode inside text */
-.solution-area p .katex-display {
-  display: inline-block !important;
-  margin: 0.3em 0.5em !important;
-  padding: 0 !important;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* Subtext paragraphs – natural wrapping, no lonely words */
-.solution-area p,
-.solution-area div:not(.katex-display),
-.solution-area .solution-text,
-.solution-area .explanation {
+/* Prevent forced line breaks around inline math */
+.solution-area p {
   white-space: pre-wrap !important;
   overflow-wrap: break-word !important;
   hyphens: auto !important;
-  word-break: normal !important;
-  line-height: 1.7 !important;
-  margin: 0.6rem 0 1.1rem !important;
 }
 
-/* Force inline math to stay together */
-.solution-area .katex-html {
-  white-space: nowrap !important;
-  display: inline-flex !important;
-  align-items: baseline !important;
+/* Fix double $$ turning into block (force inline if inside paragraph) */
+.solution-area p .katex-display {
+  display: inline-block !important;
+  margin: 0.2em 0.4em !important;
+  padding: 0 !important;
+  background: transparent !important;
 }
 
 /* Remove extra space after inline math */
@@ -2455,6 +2436,13 @@ header.header {
   margin-left: 0.1em !important;
 }
 
+
+/* Force inline math to never break lines */
+.solution-area .katex-html {
+  white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: baseline !important;
+}
 
 
 
