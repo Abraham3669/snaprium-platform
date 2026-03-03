@@ -2549,7 +2549,7 @@ header.header {
 
 
 
-/* Plan Badge – full background fill, rounded pill */
+/* Plan Badge – full rounded pill, centered in header */
 .plan-badge {
   flex: 1;
   display: flex;
@@ -2565,7 +2565,7 @@ header.header {
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   transition: all 0.2s ease;
   z-index: 10;
-  max-width: 130px;
+  max-width: 140px;                    /* prevents pushing too wide */
 }
 
 /* Pro – green gradient filling the whole badge */
@@ -2578,26 +2578,42 @@ header.header {
   background: linear-gradient(135deg, #8b5cf6, #7c3aed);
 }
 
-/* Text inside – no extra background, full transparent */
+/* Text inside – no extra background */
 .plan-badge span {
   background: transparent !important;
   padding: 0 !important;
 }
 
-/* Mobile – smaller but still full fill */
+/* Mobile – smaller, no overlap with brand name */
 @media (max-width: 768px) {
   .plan-badge {
     font-size: 0.85rem;
     padding: 0.38rem 0.9rem;
     max-width: 110px;
-    margin: 0 6px;
+    margin: 0 8px;                     /* breathing room on sides */
+  }
+
+  /* Prevent squeeze on small screens */
+  .snaprium-header-inner {
+    padding: 0 1rem;
+    gap: 0.6rem;
+  }
+
+  .snaprium-brand {
+    font-size: 1.35rem;
+    flex-shrink: 0;                    /* brand name won't shrink too much */
+  }
+
+  .snaprium-logo {
+    width: 28px !important;
+    height: 28px !important;
   }
 }
 
-/* Desktop hover – slight scale + stronger shadow */
+/* Desktop hover – subtle pop */
 @media (min-width: 769px) {
   .plan-badge:hover {
     transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.22);
   }
 }
