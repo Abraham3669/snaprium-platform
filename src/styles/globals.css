@@ -2290,113 +2290,111 @@ header.header {
 
 
 
-
 /* ─────────────────────────────────────────────
-   Snaprium Solution Display – Clean Pro 2026
-   Single soft shadow | Subtle hover lift | No forced separators
-   Math normal weight | Consistent spacing
+   Snaprium Solution Display – Clean Pro 2026 (Fixed Wrapping + Floating Accent)
+   No word breaking mess | Floating math blocks | Subtle premium depth
 ───────────────────────────────────────────── */
 
 .solution-area {
-  padding: 1.5rem 1.2rem;
+  padding: 1.6rem 1.3rem;
   background: var(--surface);
   border-radius: var(--radius);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); /* single clean shadow */
+  box-shadow: 0 4px 18px rgba(0,0,0,0.07); /* clean single shadow */
   transition: box-shadow 0.3s ease;
 }
 
-/* Step titles – bold & clear */
-.solution-area h1,
-.solution-area h2,
-.solution-area h3,
-.solution-area h4,
-.solution-area strong,
-.solution-area b {
-  color: var(--text-primary);
-  font-weight: 700;
-  font-size: 1.05rem;
-  margin: 1.6rem 0 0.8rem;
-  line-height: 1.4;
-}
-
-/* Subtext / explanations – soft & readable */
+/* Prevent messy single-word wrapping in subtext */
 .solution-area p,
 .solution-area div:not(.katex-display),
 .solution-area .solution-text,
 .solution-area .explanation {
   font-size: 0.97rem;
-  line-height: 1.68;
-  margin: 0.6rem 0 1.2rem;
+  line-height: 1.7;
+  margin: 0.65rem 0 1.1rem;
   color: var(--text-secondary);
   font-weight: 400;
+  overflow-wrap: break-word;           /* safe word breaking */
+  word-wrap: break-word;
+  hyphens: auto;                       /* soft hyphens for long words */
+  white-space: pre-wrap;               /* preserve spaces but wrap naturally */
+  word-break: normal;                  /* no aggressive breaks */
 }
 
-/* Math – normal weight (modern clean) */
-.solution-area .katex,
+/* Math blocks – floating premium look (always, no hover needed) */
 .solution-area .katex-display {
+  display: block !important;
   font-size: 1.12em;
-  font-weight: 500 !important;     /* normal / medium – not bold */
+  font-weight: 500;
   color: var(--text-primary);
-  margin: 1.1rem 0 1.3rem;
-  display: block;
-}
-
-/* Accent bar on math blocks – your signature style */
-.solution-area .katex-display {
+  margin: 1.4rem 0 1.6rem;
+  padding: 1.2rem 1.4rem;
   border-left: 5px solid var(--accent);
-  padding-left: 1.2rem;
-  background: var(--surface-light); /* subtle lift */
+  background: var(--surface-light);
+  border-radius: var(--radius);
+  box-shadow: 
+    0 6px 22px rgba(0,0,0,0.09),       /* soft floating shadow */
+    0 1px 6px rgba(0,0,0,0.05);        /* tiny depth layer */
+  position: relative;
+  overflow-x: auto;
+  transition: all 0.3s ease;
 }
 
-/* Hover – subtle lift + shadow grow */
+/* Floating accent glow (always visible – premium feel) */
+.solution-area .katex-display::before {
+  content: "";
+  position: absolute;
+  left: -4px;
+  top: 0;
+  bottom: 0;
+  width: 12px;
+  background: var(--accent);
+  opacity: 0.18;
+  filter: blur(10px);
+  border-radius: 6px;
+  z-index: -1;
+}
+
+/* Hover – gentle lift + deeper shadow */
 .solution-area .katex-display:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  transform: translateY(-2px);
+  transform: translateY(-3px);
+  box-shadow: 
+    0 12px 32px rgba(0,0,0,0.14),
+    0 2px 10px rgba(0,0,0,0.06);
 }
 
-/* Mobile – tighter & readable */
-@media (max-width: 768px) {
-  .solution-area {
-    padding: 1.2rem 1rem;
-  }
-  .solution-area .katex-display {
-    font-size: 1.08em;
-    padding-left: 1rem;
-    margin: 1rem 0;
-  }
-}
-
-
-
-
-
-
-
-
-
-
-/* ─────────────────────────────────────────────
-   FIX FOR INLINE MATH IN DESCRIPTIVE TEXT
-   (only affects text flowing into short inline math like $f'(x)$)
-───────────────────────────────────────────── */
-.solution-area .katex-html {
-  vertical-align: baseline !important;
-  /* If still slightly off → try one of these instead: */
-  /* vertical-align: middle; */
-  /* vertical-align: text-bottom; */
-  /* vertical-align: -0.06em; */
-}
-
+/* Inline math – no wrapping issues */
 .solution-area .katex {
-  margin: 0 0.11em;                     /* tiny horizontal breathing room */
+  font-size: 1.05em;
+  font-weight: 500;
+  color: var(--text-primary);
+  vertical-align: baseline;
+  margin: 0 0.12em;
   line-height: 1;
 }
 
-/* Helps paragraphs feel less jagged around inline math */
-.solution-area p {
-  line-height: 1.68 !important;         /* already set above — reinforcing */
-}
+/* Mobile – tighter but readable */
+@media (max-width: 768px) {
+  .solution-area {
+    padding: 1.3rem 1rem;
+  }
 
+  .solution-area .katex-display {
+    margin: 1.2rem 0 1.4rem;
+    padding: 1rem 1.1rem;
+    box-shadow: 0 5px 16px rgba(0,0,0,0.10); /* softer on mobile */
+  }
+
+  .solution-area .katex-display::before {
+    left: -3px;
+    width: 10px;
+    filter: blur(8px);
+  }
+
+  .solution-area p,
+  .solution-area div:not(.katex-display) {
+    margin: 0.5rem 0 0.9rem !important;
+  }
+}
 
 
 
