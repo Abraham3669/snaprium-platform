@@ -2292,192 +2292,112 @@ header.header {
 
 
 /* ─────────────────────────────────────────────
-   Snaprium Solution – Premium Guided Flow 2026
+   Snaprium Solution Display – Clean Professional 2026
    Full light/dark support using your palette
-   Math structure preserved – design via spacing & accents
+   No layout changes, no content parsing, pure visual polish
 ───────────────────────────────────────────── */
 
 .solution-area {
-  padding: 1.8rem 1.4rem;
+  padding: 1.6rem 1.2rem;
   background: var(--surface);
   border-radius: var(--radius);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
-  counter-reset: step-counter;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  line-height: 1.75;
-  color: var(--text-secondary);
 }
 
-/* Step headings with floating numbered badge */
+/* Step titles – bold, clear, using primary text */
 .solution-area h1,
 .solution-area h2,
 .solution-area h3,
 .solution-area h4,
-.solution-area h5,
-.solution-area h6 {
-  counter-increment: step-counter;
-  position: relative;
-  padding-left: 3.8rem;
-  margin: 2.8rem 0 1.4rem;
-  font-weight: 700;
-  font-size: 1.22rem;
+.solution-area strong,
+.solution-area b {
   color: var(--text-primary);
-  line-height: 1.45;
-}
-
-/* Step badge – accent circle with glow */
-.solution-area h1::before,
-.solution-area h2::before,
-.solution-area h3::before,
-.solution-area h4::before,
-.solution-area h5::before,
-.solution-area h6::before {
-  content: counter(step-counter);
-  position: absolute;
-  left: 0;
-  top: 0.1rem;
-  width: 2.6rem;
-  height: 2.6rem;
-  background: var(--icon-bg);
-  color: var(--accent);
   font-weight: 700;
-  font-size: 1.15rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  border: 2px solid var(--accent);
-  box-shadow: 0 0 14px var(--accent-glow);
-  transition: var(--transition);
+  font-size: 1.08rem;
+  margin: 2rem 0 1rem;
+  line-height: 1.4;
 }
 
-/* Badge hover lift */
-.solution-area h1:hover::before,
-.solution-area h2:hover::before,
-.solution-area h3:hover::before {
-  transform: translateY(-2px);
-  box-shadow: 0 0 24px var(--accent-glow);
-}
-
-/* Normal text / explanations */
+/* Explanations & normal text – soft secondary color, good readability */
 .solution-area p,
 .solution-area div:not(.katex-display),
 .solution-area .solution-text,
-.solution-area .explanation,
-.solution-area li {
-  font-size: 0.99rem;
-  margin: 0.8rem 0 1.5rem;
+.solution-area .explanation {
+  font-size: 0.98rem;
+  line-height: 1.75;
+  margin: 0.7rem 0 1.4rem;
   color: var(--text-secondary);
+  font-weight: 400;
 }
 
-/* Math blocks – subtle container + hover glow */
+/* Math blocks – slightly larger, medium weight, subtle container */
 .solution-area .katex,
 .solution-area .katex-display {
-  display: block;
-  font-size: 1.16em;
+  font-size: 1.14em;
   font-weight: 500;
   color: var(--text-primary);
-  margin: 1.6rem 0;
-  padding: 1rem 1.2rem;
-  background: var(--surface-mobile);
+  margin: 1.4rem 0;
+  padding: 0.9rem 1.1rem;
+  background: var(--surface-mobile); /* light lift in light mode, subtle in dark */
   border-radius: var(--radius);
   border-left: 4px solid var(--accent);
   box-shadow: var(--shadow-sm);
   transition: var(--transition);
 }
 
-/* Hover interaction on math */
+/* Hover on math – gentle glow & lift (premium touch) */
 .solution-area .katex:hover,
 .solution-area .katex-display:hover {
   box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   border-left-color: var(--accent-dark);
 }
 
-/* Soft connector gradient between steps */
+/* Thin separator after each display math block */
+.solution-area .katex-display::after {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 1px;
+  background: var(--border);
+  margin: 1.8rem 0 2.2rem;
+  opacity: 0.7;
+}
+
+/* Extra space before next content after separator */
 .solution-area .katex-display + * {
-  position: relative;
-  margin-top: 2.4rem !important;
+  margin-top: 1.4rem;
 }
 
-.solution-area .katex-display + *::before {
-  content: "";
-  position: absolute;
-  left: 1.3rem;
-  top: -2.2rem;
-  height: 2.2rem;
-  width: 2px;
-  background: linear-gradient(to bottom, var(--accent), transparent);
-  opacity: 0.45;
-}
-
-/* Final answer – pill with glow (add class="final-answer" in JS) */
-.solution-area .final-answer {
-  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-  color: white;
-  font-weight: 700;
-  font-size: 1.35rem;
-  text-align: center;
-  padding: 1.5rem 2.4rem;
-  border-radius: var(--radius-pill);
-  margin: 3.2rem auto 2.8rem;
-  max-width: 90%;
-  box-shadow: 0 10px 40px var(--accent-glow);
-  position: relative;
-  overflow: hidden;
-}
-
-/* Optional subtle shine effect on final answer */
-.solution-area .final-answer::after {
-  content: "";
-  position: absolute;
-  top: -60%;
-  left: -60%;
-  width: 220%;
-  height: 220%;
-  background: linear-gradient(
-    135deg,
-    transparent 40%,
-    rgba(255,255,255,0.3) 50%,
-    transparent 60%
-  );
-  animation: shine 8s infinite linear;
-  pointer-events: none;
-}
-
-@keyframes shine {
-  0%   { transform: translateX(-100%) translateY(-100%); }
-  100% { transform: translateX(100%) translateY(100%); }
-}
-
-/* Mobile adjustments */
+/* Mobile – tighter spacing, still readable */
 @media (max-width: 768px) {
   .solution-area {
-    padding: 1.4rem 1rem;
+    padding: 1.3rem 1rem;
   }
   .solution-area h1,
   .solution-area h2,
-  .solution-area h3 {
-    padding-left: 3.2rem;
-    font-size: 1.14rem;
+  .solution-area h3,
+  .solution-area strong,
+  .solution-area b {
+    font-size: 1.04rem;
+    margin: 1.8rem 0 0.9rem;
   }
-  .solution-area h1::before,
-  .solution-area h2::before,
-  .solution-area h3::before {
-    width: 2.4rem;
-    height: 2.4rem;
-    font-size: 1.05rem;
+  .solution-area p,
+  .solution-area div:not(.katex-display),
+  .solution-area .solution-text,
+  .solution-area .explanation {
+    font-size: 0.96rem;
+    margin: 0.6rem 0 1.2rem;
   }
   .solution-area .katex,
   .solution-area .katex-display {
     font-size: 1.1em;
-    padding: 0.9rem 1rem;
+    padding: 0.8rem 1rem;
+    margin: 1.2rem 0;
   }
-  .solution-area .final-answer {
-    font-size: 1.24rem;
-    padding: 1.2rem 1.8rem;
-    margin: 2.8rem auto 2.2rem;
+  .solution-area .katex-display::after {
+    margin: 1.4rem 0 1.8rem;
   }
 }
 
