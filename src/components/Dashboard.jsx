@@ -14,15 +14,9 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
     navigate(path);
   };
 
-  // Lemon Squeezy customer portal link (replace with your real one)
-  const CUSTOMER_PORTAL_URL = 'https://snaprium.lemonsqueezy.com/my-orders'; // ← CHANGE THIS
-
-  // Determine button text & action based on subscription
+  // Button text changes based on subscription
   const isSubscribed = user && (user.subscription === 'pro' || user.subscription === 'premium');
   const buttonText = isSubscribed ? 'Manage Subscription' : 'Upgrade Plan';
-  const buttonAction = isSubscribed 
-    ? () => window.location.href = CUSTOMER_PORTAL_URL
-    : () => handleNavigate("/upgrade");
 
   return (
     <>
@@ -90,16 +84,16 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
             </button>
           )}
 
-          {/* Upgrade / Manage Subscription Button – changes based on plan */}
+          {/* Upgrade / Manage Subscription Button – only for logged-in users */}
           {user && (
             <button
               className="upgrade-btn dashboard-btn"
-              onClick={buttonAction}
+              onClick={() => handleNavigate("/upgrade")}
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
               </svg>
-              {buttonText}
+              {isSubscribed ? 'Manage Subscription' : 'Upgrade Plan'}
             </button>
           )}
 
