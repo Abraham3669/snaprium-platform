@@ -240,12 +240,10 @@ function App() {
       snaprium
     </div>
 
-    {/* Middle: Plan Badge – ONLY for Pro or Premium logged-in users */}
+   {/* Middle: Plan Badge – ONLY for Pro or Premium logged-in users */}
 {user && (user.subscription === 'pro' || user.subscription === 'premium') && (
-  <div className="plan-badge">
-    <span className={`badge ${user.subscription}`}>
-      {user.subscription === 'pro' ? 'Pro' : 'Premium'}
-    </span>
+  <div className={`plan-badge ${user.subscription}`}>
+    {user.subscription === 'pro' ? 'Pro' : 'Premium'}
   </div>
 )}
 

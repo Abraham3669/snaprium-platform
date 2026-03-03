@@ -2549,7 +2549,7 @@ header.header {
 
 
 
-/* Plan Badge – full rounded pill, centered in header */
+/* Plan Badge – full colored pill, centered */
 .plan-badge {
   flex: 1;
   display: flex;
@@ -2565,35 +2565,28 @@ header.header {
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   transition: all 0.2s ease;
   z-index: 10;
-  max-width: 140px;                    /* prevents pushing too wide */
+  max-width: 140px;
 }
 
-/* Pro – green gradient filling the whole badge */
+/* Pro – green filling the whole badge */
 .plan-badge.pro {
   background: linear-gradient(135deg, #10b981, #059669);
 }
 
-/* Premium – purple gradient filling the whole badge */
+/* Premium – purple filling the whole badge */
 .plan-badge.premium {
   background: linear-gradient(135deg, #8b5cf6, #7c3aed);
 }
 
-/* Text inside – no extra background */
-.plan-badge span {
-  background: transparent !important;
-  padding: 0 !important;
-}
-
-/* Mobile – smaller, no overlap with brand name */
+/* Mobile – smaller pill, no overlap */
 @media (max-width: 768px) {
   .plan-badge {
     font-size: 0.85rem;
     padding: 0.38rem 0.9rem;
     max-width: 110px;
-    margin: 0 8px;                     /* breathing room on sides */
+    margin: 0 8px;
   }
 
-  /* Prevent squeeze on small screens */
   .snaprium-header-inner {
     padding: 0 1rem;
     gap: 0.6rem;
@@ -2601,7 +2594,7 @@ header.header {
 
   .snaprium-brand {
     font-size: 1.35rem;
-    flex-shrink: 0;                    /* brand name won't shrink too much */
+    flex-shrink: 0;
   }
 
   .snaprium-logo {
@@ -2610,7 +2603,7 @@ header.header {
   }
 }
 
-/* Desktop hover – subtle pop */
+/* Desktop hover */
 @media (min-width: 769px) {
   .plan-badge:hover {
     transform: scale(1.05);
