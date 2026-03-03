@@ -2293,8 +2293,9 @@ header.header {
 
 /* ─────────────────────────────────────────────
    Snaprium Solution Display – Clean Professional 2026
-   Cards have visible floating shadow AT REST in both modes
-   Hover adds subtle extra lift | Accent border untouched
+   Cards have subtle visible elevation at rest in both modes
+   Not too much floating | Blue accent bar on left untouched
+   Hover: gentle lift only
 ───────────────────────────────────────────── */
 
 .solution-area {
@@ -2354,39 +2355,39 @@ header.header {
   margin: 1.6rem auto;
   padding: 1.1rem 1.3rem;
   border-radius: var(--radius);
-  border-left: 5px solid var(--accent);  /* your accent left line – untouched */
+  border-left: 5px solid var(--accent);  /* your blue accent bar – untouched */
   overflow-x: auto;
   transition: var(--transition);
 }
 
-/* Light mode: visible floating shadow AT REST */
+/* Light mode: subtle raised card at rest (grounded but visible) */
 @media (prefers-color-scheme: light) {
   .solution-area .katex-display {
-    background: var(--surface);  /* pure white – no tint */
-    border: 1px solid rgba(203, 213, 225, 0.9); /* visible outline */
+    background: var(--surface);  /* pure white – clean & professional */
+    border: 1px solid rgba(203, 213, 225, 0.88); /* soft visible outline */
     box-shadow: 
-      0 8px 24px rgba(0, 0, 0, 0.10),        /* visible base elevation at rest */
-      0 3px 10px rgba(0, 0, 0, 0.06);        /* soft mid-layer – not too much */
+      0 4px 12px rgba(0, 0, 0, 0.08),        /* gentle base elevation – visible but grounded */
+      inset 0 1px 3px rgba(0, 0, 0, 0.04);   /* tiny inner lift */
   }
 }
 
-/* Dark mode: visible floating shadow AT REST */
+/* Dark mode: subtle raised card at rest (matches light feel) */
 @media (prefers-color-scheme: dark) {
   .solution-area .katex-display {
-    background: var(--surface);  /* your dark surface – no heavy tint */
-    border: 1px solid rgba(51, 65, 85, 0.75); /* visible outline */
+    background: var(--surface);  /* your dark surface – clean */
+    border: 1px solid rgba(51, 65, 85, 0.70); /* soft visible outline */
     box-shadow: 
-      0 8px 24px rgba(0, 0, 0, 0.45),        /* visible dark-mode elevation at rest */
-      0 3px 10px rgba(0, 0, 0, 0.35);        /* soft mid-layer – balanced */
+      0 4px 12px rgba(0, 0, 0, 0.40),        /* gentle dark elevation – visible but not heavy */
+      inset 0 1px 3px rgba(0, 0, 0, 0.20);   /* tiny inner lift */
   }
 }
 
 /* Hover – subtle extra lift (same in both modes) */
 .solution-area .katex-display:hover {
   box-shadow: 
-    0 12px 32px rgba(0, 0, 0, 0.16),         /* noticeable but not crazy */
-    inset 0 1px 4px rgba(0, 0, 0, 0.05);
-  transform: translateY(-3px);                 /* gentle lift */
+    0 8px 20px rgba(0, 0, 0, 0.12),          /* noticeable but soft boost */
+    inset 0 2px 6px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);                 /* small gentle lift – not dramatic */
 }
 
 /* Separator after display math */
