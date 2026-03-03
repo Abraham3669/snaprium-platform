@@ -2401,6 +2401,54 @@ header.header {
 
 
 
+/* Inline math – clean, tight, no messy wrapping */
+.solution-area .katex-inline,
+.solution-area p .katex,
+.solution-area .katex:not(.katex-display) {
+  font-size: 1.05em !important;
+  font-weight: 500 !important;
+  vertical-align: baseline !important;
+  margin: 0 0.15em !important;           /* tiny breathing room left/right */
+  line-height: 1.1 !important;            /* prevents vertical jump */
+  display: inline !important;
+  white-space: nowrap !important;         /* prevents mid-equation wrapping */
+}
+
+/* Prevent forced line breaks around inline math */
+.solution-area p {
+  white-space: pre-wrap !important;
+  overflow-wrap: break-word !important;
+  hyphens: auto !important;
+}
+
+/* Fix double $$ turning into block (force inline if inside paragraph) */
+.solution-area p .katex-display {
+  display: inline-block !important;
+  margin: 0.2em 0.4em !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+/* Remove extra space after inline math */
+.solution-area .katex + span,
+.solution-area .katex + text,
+.solution-area .katex + p {
+  margin-left: 0.1em !important;
+}
+
+
+/* Force inline math to never break lines */
+.solution-area .katex-html {
+  white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: baseline !important;
+}
+
+
+
+
+
+
 
 .snaprium-brand {
   display: flex;
