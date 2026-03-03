@@ -2550,27 +2550,30 @@ header.header {
 
 
 /* ─────────────────────────────────────────────
-   Plan Badge – Centered for Glass Header
+   Plan Badge – Adjusted Position + Full Fill
 ───────────────────────────────────────────── */
 
-/* Make sure header is positioning context */
+/* Ensure header is positioning context */
 header.header {
   position: sticky;
 }
 
-/* Center badge inside header */
+/* Center badge and fine-tune position */
 .plan-badge {
   position: absolute;
   left: 50%;
   top: 50%;
-  transform: translate(-50%, -50%);
+
+  /* Push slightly right (+12px) and slightly up (-6px) */
+  transform: translate(calc(-50% + 12px), calc(-50% - 6px));
+
   z-index: 1100;
 
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
-  padding: 0.4rem 1rem;
+  padding: 0.42rem 1.05rem;
   border-radius: 999px;
 
   font-size: 0.78rem;
@@ -2579,36 +2582,37 @@ header.header {
   text-transform: uppercase;
 
   white-space: nowrap;
-  color: #fff;
+  color: #ffffff;
 
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  /* Remove glass blur so color fills fully */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 
   box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.12),
-    0 2px 6px rgba(0, 0, 0, 0.08);
+    0 6px 16px rgba(0, 0, 0, 0.14),
+    0 3px 8px rgba(0, 0, 0, 0.08);
 
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Subtle hover lift (desktop only) */
+/* Desktop hover */
 @media (hover: hover) {
   .plan-badge:hover {
-    transform: translate(-50%, -50%) scale(1.05);
+    transform: translate(calc(-50% + 12px), calc(-50% - 6px)) scale(1.05);
     box-shadow:
-      0 8px 20px rgba(0, 0, 0, 0.18),
+      0 10px 22px rgba(0, 0, 0, 0.18),
       0 4px 10px rgba(0, 0, 0, 0.1);
   }
 }
 
-/* PRO – Clean SaaS Blue */
+/* PRO – Full Fill Blue */
 .badge.pro {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
 }
 
-/* PREMIUM – Rich Purple */
+/* PREMIUM – Full Fill Purple */
 .badge.premium {
-  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  background: linear-gradient(135deg, #8b5cf6, #5b21b6);
 }
 
 /* ========================
@@ -2616,16 +2620,10 @@ header.header {
 ======================== */
 @media (max-width: 768px) {
   .plan-badge {
-    font-size: 0.7rem;
-    padding: 0.32rem 0.75rem;
-    letter-spacing: 0.06em;
-  }
-}
+    font-size: 0.72rem;
+    padding: 0.35rem 0.85rem;
 
-/* Extra small devices (avoid crowding logo/icons) */
-@media (max-width: 420px) {
-  .plan-badge {
-    top: 65%; /* slightly lower to avoid tight header crowding */
-    transform: translate(-50%, -50%) scale(0.92);
+    /* Slightly less horizontal shift on mobile */
+    transform: translate(calc(-50% + 8px), calc(-50% - 4px));
   }
 }
