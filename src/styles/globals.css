@@ -2538,3 +2538,45 @@ header.header {
   margin-top: 0.5rem;
   display: block;
 }
+
+
+
+
+
+
+
+
+
+
+
+/* Plan Badge – centered in header, only shown for Pro/Premium */
+.plan-badge {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge.pro {
+  background: #3b82f6; /* blue */
+}
+
+.badge.premium {
+  background: #8b5cf6; /* purple */
+}
+
+/* Mobile – smaller badge */
+@media (max-width: 768px) {
+  .plan-badge {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.7rem;
+  }
+}

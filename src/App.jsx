@@ -170,7 +170,7 @@ function App() {
     const plan = data.subscription || 'free';
     const solves = data.solves || 0;
 
-    const limits = { free: 15, pro: 2000, premium: 3000 };
+    const limits = { free: 15, pro: 75, premium: 150 };
     const currentLimit = limits[plan] || Infinity;
 
     if (solves >= currentLimit) {
@@ -227,31 +227,42 @@ function App() {
       />
 
       <header className="snaprium-header">
-        <div className="snaprium-header-inner">
-          <div className="snaprium-brand">
-            <img 
-              src={new URL('./assets/logo.png', import.meta.url).href}
-              alt="Snaprium Logo"
-              className="snaprium-logo"
-              width="32"
-              height="32"
-            />
-            snaprium
-          </div>
+  <div className="snaprium-header-inner">
+    {/* Left: Logo + Brand */}
+    <div className="snaprium-brand">
+      <img 
+        src={new URL('./assets/logo.png', import.meta.url).href}
+        alt="Snaprium Logo"
+        className="snaprium-logo"
+        width="32"
+        height="32"
+      />
+      snaprium
+    </div>
 
-          <button
-            onClick={() => setIsDashboardOpen(true)}
-            className="snaprium-menu-btn"
-            aria-label="Open dashboard"
-          >
-            <svg viewBox="0 0 24 24" fill="none">
-              <line x1="4" y1="7" x2="20" y2="7" />
-              <line x1="4" y1="12" x2="20" y2="12" />
-              <line x1="4" y1="17" x2="20" y2="17" />
-            </svg>
-          </button>
-        </div>
-      </header>
+    {/* Middle: Plan Badge – ONLY for Pro or Premium logged-in users */}
+    {user && (user.subscription === 'pro' || user.subscription === 'premium') && (
+      <div className="plan-badge">
+        <span className={`badge ${user.subscription}`}>
+          {user.subscription === 'pro' ? 'Pro' : 'Premium'}
+        </span>
+      </div>
+    )}
+
+    {/* Right: Menu button */}
+    <button
+      onClick={() => setIsDashboardOpen(true)}
+      className="snaprium-menu-btn"
+      aria-label="Open dashboard"
+    >
+      <svg viewBox="0 0 24 24" fill="none">
+        <line x1="4" y1="7" x2="20" y2="7" />
+        <line x1="4" y1="12" x2="20" y2="12" />
+        <line x1="4" y1="17" x2="20" y2="17" />
+      </svg>
+    </button>
+  </div>
+</header>
 
       <main className="pt-16">
         <Dashboard
