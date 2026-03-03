@@ -2456,6 +2456,51 @@ header.header {
 }
 
 
+/* Hide visible double $$ that leaked as text (frontend fix) */
+.solution-area p::before,
+.solution-area p::after,
+.solution-area .katex + span,
+.solution-area .katex + text,
+.solution-area .katex + br,
+.solution-area p:contains("$$")::before,
+.solution-area p:contains("$$")::after {
+  content: "" !important;
+  display: none !important;
+}
+
+/* Force any $$ inside text to be invisible but preserve math flow */
+.solution-area p:contains("$$") {
+  position: relative;
+}
+
+.solution-area p:contains("$$")::before,
+.solution-area p:contains("$$")::after {
+  content: " " !important; /* tiny space instead of $$ */
+  font-size: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  display: inline !important;
+}
+
+/* Extra safety for inline math wrapping */
+.solution-area .katex:not(.katex-display),
+.solution-area p .katex,
+.solution-area .katex-inline {
+  display: inline !important;
+  white-space: nowrap !important;
+  margin: 0 0.18em !important;
+  vertical-align: baseline !important;
+}
+
+/* Paragraphs – prevent orphans around math */
+.solution-area p {
+  white-space: pre-wrap !important;
+  overflow-wrap: break-word !important;
+  hyphens: auto !important;
+  word-break: normal !important;
+}
+
 
 
 
