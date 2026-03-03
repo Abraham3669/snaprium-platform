@@ -2428,42 +2428,6 @@ header.header {
 
 
 
-/* Fade-in reveal for the entire solution area */
-.solution-area {
-  opacity: 0;
-  transform: translateY(12px);
-  animation: solutionReveal 0.8s ease-out forwards;
-  animation-delay: 0.3s; /* small delay after panel opens */
-}
-
-@keyframes solutionReveal {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Optional: Stagger individual paragraphs/math blocks for step-by-step feel */
-.solution-area p,
-.solution-area .katex-display {
-  opacity: 0;
-  transform: translateY(8px);
-  animation: fadeUp 0.6s ease-out forwards;
-}
-
-/* Stagger delay – each paragraph/math appears a bit after the previous */
-.solution-area p:nth-child(1),
-.solution-area .katex-display:nth-child(1) { animation-delay: 0.4s; }
-.solution-area p:nth-child(2),
-.solution-area .katex-display:nth-child(2) { animation-delay: 0.55s; }
-.solution-area p:nth-child(3),
-.solution-area .katex-display:nth-child(3) { animation-delay: 0.7s; }
-.solution-area p:nth-child(4),
-.solution-area .katex-display:nth-child(4) { animation-delay: 0.85s; }
-/* Add more if you have longer answers */
-
-
-
 
 
 
