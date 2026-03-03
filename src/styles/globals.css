@@ -2293,9 +2293,8 @@ header.header {
 
 /* ─────────────────────────────────────────────
    Snaprium Solution Display – Clean Professional 2026
-   Light mode: strong card standout + visible shadow at rest
-   Dark mode: untouched
-   Inline math seamless | Display math card-like
+   Cards have visible floating shadow AT REST in both modes
+   Hover adds subtle extra lift | Accent border untouched
 ───────────────────────────────────────────── */
 
 .solution-area {
@@ -2332,7 +2331,7 @@ header.header {
   font-weight: 400;
 }
 
-/* INLINE MATH – blends perfectly into text/titles */
+/* INLINE MATH – blends perfectly */
 .solution-area .katex {
   font-size: 1.05em;
   font-weight: 500;
@@ -2346,7 +2345,7 @@ header.header {
   box-shadow: none;
 }
 
-/* DISPLAY MATH – card style */
+/* DISPLAY MATH – card style base */
 .solution-area .katex-display {
   display: block !important;
   font-size: 1.14em;
@@ -2355,29 +2354,39 @@ header.header {
   margin: 1.6rem auto;
   padding: 1.1rem 1.3rem;
   border-radius: var(--radius);
-  border-left: 5px solid var(--accent);
+  border-left: 5px solid var(--accent);  /* your accent left line – untouched */
   overflow-x: auto;
   transition: var(--transition);
 }
 
-/* Light mode: stronger card pop + visible shadow at rest */
+/* Light mode: visible floating shadow AT REST */
 @media (prefers-color-scheme: light) {
   .solution-area .katex-display {
-    background: #f8fbff;                    /* pale cool blue-white – distinct from page */
-    border: 1px solid rgba(203, 213, 225, 0.85); /* visible outline */
+    background: var(--surface);  /* pure white – no tint */
+    border: 1px solid rgba(203, 213, 225, 0.9); /* visible outline */
     box-shadow: 
-      0 8px 24px rgba(0, 0, 0, 0.10),        /* stronger base shadow – visible even at rest */
-      inset 0 1px 4px rgba(59, 130, 246, 0.10); /* faint inner depth */
+      0 8px 24px rgba(0, 0, 0, 0.10),        /* visible base elevation at rest */
+      0 3px 10px rgba(0, 0, 0, 0.06);        /* soft mid-layer – not too much */
   }
 }
 
-/* Hover – extra lift & glow */
+/* Dark mode: visible floating shadow AT REST */
+@media (prefers-color-scheme: dark) {
+  .solution-area .katex-display {
+    background: var(--surface);  /* your dark surface – no heavy tint */
+    border: 1px solid rgba(51, 65, 85, 0.75); /* visible outline */
+    box-shadow: 
+      0 8px 24px rgba(0, 0, 0, 0.45),        /* visible dark-mode elevation at rest */
+      0 3px 10px rgba(0, 0, 0, 0.35);        /* soft mid-layer – balanced */
+  }
+}
+
+/* Hover – subtle extra lift (same in both modes) */
 .solution-area .katex-display:hover {
   box-shadow: 
-    0 12px 32px rgba(0, 0, 0, 0.14),         /* deeper hover shadow */
-    inset 0 2px 6px rgba(59, 130, 246, 0.12);
-  transform: translateY(-3px);
-  border-left-color: var(--accent);            /* stays your accent */
+    0 12px 32px rgba(0, 0, 0, 0.16),         /* noticeable but not crazy */
+    inset 0 1px 4px rgba(0, 0, 0, 0.05);
+  transform: translateY(-3px);                 /* gentle lift */
 }
 
 /* Separator after display math */
