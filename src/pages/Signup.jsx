@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { auth, logEvent, analytics } from '../lib/firebase';  // ← Add logEvent & analytics
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -26,6 +26,12 @@ export default function Signup() {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
       await updateProfile(userCredential.user, { displayName: name.trim() });
+
+      // Log successful signup (GA4 recommended event)
+      logEvent(analytics, 'sign_up', {
+        method: 'email',  // Change to 'google' if you add Google signup later
+      });
+
       navigate('/');
     } catch (err) {
       console.error('Signup error:', err.code, err.message);

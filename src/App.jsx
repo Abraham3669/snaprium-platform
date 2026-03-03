@@ -1,6 +1,6 @@
 // src/App.jsx
-import { useState, useRef } from "react";
-import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";  // Added useEffect
+import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";  // Added useLocation
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -20,12 +20,13 @@ import Upgrade from "./pages/Upgrade";
 import { postAPI } from "./utils/apiClient";
 
 import { doc, updateDoc, increment, serverTimestamp, getDoc } from "firebase/firestore";
-import { auth, db } from "./lib/firebase";
+import { auth, db, analytics, logEvent, setUserId } from "./lib/firebase";  // Updated imports
 import { useAuth } from "./context/AuthContext";
 
 function App() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();  // For SPA page tracking
 
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
   const [file, setFile] = useState(null);
@@ -37,7 +38,22 @@ function App() {
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
- 
+  // Link Firebase Analytics user ID when authenticated (for cross-device tracking)
+  useEffect(() => {
+    if (user?.uid) {
+      setUserId(analytics, user.uid);
+      logEvent(analytics, "login", { method: user.providerData?.[0]?.providerId || "unknown" });
+    }
+  }, [user]);
+
+  // Track page views on route changes (SPA-friendly)
+  useEffect(() => {
+    logEvent(analytics, "page_view", {
+      page_path: location.pathname + location.search,
+      page_title: document.title || "Snaprium",
+      page_location: window.location.href,
+    });
+  }, [location]);
 
   const toggleTheme = () => {
     const nextTheme = theme === "dark" ? "light" : "dark";
@@ -53,6 +69,12 @@ function App() {
     setIsProcessing(true);
     setResultText("");
 
+    // Log snap attempt / photo processed
+    logEvent(analytics, "photo_processed", {
+      user_type: user ? "registered" : "guest",
+      image_size: dataUrl.length,  // rough base64 size indicator
+    });
+
     try {
       if (!(await checkSolveLimit())) return;
 
@@ -64,6 +86,13 @@ function App() {
       setResultText(res.answer || res.text || JSON.stringify(res) || "No answer received");
 
       setIsProcessing(false);
+
+      // Log successful solution
+      logEvent(analytics, "solution_generated", {
+        success: true,
+        user_type: user ? "registered" : "guest",
+        // Add problem_type if your API returns it, e.g. res.subject
+      });
 
       await incrementSolveCount();
       const currentUser = auth.currentUser;
@@ -79,6 +108,12 @@ function App() {
       console.error("Process error:", err);
       setResultText("Failed to get solution – please try again");
       setIsProcessing(false);
+
+      // Log failure
+      logEvent(analytics, "solution_generated", {
+        success: false,
+        error_message: err.message?.substring(0, 100) || "unknown_error",
+      });
     }
   };
 
@@ -86,6 +121,10 @@ function App() {
     if (!user) {
       let guestSolves = parseInt(localStorage.getItem('guestSolves') || '0', 10);
       if (guestSolves >= 2) {
+        logEvent(analytics, "guest_limit_hit", {
+          solves_attempted: guestSolves + 1,
+        });
+
         toast(
           <div style={{ textAlign: 'center' }}>
             <p style={{ marginBottom: '12px', fontWeight: 500 }}>
@@ -135,6 +174,13 @@ function App() {
     const currentLimit = limits[plan] || Infinity;
 
     if (solves >= currentLimit) {
+      logEvent(analytics, "upgrade_modal_shown", {
+        plan,
+        solves_used: solves,
+        limit: currentLimit,
+        user_type: "registered",
+      });
+
       if (plan === 'free' || plan === 'pro') {
         setShowUpgradeModal(true);
       } else {
@@ -180,34 +226,32 @@ function App() {
         theme={theme}
       />
 
-      
+      <header className="snaprium-header">
+        <div className="snaprium-header-inner">
+          <div className="snaprium-brand">
+            <img 
+              src={new URL('./assets/logo.png', import.meta.url).href}
+              alt="Snaprium Logo"
+              className="snaprium-logo"
+              width="32"
+              height="32"
+            />
+            snaprium
+          </div>
 
-<header className="snaprium-header">
-  <div className="snaprium-header-inner">
-    <div className="snaprium-brand">
-  <img 
-    src={new URL('./assets/logo.png', import.meta.url).href}  // ← this works perfectly in Vite
-    alt="Snaprium Logo"
-    className="snaprium-logo"
-    width="32"
-    height="32"
-  />
-  snaprium
-</div>
-
-    <button
-      onClick={() => setIsDashboardOpen(true)}
-      className="snaprium-menu-btn"
-      aria-label="Open dashboard"
-    >
-      <svg viewBox="0 0 24 24" fill="none">
-        <line x1="4" y1="7" x2="20" y2="7" />
-        <line x1="4" y1="12" x2="20" y2="12" />
-        <line x1="4" y1="17" x2="20" y2="17" />
-      </svg>
-    </button>
-  </div>
-</header>
+          <button
+            onClick={() => setIsDashboardOpen(true)}
+            className="snaprium-menu-btn"
+            aria-label="Open dashboard"
+          >
+            <svg viewBox="0 0 24 24" fill="none">
+              <line x1="4" y1="7" x2="20" y2="7" />
+              <line x1="4" y1="12" x2="20" y2="12" />
+              <line x1="4" y1="17" x2="20" y2="17" />
+            </svg>
+          </button>
+        </div>
+      </header>
 
       <main className="pt-16">
         <Dashboard
@@ -226,6 +270,8 @@ function App() {
                   onFileSelect={(selectedFile) => {
                     setFile(selectedFile);
                     setIsCropperOpen(true);
+                    // Optional: log start of upload flow
+                    logEvent(analytics, "camera_input_started", { user_type: user ? "registered" : "guest" });
                   }}
                   onOpenDashboard={() => setIsDashboardOpen(true)}
                 />
@@ -241,12 +287,12 @@ function App() {
                 />
 
                 {isResultOpen && (
-  <ResultPanel
-    result={{ image: croppedImage, text: resultText }}
-    loading={isProcessing}
-    onClose={() => setIsResultOpen(false)}
-  />
-)}
+                  <ResultPanel
+                    result={{ image: croppedImage, text: resultText }}
+                    loading={isProcessing}
+                    onClose={() => setIsResultOpen(false)}
+                  />
+                )}
               </>
             }
           />
