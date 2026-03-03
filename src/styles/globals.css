@@ -2293,8 +2293,9 @@ header.header {
 
 /* ─────────────────────────────────────────────
    Snaprium Solution Display – Clean Professional 2026
-   Both modes: cards float visibly at rest with strong base shadow
-   Hover: slight extra lift | Inline math seamless
+   Cards float visibly at rest in BOTH modes
+   Strong base shadow + separation | Hover adds subtle extra lift
+   Accent left border unchanged
 ───────────────────────────────────────────── */
 
 .solution-area {
@@ -2345,7 +2346,7 @@ header.header {
   box-shadow: none;
 }
 
-/* DISPLAY MATH – card style base */
+/* DISPLAY MATH – card style base (accent border unchanged) */
 .solution-area .katex-display {
   display: block !important;
   font-size: 1.14em;
@@ -2354,42 +2355,41 @@ header.header {
   margin: 1.6rem auto;
   padding: 1.1rem 1.3rem;
   border-radius: var(--radius);
-  border-left: 5px solid var(--accent);
+  border-left: 5px solid var(--accent);  /* your accent left line – untouched */
   overflow-x: auto;
   transition: var(--transition);
 }
 
-/* Light mode: strong floating card at rest */
+/* Light mode: cards FLOAT visibly at rest */
 @media (prefers-color-scheme: light) {
   .solution-area .katex-display {
-    background: #f5faff;                    /* cool off-white – distinct from page */
-    border: 1px solid rgba(203, 213, 225, 0.9); /* clear outline */
+    background: #f6faff;                    /* clean cool white – clearly different from page #fafcff */
+    border: 1px solid rgba(203, 213, 225, 0.92); /* stronger outline for edge definition */
     box-shadow: 
-      0 12px 32px rgba(0, 0, 0, 0.12),       /* strong base elevation */
-      0 4px 16px rgba(0, 0, 0, 0.08),        /* mid-layer depth */
-      inset 0 2px 8px rgba(59, 130, 246, 0.12); /* inner glow/depth */
+      0 16px 40px rgba(0, 0, 0, 0.14),       /* strong base elevation – looks floating */
+      0 8px 24px rgba(0, 0, 0, 0.10),        /* added depth layer */
+      inset 0 2px 10px rgba(0, 0, 0, 0.06);  /* subtle inner lift */
   }
 }
 
-/* Dark mode: strong floating card at rest */
+/* Dark mode: cards FLOAT visibly at rest (matching premium feel) */
 @media (prefers-color-scheme: dark) {
   .solution-area .katex-display {
-    background: #111827;                    /* slightly darker slate – pops from #0f172a surface */
-    border: 1px solid rgba(51, 65, 85, 0.8); /* visible dark outline */
+    background: #0e1a32;                    /* noticeably darker than surface #0f172a */
+    border: 1px solid rgba(51, 65, 85, 0.85); /* visible dark outline */
     box-shadow: 
-      0 12px 32px rgba(0, 0, 0, 0.5),        /* deep base shadow for dark mode */
-      0 4px 16px rgba(0, 0, 0, 0.4),         /* mid-layer */
-      inset 0 2px 8px rgba(96, 165, 250, 0.12); /* faint blue inner glow */
+      0 16px 40px rgba(0, 0, 0, 0.60),       /* deep dark-mode elevation */
+      0 8px 24px rgba(0, 0, 0, 0.50),        /* mid-layer depth */
+      inset 0 2px 10px rgba(96, 165, 250, 0.10); /* faint blue inner glow */
   }
 }
 
-/* Hover – extra lift in both modes (subtle boost) */
+/* Hover – subtle extra lift (same in both modes) */
 .solution-area .katex-display:hover {
   box-shadow: 
-    0 16px 40px rgba(0, 0, 0, 0.18),         /* stronger hover in light */
-    inset 0 3px 10px rgba(59, 130, 246, 0.15);
-  transform: translateY(-4px);
-  border-left-color: var(--accent);            /* unchanged accent */
+    0 20px 48px rgba(0, 0, 0, 0.22),         /* stronger on hover */
+    inset 0 3px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-5px);
 }
 
 /* Separator after display math */
@@ -2419,10 +2419,6 @@ header.header {
     margin: 1.4rem 0;
   }
 }
-
-
-
-
 
 
 
