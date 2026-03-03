@@ -2400,11 +2400,12 @@ header.header {
 
 
 
+
 /* ─────────────────────────────────────────────
-   Inline & Display Math – Clean, No Messy Wrapping (Final Working Fix)
+   Inline & Display Math – Clean, No Messy Wrapping (Final Fix)
 ───────────────────────────────────────────── */
 
-/* Inline math ($...$) – tight, no awkward breaks or orphans */
+/* Inline math ($...$) – tight, no awkward breaks */
 .solution-area .katex:not(.katex-display),
 .solution-area p .katex,
 .solution-area .katex-inline {
@@ -2417,7 +2418,7 @@ header.header {
   white-space: nowrap !important;
 }
 
-/* Prevent double $$ from forcing block mode inside paragraphs */
+/* Prevent double $$ from forcing block mode inside text */
 .solution-area p .katex-display {
   display: inline-block !important;
   margin: 0.3em 0.5em !important;
@@ -2440,36 +2441,23 @@ header.header {
   margin: 0.6rem 0 1.1rem !important;
 }
 
-/* Force inline math to stay together (fixes "v'(x)$$:" mess) */
+/* Force inline math to stay together */
 .solution-area .katex-html {
   white-space: nowrap !important;
   display: inline-flex !important;
   align-items: baseline !important;
 }
 
-/* Hide any stray double $$ or extra delimiters that leak as text */
-.solution-area p > text:empty,
-.solution-area p > span:empty,
-.solution-area p > br + text,
-.solution-area p > br + span,
-.solution-area .katex + text,
+/* Remove extra space after inline math */
 .solution-area .katex + span,
-.solution-area .katex + br {
-  display: none !important;
+.solution-area .katex + text,
+.solution-area .katex + p {
+  margin-left: 0.1em !important;
 }
 
-/* Extra safety for mobile – prevent wrapping mid-math */
-@media (max-width: 768px) {
-  .solution-area .katex:not(.katex-display) {
-    font-size: 1.03em !important;
-    margin: 0 0.15em !important;
-  }
 
-  .solution-area p {
-    line-height: 1.65 !important;
-    margin: 0.5rem 0 0.9rem !important;
-  }
-}
+
+
 
 
 
