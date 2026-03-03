@@ -2293,14 +2293,15 @@ header.header {
 
 /* ─────────────────────────────────────────────
    Snaprium Solution Display – Clean Professional 2026
-   Cards elevated at rest with strong shadow (what was hover shadow)
-   Hover: extra lift & deeper shadow | Accent left bar untouched
+   Both modes: cards float visibly at rest with strong base shadow
+   Hover: slight extra lift | Inline math seamless
 ───────────────────────────────────────────── */
 
 .solution-area {
   padding: 1.6rem 1.2rem;
   background: var(--surface);
   border-radius: var(--radius);
+  border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
 }
 
@@ -2353,37 +2354,42 @@ header.header {
   margin: 1.6rem auto;
   padding: 1.1rem 1.3rem;
   border-radius: var(--radius);
-  border-left: 5px solid var(--accent);  /* your blue accent bar – untouched */
+  border-left: 5px solid var(--accent);
   overflow-x: auto;
   transition: var(--transition);
 }
 
-/* Light mode: elevated at rest (strong shadow from previous hover level) */
+/* Light mode: strong floating card at rest */
 @media (prefers-color-scheme: light) {
   .solution-area .katex-display {
-    background: var(--surface);  /* pure white – clean */
+    background: #f5faff;                    /* cool off-white – distinct from page */
+    border: 1px solid rgba(203, 213, 225, 0.9); /* clear outline */
     box-shadow: 
-      0 12px 32px rgba(0, 0, 0, 0.14),       /* strong visible elevation at rest */
-      0 4px 12px rgba(0, 0, 0, 0.08);        /* soft mid-layer depth */
+      0 12px 32px rgba(0, 0, 0, 0.12),       /* strong base elevation */
+      0 4px 16px rgba(0, 0, 0, 0.08),        /* mid-layer depth */
+      inset 0 2px 8px rgba(59, 130, 246, 0.12); /* inner glow/depth */
   }
 }
 
-/* Dark mode: elevated at rest (matching strong shadow) */
+/* Dark mode: strong floating card at rest */
 @media (prefers-color-scheme: dark) {
   .solution-area .katex-display {
-    background: var(--surface);  /* your dark surface */
+    background: #111827;                    /* slightly darker slate – pops from #0f172a surface */
+    border: 1px solid rgba(51, 65, 85, 0.8); /* visible dark outline */
     box-shadow: 
-      0 12px 32px rgba(0, 0, 0, 0.50),       /* strong dark elevation at rest */
-      0 4px 12px rgba(0, 0, 0, 0.40);        /* soft mid-layer */
+      0 12px 32px rgba(0, 0, 0, 0.5),        /* deep base shadow for dark mode */
+      0 4px 16px rgba(0, 0, 0, 0.4),         /* mid-layer */
+      inset 0 2px 8px rgba(96, 165, 250, 0.12); /* faint blue inner glow */
   }
 }
 
-/* Hover – extra nice lift (deeper shadow + more translate) */
+/* Hover – extra lift in both modes (subtle boost) */
 .solution-area .katex-display:hover {
   box-shadow: 
-    0 20px 48px rgba(0, 0, 0, 0.20),         /* deeper hover shadow */
-    inset 0 2px 8px rgba(0, 0, 0, 0.06);
-  transform: translateY(-6px);                 /* noticeable but controlled lift */
+    0 16px 40px rgba(0, 0, 0, 0.18),         /* stronger hover in light */
+    inset 0 3px 10px rgba(59, 130, 246, 0.15);
+  transform: translateY(-4px);
+  border-left-color: var(--accent);            /* unchanged accent */
 }
 
 /* Separator after display math */
@@ -2413,6 +2419,7 @@ header.header {
     margin: 1.4rem 0;
   }
 }
+
 
 
 
