@@ -2293,8 +2293,8 @@ header.header {
 
 /* ─────────────────────────────────────────────
    Snaprium Solution Display – Clean Professional 2026
-   Cards elevated at rest with strong shadow (what was hover shadow)
-   Hover: extra lift & deeper shadow | Accent left bar untouched
+   Very subtle shadow at rest | Shadow grows nicely on hover
+   Accent left bar untouched | No extra borders or tints
 ───────────────────────────────────────────── */
 
 .solution-area {
@@ -2358,32 +2358,32 @@ header.header {
   transition: var(--transition);
 }
 
-/* Light mode: elevated at rest (strong shadow from previous hover level) */
+/* Light mode: very subtle shadow at rest */
 @media (prefers-color-scheme: light) {
   .solution-area .katex-display {
-    background: var(--surface);  /* pure white – clean */
+    background: var(--surface);  /* pure white */
     box-shadow: 
-      0 12px 32px rgba(0, 0, 0, 0.14),       /* strong visible elevation at rest */
-      0 4px 12px rgba(0, 0, 0, 0.08);        /* soft mid-layer depth */
+      0 2px 8px rgba(0, 0, 0, 0.06),     /* very soft base elevation – barely there */
+      0 1px 4px rgba(0, 0, 0, 0.04);     /* tiny depth layer */
   }
 }
 
-/* Dark mode: elevated at rest (matching strong shadow) */
+/* Dark mode: very subtle shadow at rest */
 @media (prefers-color-scheme: dark) {
   .solution-area .katex-display {
     background: var(--surface);  /* your dark surface */
     box-shadow: 
-      0 12px 32px rgba(0, 0, 0, 0.50),       /* strong dark elevation at rest */
-      0 4px 12px rgba(0, 0, 0, 0.40);        /* soft mid-layer */
+      0 2px 8px rgba(0, 0, 0, 0.30),     /* very soft dark elevation */
+      0 1px 4px rgba(0, 0, 0, 0.20);     /* tiny depth layer */
   }
 }
 
-/* Hover – extra nice lift (deeper shadow + more translate) */
+/* Hover – shadow grows nicely (deeper & wider) + small lift */
 .solution-area .katex-display:hover {
   box-shadow: 
-    0 20px 48px rgba(0, 0, 0, 0.20),         /* deeper hover shadow */
-    inset 0 2px 8px rgba(0, 0, 0, 0.06);
-  transform: translateY(-6px);                 /* noticeable but controlled lift */
+    0 8px 24px rgba(0, 0, 0, 0.14),      /* noticeable grow in light */
+    inset 0 1px 4px rgba(0, 0, 0, 0.05);
+  transform: translateY(-4px);             /* gentle but visible lift */
 }
 
 /* Separator after display math */
