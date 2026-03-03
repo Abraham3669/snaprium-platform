@@ -241,13 +241,13 @@ function App() {
     </div>
 
     {/* Middle: Plan Badge – ONLY for Pro or Premium logged-in users */}
-    {user && (user.subscription === 'pro' || user.subscription === 'premium') && (
-      <div className="plan-badge">
-        <span className={`badge ${user.subscription}`}>
-          {user.subscription === 'pro' ? 'Pro' : 'Premium'}
-        </span>
-      </div>
-    )}
+{user && (user.subscription === 'pro' || user.subscription === 'premium') && (
+  <div className="plan-badge">
+    <span className={`badge ${user.subscription}`}>
+      {user.subscription === 'pro' ? 'Pro' : 'Premium'}
+    </span>
+  </div>
+)}
 
     {/* Right: Menu button */}
     <button
