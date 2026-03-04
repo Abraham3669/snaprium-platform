@@ -998,7 +998,7 @@ header.header {
 
 /* ──────────────────────────────────────────────
    Scanning animation over the preview image
-   + responsive size control (mobile full-width, desktop capped)
+   Faster, more energetic feel (perceived wait shorter)
 ─────────────────────────────────────────────── */
 
 .image-wrapper {
@@ -1018,29 +1018,27 @@ header.header {
   object-fit: contain;
 }
 
-/* ── Responsive max-width ──────────────────────────────── */
-
+/* Responsive max-width */
 @media (min-width: 768px) {
   .image-wrapper {
-    max-width: 620px;           /* ← main control – feels good on tablets & small laptops */
+    max-width: 620px;
     margin: 20px auto;
   }
 }
 
 @media (min-width: 1024px) {
   .image-wrapper {
-    max-width: 720px;           /* little bigger on full desktop */
+    max-width: 720px;
   }
 }
 
 @media (min-width: 1440px) {
   .image-wrapper {
-    max-width: 820px;           /* optional – prevents feeling too small on very wide screens */
+    max-width: 820px;
   }
 }
 
-/* ── Scanning overlay & line ───────────────────────────── */
-
+/* Scanning overlay & line – FASTER animation */
 .scan-overlay {
   position: absolute;
   inset: 0;
@@ -1052,7 +1050,7 @@ header.header {
     rgba(0, 0, 0, 0.35) 55%,
     rgba(0, 0, 0, 0.08) 100%
   );
-  opacity: 0.9;
+  opacity: 0.92;
 }
 
 .scan-line {
@@ -1070,7 +1068,7 @@ header.header {
   box-shadow: 
     0 0 18px #00ff9d,
     0 0 36px rgba(0, 255, 157, 0.5);
-  animation: scan 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: scan 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite; /* FASTER duration */
   pointer-events: none;
 }
 
@@ -1080,18 +1078,25 @@ header.header {
   inset: -24px 0 -24px 0;
   background: linear-gradient(to bottom, transparent, rgba(0, 255, 157, 0.35), transparent);
   opacity: 0.7;
+  animation: pulse-glow 1.4s infinite; /* subtle pulse synced with scan */
 }
 
+/* Faster scan animation */
 @keyframes scan {
-  0%   { top: -12%; opacity: 0.35; }
-  8%   { opacity: 1; }
-  48%  { top: 102%; opacity: 1; }
-  58%  { opacity: 0.35; }
-  100% { top: 112%; opacity: 0; }
+  0%   { top: -10%; opacity: 0.4; }
+  5%   { opacity: 1; }
+  45%  { top: 102%; opacity: 1; }
+  50%  { opacity: 0.4; }
+  100% { top: 110%; opacity: 0; }
 }
 
-/* ── Processing text (optional – smaller & cleaner) ────── */
+/* Subtle glow pulse (makes it feel more active) */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.7; }
+  50%      { opacity: 1; }
+}
 
+/* Processing text (optional – smaller & cleaner) */
 .processing-text {
   text-align: center;
   color: #555;
@@ -1100,11 +1105,6 @@ header.header {
   font-style: italic;
   opacity: 0.9;
 }
-
-/* If you want NO text at all during loading, just remove/comment 
-   the <p className="processing-text">...</p> from the JSX */
-
-
    
 
 
