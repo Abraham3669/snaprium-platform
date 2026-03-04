@@ -1,6 +1,6 @@
 // src/App.jsx
-import { useState, useRef, useEffect } from "react";  // Added useEffect
-import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";  // Added useLocation
+import { useState, useRef, useEffect } from "react";
+import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -20,13 +20,13 @@ import Upgrade from "./pages/Upgrade";
 import { postAPI } from "./utils/apiClient";
 
 import { doc, updateDoc, increment, serverTimestamp, getDoc } from "firebase/firestore";
-import { auth, db, analytics, logEvent, setUserId } from "./lib/firebase";  // Updated imports
+import { auth, db, analytics, logEvent, setUserId } from "./lib/firebase";
 import { useAuth } from "./context/AuthContext";
 
 function App() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();  // For SPA page tracking
+  const location = useLocation();
 
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
   const [file, setFile] = useState(null);
@@ -38,7 +38,6 @@ function App() {
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
-  // Link Firebase Analytics user ID when authenticated (for cross-device tracking)
   useEffect(() => {
     if (user?.uid) {
       setUserId(analytics, user.uid);
@@ -46,7 +45,6 @@ function App() {
     }
   }, [user]);
 
-  // Track page views on route changes (SPA-friendly)
   useEffect(() => {
     logEvent(analytics, "page_view", {
       page_path: location.pathname + location.search,
@@ -69,29 +67,24 @@ function App() {
     setIsProcessing(true);
     setResultText("");
 
-    // Log snap attempt / photo processed
     logEvent(analytics, "photo_processed", {
       user_type: user ? "registered" : "guest",
-      image_size: dataUrl.length,  // rough base64 size indicator
+      image_size: dataUrl.length,
     });
 
     try {
       if (!(await checkSolveLimit())) return;
 
-      console.log("Sending to API...");
       const res = await postAPI("/api/process", {
         imageBase64: dataUrl.split(",")[1],
       });
-      console.log("API response:", res);
       setResultText(res.answer || res.text || JSON.stringify(res) || "No answer received");
 
       setIsProcessing(false);
 
-      // Log successful solution
       logEvent(analytics, "solution_generated", {
         success: true,
         user_type: user ? "registered" : "guest",
-        // Add problem_type if your API returns it, e.g. res.subject
       });
 
       await incrementSolveCount();
@@ -102,14 +95,12 @@ function App() {
           uploadCount: increment(1),
           lastUpload: serverTimestamp(),
         });
-        console.log("Upload count incremented");
       }
     } catch (err) {
       console.error("Process error:", err);
       setResultText("Failed to get solution – please try again");
       setIsProcessing(false);
 
-      // Log failure
       logEvent(analytics, "solution_generated", {
         success: false,
         error_message: err.message?.substring(0, 100) || "unknown_error",
@@ -227,40 +218,41 @@ function App() {
       />
 
       <header className="snaprium-header">
-  <div className="snaprium-header-inner">
-    {/* Left: Logo + Brand */}
-    <div className="snaprium-brand">
-      <img 
-        src={new URL('./assets/logo.png', import.meta.url).href}
-        alt="Snaprium Logo"
-        className="snaprium-logo"
-        width="32"
-        height="32"
-      />
-      snaprium
-    </div>
+        <div className="snaprium-header-inner">
+          {/* Left: Logo + Brand */}
+          <div className="snaprium-brand">
+            <img 
+              src={new URL('./assets/logo.png', import.meta.url).href}
+              alt="Snaprium Logo"
+              className="snaprium-logo"
+              width="32"
+              height="32"
+            />
+            snaprium
+          </div>
 
-   {/* Middle: Plan Badge – ONLY for Pro or Premium logged-in users */}
-{user && (user.subscription === 'pro' || user.subscription === 'premium') && (
-  <div className={`plan-badge ${user.subscription}`}>
-    {user.subscription === 'pro' ? 'Pro' : 'Premium'}
-  </div>
-)}
+          {/* Right side: Plan Badge (Pro/Premium only) + Menu button */}
+          <div className="header-right">
+            {user && (user.subscription === 'pro' || user.subscription === 'premium') && (
+              <div className={`plan-badge ${user.subscription}`}>
+                {user.subscription === 'pro' ? 'Pro' : 'Premium'}
+              </div>
+            )}
 
-    {/* Right: Menu button */}
-    <button
-      onClick={() => setIsDashboardOpen(true)}
-      className="snaprium-menu-btn"
-      aria-label="Open dashboard"
-    >
-      <svg viewBox="0 0 24 24" fill="none">
-        <line x1="4" y1="7" x2="20" y2="7" />
-        <line x1="4" y1="12" x2="20" y2="12" />
-        <line x1="4" y1="17" x2="20" y2="17" />
-      </svg>
-    </button>
-  </div>
-</header>
+            <button
+              onClick={() => setIsDashboardOpen(true)}
+              className="snaprium-menu-btn"
+              aria-label="Open dashboard"
+            >
+              <svg viewBox="0 0 24 24" fill="none">
+                <line x1="4" y1="7" x2="20" y2="7" />
+                <line x1="4" y1="12" x2="20" y2="12" />
+                <line x1="4" y1="17" x2="20" y2="17" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </header>
 
       <main className="pt-16">
         <Dashboard
@@ -279,7 +271,6 @@ function App() {
                   onFileSelect={(selectedFile) => {
                     setFile(selectedFile);
                     setIsCropperOpen(true);
-                    // Optional: log start of upload flow
                     logEvent(analytics, "camera_input_started", { user_type: user ? "registered" : "guest" });
                   }}
                   onOpenDashboard={() => setIsDashboardOpen(true)}
@@ -317,7 +308,6 @@ function App() {
         </Routes>
       </main>
 
-      {/* Limit-hit modal */}
       {showUpgradeModal && <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />}
     </div>
   );
