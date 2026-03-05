@@ -1,6 +1,6 @@
 // src/components/ResultPanel.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -9,6 +9,9 @@ import 'katex/dist/katex.min.css';
 export default function ResultPanel({ result, loading, onClose }) {
   const [showSteps, setShowSteps] = useState(false);
   const [feedback, setFeedback] = useState(null);
+
+  // Ref to measure the real height of the content for smooth animation
+  const stepsRef = useRef(null);
 
   const handleFeedback = (type) => {
     setFeedback(type);
@@ -116,15 +119,21 @@ export default function ResultPanel({ result, loading, onClose }) {
                 `}
               >
                 {showSteps ? 'Hide Step-by-Step' : 'Show Step-by-Step'}
-                <span className="text-xl">{showSteps ? '▲' : '▼'}</span>
+                <span className="text-xl transition-transform duration-300">
+                  {showSteps ? '▲' : '▼'}
+                </span>
               </button>
 
-              {/* Expandable Steps */}
+              {/* Expandable Steps – now using dynamic height */}
               <div
-                className={`
-                  steps-section overflow-hidden transition-all duration-500 ease-in-out
-                  ${showSteps ? 'max-h-[3000px] opacity-100' : 'max-h-0 opacity-0'}
-                `}
+                ref={stepsRef}
+                className="overflow-hidden transition-all duration-500 ease-in-out"
+                style={{
+                  maxHeight: showSteps
+                    ? `${stepsRef.current?.scrollHeight || 2000}px`
+                    : '0px',
+                  opacity: showSteps ? 1 : 0,
+                }}
               >
                 <div className="pt-1 pb-6 px-1">
                   <h4 className="text-lg font-semibold text-[var(--text-primary)] mb-4">
@@ -166,7 +175,8 @@ export default function ResultPanel({ result, loading, onClose }) {
                   onClick={() => handleFeedback('up')}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path d="M14 9V5a3 3 0 0 0-6 0v4H5v11h14V9h-5z"
+                    <path 
+                      d="M14 9V5a3 3 0 0 0-6 0v4H5v11h14V9h-5z"
                       stroke="currentColor"
                       strokeWidth="2"
                     />
@@ -179,7 +189,8 @@ export default function ResultPanel({ result, loading, onClose }) {
                   onClick={() => handleFeedback('down')}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path d="M10 15v4a3 3 0 0 0 6 0v-4h3V4H5v11h5z"
+                    <path 
+                      d="M10 15v4a3 3 0 0 0 6 0v-4h3V4H5v11h5z"
                       stroke="currentColor"
                       strokeWidth="2"
                     />
@@ -219,24 +230,16 @@ function prepareMathForKaTeX(rawText) {
     '\\frac{$1}{$2}'
   );
 
-  // ────────────────────────────────────────────────────────────────
-  // ADD YOUR NEW BLOCK HERE (or adjust if you already have something similar)
-  // This upgrades inline math → display math for sentences that look like
-  // they contain important explanatory steps / rules
+  // Upgrade inline math → display math for explanatory sentences
   text = text.replace(
     /\$([^$]*?(?:derivative|rule|product rule|quotient|chain|integral|limit|sum|equals|therefore)[^$]*?)\$/gi,
     '$$$$$1$$$$'
   );
-  // ────────────────────────────────────────────────────────────────
 
-  // 3. Fix common model mistakes: single $ delimiters that should be display
-  //    (your existing optional block)
-  // text = text.replace(/\$([^\$]+)\$/g, '$$$$$1$$$$');
-
-  // 4. Clean up extra spaces inside delimiters (helps KaTeX sometimes)
+  // 4. Clean up extra spaces inside delimiters
   text = text.replace(/\$\$[\s\n]+/g, '$$').replace(/[\s\n]+\$\$/g, '$$');
 
-  // 5. Replace any stray \[ \] delimiters with $$ (some models use them)
+  // 5. Replace any stray \[ \] delimiters with $$
   text = text.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$');
 
   return text;
