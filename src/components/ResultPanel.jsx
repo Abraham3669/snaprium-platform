@@ -20,37 +20,85 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   if (!result?.image) return null;
 
+  // ────────────────────────────────────────────────
+  // Very robust final answer extraction – improved 2026
+  // ────────────────────────────────────────────────
   const extractFinalAnswer = (text) => {
-  if (!text?.trim()) return '$$\\text{No solution found}$$';
+    if (!text?.trim()) return '$$\\text{No solution found}$$';
 
-  const cleaned = text
-    .trim()
-    .replace(/\n{3,}/g, '\n\n')
-    .replace(/\n+/g, '\n');
+    let cleaned = text.trim().replace(/\n{3,}/g, '\n\n').replace(/\n+/g, '\n');
 
-  const lines = cleaned.split('\n').map(l => l.trim()).filter(Boolean);
-
-  // Walk backwards to find the last math-looking line
-  for (let i = lines.length - 1; i >= 0; i--) {
-    const line = lines[i];
-
-    if (
-      line.includes('\\') ||
-      /[=\-+*/^(){}\[\]\d]/.test(line)
-    ) {
-      return line;
+    // Priority 1: content inside \boxed{}
+    let boxedContent = null;
+    const boxedMatch = cleaned.match(/\\boxed\{([\s\S]*?)\}/);
+    if (boxedMatch && boxedMatch[1]?.trim()) {
+      boxedContent = boxedMatch[1].trim();
     }
-  }
 
-  // fallback: just return last line
-  return lines[lines.length - 1] || '$$\\text{No solution found}$$';
-};
+    // Priority 2: last complete $$...$$ block
+    const displayMatches = [...cleaned.matchAll(/\$\$([\s\S]*?)\$\$/g)];
+    let lastDisplay = null;
+    if (displayMatches.length > 0) {
+      lastDisplay = displayMatches[displayMatches.length - 1][1].trim();
+    }
 
+    // Choose best candidate
+    let candidate = boxedContent || lastDisplay;
 
+    // Fallback: keyword search (final answer, therefore, etc.)
+    if (!candidate) {
+      const keywordRegex = /(?:final answer|answer|result|solution|therefore|thus|conclusion|so|we get)[:=\s→-]*([\s\S]*?)(?=\n{2,}|$)/i;
+      const match = cleaned.match(keywordRegex);
+      if (match?.[1]) {
+        candidate = match[1].trim()
+          .replace(/\\boxed\{([\s\S]*?)\}/, '$1')
+          .replace(/^[$\s\\]+|[$\s\\]+$/, '')
+          .trim();
+      }
+    }
 
-  const finalAnswer = prepareMathForKaTeX(
-  extractFinalAnswer(result.text || '')
-);
+    // Last resort: last math-looking line
+    if (!candidate) {
+      const lines = cleaned.split('\n').filter(Boolean);
+      for (let i = lines.length - 1; i >= 0; i--) {
+        let line = lines[i].trim();
+        if (line.includes('\\') || /[=\-+\*/^(){}\[\]\d]/.test(line)) {
+          line = line
+            .replace(/\\boxed\{([\s\S]*?)\}/, '$1')
+            .replace(/^[$\s\\]+|[$\s\\]+$/, '')
+            .trim();
+          candidate = line;
+          break;
+        }
+      }
+    }
+
+    if (!candidate) {
+      return '$$\\text{See the solution below}$$';
+    }
+
+    // ── Normalize & prepare for KaTeX ──
+    candidate = candidate
+      .replace(/\\boxed\{([\s\S]*?)\}/g, '$1')           // remove any remaining \boxed
+      .replace(/^[\s$\\]+|[\s$\\]+$/g, '')               // strip leading/trailing junk
+      .replace(/^\$\$|\$\$$/g, '')                       // remove outer $$ if present
+      .replace(/^\\\[|\\\]$/g, '')                       // remove \[ \]
+      .replace(/\$\$[\r\n]{2,}\$\$/g, '$$')              // no empty lines between $$
+      .trim();
+
+    // Decide display vs inline
+    const looksLikeDisplay = /\\(frac|sum|int|prod|lim|matrix|cases|align|array|begin|end)|\\begin\{[a-z]+\}/.test(candidate)
+      || candidate.includes('\n') || candidate.length > 30;
+
+    if (looksLikeDisplay && !candidate.includes('$$')) {
+      candidate = `$$${candidate}$$`;
+    }
+
+    // Final safety
+    return candidate || '$$\\text{No final answer extracted}$$';
+  };
+
+  const finalAnswer = prepareMathForKaTeX(extractFinalAnswer(result.text || ''));
 
   return (
     <div className="result-panel">
@@ -61,11 +109,7 @@ export default function ResultPanel({ result, loading, onClose }) {
 
       <div className="result-panel-content">
         <div className="image-wrapper">
-          <img
-            className="result-image"
-            src={result.image}
-            alt="Cropped preview"
-          />
+          <img className="result-image" src={result.image} alt="Cropped preview" />
           {loading && (
             <div className="scan-overlay">
               <div className="scan-line"></div>
@@ -77,7 +121,7 @@ export default function ResultPanel({ result, loading, onClose }) {
           {!loading && result?.text && (
             <>
               {/* Final Answer Block */}
-              <div 
+              <div
                 className="final-answer mb-6 p-6 md:p-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-lg)] text-center overflow-hidden"
                 style={{ background: 'linear-gradient(135deg, var(--accent-glow), transparent 70%)' }}
               >
@@ -85,19 +129,13 @@ export default function ResultPanel({ result, loading, onClose }) {
                   Final Answer
                 </h3>
 
-                <div 
+                <div
                   className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-[var(--text-primary)] leading-tight min-h-[4rem] flex items-center justify-center overflow-x-auto px-2"
                 >
                   <ReactMarkdown
                     remarkPlugins={[remarkMath]}
                     rehypePlugins={[rehypeKatex]}
-                    components={{
-                      p: ({children}) => <div className="inline-block text-center">{children}</div>,
-                      div: ({node, className, children, ...props}) => 
-                        className?.includes('katex-display')
-                          ? <div className="katex-display-final mx-auto text-center" {...props}>{children}</div>
-                          : <div {...props}>{children}</div>
-                    }}
+                    // Removed fragile custom components override → KaTeX can do its job cleanly
                   >
                     {finalAnswer}
                   </ReactMarkdown>
@@ -128,7 +166,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                   <h4 className="text-xl font-semibold text-[var(--text-primary)] mb-5">
                     Step-by-Step Solution
                   </h4>
-                  
+
                   <div className="prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)]">
                     <ReactMarkdown
                       remarkPlugins={[remarkMath]}
@@ -181,6 +219,7 @@ function prepareMathForKaTeX(rawText) {
 
   let text = rawText;
 
+  // fractions from plain numbers
   text = text.replace(
     /(\b\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?\b)(?!\s*\/)/g,
     '\\frac{$1}{$2}'
@@ -191,6 +230,7 @@ function prepareMathForKaTeX(rawText) {
     '\\frac{$1}{$2}'
   );
 
+  // some inline → display when it makes sense
   text = text.replace(
     /\$([^$]*?(?:derivative|rule|product rule|quotient|chain|integral|limit|sum|equals|therefore)[^$]*?)\$/gi,
     '$$$$$1$$$$'
