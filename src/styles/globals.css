@@ -3110,3 +3110,9 @@ button.w-full.py-3\.5:active {
     justify-content: center;
   }
 }
+
+
+.final-answer .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+}

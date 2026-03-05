@@ -92,7 +92,9 @@ export default function ResultPanel({ result, loading, onClose }) {
     return candidate || '$$\\text{No final answer extracted}$$';
   };
 
-  const finalAnswer = extractFinalAnswer(result.text || '');
+  const finalAnswer = prepareMathForKaTeX(
+  extractFinalAnswer(result.text || '')
+);
 
   return (
     <div className="result-panel">
