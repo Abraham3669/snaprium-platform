@@ -135,7 +135,7 @@ export default function CameraInput({ onFileSelect, onOpenDashboard }) {
         </h2>
 
         <div className="post-animation-text">
-          Improve your problem-solving skills in math, physics, and chemistry with Snaprium — <strong>study smarter and achieve more</strong>.
+    Level up your math and physics skills with Snaprium — <strong>study smarter, score higher</strong>.
         </div>
       </div>
     </section>

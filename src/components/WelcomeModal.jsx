@@ -5,7 +5,7 @@ import Confetti from 'react-confetti';
 export default function WelcomeModal({ plan, onClose }) {
   const isPro = plan === 'pro';
   const planName = isPro ? 'Pro' : 'Premium';
-  const solutions = isPro ? '75' : '150';
+  const solutions = isPro ? '80' : '170';
 
   // Auto-close after 8 seconds (user can close earlier)
   useEffect(() => {
@@ -38,8 +38,8 @@ export default function WelcomeModal({ plan, onClose }) {
           You are now a <strong>{planName}</strong> member!
         </p>
 
-        <p className="welcome-detail">
-          Enjoy <strong>{solutions}</strong> high-quality, expert step-by-step solutions every month with priority processing, advanced topics unlocked, and no more limits during peak times.
+       <p className="welcome-detail">
+          Enjoy <strong>{solutions}</strong> high-quality, expert step-by-step solutions every month.
         </p>
 
         <button className="welcome-cta" onClick={onClose}>
@@ -47,8 +47,8 @@ export default function WelcomeModal({ plan, onClose }) {
         </button>
 
         <p className="welcome-note">
-          Thank you for supporting Snaprium.
-        </p>
+  Thank you for supporting Snaprium — happy studying!
+</p>
       </div>
     </div>
   );
