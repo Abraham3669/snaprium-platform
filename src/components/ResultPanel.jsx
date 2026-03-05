@@ -21,71 +21,75 @@ export default function ResultPanel({ result, loading, onClose }) {
   if (!result?.image) return null;
 
   // ────────────────────────────────────────────────
-  // Cleaner final answer extraction + better math handling
+  // Very robust final answer extraction (updated 2026)
   // ────────────────────────────────────────────────
   const extractFinalAnswer = (text) => {
-    if (!text) return 'See steps below';
+    if (!text?.trim()) return '$$\\text{No solution found}$$';
 
-    let cleaned = text.trim().replace(/\n+/g, '\n');
+    let cleaned = text.trim().replace(/\n{3,}/g, '\n\n').replace(/\n+/g, '\n');
 
-    // 1. Most reliable: \boxed{...} pattern (very common in math solvers)
-    const boxedMatch = cleaned.match(/\\boxed\{([^}]*)\}/);
-    if (boxedMatch && boxedMatch[1].trim()) {
-      let content = boxedMatch[1].trim();
-      // If already has $$ or $, don't add again
-      if (!content.includes('$$') && !content.startsWith('$')) {
-        return `$$${content}$$`;
-      }
-      return content;
+    // === Priority 1: Extract content inside \boxed{} ===
+    let boxedContent = null;
+    const boxedMatch = cleaned.match(/\\boxed\{([\s\S]*?)\}/);
+    if (boxedMatch && boxedMatch[1]?.trim()) {
+      boxedContent = boxedMatch[1].trim();
     }
 
-    // 2. Look for last block of display math
-    const displayMathMatches = [...cleaned.matchAll(/\$\$([\s\S]*?)\$\$/g)];
-    if (displayMathMatches.length > 0) {
-      const last = displayMathMatches[displayMathMatches.length - 1][1].trim();
-      if (last) return `$$${last}$$`;
+    // === Priority 2: Last complete $$...$$ block ===
+    const displayMatches = [...cleaned.matchAll(/\$\$([\s\S]*?)\$\$/g)];
+    let lastDisplay = null;
+    if (displayMatches.length > 0) {
+      lastDisplay = displayMatches[displayMatches.length - 1][1].trim();
     }
 
-    // 3. Keyword-based (final answer:, answer =, etc.)
-    const finalKeywordMatch = cleaned.match(
-      /(?:final answer|answer|result|solution|therefore|thus|conclusion|so|we get)(?::|\s*[=→]?\s*)([\s\S]*?)(?=\n\n|\n*$)/i
-    );
-    if (finalKeywordMatch) {
-      let answerPart = finalKeywordMatch[1].trim();
-      // Remove trailing punctuation junk sometimes left
-      answerPart = answerPart.replace(/[.,;]$/, '').trim();
+    // === Choose best candidate ===
+    let candidate = boxedContent || lastDisplay;
 
-      // If it looks like math expression → force display math
-      if (answerPart.match(/[\d=+\-*/^()\\{}[\]]/) || answerPart.includes('\\')) {
-        // Clean up if it already has inline delimiters
-        answerPart = answerPart.replace(/^\$|\$$/g, '').trim();
-        return `$$${answerPart}$$`;
-      }
-      return answerPart;
-    }
-
-    // 4. Last meaningful math-looking line
-    const lines = cleaned.split('\n').filter(l => l.trim());
-    for (let i = lines.length - 1; i >= 0; i--) {
-      const line = lines[i].trim();
-      if (line.includes('=') || line.match(/[\d\\{}[\]()]/)) {
-        let cleanedLine = line
-          .replace(/^[\[\$]+|[\]\$]+$/g, '')   // remove stray delimiters
+    // === Fallback: keyword search ===
+    if (!candidate) {
+      const keywordRegex = /(?:final answer|answer|result|solution|therefore|thus|conclusion|so|we get)[:=\s→-]*([\s\S]*?)(?=\n{2,}|$)/i;
+      const match = cleaned.match(keywordRegex);
+      if (match?.[1]) {
+        candidate = match[1].trim()
+          .replace(/\\boxed\{([\s\S]*?)\}/, '$1') // remove outer boxed if present
+          .replace(/^[$\s\\]+|[$\s\\]+$/, '')     // strip stray delimiters
           .trim();
-        return `$$${cleanedLine}$$`;
       }
     }
 
-    // Fallback: last non-empty line, forced to math if looks plausible
-    if (lines.length > 0) {
-      const last = lines[lines.length - 1].trim();
-      if (last.match(/[\d=+\-*/^()\\]/)) {
-        return `$$${last}$$`;
+    // === Last resort: last math-looking line ===
+    if (!candidate) {
+      const lines = cleaned.split('\n').filter(Boolean);
+      for (let i = lines.length - 1; i >= 0; i--) {
+        let line = lines[i].trim();
+        if (line.includes('\\') || /[=\-+\*/^(){}\[\]\d]/.test(line)) {
+          line = line.replace(/\\boxed\{([\s\S]*?)\}/, '$1')
+                     .replace(/^[$\s\\]+|[$\s\\]+$/, '')
+                     .trim();
+          candidate = line;
+          break;
+        }
       }
-      return last;
     }
 
-    return 'See steps below';
+    // === Final safety net ===
+    if (!candidate) {
+      return '$$\\text{See steps below}$$';
+    }
+
+    // === Force display math if it looks like math but isn't wrapped ===
+    const looksLikeMath = candidate.match(/\\(frac|sqrt|sum|int|prod|lim|boxed|sin|cos|tan|log|ln|[a-z]{2,})|\d+\/\d+|[=+\-*/^()\\{}]/);
+    if (looksLikeMath && !candidate.includes('$$') && !candidate.startsWith('$')) {
+      candidate = `$$${candidate}$$`;
+    }
+
+    // === Clean double-wrapping or junk ===
+    candidate = candidate
+      .replace(/^\$\$+\s*|\s*\$\$+$/g, '$$')   // normalize delimiters
+      .replace(/\\boxed\{([\s\S]*?)\}/g, '$1') // remove any leftover boxed
+      .trim();
+
+    return candidate || '$$\\text{No final answer extracted}$$';
   };
 
   const finalAnswer = extractFinalAnswer(result.text || '');
@@ -98,7 +102,6 @@ export default function ResultPanel({ result, loading, onClose }) {
       </div>
 
       <div className="result-panel-content">
-        {/* Image preview */}
         <div className="image-wrapper">
           <img
             className="result-image"
@@ -112,30 +115,30 @@ export default function ResultPanel({ result, loading, onClose }) {
           )}
         </div>
 
-        {/* Solution area */}
         <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
           {!loading && result?.text && (
             <>
-              {/* ─── Big Final Answer (improved styling + guaranteed display math) ─── */}
+              {/* Final Answer Block */}
               <div 
-                className="final-answer mb-6 p-6 md:p-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-lg)] text-center"
+                className="final-answer mb-6 p-6 md:p-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-lg)] text-center overflow-hidden"
                 style={{ background: 'linear-gradient(135deg, var(--accent-glow), transparent 70%)' }}
               >
                 <h3 className="text-2xl font-bold text-[var(--text-secondary)] mb-4 tracking-tight">
                   Final Answer
                 </h3>
-                <div className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-[var(--text-primary)] leading-tight min-h-[3rem] flex items-center justify-center">
+
+                <div 
+                  className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-[var(--text-primary)] leading-tight min-h-[4rem] flex items-center justify-center overflow-x-auto px-2"
+                >
                   <ReactMarkdown
                     remarkPlugins={[remarkMath]}
                     rehypePlugins={[rehypeKatex]}
                     components={{
-                      p: ({children}) => <div className="inline-block">{children}</div>,
-                      // Make sure display math is centered and big
-                      div: ({node, ...props}) => (
-                        node.tagName === 'div' && props.className?.includes('katex-display')
-                          ? <div className="katex-display-big" {...props} />
-                          : <div {...props} />
-                      )
+                      p: ({children}) => <div className="inline-block text-center">{children}</div>,
+                      div: ({node, className, children, ...props}) => 
+                        className?.includes('katex-display')
+                          ? <div className="katex-display-final mx-auto text-center" {...props}>{children}</div>
+                          : <div {...props}>{children}</div>
                     }}
                   >
                     {finalAnswer}
@@ -146,10 +149,7 @@ export default function ResultPanel({ result, loading, onClose }) {
               {/* Toggle Button */}
               <button
                 onClick={() => setShowSteps(!showSteps)}
-                className={`
-                  w-full py-3.5 px-5 mb-5 bg-[var(--accent)] hover:bg-[var(--accent-dark)] 
-                  text-white font-medium rounded-lg shadow-md transition-all flex items-center justify-center gap-2
-                `}
+                className="w-full py-3.5 px-5 mb-5 bg-[var(--accent)] hover:bg-[var(--accent-dark)] text-white font-medium rounded-lg shadow-md transition-all flex items-center justify-center gap-2"
               >
                 {showSteps ? 'Hide Step-by-Step' : 'Show Step-by-Step'}
                 <span className="text-xl transition-transform duration-300">
@@ -157,14 +157,12 @@ export default function ResultPanel({ result, loading, onClose }) {
                 </span>
               </button>
 
-              {/* Expandable Steps – NO repeated final answer at bottom */}
+              {/* Steps Section */}
               <div
                 ref={stepsRef}
                 className="overflow-hidden transition-all duration-500 ease-in-out"
                 style={{
-                  maxHeight: showSteps
-                    ? `${stepsRef.current?.scrollHeight || 2000}px`
-                    : '0px',
+                  maxHeight: showSteps ? `${stepsRef.current?.scrollHeight || 2000}px` : '0px',
                   opacity: showSteps ? 1 : 0,
                 }}
               >
@@ -185,9 +183,9 @@ export default function ResultPanel({ result, loading, onClose }) {
               </div>
 
               {/* Feedback */}
-              <div className="feedback-bar mt-6">
+              <div className="feedback-bar mt-6 flex justify-center gap-4">
                 <button
-                  className={`feedback-btn ${feedback === 'up' ? 'active' : ''}`}
+                  className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'up' ? 'active' : ''}`}
                   onClick={() => handleFeedback('up')}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -197,7 +195,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                 </button>
 
                 <button
-                  className={`feedback-btn ${feedback === 'down' ? 'active' : ''}`}
+                  className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'down' ? 'active' : ''}`}
                   onClick={() => handleFeedback('down')}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
