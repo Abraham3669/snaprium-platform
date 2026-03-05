@@ -2672,3 +2672,166 @@ header.header {
     max-height: 30vh;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+/* Welcome Modal – Professional Congratulations Popup */
+.welcome-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75); /* strong dark overlay */
+  z-index: 4000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  backdrop-filter: blur(8px); /* glass effect */
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.welcome-modal-content {
+  position: relative;
+  background: var(--surface);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  max-width: 420px;
+  width: 100%;
+  padding: 2.5rem 2rem;
+  color: var(--text-primary);
+  text-align: center;
+  overflow: hidden;
+}
+
+/* Close button */
+.welcome-close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: transparent;
+  border: none;
+  font-size: 2rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  transition: color 0.2s ease;
+}
+
+.welcome-close-btn:hover {
+  color: var(--text-primary);
+}
+
+/* Icon (🎉) */
+.welcome-icon {
+  font-size: 4.5rem;
+  margin-bottom: 1.2rem;
+  line-height: 1;
+}
+
+/* Title */
+.welcome-modal-content h2 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin: 0 0 1rem;
+  color: var(--text-primary);
+}
+
+/* Main text */
+.welcome-text {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 0.8rem;
+  color: var(--text-primary);
+}
+
+/* Detail text */
+.welcome-detail {
+  font-size: 1.05rem;
+  line-height: 1.5;
+  margin: 0 0 1.8rem;
+  color: var(--text-secondary);
+}
+
+/* CTA Button */
+.welcome-cta {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 1rem 2.2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  margin: 1.5rem 0 1.2rem;
+}
+
+.welcome-cta:hover {
+  background: var(--accent-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+/* Note at bottom */
+.welcome-note {
+  font-size: 0.95rem;
+  color: var(--text-tertiary);
+  margin: 0;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .welcome-modal-content {
+  background: var(--surface-dark);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="dark"] .welcome-close-btn {
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .welcome-close-btn:hover {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .welcome-text,
+[data-theme="dark"] .welcome-detail {
+  color: var(--text-primary);
+}
+
+/* Mobile adjustments */
+@media (max-width: 480px) {
+  .welcome-modal-content {
+    padding: 2rem 1.5rem;
+    border-radius: 12px;
+  }
+
+  .welcome-icon {
+    font-size: 3.8rem;
+  }
+
+  .welcome-modal-content h2 {
+    font-size: 1.9rem;
+  }
+
+  .welcome-text {
+    font-size: 1.15rem;
+  }
+
+  .welcome-detail {
+    font-size: 0.98rem;
+  }
+
+  .welcome-cta {
+    padding: 0.9rem 2rem;
+    font-size: 1rem;
+  }
+}

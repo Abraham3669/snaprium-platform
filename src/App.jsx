@@ -9,6 +9,7 @@ import CropperModal from "./components/CropperModal";
 import ResultPanel from "./components/ResultPanel";
 import Dashboard from "./components/Dashboard";
 import UpgradeModal from "./components/UpgradeModal";
+import WelcomeModal from "./components/WelcomeModal";  // ← NEW import (we'll create this next)
 
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -37,6 +38,21 @@ function App() {
   const [isResultOpen, setIsResultOpen] = useState(false);
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);  // ← NEW state for welcome popup
+
+  // Check for welcome popup (once per subscription)
+  useEffect(() => {
+    if (!user?.uid || !user?.subscription || user.subscription === 'free') return;
+
+    const welcomeKey = `welcome_shown_${user.uid}_${user.subscription}`;
+    const hasSeen = localStorage.getItem(welcomeKey);
+
+    if (!hasSeen) {
+      setShowWelcomeModal(true);
+      localStorage.setItem(welcomeKey, 'true');
+      logEvent(analytics, "welcome_modal_shown", { plan: user.subscription });
+    }
+  }, [user]);
 
   useEffect(() => {
     if (user?.uid) {
@@ -309,6 +325,14 @@ function App() {
       </main>
 
       {showUpgradeModal && <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />}
+
+      {/* NEW: Welcome popup for new subscribers */}
+      {showWelcomeModal && (
+        <WelcomeModal
+          plan={user.subscription}
+          onClose={() => setShowWelcomeModal(false)}
+        />
+      )}
     </div>
   );
 }
