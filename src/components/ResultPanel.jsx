@@ -21,77 +21,27 @@ export default function ResultPanel({ result, loading, onClose }) {
   if (!result?.image) return null;
 
   // ────────────────────────────────────────────────
-  // Very robust final answer extraction (updated 2026)
-  // ────────────────────────────────────────────────
-  const extractFinalAnswer = (text) => {
-    if (!text?.trim()) return '$$\\text{No solution found}$$';
+// Clean final answer extraction (stable for KaTeX)
+// ────────────────────────────────────────────────
+const extractFinalAnswer = (text) => {
+  if (!text || !text.trim()) {
+    return '$$\\text{No solution found}$$';
+  }
 
-    let cleaned = text.trim().replace(/\n{3,}/g, '\n\n').replace(/\n+/g, '\n');
+  const cleaned = text.trim();
 
-    // === Priority 1: Extract content inside \boxed{} ===
-    let boxedContent = null;
-    const boxedMatch = cleaned.match(/\\boxed\{([\s\S]*?)\}/);
-    if (boxedMatch && boxedMatch[1]?.trim()) {
-      boxedContent = boxedMatch[1].trim();
-    }
+  // Find all $$...$$ math blocks
+  const matches = [...cleaned.matchAll(/\$\$([\s\S]*?)\$\$/g)];
 
-    // === Priority 2: Last complete $$...$$ block ===
-    const displayMatches = [...cleaned.matchAll(/\$\$([\s\S]*?)\$\$/g)];
-    let lastDisplay = null;
-    if (displayMatches.length > 0) {
-      lastDisplay = displayMatches[displayMatches.length - 1][1].trim();
-    }
+  // Use the LAST one (usually the final answer)
+  if (matches.length > 0) {
+    const last = matches[matches.length - 1][1].trim();
+    return `$$${last}$$`;
+  }
 
-    // === Choose best candidate ===
-    let candidate = boxedContent || lastDisplay;
-
-    // === Fallback: keyword search ===
-    if (!candidate) {
-      const keywordRegex = /(?:final answer|answer|result|solution|therefore|thus|conclusion|so|we get)[:=\s→-]*([\s\S]*?)(?=\n{2,}|$)/i;
-      const match = cleaned.match(keywordRegex);
-      if (match?.[1]) {
-        candidate = match[1].trim()
-          .replace(/\\boxed\{([\s\S]*?)\}/, '$1') // remove outer boxed if present
-          .replace(/^[$\s\\]+|[$\s\\]+$/, '')     // strip stray delimiters
-          .trim();
-      }
-    }
-
-    // === Last resort: last math-looking line ===
-    if (!candidate) {
-      const lines = cleaned.split('\n').filter(Boolean);
-      for (let i = lines.length - 1; i >= 0; i--) {
-        let line = lines[i].trim();
-        if (line.includes('\\') || /[=\-+\*/^(){}\[\]\d]/.test(line)) {
-          line = line.replace(/\\boxed\{([\s\S]*?)\}/, '$1')
-                     .replace(/^[$\s\\]+|[$\s\\]+$/, '')
-                     .trim();
-          candidate = line;
-          break;
-        }
-      }
-    }
-
-    // === Final safety net ===
-    if (!candidate) {
-      return '$$\\text{See steps below}$$';
-    }
-
-    // === Force display math if it looks like math but isn't wrapped ===
-    const looksLikeMath = candidate.match(/\\(frac|sqrt|sum|int|prod|lim|boxed|sin|cos|tan|log|ln|[a-z]{2,})|\d+\/\d+|[=+\-*/^()\\{}]/);
-    if (looksLikeMath && !candidate.includes('$$') && !candidate.startsWith('$')) {
-      candidate = `$$${candidate}$$`;
-    }
-
-    // === Clean double-wrapping or junk ===
-    candidate = candidate
-      .replace(/^\$\$+\s*|\s*\$\$+$/g, '$$')   // normalize delimiters
-      .replace(/\\boxed\{([\s\S]*?)\}/g, '$1') // remove any leftover boxed
-      .trim();
-
-    return candidate || '$$\\text{No final answer extracted}$$';
-  };
-
+  // fallback
+  return '$$\\text{See steps below}$$';
+};
   const finalAnswer = prepareMathForKaTeX(
   extractFinalAnswer(result.text || '')
 );
