@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { useNavigate } from "react-router-dom";
 
 export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
-  const { user } = useAuth();
+  const { user, signOutUser } = useAuth();  // ← FIXED: added signOutUser here
   const navigate = useNavigate();
 
   if (!isOpen) return null;
@@ -56,9 +56,14 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
 
                 <button
                   className="signout-btn dashboard-btn"
-                  onClick={() => {
-                    signOutUser();
-                    onClose();
+                  onClick={async () => {
+                    try {
+                      await signOutUser();  // now available
+                      onClose();
+                      navigate('/login');   // redirect to login page after sign out
+                    } catch (error) {
+                      console.error("Sign out failed:", error);
+                    }
                   }}
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
