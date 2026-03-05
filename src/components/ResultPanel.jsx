@@ -10,7 +10,6 @@ export default function ResultPanel({ result, loading, onClose }) {
   const [showSteps, setShowSteps] = useState(false);
   const [feedback, setFeedback] = useState(null);
 
-  // Ref to measure the real height of the content for smooth animation
   const stepsRef = useRef(null);
 
   const handleFeedback = (type) => {
@@ -21,44 +20,69 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   if (!result?.image) return null;
 
-  // Improved extraction: more robust for common solver outputs
+  // ────────────────────────────────────────────────
+  // Cleaner final answer extraction + better math handling
+  // ────────────────────────────────────────────────
   const extractFinalAnswer = (text) => {
     if (!text) return 'See steps below';
 
-    // Clean text: remove extra newlines/spaces
-    const cleaned = text.trim().replace(/\n+/g, '\n');
+    let cleaned = text.trim().replace(/\n+/g, '\n');
 
-    // Priority 1: Look for \boxed{} (common in math solvers)
+    // 1. Most reliable: \boxed{...} pattern (very common in math solvers)
     const boxedMatch = cleaned.match(/\\boxed\{([^}]*)\}/);
-    if (boxedMatch) return `$$${boxedMatch[1]}$$`;
-
-    // Priority 2: "Final answer:" or similar keyword + following content
-    const finalKeywordMatch = cleaned.match(/(?:final answer|answer|result|solution|therefore|thus|so)(?::|\s*=\s*)?([\s\S]*)$/i);
-    if (finalKeywordMatch) {
-      const answerPart = finalKeywordMatch[1].trim();
-      // If it's math, wrap in $$
-      return answerPart.match(/[\d=+-/*^()]/) ? `$$${answerPart}$$` : answerPart;
+    if (boxedMatch && boxedMatch[1].trim()) {
+      let content = boxedMatch[1].trim();
+      // If already has $$ or $, don't add again
+      if (!content.includes('$$') && !content.startsWith('$')) {
+        return `$$${content}$$`;
+      }
+      return content;
     }
 
-    // Priority 3: Last display math $$...$$
+    // 2. Look for last block of display math
     const displayMathMatches = [...cleaned.matchAll(/\$\$([\s\S]*?)\$\$/g)];
     if (displayMathMatches.length > 0) {
-      return `$$${displayMathMatches[displayMathMatches.length - 1][1].trim()}$$`;
+      const last = displayMathMatches[displayMathMatches.length - 1][1].trim();
+      if (last) return `$$${last}$$`;
     }
 
-    // Priority 4: Last line that looks like an equation (has = or simplified expr)
+    // 3. Keyword-based (final answer:, answer =, etc.)
+    const finalKeywordMatch = cleaned.match(
+      /(?:final answer|answer|result|solution|therefore|thus|conclusion|so|we get)(?::|\s*[=→]?\s*)([\s\S]*?)(?=\n\n|\n*$)/i
+    );
+    if (finalKeywordMatch) {
+      let answerPart = finalKeywordMatch[1].trim();
+      // Remove trailing punctuation junk sometimes left
+      answerPart = answerPart.replace(/[.,;]$/, '').trim();
+
+      // If it looks like math expression → force display math
+      if (answerPart.match(/[\d=+\-*/^()\\{}[\]]/) || answerPart.includes('\\')) {
+        // Clean up if it already has inline delimiters
+        answerPart = answerPart.replace(/^\$|\$$/g, '').trim();
+        return `$$${answerPart}$$`;
+      }
+      return answerPart;
+    }
+
+    // 4. Last meaningful math-looking line
     const lines = cleaned.split('\n').filter(l => l.trim());
     for (let i = lines.length - 1; i >= 0; i--) {
       const line = lines[i].trim();
-      if (line.includes('=') || line.match(/^[\d\w\s+-/*^()=]+$/)) {
-        return line.match(/[\d=+-/*^()]/) ? `$$${line}$$` : line;
+      if (line.includes('=') || line.match(/[\d\\{}[\]()]/)) {
+        let cleanedLine = line
+          .replace(/^[\[\$]+|[\]\$]+$/g, '')   // remove stray delimiters
+          .trim();
+        return `$$${cleanedLine}$$`;
       }
     }
 
-    // Fallback: last non-empty line
+    // Fallback: last non-empty line, forced to math if looks plausible
     if (lines.length > 0) {
-      const lastLine = lines[lines.length - 1].trim();
-      return lastLine.match(/[\d=+-/*^()]/) ? `$$${lastLine}$$` : lastLine;
+      const last = lines[lines.length - 1].trim();
+      if (last.match(/[\d=+\-*/^()\\]/)) {
+        return `$$${last}$$`;
+      }
+      return last;
     }
 
     return 'See steps below';
@@ -74,7 +98,7 @@ export default function ResultPanel({ result, loading, onClose }) {
       </div>
 
       <div className="result-panel-content">
-        {/* Image preview – unchanged */}
+        {/* Image preview */}
         <div className="image-wrapper">
           <img
             className="result-image"
@@ -92,25 +116,34 @@ export default function ResultPanel({ result, loading, onClose }) {
         <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
           {!loading && result?.text && (
             <>
-              {/* Big Final Answer – visible immediately */}
+              {/* ─── Big Final Answer (improved styling + guaranteed display math) ─── */}
               <div 
-                className="final-answer mb-6 p-5 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-md)] text-center transition-[var(--transition)]"
-                style={{ background: 'linear-gradient(135deg, var(--accent-glow), transparent)' }}
+                className="final-answer mb-6 p-6 md:p-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-lg)] text-center"
+                style={{ background: 'linear-gradient(135deg, var(--accent-glow), transparent 70%)' }}
               >
-                <h3 className="text-xl font-semibold text-[var(--text-secondary)] mb-3">
+                <h3 className="text-2xl font-bold text-[var(--text-secondary)] mb-4 tracking-tight">
                   Final Answer
                 </h3>
-                <div className="text-4xl md:text-5xl font-bold text-[var(--text-primary)] tracking-tight">
+                <div className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-[var(--text-primary)] leading-tight min-h-[3rem] flex items-center justify-center">
                   <ReactMarkdown
                     remarkPlugins={[remarkMath]}
                     rehypePlugins={[rehypeKatex]}
+                    components={{
+                      p: ({children}) => <div className="inline-block">{children}</div>,
+                      // Make sure display math is centered and big
+                      div: ({node, ...props}) => (
+                        node.tagName === 'div' && props.className?.includes('katex-display')
+                          ? <div className="katex-display-big" {...props} />
+                          : <div {...props} />
+                      )
+                    }}
                   >
                     {finalAnswer}
                   </ReactMarkdown>
                 </div>
               </div>
 
-              {/* Toggle Steps Button */}
+              {/* Toggle Button */}
               <button
                 onClick={() => setShowSteps(!showSteps)}
                 className={`
@@ -124,7 +157,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                 </span>
               </button>
 
-              {/* Expandable Steps – now using dynamic height */}
+              {/* Expandable Steps – NO repeated final answer at bottom */}
               <div
                 ref={stepsRef}
                 className="overflow-hidden transition-all duration-500 ease-in-out"
@@ -135,12 +168,12 @@ export default function ResultPanel({ result, loading, onClose }) {
                   opacity: showSteps ? 1 : 0,
                 }}
               >
-                <div className="pt-1 pb-6 px-1">
-                  <h4 className="text-lg font-semibold text-[var(--text-primary)] mb-4">
-                    Solving Steps
+                <div className="pt-1 pb-8 px-1">
+                  <h4 className="text-xl font-semibold text-[var(--text-primary)] mb-5">
+                    Step-by-Step Solution
                   </h4>
                   
-                  <div className="prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)]">
+                  <div className="prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)]">
                     <ReactMarkdown
                       remarkPlugins={[remarkMath]}
                       rehypePlugins={[rehypeKatex]}
@@ -148,38 +181,17 @@ export default function ResultPanel({ result, loading, onClose }) {
                       {prepareMathForKaTeX(result.text || '')}
                     </ReactMarkdown>
                   </div>
-
-                  {/* Repeated final answer at bottom */}
-                  <div 
-                    className="mt-10 p-5 rounded-2xl border border-[var(--border)] bg-[var(--surface)] text-center"
-                  >
-                    <h5 className="text-lg font-medium text-[var(--text-secondary)] mb-2">
-                      Final Result
-                    </h5>
-                    <div className="text-3xl font-bold text-[var(--text-primary)]">
-                      <ReactMarkdown
-                        remarkPlugins={[remarkMath]}
-                        rehypePlugins={[rehypeKatex]}
-                      >
-                        {finalAnswer}
-                      </ReactMarkdown>
-                    </div>
-                  </div>
                 </div>
               </div>
 
-              {/* Feedback – always visible */}
+              {/* Feedback */}
               <div className="feedback-bar mt-6">
                 <button
                   className={`feedback-btn ${feedback === 'up' ? 'active' : ''}`}
                   onClick={() => handleFeedback('up')}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path 
-                      d="M14 9V5a3 3 0 0 0-6 0v4H5v11h14V9h-5z"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    />
+                    <path d="M14 9V5a3 3 0 0 0-6 0v4H5v11h14V9h-5z" stroke="currentColor" strokeWidth="2" />
                   </svg>
                   Helpful
                 </button>
@@ -189,11 +201,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                   onClick={() => handleFeedback('down')}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path 
-                      d="M10 15v4a3 3 0 0 0 6 0v-4h3V4H5v11h5z"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    />
+                    <path d="M10 15v4a3 3 0 0 0 6 0v-4h3V4H5v11h5z" stroke="currentColor" strokeWidth="2" />
                   </svg>
                   Not Helpful
                 </button>
@@ -212,34 +220,28 @@ export default function ResultPanel({ result, loading, onClose }) {
   );
 }
 
-// Your existing prepareMathForKaTeX helper – unchanged
 function prepareMathForKaTeX(rawText) {
   if (!rawText) return '';
 
   let text = rawText;
 
-  // 1. Convert plain ASCII fractions 3/4 → \frac{3}{4}  (only when it looks safe)
   text = text.replace(
     /(\b\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?\b)(?!\s*\/)/g,
     '\\frac{$1}{$2}'
   );
 
-  // 2. Convert ugly ASCII stacked fractions (common in some model outputs)
   text = text.replace(
     /(\d+)\s*\n\s*_{2,}\s*\n\s*(\d+)/g,
     '\\frac{$1}{$2}'
   );
 
-  // Upgrade inline math → display math for explanatory sentences
   text = text.replace(
     /\$([^$]*?(?:derivative|rule|product rule|quotient|chain|integral|limit|sum|equals|therefore)[^$]*?)\$/gi,
     '$$$$$1$$$$'
   );
 
-  // 4. Clean up extra spaces inside delimiters
   text = text.replace(/\$\$[\s\n]+/g, '$$').replace(/[\s\n]+\$\$/g, '$$');
 
-  // 5. Replace any stray \[ \] delimiters with $$
   text = text.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$');
 
   return text;

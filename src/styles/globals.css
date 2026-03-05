@@ -2875,18 +2875,17 @@ header.header {
 
 /* ================================================
    SNAPRIUM RESULT PANEL – 2026 FINAL UX + STYLING
-   Matches: Answer first → Steps toggle → Repeat answer
-   Uses your exact theme vars + premium floating math
+   Improved Final Answer math rendering – March 2026
    ================================================ */
 
 /* Final Answer – Big, prominent, always visible */
 .final-answer {
-  padding: 1.8rem 1.5rem;
-  margin-bottom: 1.8rem;
+  padding: 2rem 1.5rem 2.5rem;
+  margin-bottom: 2rem;
   border-radius: var(--radius);
   background: var(--surface);
   border: 1px solid var(--border);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-lg);
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -2897,29 +2896,73 @@ header.header {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, var(--accent-glow), transparent 70%);
-  opacity: 0.6;
+  background: linear-gradient(135deg, var(--accent-glow), transparent 65%);
+  opacity: 0.55;
   z-index: -1;
   pointer-events: none;
 }
 
 .final-answer h3 {
-  margin: 0 0 1rem;
-  font-size: 1.35rem;
+  margin: 0 0 1.25rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--text-secondary);
-  letter-spacing: -0.4px;
+  letter-spacing: -0.5px;
 }
 
-.final-answer .text-4xl,
-.final-answer .text-5xl {
-  font-size: clamp(2.25rem, 6vw, 3.5rem);
-  font-weight: 900;
+/* ── Improved KaTeX handling in final answer ── */
+.final-answer .katex-display,
+.final-answer .katex {
+  margin: 0.4em 0;
+  font-size: 1.65em !important;          /* bigger base size for final answer */
+  line-height: 1.25;
   color: var(--text-primary);
-  line-height: 1.05;
 }
 
-/* Show / Hide Steps Button – full-width, branded */
+.final-answer .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+  padding: 0.6em 0;
+  /* ensures very wide expressions can scroll horizontally on mobile */
+}
+
+/* Make sure display math is treated as block and centered */
+.final-answer .katex-display > .katex {
+  display: block !important;
+  text-align: center;
+  margin: 0 auto;
+}
+
+/* Slightly larger for very important results */
+.final-answer .katex .mord,
+.final-answer .katex .mbin,
+.final-answer .katex .mrel {
+  font-weight: 600;
+}
+
+/* Mobile – still readable but not overwhelming */
+@media (max-width: 768px) {
+  .final-answer {
+    padding: 1.6rem 1.2rem 2rem;
+  }
+
+  .final-answer h3 {
+    font-size: 1.35rem;
+  }
+
+  .final-answer .katex-display,
+  .final-answer .katex {
+    font-size: 1.45em !important;       /* bit smaller on mobile but still prominent */
+  }
+
+  .final-answer .katex-display {
+    padding: 0.5em 0;
+  }
+}
+
+/* ── Rest of your styles (mostly unchanged) ── */
+
 button.w-full.py-3\.5 {
   padding: 1rem 1.5rem;
   font-size: 1.1rem;
@@ -2953,7 +2996,6 @@ button.w-full.py-3\.5:active {
   padding-bottom: 2rem;
 }
 
-/* Solving Steps Heading */
 .steps-section h4 {
   font-size: 1.4rem;
   font-weight: 700;
@@ -2962,31 +3004,7 @@ button.w-full.py-3\.5:active {
   letter-spacing: -0.3px;
 }
 
-/* Repeated Final Result at bottom of steps */
-div.mt-10.p-5.rounded-2xl {
-  margin-top: 2.5rem !important;
-  padding: 1.8rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
-  text-align: center;
-}
-
-div.mt-10.p-5.rounded-2xl h5 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin-bottom: 0.8rem;
-}
-
-div.mt-10.p-5.rounded-2xl .text-3xl {
-  font-size: 2.25rem;
-  font-weight: 800;
-  color: var(--text-primary);
-}
-
-/* Feedback Bar – refined spacing & scale */
+/* Feedback Bar */
 .feedback-bar {
   margin-top: 2.2rem;
   gap: 1rem;
@@ -3018,7 +3036,7 @@ div.mt-10.p-5.rounded-2xl .text-3xl {
   transform: translateY(-1px);
 }
 
-/* Dark mode feedback tweaks */
+/* Dark mode feedback */
 [data-theme="dark"] .feedback-btn {
   border-color: rgba(255,255,255,0.1);
 }
@@ -3028,12 +3046,12 @@ div.mt-10.p-5.rounded-2xl .text-3xl {
   box-shadow: 0 8px 28px rgba(96, 165, 250, 0.35);
 }
 
-/* Enhance your floating KaTeX blocks inside steps */
+/* KaTeX blocks inside steps (unchanged – already nice) */
 .solution-area .katex-display {
   margin: 1.5rem 0;
   padding: 1.3rem 1.5rem;
   border-left: 5px solid var(--accent);
-  background: rgba(var(--accent), 0.04); /* very subtle tint */
+  background: rgba(var(--accent), 0.04);
   border-radius: var(--radius);
   box-shadow: 0 6px 22px rgba(0,0,0,0.08);
   position: relative;
@@ -3045,7 +3063,6 @@ div.mt-10.p-5.rounded-2xl .text-3xl {
   box-shadow: 0 12px 36px rgba(0,0,0,0.14);
 }
 
-/* Always-visible accent glow strip */
 .solution-area .katex-display::before {
   content: "";
   position: absolute;
@@ -3059,7 +3076,6 @@ div.mt-10.p-5.rounded-2xl .text-3xl {
   z-index: -1;
 }
 
-/* Inline math – tight & readable */
 .solution-area .katex {
   font-size: 1.08em;
   font-weight: 500;
@@ -3070,19 +3086,6 @@ div.mt-10.p-5.rounded-2xl .text-3xl {
 
 /* Mobile refinements */
 @media (max-width: 768px) {
-  .final-answer {
-    padding: 1.4rem 1.2rem;
-  }
-
-  .final-answer h3 {
-    font-size: 1.2rem;
-  }
-
-  .final-answer .text-4xl,
-  .final-answer .text-5xl {
-    font-size: clamp(1.8rem, 8vw, 2.8rem);
-  }
-
   .steps-section h4 {
     font-size: 1.3rem;
   }
