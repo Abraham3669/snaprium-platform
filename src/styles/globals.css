@@ -2875,13 +2875,14 @@ header.header {
 
 /* ================================================
    SNAPRIUM RESULT PANEL – 2026 FINAL UX + STYLING
-   Improved Final Answer math rendering – March 2026
+   FINAL ANSWER MATH FIX – bigger, cleaner, centered
+   Updated: March 2026
    ================================================ */
 
-/* Final Answer – Big, prominent, always visible */
+/* Final Answer container */
 .final-answer {
   padding: 2rem 1.5rem 2.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 2.2rem;
   border-radius: var(--radius);
   background: var(--surface);
   border: 1px solid var(--border);
@@ -2910,58 +2911,67 @@ header.header {
   letter-spacing: -0.5px;
 }
 
-/* ── Improved KaTeX handling in final answer ── */
-.final-answer .katex-display,
-.final-answer .katex {
-  margin: 0.4em 0;
-  font-size: 1.65em !important;          /* bigger base size for final answer */
-  line-height: 1.25;
+/* ── STRONGER KaTeX fixes for final answer area ── */
+.final-answer .katex,
+.final-answer .katex-display {
+  font-size: 2.1em !important;           /* much bigger – adjust between 1.9–2.4 if needed */
+  line-height: 1.35;
   color: var(--text-primary);
+  margin: 0.6em 0;
 }
 
 .final-answer .katex-display {
+  display: block !important;
+  text-align: center !important;
+  margin: 1.2rem auto !important;
+  padding: 0.8rem 1rem;
+  max-width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
-  max-width: 100%;
-  padding: 0.6em 0;
-  /* ensures very wide expressions can scroll horizontally on mobile */
+  -webkit-overflow-scrolling: touch;     /* smooth scroll on iOS */
+  border-radius: 12px;
+  background: rgba(var(--accent), 0.05); /* very subtle highlight */
+  border: 1px solid rgba(var(--accent), 0.12);
 }
 
-/* Make sure display math is treated as block and centered */
-.final-answer .katex-display > .katex {
-  display: block !important;
+/* Ensure inner KaTeX content is centered */
+.final-answer .katex-display .katex-html {
+  display: inline-block;
   text-align: center;
-  margin: 0 auto;
 }
 
-/* Slightly larger for very important results */
+/* Make important symbols bolder */
 .final-answer .katex .mord,
 .final-answer .katex .mbin,
-.final-answer .katex .mrel {
-  font-weight: 600;
+.final-answer .katex .mrel,
+.final-answer .katex .mop,
+.final-answer .katex .mopen,
+.final-answer .katex .mclose {
+  font-weight: 650;
 }
 
-/* Mobile – still readable but not overwhelming */
+/* Mobile adjustments – still readable but not overwhelming */
 @media (max-width: 768px) {
   .final-answer {
-    padding: 1.6rem 1.2rem 2rem;
+    padding: 1.6rem 1.2rem 2.2rem;
   }
 
   .final-answer h3 {
     font-size: 1.35rem;
   }
 
-  .final-answer .katex-display,
-  .final-answer .katex {
-    font-size: 1.45em !important;       /* bit smaller on mobile but still prominent */
+  .final-answer .katex,
+  .final-answer .katex-display {
+    font-size: 1.75em !important;        /* reduced but still prominent */
   }
 
   .final-answer .katex-display {
-    padding: 0.5em 0;
+    padding: 0.6rem 0.8rem;
+    margin: 1rem auto;
   }
 }
 
-/* ── Rest of your styles (mostly unchanged) ── */
+/* ── Rest of your original styles (unchanged) ── */
 
 button.w-full.py-3\.5 {
   padding: 1rem 1.5rem;
@@ -3036,7 +3046,7 @@ button.w-full.py-3\.5:active {
   transform: translateY(-1px);
 }
 
-/* Dark mode feedback */
+/* Dark mode feedback tweaks */
 [data-theme="dark"] .feedback-btn {
   border-color: rgba(255,255,255,0.1);
 }
@@ -3046,7 +3056,7 @@ button.w-full.py-3\.5:active {
   box-shadow: 0 8px 28px rgba(96, 165, 250, 0.35);
 }
 
-/* KaTeX blocks inside steps (unchanged – already nice) */
+/* KaTeX inside steps – unchanged, already good */
 .solution-area .katex-display {
   margin: 1.5rem 0;
   padding: 1.3rem 1.5rem;
