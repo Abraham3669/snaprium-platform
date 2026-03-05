@@ -2683,155 +2683,195 @@ header.header {
 
 
 
-/* Welcome Modal – Professional Congratulations Popup */
+/* ─────────────────────────────────────────────
+   Welcome Modal – Premium SaaS Style 2026
+───────────────────────────────────────────── */
+
+/* Overlay */
 .welcome-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75); /* strong dark overlay */
   z-index: 4000;
+
   display: flex;
-  justify-content: center;
   align-items: center;
-  padding: 1rem;
-  backdrop-filter: blur(8px); /* glass effect */
-  -webkit-backdrop-filter: blur(8px);
+  justify-content: center;
+  padding: 1.2rem;
+
+  background: rgba(10, 15, 25, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  animation: fadeIn 0.25s ease forwards;
 }
 
+/* Modal Card */
 .welcome-modal-content {
   position: relative;
-  background: var(--surface);
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-  max-width: 420px;
   width: 100%;
-  padding: 2.5rem 2rem;
+  max-width: 460px;
+
+  padding: 2.75rem 2.2rem 2.4rem;
+  border-radius: 20px;
+
+  background: var(--surface);
   color: var(--text-primary);
   text-align: center;
-  overflow: hidden;
+
+  box-shadow:
+    0 25px 80px rgba(0, 0, 0, 0.35),
+    0 8px 30px rgba(0, 0, 0, 0.15);
+
+  animation: modalPop 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Close button */
+/* Close Button */
 .welcome-close-btn {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: transparent;
+  top: 1.1rem;
+  right: 1.1rem;
+
+  width: 36px;
+  height: 36px;
+
+  border-radius: 10px;
   border: none;
-  font-size: 2rem;
-  color: var(--text-secondary);
-  cursor: pointer;
+  background: rgba(0, 0, 0, 0.05);
+
+  font-size: 1.6rem;
   line-height: 1;
-  padding: 0;
-  transition: color 0.2s ease;
+  cursor: pointer;
+
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
 }
 
 .welcome-close-btn:hover {
+  background: rgba(0, 0, 0, 0.12);
   color: var(--text-primary);
 }
 
-/* Icon (🎉) */
+/* Icon */
 .welcome-icon {
-  font-size: 4.5rem;
-  margin-bottom: 1.2rem;
-  line-height: 1;
+  font-size: 4.2rem;
+  margin-bottom: 1.3rem;
 }
 
 /* Title */
 .welcome-modal-content h2 {
-  font-size: 2.2rem;
+  font-size: 2rem;
   font-weight: 700;
-  margin: 0 0 1rem;
-  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  margin: 0 0 0.9rem;
 }
 
-/* Main text */
+/* Main Text */
 .welcome-text {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 600;
-  margin: 0 0 0.8rem;
-  color: var(--text-primary);
+  margin-bottom: 0.6rem;
 }
 
-/* Detail text */
+/* Detail Text */
 .welcome-detail {
-  font-size: 1.05rem;
-  line-height: 1.5;
-  margin: 0 0 1.8rem;
+  font-size: 1rem;
+  line-height: 1.6;
   color: var(--text-secondary);
+  margin-bottom: 2rem;
 }
 
 /* CTA Button */
 .welcome-cta {
-  background: var(--accent);
-  color: white;
+  display: inline-block;
+  width: 100%;
+
+  padding: 1rem 1.2rem;
+  border-radius: 14px;
   border: none;
-  padding: 1rem 2.2rem;
-  font-size: 1.1rem;
+
+  background: linear-gradient(
+    135deg,
+    var(--accent),
+    var(--accent-dark)
+  );
+
+  color: #ffffff;
+  font-size: 1.05rem;
   font-weight: 600;
-  border-radius: 12px;
+  letter-spacing: 0.02em;
+
   cursor: pointer;
   transition: all 0.25s ease;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-  margin: 1.5rem 0 1.2rem;
+
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.2),
+    0 4px 10px rgba(0, 0, 0, 0.12);
 }
 
 .welcome-cta:hover {
-  background: var(--accent-dark);
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  box-shadow:
+    0 14px 30px rgba(0, 0, 0, 0.25),
+    0 6px 14px rgba(0, 0, 0, 0.15);
 }
 
-/* Note at bottom */
+/* Bottom Note */
 .welcome-note {
-  font-size: 0.95rem;
+  margin-top: 1.4rem;
+  font-size: 0.9rem;
   color: var(--text-tertiary);
-  margin: 0;
 }
 
-/* Dark mode adjustments */
+/* Dark Mode Refinement */
 [data-theme="dark"] .welcome-modal-content {
   background: var(--surface-dark);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  box-shadow:
+    0 30px 90px rgba(0, 0, 0, 0.6),
+    0 10px 35px rgba(0, 0, 0, 0.35);
 }
 
-[data-theme="dark"] .welcome-close-btn {
-  color: var(--text-secondary);
+/* Animations */
+@keyframes modalPop {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
-[data-theme="dark"] .welcome-close-btn:hover {
-  color: var(--text-primary);
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-[data-theme="dark"] .welcome-text,
-[data-theme="dark"] .welcome-detail {
-  color: var(--text-primary);
-}
-
-/* Mobile adjustments */
+/* Mobile */
 @media (max-width: 480px) {
   .welcome-modal-content {
-    padding: 2rem 1.5rem;
-    border-radius: 12px;
+    padding: 2.2rem 1.6rem 2rem;
+    border-radius: 16px;
   }
 
   .welcome-icon {
-    font-size: 3.8rem;
+    font-size: 3.5rem;
   }
 
   .welcome-modal-content h2 {
-    font-size: 1.9rem;
+    font-size: 1.7rem;
   }
 
   .welcome-text {
-    font-size: 1.15rem;
+    font-size: 1.05rem;
   }
 
   .welcome-detail {
-    font-size: 0.98rem;
+    font-size: 0.95rem;
   }
 
   .welcome-cta {
-    padding: 0.9rem 2rem;
     font-size: 1rem;
+    padding: 0.9rem 1rem;
   }
 }
