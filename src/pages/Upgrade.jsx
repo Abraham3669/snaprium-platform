@@ -60,7 +60,7 @@ export default function Upgrade() {
     ${proPrice} <span>per month</span>
   </div>
   <p className="plan-desc">
-    75 full step-by-step solutions monthly
+    80 full step-by-step solutions monthly
   </p>
   <p className="plan-detail">
     Ideal for consistent practice, assignments, and weekly exam prep.
@@ -80,7 +80,7 @@ export default function Upgrade() {
     ${premiumPrice} <span>per month</span>
   </div>
   <p className="plan-desc">
-    150 full step-by-step solutions monthly
+    170 full step-by-step solutions monthly
   </p>
   <p className="plan-detail">
     Built for intensive revision, past questions, and heavy coursework.
