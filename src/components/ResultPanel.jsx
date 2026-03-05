@@ -18,22 +18,47 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   if (!result?.image) return null;
 
-  // Extract final answer (heuristic – last display math or last equation-like line)
+  // Improved extraction: more robust for common solver outputs
   const extractFinalAnswer = (text) => {
-    if (!text) return 'Solution ready – check steps below';
-    
-    const displayMathMatches = [...text.matchAll(/\$\$([\s\S]*?)\$\$/g)];
+    if (!text) return 'See steps below';
+
+    // Clean text: remove extra newlines/spaces
+    const cleaned = text.trim().replace(/\n+/g, '\n');
+
+    // Priority 1: Look for \boxed{} (common in math solvers)
+    const boxedMatch = cleaned.match(/\\boxed\{([^}]*)\}/);
+    if (boxedMatch) return `$$${boxedMatch[1]}$$`;
+
+    // Priority 2: "Final answer:" or similar keyword + following content
+    const finalKeywordMatch = cleaned.match(/(?:final answer|answer|result|solution|therefore|thus|so)(?::|\s*=\s*)?([\s\S]*)$/i);
+    if (finalKeywordMatch) {
+      const answerPart = finalKeywordMatch[1].trim();
+      // If it's math, wrap in $$
+      return answerPart.match(/[\d=+-/*^()]/) ? `$$${answerPart}$$` : answerPart;
+    }
+
+    // Priority 3: Last display math $$...$$
+    const displayMathMatches = [...cleaned.matchAll(/\$\$([\s\S]*?)\$\$/g)];
     if (displayMathMatches.length > 0) {
-      return `$$${displayMathMatches[displayMathMatches.length - 1][1]}$$`;
+      return `$$${displayMathMatches[displayMathMatches.length - 1][1].trim()}$$`;
     }
-    
-    const lines = text.split('\n').filter(l => l.trim());
-    const lastLine = lines[lines.length - 1] || '';
-    if (lastLine.includes('=') || lastLine.match(/^\s*[a-zA-Z0-9]+\s*=/)) {
-      return lastLine;
+
+    // Priority 4: Last line that looks like an equation (has = or simplified expr)
+    const lines = cleaned.split('\n').filter(l => l.trim());
+    for (let i = lines.length - 1; i >= 0; i--) {
+      const line = lines[i].trim();
+      if (line.includes('=') || line.match(/^[\d\w\s+-/*^()=]+$/)) {
+        return line.match(/[\d=+-/*^()]/) ? `$$${line}$$` : line;
+      }
     }
-    
-    return 'Final result computed – see steps';
+
+    // Fallback: last non-empty line
+    if (lines.length > 0) {
+      const lastLine = lines[lines.length - 1].trim();
+      return lastLine.match(/[\d=+-/*^()]/) ? `$$${lastLine}$$` : lastLine;
+    }
+
+    return 'See steps below';
   };
 
   const finalAnswer = extractFinalAnswer(result.text || '');
@@ -86,22 +111,18 @@ export default function ResultPanel({ result, loading, onClose }) {
               <button
                 onClick={() => setShowSteps(!showSteps)}
                 className={`
-                  w-full py-3.5 px-5 mb-5 font-medium text-white rounded-xl shadow-md
-                  bg-[var(--accent)] hover:bg-[var(--accent-dark)] 
-                  transition-[var(--transition)] flex items-center justify-center gap-2.5
-                  active:scale-[0.98]
+                  w-full py-3.5 px-5 mb-5 bg-[var(--accent)] hover:bg-[var(--accent-dark)] 
+                  text-white font-medium rounded-lg shadow-md transition-all flex items-center justify-center gap-2
                 `}
               >
                 {showSteps ? 'Hide Step-by-Step' : 'Show Step-by-Step'}
-                <span className="text-xl leading-none">
-                  {showSteps ? '▲' : '▼'}
-                </span>
+                <span className="text-xl">{showSteps ? '▲' : '▼'}</span>
               </button>
 
               {/* Expandable Steps */}
               <div
                 className={`
-                  steps-section overflow-hidden transition-all duration-500
+                  steps-section overflow-hidden transition-all duration-500 ease-in-out
                   ${showSteps ? 'max-h-[3000px] opacity-100' : 'max-h-0 opacity-0'}
                 `}
               >
@@ -139,27 +160,29 @@ export default function ResultPanel({ result, loading, onClose }) {
               </div>
 
               {/* Feedback – always visible */}
-              <div className="feedback-bar mt-6 flex justify-center gap-4">
+              <div className="feedback-bar mt-6">
                 <button
-                  className={`feedback-btn flex items-center gap-2 px-5 py-2.5 rounded-full border border-[var(--border)] transition-[var(--transition)] ${
-                    feedback === 'up' ? 'bg-[var(--accent-glow)] text-[var(--accent-dark)]' : 'hover:bg-[var(--icon-bg)]'
-                  }`}
+                  className={`feedback-btn ${feedback === 'up' ? 'active' : ''}`}
                   onClick={() => handleFeedback('up')}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M14 9V5a3 3 0 0 0-6 0v4H5v11h14V9h-5z" />
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M14 9V5a3 3 0 0 0-6 0v4H5v11h14V9h-5z"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    />
                   </svg>
                   Helpful
                 </button>
 
                 <button
-                  className={`feedback-btn flex items-center gap-2 px-5 py-2.5 rounded-full border border-[var(--border)] transition-[var(--transition)] ${
-                    feedback === 'down' ? 'bg-[var(--accent-glow)] text-[var(--accent-dark)]' : 'hover:bg-[var(--icon-bg)]'
-                  }`}
+                  className={`feedback-btn ${feedback === 'down' ? 'active' : ''}`}
                   onClick={() => handleFeedback('down')}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M10 15v4a3 3 0 0 0 6 0v-4h3V4H5v11h5z" />
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M10 15v4a3 3 0 0 0 6 0v-4h3V4H5v11h5z"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    />
                   </svg>
                   Not Helpful
                 </button>
@@ -168,7 +191,7 @@ export default function ResultPanel({ result, loading, onClose }) {
           )}
 
           {loading && (
-            <div className="text-center py-10 text-[var(--text-secondary)]">
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               Solving your problem...
             </div>
           )}
@@ -184,23 +207,36 @@ function prepareMathForKaTeX(rawText) {
 
   let text = rawText;
 
+  // 1. Convert plain ASCII fractions 3/4 → \frac{3}{4}  (only when it looks safe)
   text = text.replace(
     /(\b\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?\b)(?!\s*\/)/g,
     '\\frac{$1}{$2}'
   );
 
+  // 2. Convert ugly ASCII stacked fractions (common in some model outputs)
   text = text.replace(
     /(\d+)\s*\n\s*_{2,}\s*\n\s*(\d+)/g,
     '\\frac{$1}{$2}'
   );
 
+  // ────────────────────────────────────────────────────────────────
+  // ADD YOUR NEW BLOCK HERE (or adjust if you already have something similar)
+  // This upgrades inline math → display math for sentences that look like
+  // they contain important explanatory steps / rules
   text = text.replace(
     /\$([^$]*?(?:derivative|rule|product rule|quotient|chain|integral|limit|sum|equals|therefore)[^$]*?)\$/gi,
     '$$$$$1$$$$'
   );
+  // ────────────────────────────────────────────────────────────────
 
+  // 3. Fix common model mistakes: single $ delimiters that should be display
+  //    (your existing optional block)
+  // text = text.replace(/\$([^\$]+)\$/g, '$$$$$1$$$$');
+
+  // 4. Clean up extra spaces inside delimiters (helps KaTeX sometimes)
   text = text.replace(/\$\$[\s\n]+/g, '$$').replace(/[\s\n]+\$\$/g, '$$');
 
+  // 5. Replace any stray \[ \] delimiters with $$ (some models use them)
   text = text.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$');
 
   return text;
