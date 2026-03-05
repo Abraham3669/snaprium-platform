@@ -20,28 +20,34 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   if (!result?.image) return null;
 
-  // ────────────────────────────────────────────────
-// Clean final answer extraction (stable for KaTeX)
-// ────────────────────────────────────────────────
-const extractFinalAnswer = (text) => {
-  if (!text || !text.trim()) {
-    return '$$\\text{No solution found}$$';
+  const extractFinalAnswer = (text) => {
+  if (!text?.trim()) return '$$\\text{No solution found}$$';
+
+  const cleaned = text
+    .trim()
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\n+/g, '\n');
+
+  const lines = cleaned.split('\n').map(l => l.trim()).filter(Boolean);
+
+  // Walk backwards to find the last math-looking line
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const line = lines[i];
+
+    if (
+      line.includes('\\') ||
+      /[=\-+*/^(){}\[\]\d]/.test(line)
+    ) {
+      return line;
+    }
   }
 
-  const cleaned = text.trim();
-
-  // Find all $$...$$ math blocks
-  const matches = [...cleaned.matchAll(/\$\$([\s\S]*?)\$\$/g)];
-
-  // Use the LAST one (usually the final answer)
-  if (matches.length > 0) {
-    const last = matches[matches.length - 1][1].trim();
-    return `$$${last}$$`;
-  }
-
-  // fallback
-  return '$$\\text{See steps below}$$';
+  // fallback: just return last line
+  return lines[lines.length - 1] || '$$\\text{No solution found}$$';
 };
+
+
+
   const finalAnswer = prepareMathForKaTeX(
   extractFinalAnswer(result.text || '')
 );
