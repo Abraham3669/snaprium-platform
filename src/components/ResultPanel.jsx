@@ -21,104 +21,105 @@ export default function ResultPanel({ result, loading, onClose }) {
   if (!result?.image) return null;
 
   const extractFinalAnswer = (text) => {
-    if (!text?.trim()) return '$$\\text{No solution found}$$';
+  if (!text?.trim()) return '$$\\text{No solution found}$$';
 
-    let cleaned = text
-      .trim()
-      .replace(/\r\n|\r/g, '\n')
-      .replace(/\n{3,}/g, '\n\n')
-      .replace(/\n+/g, '\n');
+  let cleaned = text
+    .trim()
+    .replace(/\r\n|\r/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\n+/g, '\n');
 
-    let candidate = null;
+  let candidate = null;
 
-    // Priority 1: Last \boxed{...}
-    const boxedMatches = [...cleaned.matchAll(/\\boxed\{([\s\S]*?)\}/g)];
-    if (boxedMatches.length > 0) {
-      candidate = boxedMatches[boxedMatches.length - 1][1].trim();
+  // Priority 1: Last \boxed{...} — highest trust
+  const boxedMatches = [...cleaned.matchAll(/\\boxed\{([\s\S]*?)\}/g)];
+  if (boxedMatches.length > 0) {
+    candidate = boxedMatches[boxedMatches.length - 1][1].trim();
+  }
+
+  // Priority 2: Last complete display math block
+  if (!candidate) {
+    const displayMatches = [...cleaned.matchAll(/\$\$([\s\S]*?)\$\$|\\\[([\s\S]*?)\\\]/g)];
+    if (displayMatches.length > 0) {
+      const last = displayMatches[displayMatches.length - 1];
+      candidate = (last[1] || last[2] || '').trim();
     }
+  }
 
-    // Priority 2: Last display math block
-    if (!candidate) {
-      const displayMatches = [...cleaned.matchAll(/\$\$([\s\S]*?)\$\$|\\\[([\s\S]*?)\\\]/g)];
-      if (displayMatches.length > 0) {
-        const last = displayMatches[displayMatches.length - 1];
-        candidate = (last[1] || last[2] || '').trim();
+  // Priority 3: Keyword-based capture (greedier end boundary)
+  if (!candidate) {
+    const keywordRegex = /(?:final answer|answer|result|solution|therefore|thus|conclusion|so|we get)[:=\s→-]?\s*([\s\S]*?)(?=\n{2,}|$)/is;
+    const match = cleaned.match(keywordRegex);
+    if (match?.[1]) candidate = match[1].trim();
+  }
+
+  // Priority 4: Last plausible math line — stricter length & structure
+  if (!candidate) {
+    const lines = cleaned.split('\n').filter(Boolean);
+    for (let i = lines.length - 1; i >= 0; i--) {
+      const line = lines[i].trim();
+      if (line.length < 10) continue; // skip tiny fragments like "\frac{5"
+      if (
+        line.includes('\\boxed') ||
+        (line.includes('\\frac') && line.includes('}{')) || // requires both braces
+        line.match(/(f'|f''|[a-z]\(x\))\s*=/) ||
+        line.match(/\\(sqrt|sum|int|prod|lim|e\^{|sin|cos|ln|log)/)
+      ) {
+        candidate = line;
+        break;
       }
     }
+  }
 
-    // Priority 3: Keyword phrase
-    if (!candidate) {
-      const keywordRegex = /(?:final answer|answer|result|solution|therefore|thus|conclusion|so|we get)[:=\s→-]?\s*([\s\S]*?)(?=\n{2,}|$)/is;
-      const match = cleaned.match(keywordRegex);
-      if (match?.[1]) candidate = match[1].trim();
-    }
+  if (!candidate) {
+    return '$$\\text{See the detailed steps below}$$';
+  }
 
-    // Priority 4: Last plausible math line (avoid tiny fragments)
-    if (!candidate) {
-      const lines = cleaned.split('\n').filter(Boolean);
-      for (let i = lines.length - 1; i >= 0; i--) {
-        const line = lines[i].trim();
-        if (line.length < 8) continue; // skip very short fragments
-        if (
-          line.includes('\\boxed') ||
-          (line.includes('\\frac') && line.includes('}{')) ||
-          line.match(/(f'|f''|[a-z]\(x\))\s*=/) ||
-          line.match(/\\(sqrt|sum|int|prod|lim|e\^{)/)
-        ) {
-          candidate = line;
-          break;
-        }
-      }
-    }
+  // Cleanup outer junk
+  candidate = candidate
+    .replace(/^[\s$\\[\]]+|[\s$\\[\]]+$/g, '')
+    .replace(/^\\boxed\{([\s\S]*)\}$/, '$1')
+    .replace(/\\boxed\{([\s\S]*?)\}/g, '$1')
+    .trim();
 
-    if (!candidate) {
-      return '$$\\text{See the detailed steps below}$$';
-    }
+  // ── Apply the same preparation that helps steps render well ──
+  candidate = prepareMathForKaTeX(candidate);
 
-    // Cleanup outer junk
-    candidate = candidate
-      .replace(/^[\s$\\[\]]+|[\s$\\[\]]+$/g, '')
-      .replace(/^\\boxed\{([\s\S]*)\}$/, '$1')
-      .replace(/\\boxed\{([\s\S]*?)\}/g, '$1')
-      .trim();
+  // ── Stronger protection against broken frac after preparation ──
+  const fracCount = (candidate.match(/\\frac|\\dfrac/g) || []).length;
+  const openBraces  = (candidate.match(/\{/g)  || []).length;
+  const closeBraces = (candidate.match(/\}/g) || []).length;
 
-    // ── IMPORTANT CHANGE: Apply the same math preparation as the steps section ──
-    candidate = prepareMathForKaTeX(candidate);
+  if (fracCount > 0 && (openBraces < fracCount * 2 || closeBraces < fracCount * 2)) {
+    // Still broken → render as plain text (prevents "frac{5" mess)
+    return `\\text{Answer: ${candidate}}`;
+    // Alternative (cleaner but less informative):
+    // return '$$\\text{See steps below}$$';
+  }
 
-    // ── CRITICAL CHECK: Block obviously broken frac/dfrac after preparation ──
-    const fracCount = (candidate.match(/\\frac|\\dfrac/g) || []).length;
-    const openBraces  = (candidate.match(/\{/g)  || []).length;
-    const closeBraces = (candidate.match(/\}/g) || []).length;
+  // ── Wrapping logic ────────────────────────────────────────────────
+  // Case: looks like equation → wrap only right side in inline math
+  const eqMatch = candidate.match(/^(.+?)\s*=\s*(.+)$/);
+  if (eqMatch) {
+    const left  = eqMatch[1].trim();
+    const right = eqMatch[2].trim();
+    return `${left} = $${right}$`;
+  }
 
-    if (fracCount > 0 && (openBraces < fracCount * 2 || closeBraces < fracCount * 2)) {
-      // Still incomplete after preparation → show as text / fallback
-      return `\\text{Answer (fraction): ${candidate}}`;
-      // Alternative stronger fallback:
-      // return '$$\\text{Complex answer – see steps below}$$';
-    }
+  // Case: short pure math/symbol → inline
+  if (!candidate.includes('=') && candidate.length < 60 && !candidate.includes('  ')) {
+    return `$${candidate}$`;
+  }
 
-    // ── Wrapping logic ────────────────────────────────────────────────────
-    // Equation style: wrap only right-hand side in inline math
-    const eqMatch = candidate.match(/^(.+?)\s*=\s*(.+)$/);
-    if (eqMatch) {
-      const left  = eqMatch[1].trim();
-      const right = eqMatch[2].trim();
-      return `${left} = $${right}$`;
-    }
+  // Default: full display math
+  return `$$${candidate}$$`;
+};
 
-    // Short/symbolic → inline math
-    if (!candidate.includes('=') && candidate.length < 60 && !candidate.includes('  ')) {
-      return `$${candidate}$`;
-    }
-
-    // Default: display math
-    return `$$${candidate}$$`;
-  };
 
   const finalAnswer = extractFinalAnswer(result.text || '');
 
   // Optional debug: uncomment to see what’s actually being rendered
-  // console.log("Final answer sent to ReactMarkdown:", finalAnswer);
+   console.log("Final answer sent to ReactMarkdown:", finalAnswer);
 
   return (
     <div className="result-panel">
