@@ -29,106 +29,92 @@ const extractFinalAnswer = (text) => {
   let cleaned = text
     .trim()
     .replace(/\r\n|\r/g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .replace(/\n+/g, '\n');
+    .replace(/\n{3,}/g, '\n\n');
 
   let candidate = null;
 
-  // 1️⃣ Prefer boxed answers
-  const boxedMatches = [...cleaned.matchAll(/\\boxed\{([\s\S]*?)\}/g)];
-  if (boxedMatches.length > 0) {
-    candidate = boxedMatches[boxedMatches.length - 1][1].trim();
+  // 1️⃣ BOXED answers (best signal)
+  const boxed = [...cleaned.matchAll(/\\boxed\{([\s\S]*?)\}/g)];
+  if (boxed.length) {
+    candidate = boxed[boxed.length - 1][1].trim();
   }
 
-  // 2️⃣ Otherwise last display math
+  // 2️⃣ Explicit "Final answer"
   if (!candidate) {
-    const displayMatches = [...cleaned.matchAll(/\$\$([\s\S]*?)\$\$|\\\[([\s\S]*?)\\\]/g)];
-    if (displayMatches.length > 0) {
-      const last = displayMatches[displayMatches.length - 1];
-      candidate = (last[1] || last[2] || '').trim();
+    const finalMatch = cleaned.match(
+      /(final answer|answer|result|solution)[:=\s\-→]*([^\n]+)/i
+    );
+    if (finalMatch) {
+      candidate = finalMatch[2].trim();
     }
   }
 
-  // 3️⃣ Keyword extraction
+  // 3️⃣ Last display math $$...$$
   if (!candidate) {
-    const keywordRegex =
-      /(?:final answer|answer|result|solution|therefore|thus|conclusion|so|we get)[:=\s→-]?\s*([^\n]+)/i;
-
-    const match = cleaned.match(keywordRegex);
-    if (match && match[1]) {
-      candidate = match[1].trim();
+    const display = [...cleaned.matchAll(/\$\$([\s\S]*?)\$\$/g)];
+    if (display.length) {
+      candidate = display[display.length - 1][1].trim();
     }
   }
 
-  // 4️⃣ Last plausible math line
+  // 4️⃣ Last equation line
   if (!candidate) {
-    const lines = cleaned.split('\n').filter(Boolean);
+    const lines = cleaned.split('\n').reverse();
 
-    for (let i = lines.length - 1; i >= 0; i--) {
-      const line = lines[i].trim();
+    for (const line of lines) {
 
-      if (line.length < 4) continue;
+      const l = line.trim();
+
+      if (!l) continue;
 
       if (
-        line.includes('\\frac') ||
-        line.includes('=') ||
-        line.includes('^') ||
-        line.includes('_') ||
-        line.match(/[a-z]\(x\)/i)
+        l.includes('=') ||
+        l.includes('\\frac') ||
+        l.includes('^') ||
+        l.includes('_')
       ) {
-        candidate = line;
+        candidate = l;
         break;
       }
     }
   }
 
+  // 5️⃣ Fraction fallback
+  if (!candidate) {
+    const fraction = cleaned.match(/\d+\s*\/\s*\d+/);
+    if (fraction) {
+      candidate = fraction[0];
+    }
+  }
+
   if (!candidate) {
     return '$$\\text{No solution found}$$';
   }
 
-  // Clean wrappers
+  // Remove wrappers
   candidate = candidate
-    .replace(/^[\s$\\[\]]+|[\s$\\[\]]+$/g, '')
-    .replace(/^\\boxed\{([\s\S]*)\}$/, '$1')
+    .replace(/^\$+|\$+$/g, '')
+    .replace(/^\\\[|\\\]$/g, '')
     .replace(/\\boxed\{([\s\S]*?)\}/g, '$1')
     .trim();
 
-  // 🔧 Fix LaTeX BEFORE KaTeX preparation
+  // Repair latex
   candidate = repairLatex(candidate);
 
-  // Reject clearly broken fragments
-if (
-  candidate.length < 3 ||
-  candidate === 'text' ||
-  candidate.startsWith('text{') ||
-  candidate === 'For' ||
-  candidate === 'frac' ||
- candidate.match(/\\frac\{[^}]*\}$/) ||   // incomplete fraction
-  candidate.match(/\^[^{]*$/)            // broken exponent
-) {
-  return '$$\\text{No solution found}$$';
-}
+  // Convert plain fractions to latex
+  candidate = candidate.replace(
+    /(\d+)\s*\/\s*(\d+)/g,
+    '\\frac{$1}{$2}'
+  );
 
-
-
-
-
-
-  // Prepare for KaTeX
-  candidate = prepareMathForKaTeX(candidate);
-
-  // Extra safety: avoid very short fragments
+  // Final sanity check
   if (candidate.length < 2) {
     return '$$\\text{No solution found}$$';
   }
 
-  // Always render as display math for clean UI
-  let result = '$$';
-  result += candidate;
-  result += '$$';
-
-  return result;
+  return '$$' + candidate + '$$';
 };
+
 
 
   const finalAnswer = extractFinalAnswer(result.text || '');
@@ -275,36 +261,39 @@ function repairLatex(candidate) {
   // Fix missing \frac
   fixed = fixed.replace(/(^|[^\\])frac\{/g, '$1\\frac{');
 
-  // Fix exponent like e^3 -> e^{3}
+  // Convert plain fractions 5/2 → \frac{5}{2}
+  fixed = fixed.replace(
+    /(\d+)\s*\/\s*(\d+)/g,
+    '\\frac{$1}{$2}'
+  );
+
+  // Fix exponent like e^3 → e^{3}
   fixed = fixed.replace(/\^([a-zA-Z0-9]+)/g, '^{$1}');
 
-  // Fix subscript like x_2 -> x_{2}
+  // Fix subscript like x_2 → x_{2}
   fixed = fixed.replace(/_([a-zA-Z0-9]+)/g, '_{$1}');
 
-  /// Fix incomplete \frac{a}
-fixed = fixed.replace(/\\frac\{([^}]*)\}(?!\{)/g, '\\frac{$1}{1}');
+  // Fix incomplete \frac{a}
+  fixed = fixed.replace(/\\frac\{([^}]*)\}(?!\{)/g, '\\frac{$1}{1}');
 
-// Fix incomplete \frac{a}{ }
-fixed = fixed.replace(/\\frac\{([^}]*)\}\{\}/g, '\\frac{$1}{1}');
+  // Fix incomplete \frac{a}{ }
+  fixed = fixed.replace(/\\frac\{([^}]*)\}\{\}/g, '\\frac{$1}{1}');
 
-// Balance braces
-const open = (fixed.match(/\{/g) || []).length;
-const close = (fixed.match(/\}/g) || []).length;
+  // Balance braces
+  const open = (fixed.match(/\{/g) || []).length;
+  const close = (fixed.match(/\}/g) || []).length;
 
-if (open > close) {
-  fixed += '}'.repeat(open - close);
-}
+  if (open > close) {
+    fixed += '}'.repeat(open - close);
+  }
 
-
-
-  // Remove double braces
   // Remove duplicated braces safely
-fixed = fixed.replace(/\{\s*\{/g, '{').replace(/\}\s*\}/g, '}');
-
+  fixed = fixed
+    .replace(/\{\s*\{/g, '{')
+    .replace(/\}\s*\}/g, '}');
 
   return fixed.trim();
 }
-
 
 
 
