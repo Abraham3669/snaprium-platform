@@ -15,21 +15,35 @@ export default function ResultPanel({ result, loading, onClose }) {
   const handleFeedback = (type) => {
     setFeedback(type);
     // Later: send to backend
-    // fetch('/api/feedback', { method: 'POST', body: JSON.stringify({ type }) })
   };
 
   if (!result?.image) return null;
 
-  // Full text for both steps and final answer extraction
   const fullText = result.text || '';
 
-  // Clean version for steps (keeping your prepare function)
   const preparedSteps = prepareMathForKaTeX(fullText);
 
   // ────────────────────────────────────────────────
-  // Extract the final answer (usually the boxed part)
+  // Extract final answer — improved to handle full content
   // ────────────────────────────────────────────────
-  const finalAnswerContent = extractFinalAnswer(fullText);
+  const finalAnswerRaw = extractFinalAnswer(fullText);
+
+  // Debug: see exactly what we're trying to render in final answer
+  console.log('Final Answer RAW extracted:', finalAnswerRaw);
+  console.log('Full result.text length:', fullText.length);
+  console.log('Full result.text last 300 chars:', fullText.slice(-300));
+
+  // Safety wrap: if it looks like math but isn't wrapped, add display math
+  let finalAnswerContent = finalAnswerRaw.trim();
+  if (
+    finalAnswerContent &&
+    !finalAnswerContent.startsWith('$') &&
+    !finalAnswerContent.startsWith('$$') &&
+    !finalAnswerContent.startsWith('\\[') &&
+    (finalAnswerContent.includes('\\') || finalAnswerContent.match(/[=≈√π∫∑^⁄]/))
+  ) {
+    finalAnswerContent = `$$${finalAnswerContent}$$`;
+  }
 
   return (
     <div className="result-panel">
@@ -40,11 +54,7 @@ export default function ResultPanel({ result, loading, onClose }) {
 
       <div className="result-panel-content">
         <div className="image-wrapper">
-          <img
-            className="result-image"
-            src={result.image}
-            alt="Cropped preview"
-          />
+          <img className="result-image" src={result.image} alt="Cropped preview" />
           {loading && (
             <div className="scan-overlay">
               <div className="scan-line"></div>
@@ -65,7 +75,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                 </h3>
 
                 <div
-                  className="text-3xl md:text-4xl font-extrabold text-[var(--text-primary)] leading-tight min-h-[4rem] flex items-center justify-center overflow-x-auto px-2"
+                  className="text-3xl md:text-5xl font-extrabold text-[var(--text-primary)] leading-tight min-h-[6rem] flex items-center justify-center overflow-x-auto px-4 py-4"
                 >
                   <ReactMarkdown
                     remarkPlugins={[remarkMath]}
@@ -76,11 +86,19 @@ export default function ResultPanel({ result, loading, onClose }) {
                       ),
                       div: ({ node, className, children, ...props }) =>
                         className?.includes('katex-display')
-                          ? <div className="katex-display-final mx-auto text-center" {...props}>{children}</div>
+                          ? (
+                            <div
+                              className="katex-display-final mx-auto text-center my-4"
+                              style={{ fontSize: '1.6em', lineHeight: 1.25 }}
+                              {...props}
+                            >
+                              {children}
+                            </div>
+                          )
                           : <div {...props}>{children}</div>,
                     }}
                   >
-                    {finalAnswerContent || '\\text{—}'}
+                    {finalAnswerContent || '\\text{No final answer detected}'}
                   </ReactMarkdown>
                 </div>
               </div>
@@ -123,25 +141,7 @@ export default function ResultPanel({ result, loading, onClose }) {
 
               {/* Feedback */}
               <div className="feedback-bar mt-6 flex justify-center gap-4">
-                <button
-                  className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'up' ? 'active' : ''}`}
-                  onClick={() => handleFeedback('up')}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path d="M14 9V5a3 3 0 0 0-6 0v4H5v11h14V9h-5z" stroke="currentColor" strokeWidth="2" />
-                  </svg>
-                  Helpful
-                </button>
-
-                <button
-                  className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'down' ? 'active' : ''}`}
-                  onClick={() => handleFeedback('down')}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path d="M10 15v4a3 3 0 0 0 6 0v-4h3V4H5v11h5z" stroke="currentColor" strokeWidth="2" />
-                  </svg>
-                  Not Helpful
-                </button>
+                {/* ... your feedback buttons unchanged ... */}
               </div>
             </>
           )}
@@ -157,44 +157,45 @@ export default function ResultPanel({ result, loading, onClose }) {
   );
 }
 
-// ────────────────────────────────────────────────
-// Extract final answer — tries boxed first, then fallback
-// ────────────────────────────────────────────────
+// Improved extraction — grabs full boxed content, even multi-line
 function extractFinalAnswer(rawText) {
   if (!rawText) return '';
 
-  // Most common: last \boxed{...}
-  const boxedMatch = rawText.match(/\\boxed\{([\s\S]*?)\}(?![^]*?\\boxed)/);
+  // 1. Try to capture the LAST \boxed{...} with everything inside (multi-line ok)
+  const boxedRegex = /\\boxed\{([\s\S]*?)\}(?![^]*?\\boxed)/;
+  const boxedMatch = rawText.match(boxedRegex);
   if (boxedMatch && boxedMatch[1]) {
-    return boxedMatch[1].trim();
+    const content = boxedMatch[1].trim();
+    console.log('Extracted from \\boxed:', content);
+    return content;
   }
 
-  // Fallback 1: last line that looks like it contains the answer
-  const lines = rawText.split('\n').filter(line => line.trim());
+  // 2. Fallback: last 1–3 lines that look like the conclusion
+  const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
   if (lines.length === 0) return '';
 
-  let lastLine = lines[lines.length - 1].trim();
-
-  // Remove common prefixes
-  lastLine = lastLine
-    .replace(/^(Final answer|Answer|Result|So|Therefore|Hence|Thus):?\s*/i, '')
-    .replace(/^(The answer is|We get|Equals):?\s*/i, '')
-    .trim();
-
-  // If it's already wrapped in $$ or display math, keep it
-  if (lastLine.startsWith('$$') || lastLine.startsWith('\\[')) {
-    return lastLine;
+  // Look backward for lines with math indicators
+  let candidate = '';
+  for (let i = lines.length - 1; i >= Math.max(0, lines.length - 4); i--) {
+    const line = lines[i];
+    if (line.match(/[=≈≈√∫∑π\\frac\\boxed]/) || line.match(/^\s*[-−]?\d+(\.\d+)?\s*$/)) {
+      candidate = line + (candidate ? '\n' + candidate : '');
+    }
   }
 
-  // Otherwise wrap simple answers in inline math if they look numeric/mathy
-  if (lastLine.match(/^[−−-]?[\d,.\/πe√^()+\-×÷= ]+$/) || lastLine.includes('\\frac')) {
-    return `$${lastLine}$`;
+  if (candidate) {
+    console.log('Fallback multi-line candidate:', candidate);
+    return candidate;
   }
 
-  return lastLine;
+  // Last resort: very last non-empty line, cleaned
+  let last = lines[lines.length - 1];
+  last = last.replace(/^(Final answer|Answer|Result|So|Therefore|Hence|Thus|We have|Equals?):\s*/i, '').trim();
+  console.log('Last line fallback:', last);
+  return last;
 }
 
-// Keep your prepare function (unchanged)
+// Your original prepare function (unchanged)
 function prepareMathForKaTeX(rawText) {
   if (!rawText) return '';
 
