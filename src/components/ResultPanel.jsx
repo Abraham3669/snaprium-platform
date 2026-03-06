@@ -39,7 +39,7 @@ export default function ResultPanel({ result, loading, onClose }) {
       candidate = boxed[boxed.length - 1][1].trim();
     }
 
-    // 2. Keyword match – improved capture
+    // 2. Keyword match — improved capture
     if (!candidate) {
       const finalMatch = cleaned.match(
         /(final answer|answer|result|solution|therefore|thus|conclusion)[:=\s\-→]*([\s\S]*?)(?=\n{2,}|$)/i
@@ -57,7 +57,7 @@ export default function ResultPanel({ result, loading, onClose }) {
       }
     }
 
-    // 4. Last equation-like line – more permissive for complex/calculus
+    // 4. Last equation-like line – very permissive for complex/calculus
     if (!candidate) {
       const lines = cleaned.split('\n').reverse();
       for (const line of lines) {
@@ -78,7 +78,11 @@ export default function ResultPanel({ result, loading, onClose }) {
           l.includes('\\sin') ||
           l.includes('\\cos') ||
           l.includes('\\log') ||
-          l.includes('\\ln')
+          l.includes('\\ln') ||
+          l.includes('\\tan') ||
+          l.includes('\\sec') ||
+          l.includes('\\csc') ||
+          l.includes('\\cot')
         ) {
           candidate = l;
           break;
