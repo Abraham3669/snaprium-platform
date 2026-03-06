@@ -20,46 +20,50 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   if (!result?.image) return null;
 
- // ────────────────────────────────────────────────
-// Very robust final answer extraction – fixed for messy frac{ issues
+// ────────────────────────────────────────────────
+// Very robust final answer extraction – handles equations like f'(x) = e^{3x}
 // ────────────────────────────────────────────────
 const extractFinalAnswer = (text) => {
   if (!text?.trim()) return '$$\\text{No solution found}$$';
 
   let cleaned = text
     .trim()
-    .replace(/\r\n|\r/g, '\n')              // normalize line endings
+    .replace(/\r\n|\r/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .replace(/\n+/g, '\n');
 
-  // 1. Try to get content from the LAST \boxed{...} (most trustworthy)
   let candidate = null;
+
+  // 1. Last \boxed{} — highest priority
   const boxedMatches = [...cleaned.matchAll(/\\boxed\{([\s\S]*?)\}/g)];
   if (boxedMatches.length > 0) {
     candidate = boxedMatches[boxedMatches.length - 1][1].trim();
   }
 
-  // 2. If no boxed, try last full $$...$$ block
+  // 2. Last full display math block
   if (!candidate) {
-    const displayMatches = [...cleaned.matchAll(/\$\$([\s\S]*?)\$\$/g)];
+    const displayMatches = [...cleaned.matchAll(/\$\$([\s\S]*?)\$\$|\\\[([\s\S]*?)\\\]/g)];
     if (displayMatches.length > 0) {
-      candidate = displayMatches[displayMatches.length - 1][1].trim();
+      const last = displayMatches[displayMatches.length - 1];
+      candidate = (last[1] || last[2]).trim();
     }
   }
 
-  // 3. Keyword fallback (final answer:, therefore, etc.)
+  // 3. Keyword fallback
   if (!candidate) {
-    const keywordRegex = /(?:final answer|answer|result|therefore|thus|conclusion|so|we get)[:=\s→-]*([\s\S]*?)(?=\n{2,}|$)/i;
+    const keywordRegex = /(?:final answer|answer|result|solution|therefore|thus|conclusion|so|we get)[:=\s→-]*(.+?)(?=\n{2,}|$)/is;
     const match = cleaned.match(keywordRegex);
     if (match?.[1]) candidate = match[1].trim();
   }
 
-  // 4. Last math-looking line as desperate fallback
+  // 4. Last reasonable math line (improved pattern)
   if (!candidate) {
     const lines = cleaned.split('\n').filter(Boolean);
     for (let i = lines.length - 1; i >= 0; i--) {
       const line = lines[i].trim();
-      if (line.match(/\\(frac|d?frac|sqrt|boxed|[a-z]{2,})|\$|\d+\/\d+/)) {
+      if (line.match(/(f'|f''|[a-zA-Z]\(x\)|[a-zA-Z]_?[a-zA-Z]?)\s*=/) || // looks like function definition
+          line.match(/\\(frac|sqrt|sum|int|prod|lim|e\^\{|sin|cos|ln|log|boxed)/) ||
+          line.match(/^\s*[a-zA-Z0-9'()^=+\-*/ ]{1,60}\s*$/)) {  // short equation-like
         candidate = line;
         break;
       }
@@ -70,26 +74,31 @@ const extractFinalAnswer = (text) => {
     return '$$\\text{See the step-by-step solution below}$$';
   }
 
-  // ── CLEANUP: remove outer junk, we will re-wrap properly ──
+  // ── Smart cleanup & wrapping logic ─────────────────────────────────────
+  // Remove outer delimiters / box only — keep inner structure
   candidate = candidate
-    // Remove any outer math delimiters
     .replace(/^[\s$\\[\]]+|[\s$\\[\]]+$/g, '')
-    // Unwrap any \boxed{...}
     .replace(/^\\boxed\{([\s\S]*)\}$/, '$1')
     .replace(/\\boxed\{([\s\S]*?)\}/g, '$1')
-    // Remove stray single $ or $$ at start/end
-    .replace(/^(\$|\$\$)+|(\$|\$\$)+$/g, '')
     .trim();
 
-  // Quick safety: if it looks obviously broken (unbalanced frac), fallback
-  const fracCount = (candidate.match(/\\frac|\\dfrac/g) || []).length;
-  const braceCountOpen = (candidate.match(/\{/g) || []).length;
-  const braceCountClose = (candidate.match(/\}/g) || []).length;
-  if (fracCount > 0 && Math.abs(braceCountOpen - braceCountClose) > 2) {
-    return '$$\\text{Complex answer – see detailed steps below}$$';
+  // Detect if this is already a full equation style string
+  const hasAssignment = candidate.match(/=/);
+  const hasFunctionLike = candidate.match(/(f'|f''|[a-z]\(x\))/);
+  const pureMath = !hasAssignment && !candidate.includes(' ') && candidate.match(/^[a-zA-Z0-9^{}[\]()+\-*/= ]+$/);
+
+  if (pureMath) {
+    // Short symbolic answer → inline is fine, but big
+    return `$${candidate}$`;
   }
 
-  // ALWAYS wrap in display math for the prominent top box – this fixes most "frac{5" messes
+  if (hasAssignment || hasFunctionLike) {
+    // Looks like "f'(x) = something" → wrap the whole thing as display math
+    // KaTeX handles this very well
+    return `$$${candidate}$$`;
+  }
+
+  // Default: assume it's math-heavy → display math
   return `$$${candidate}$$`;
 };
 
