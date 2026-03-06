@@ -20,7 +20,7 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   if (!result?.image) return null;
 
- const extractFinalAnswer = (text) => {
+const extractFinalAnswer = (text) => {
   if (!text?.trim()) return '$$\\text{No solution found}$$';
 
   let cleaned = text
@@ -58,12 +58,13 @@ export default function ResultPanel({ result, loading, onClose }) {
     const lines = cleaned.split('\n').filter(Boolean);
     for (let i = lines.length - 1; i >= 0; i--) {
       const line = lines[i].trim();
-      if (line.length < 10) continue;
+      if (line.length < 6) continue; // lowered from 10 — allows short equations
       if (
         line.includes('\\boxed') ||
-        (line.includes('\\frac') && line.includes('}{')) ||
+        line.includes('\\frac') ||
         line.match(/(f'|f''|[a-z]\(x\))\s*=/) ||
-        line.match(/\\(sqrt|sum|int|prod|lim|e\^{)/)
+        line.match(/\\(sqrt|sum|int|prod|lim|e\^{|sin|cos|ln|log|x\^)/) ||
+        line.includes('=') // allow simple equations
       ) {
         candidate = line;
         break;
@@ -82,29 +83,25 @@ export default function ResultPanel({ result, loading, onClose }) {
     .replace(/\\boxed\{([\s\S]*?)\}/g, '$1')
     .trim();
 
-  // Apply same preparation as steps
+  // Prepare like steps section
   candidate = prepareMathForKaTeX(candidate);
 
-  // Emergency junk filter
-  if (
-    candidate.length < 8 ||
-    (candidate.includes('\\frac') && candidate.length < 12) ||
-    candidate.startsWith('frac') ||
-    candidate === 'frac{5'
-  ) {
-    return '$$\\text{See steps below}$$';
-  }
-
-  // Stronger frac balance check
+  // ── Relaxed protection: only block extremely broken cases ──
   const fracCount = (candidate.match(/\\frac|\\dfrac/g) || []).length;
   const openBraces  = (candidate.match(/\{/g)  || []).length;
   const closeBraces = (candidate.match(/\}/g) || []).length;
 
-  if (fracCount > 0 && (openBraces < fracCount * 2 || closeBraces < fracCount * 2)) {
-    return `\\text{Answer: ${candidate}}`;
+  const isVeryBroken =
+    candidate.length < 5 ||
+    candidate.trim() === '' ||
+    candidate.startsWith('frac{') ||
+    (fracCount > 0 && candidate.includes('\\frac') && !candidate.includes('}{'));
+
+  if (isVeryBroken) {
+    return '$$\\text{See steps below}$$';
   }
 
-  // Wrapping
+  // ── Wrapping logic ────────────────────────────────────────────────
   const eqMatch = candidate.match(/^(.+?)\s*=\s*(.+)$/);
   if (eqMatch) {
     const left  = eqMatch[1].trim();
@@ -112,12 +109,15 @@ export default function ResultPanel({ result, loading, onClose }) {
     return `${left} = $${right}$`;
   }
 
-  if (!candidate.includes('=') && candidate.length < 60 && !candidate.includes('  ')) {
+  // Most short math → try inline first
+  if (candidate.length < 80 && !candidate.includes('\\\\')) {
     return `$${candidate}$`;
   }
 
+  // Longer / complex → display
   return `$$${candidate}$$`;
 };
+
 
 
   const finalAnswer = extractFinalAnswer(result.text || '');
