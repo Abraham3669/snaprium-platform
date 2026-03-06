@@ -68,7 +68,7 @@ const extractFinalAnswer = (text) => {
   }
 
   if (!candidate) {
-    return '';  // ← no fallback message
+    return '';
   }
 
   candidate = candidate
@@ -91,36 +91,38 @@ const extractFinalAnswer = (text) => {
     (fracCount > 0 && openBraces === 0 && closeBraces === 0);
 
   if (isVeryBroken) {
-    return '\\text{Answer: ' + candidate + '}';  // ← shows text instead of hiding
+    // Force render broken frac with ? placeholder
+    let fallback = candidate;
+    if (fallback.includes('\\frac') && !fallback.includes('}{')) {
+      fallback = fallback.replace(/\\frac\s*\{([^}]*)\}?/, '\\frac{$1}{?}');
+    }
+    return '$$' + fallback + '$$';
   }
 
-  // ── Wrapping logic – safe concatenation ────────────────────────────────
+  // ── Wrapping logic – bulletproof ──────────────────────────────────────
   const eqMatch = candidate.match(/^(.+?)\s*=\s*(.+)$/);
   if (eqMatch) {
     const left  = eqMatch[1].trim();
     const right = eqMatch[2].trim();
     let result = left;
-    result += " = $";
+    result += ' = $';
     result += right;
-    result += "$";
+    result += '$';
     return result;
   }
 
   if (!candidate.includes('=') && candidate.length < 80 && !candidate.includes('\\\\')) {
-    let result = "$";
+    let result = '$';
     result += candidate.trim();
-    result += "$";
+    result += '$';
     return result;
   }
 
-  let result = "$$";
+  let result = '$$';
   result += candidate;
-  result += "$$";
+  result += '$$';
   return result;
 };
-
-
-
 
   const finalAnswer = extractFinalAnswer(result.text || '');
 
