@@ -23,15 +23,12 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   const preparedSteps = prepareMathForKaTeX(fullText);
 
-  // Extract final answer with proper brace balancing
   const finalAnswerRaw = extractFinalAnswer(fullText);
 
-  // Debug logs
   console.log('Final Answer RAW extracted:', finalAnswerRaw);
   console.log('Full result.text length:', fullText.length);
   console.log('Full result.text last 400 chars:\n', fullText.slice(-400));
 
-  // Auto-wrap in display math if it looks like math but isn't already wrapped
   let finalAnswerContent = finalAnswerRaw.trim();
   if (
     finalAnswerContent &&
@@ -61,20 +58,16 @@ export default function ResultPanel({ result, loading, onClose }) {
         <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
           {!loading && result?.text && (
             <>
+              {/* Professional Final Answer Card – NO GRADIENT */}
               <div
-                className="final-answer mb-6 p-6 md:p-10 rounded-3xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-xl)] text-center overflow-hidden"
-                style={{ background: 'linear-gradient(135deg, var(--accent-glow) 0%, transparent 70%)' }}
+                className="final-answer mb-6 md:mb-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-md)] overflow-hidden"
               >
-                <h3 className="text-3xl md:text-4xl font-bold text-[var(--text-secondary)] mb-6 tracking-tight">
+                <h3 className="text-2xl md:text-3xl font-bold text-[var(--text-secondary)] px-6 pt-6 md:pt-8 pb-4">
                   Final Answer
                 </h3>
 
                 <div
-                  className="text-4xl md:text-6xl lg:text-7xl font-black text-[var(--text-primary)] leading-none min-h-[8rem] md:min-h-[10rem] lg:min-h-[12rem] flex items-center justify-center overflow-x-auto px-6 py-8 scrollbar-thin scrollbar-thumb-[var(--accent)] scrollbar-track-transparent scrollbar-thumb-rounded-full"
-                  style={{
-                    maxWidth: '100%',
-                    WebkitOverflowScrolling: 'touch',
-                  }}
+                  className="answer-container px-6 pb-8 md:pb-10 min-h-[10rem] overflow-x-auto -webkit-overflow-scrolling-touch"
                 >
                   <ReactMarkdown
                     remarkPlugins={[remarkMath]}
@@ -89,8 +82,8 @@ export default function ResultPanel({ result, loading, onClose }) {
                         className?.includes('katex-display')
                           ? (
                             <div
-                              className="katex-display-final mx-auto text-center whitespace-nowrap my-2"
-                              style={{ fontSize: '1.9em', lineHeight: 1.25 }}
+                              className="katex-display-final mx-auto text-center whitespace-nowrap my-3"
+                              style={{ fontSize: '2.5em', lineHeight: 1.3, fontWeight: 800 }}
                               {...props}
                             >
                               {children}
@@ -99,7 +92,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                           : <div {...props}>{children}</div>,
                     }}
                   >
-                    {finalAnswerContent || '\\text{—}'}
+                    {finalAnswerContent || '\\text{-}'}
                   </ReactMarkdown>
                 </div>
               </div>
