@@ -31,13 +31,11 @@ const extractFinalAnswer = (text) => {
 
   let candidate = null;
 
-  // Priority 1: Last \boxed{...}
   const boxedMatches = [...cleaned.matchAll(/\\boxed\{([\s\S]*?)\}/g)];
   if (boxedMatches.length > 0) {
     candidate = boxedMatches[boxedMatches.length - 1][1].trim();
   }
 
-  // Priority 2: Last display math block
   if (!candidate) {
     const displayMatches = [...cleaned.matchAll(/\$\$([\s\S]*?)\$\$|\\\[([\s\S]*?)\\\]/g)];
     if (displayMatches.length > 0) {
@@ -46,25 +44,22 @@ const extractFinalAnswer = (text) => {
     }
   }
 
-  // Priority 3: Keyword phrase
   if (!candidate) {
     const keywordRegex = /(?:final answer|answer|result|solution|therefore|thus|conclusion|so|we get)[:=\s→-]?\s*([\s\S]*?)(?=\n{2,}|$)/is;
     const match = cleaned.match(keywordRegex);
     if (match?.[1]) candidate = match[1].trim();
   }
 
-  // Priority 4: Last plausible math line
   if (!candidate) {
     const lines = cleaned.split('\n').filter(Boolean);
     for (let i = lines.length - 1; i >= 0; i--) {
       const line = lines[i].trim();
-      if (line.length < 6) continue;
+      if (line.length < 5) continue;
       if (
         line.includes('\\boxed') ||
         line.includes('\\frac') ||
-        line.match(/(f'|f''|[a-z]\(x\))\s*=/) ||
-        line.match(/\\(sqrt|sum|int|prod|lim|e\^{|sin|cos|ln|log|x\^)/) ||
-        line.includes('=')
+        line.includes('=') ||
+        line.match(/(f'|f''|[a-z]\(x\))/)
       ) {
         candidate = line;
         break;
@@ -76,45 +71,44 @@ const extractFinalAnswer = (text) => {
     return '$$\\text{See the detailed steps below}$$';
   }
 
-  // Cleanup
   candidate = candidate
     .replace(/^[\s$\\[\]]+|[\s$\\[\]]+$/g, '')
     .replace(/^\\boxed\{([\s\S]*)\}$/, '$1')
     .replace(/\\boxed\{([\s\S]*?)\}/g, '$1')
     .trim();
 
-  // Prepare
   candidate = prepareMathForKaTeX(candidate);
 
-  // Relaxed broken check
   const fracCount = (candidate.match(/\\frac|\\dfrac/g) || []).length;
   const openBraces  = (candidate.match(/\{/g)  || []).length;
   const closeBraces = (candidate.match(/\}/g) || []).length;
 
   const isVeryBroken =
-    candidate.length < 5 ||
+    candidate.length < 4 ||
     candidate.trim() === '' ||
     candidate.startsWith('frac{') ||
-    (fracCount > 0 && !candidate.includes('}{'));
+    candidate === 'frac' ||
+    (fracCount > 0 && openBraces === 0 && closeBraces === 0);
 
   if (isVeryBroken) {
     return '$$\\text{See steps below}$$';
   }
 
-  // ── Wrapping logic – safer version ─────────────────────────────────────
+  // ── Wrapping logic – safe version ─────────────────────────────────────
   const eqMatch = candidate.match(/^(.+?)\s*=\s*(.+)$/);
   if (eqMatch) {
     const left  = eqMatch[1].trim();
     const right = eqMatch[2].trim();
-    return left + ' = $' + right + '$';
+    return left + " = $" + right + "$";
   }
 
-  if (!candidate.includes('=') && candidate.length < 80 && !candidate.includes('  ')) {
-    return '$' + candidate.trim() + '$';
+  if (!candidate.includes('=') && candidate.length < 80 && !candidate.includes('\\\\')) {
+    return "$" + candidate.trim() + "$";
   }
 
-  return '$$' + candidate + '$$';
+  return "$$" + candidate + "$$";
 };
+
 
 
   const finalAnswer = extractFinalAnswer(result.text || '');
