@@ -20,87 +20,79 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   if (!result?.image) return null;
 
-  // ────────────────────────────────────────────────
-  // Very robust final answer extraction (improved 2026)
-  // ────────────────────────────────────────────────
-  const extractFinalAnswer = (text) => {
-    if (!text?.trim()) return '$$\\text{No solution found}$$';
+ // ────────────────────────────────────────────────
+// Very robust final answer extraction – fixed for messy frac{ issues
+// ────────────────────────────────────────────────
+const extractFinalAnswer = (text) => {
+  if (!text?.trim()) return '$$\\text{No solution found}$$';
 
-    let cleaned = text
-      .trim()
-      .replace(/\n{3,}/g, '\n\n')
-      .replace(/\n+/g, '\n')
-      .replace(/\r/g, ''); // just in case
+  let cleaned = text
+    .trim()
+    .replace(/\r\n|\r/g, '\n')              // normalize line endings
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\n+/g, '\n');
 
-    // Priority 1: Content inside the LAST \boxed{...}
-    let boxedContent = null;
-    const boxedMatches = [...cleaned.matchAll(/\\boxed\{([\s\S]*?)\}/g)];
-    if (boxedMatches.length > 0) {
-      const lastBox = boxedMatches[boxedMatches.length - 1];
-      boxedContent = lastBox[1]?.trim() || null;
-    }
+  // 1. Try to get content from the LAST \boxed{...} (most trustworthy)
+  let candidate = null;
+  const boxedMatches = [...cleaned.matchAll(/\\boxed\{([\s\S]*?)\}/g)];
+  if (boxedMatches.length > 0) {
+    candidate = boxedMatches[boxedMatches.length - 1][1].trim();
+  }
 
-    // Priority 2: Last complete display math block $$...$$
+  // 2. If no boxed, try last full $$...$$ block
+  if (!candidate) {
     const displayMatches = [...cleaned.matchAll(/\$\$([\s\S]*?)\$\$/g)];
-    let lastDisplay = null;
     if (displayMatches.length > 0) {
-      lastDisplay = displayMatches[displayMatches.length - 1][1].trim();
+      candidate = displayMatches[displayMatches.length - 1][1].trim();
     }
+  }
 
-    // Choose best candidate
-    let candidate = boxedContent || lastDisplay;
+  // 3. Keyword fallback (final answer:, therefore, etc.)
+  if (!candidate) {
+    const keywordRegex = /(?:final answer|answer|result|therefore|thus|conclusion|so|we get)[:=\s→-]*([\s\S]*?)(?=\n{2,}|$)/i;
+    const match = cleaned.match(keywordRegex);
+    if (match?.[1]) candidate = match[1].trim();
+  }
 
-    // Fallback: keyword-based (final answer, therefore, etc.)
-    if (!candidate) {
-      const keywordRegex =
-        /(?:final answer|answer|result|solution|therefore|thus|conclusion|so|we get)[:=\s→-]*([\s\S]*?)(?=\n{2,}|$)/i;
-      const match = cleaned.match(keywordRegex);
-      if (match?.[1]) {
-        candidate = match[1].trim();
+  // 4. Last math-looking line as desperate fallback
+  if (!candidate) {
+    const lines = cleaned.split('\n').filter(Boolean);
+    for (let i = lines.length - 1; i >= 0; i--) {
+      const line = lines[i].trim();
+      if (line.match(/\\(frac|d?frac|sqrt|boxed|[a-z]{2,})|\$|\d+\/\d+/)) {
+        candidate = line;
+        break;
       }
     }
+  }
 
-    // Last resort: last math-ish line
-    if (!candidate) {
-      const lines = cleaned.split('\n').filter(Boolean);
-      for (let i = lines.length - 1; i >= 0; i--) {
-        let line = lines[i].trim();
-        if (line.match(/\\(frac|sqrt|sum|int|prod|lim|boxed|[a-z]{2,})|\$\$.*?\$\$|\$[^$]+\$|[=+\-*/^(){}\[\]\d]/)) {
-          candidate = line;
-          break;
-        }
-      }
-    }
+  if (!candidate) {
+    return '$$\\text{See the step-by-step solution below}$$';
+  }
 
-    if (!candidate) {
-      return '$$\\text{See step-by-step solution below}$$';
-    }
+  // ── CLEANUP: remove outer junk, we will re-wrap properly ──
+  candidate = candidate
+    // Remove any outer math delimiters
+    .replace(/^[\s$\\[\]]+|[\s$\\[\]]+$/g, '')
+    // Unwrap any \boxed{...}
+    .replace(/^\\boxed\{([\s\S]*)\}$/, '$1')
+    .replace(/\\boxed\{([\s\S]*?)\}/g, '$1')
+    // Remove stray single $ or $$ at start/end
+    .replace(/^(\$|\$\$)+|(\$|\$\$)+$/g, '')
+    .trim();
 
-    // ── Aggressive normalization ───────────────────────────────────────
-    candidate = candidate
-      // Remove outer math delimiters (we will add correct ones ourselves)
-      .replace(/^[\s$\\[\]]+|[\s$\\[\]]+$/g, '')
-      // Remove any \boxed wrapper (we want clean content)
-      .replace(/\\boxed\{([\s\S]*?)\}/g, '$1')
-      // Remove stray inner $$ or single $ pairs that would break parsing
-      .replace(/^\$\$|\$\$$/g, '')
-      .replace(/^\$|\$$/g, '')
-      // Remove multiple consecutive delimiters
-      .replace(/[\$]{3,}/g, '$$')
-      .trim();
+  // Quick safety: if it looks obviously broken (unbalanced frac), fallback
+  const fracCount = (candidate.match(/\\frac|\\dfrac/g) || []).length;
+  const braceCountOpen = (candidate.match(/\{/g) || []).length;
+  const braceCountClose = (candidate.match(/\}/g) || []).length;
+  if (fracCount > 0 && Math.abs(braceCountOpen - braceCountClose) > 2) {
+    return '$$\\text{Complex answer – see detailed steps below}$$';
+  }
 
-    // Decide final wrapping
-    // Most final answers look best in display math in a prominent box
-    const forceDisplayMath = true; // ← you can set to false if you prefer inline for very short answers
+  // ALWAYS wrap in display math for the prominent top box – this fixes most "frac{5" messes
+  return `$$${candidate}$$`;
+};
 
-    if (forceDisplayMath) {
-      return `$$${candidate}$$`;
-    } else {
-      // Optional: inline for very short / symbolic answers
-      const isShort = candidate.length < 40 && !candidate.includes('\\\\') && !candidate.includes('\\begin');
-      return isShort ? `$${candidate}$` : `$$${candidate}$$`;
-    }
-  };
 
   const finalAnswer = extractFinalAnswer(result.text || '');
 
