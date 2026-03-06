@@ -286,20 +286,18 @@ function repairLatex(candidate) {
     '\\frac{$1}{$2}'
   );
 
-  // Fix exponents
+  // Fix exponents like e^3 → e^{3}
   fixed = fixed.replace(/\^([a-zA-Z0-9]+)/g, '^{$1}');
 
-  // Fix subscripts
+  // Fix subscripts like x_2 → x_{2}
   fixed = fixed.replace(/_([a-zA-Z0-9]+)/g, '_{$1}');
 
-  // ONLY add default {1} if there is NO second { } group at all
-  // \frac{num} → \frac{num}{1}
+  // Force default denominator 1 for incomplete fractions
   fixed = fixed.replace(/\\frac\{([^}]*)\}(?!\{)/g, '\\frac{$1}{1}');
+  fixed = fixed.replace(/\\frac\{([^}]*)\}\{\}/g, '\\frac{$1}{1}');
+  fixed = fixed.replace(/\\frac\{([^}]*)$/, '\\frac{$1}{1}');
 
-  // If there IS a second group (even empty \frac{num}{} or \frac{num}{x+), leave it
-  // Do NOT touch it — preserve real denominators
-
-  // Fix rare \frac with no braces at all
+  // Fix \frac with no braces at all (rare case)
   fixed = fixed.replace(/\\frac\s+(\d+)/g, '\\frac{$1}{1}');
 
   // Gentle brace balancing (only if slightly off)
@@ -318,6 +316,8 @@ function repairLatex(candidate) {
 
   return fixed.trim();
 }
+
+
 
 
 function prepareMathForKaTeX(rawText) {
