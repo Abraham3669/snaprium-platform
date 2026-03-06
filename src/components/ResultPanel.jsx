@@ -21,6 +21,7 @@ export default function ResultPanel({ result, loading, onClose }) {
   if (!result?.image) return null;
 
 const extractFinalAnswer = (text) => {
+
   if (!text || !text.trim()) {
     return '$$\\text{No solution found}$$';
   }
@@ -33,13 +34,13 @@ const extractFinalAnswer = (text) => {
 
   let candidate = null;
 
-  // 1. Last \boxed{...}
+  // 1️⃣ Prefer boxed answers
   const boxedMatches = [...cleaned.matchAll(/\\boxed\{([\s\S]*?)\}/g)];
   if (boxedMatches.length > 0) {
     candidate = boxedMatches[boxedMatches.length - 1][1].trim();
   }
 
-  // 2. Last display math
+  // 2️⃣ Otherwise last display math
   if (!candidate) {
     const displayMatches = [...cleaned.matchAll(/\$\$([\s\S]*?)\$\$|\\\[([\s\S]*?)\\\]/g)];
     if (displayMatches.length > 0) {
@@ -48,24 +49,32 @@ const extractFinalAnswer = (text) => {
     }
   }
 
-  // 3. Keyword
+  // 3️⃣ Keyword extraction
   if (!candidate) {
-    const keywordRegex = /(?:final answer|answer|result|solution|therefore|thus|conclusion|so|we get)[:=\s→-]?\s*([\s\S]*?)(?=\n{2,}|$)/is;
+    const keywordRegex =
+      /(?:final answer|answer|result|solution|therefore|thus|conclusion|so|we get)[:=\s→-]?\s*([^\n]+)/i;
+
     const match = cleaned.match(keywordRegex);
-    if (match && match[1]) candidate = match[1].trim();
+    if (match && match[1]) {
+      candidate = match[1].trim();
+    }
   }
 
-  // 4. Last plausible line
+  // 4️⃣ Last plausible math line
   if (!candidate) {
     const lines = cleaned.split('\n').filter(Boolean);
+
     for (let i = lines.length - 1; i >= 0; i--) {
       const line = lines[i].trim();
-      if (line.length < 5) continue;
+
+      if (line.length < 4) continue;
+
       if (
-        line.includes('\\boxed') ||
         line.includes('\\frac') ||
         line.includes('=') ||
-        line.match(/(f'|f''|[a-z]\(x\))/)
+        line.includes('^') ||
+        line.includes('_') ||
+        line.match(/[a-z]\(x\)/i)
       ) {
         candidate = line;
         break;
@@ -74,71 +83,35 @@ const extractFinalAnswer = (text) => {
   }
 
   if (!candidate) {
-    return '';
+    return '$$\\text{No solution found}$$';
   }
 
-  // Cleanup
+  // Clean wrappers
   candidate = candidate
     .replace(/^[\s$\\[\]]+|[\s$\\[\]]+$/g, '')
     .replace(/^\\boxed\{([\s\S]*)\}$/, '$1')
     .replace(/\\boxed\{([\s\S]*?)\}/g, '$1')
     .trim();
 
+  // 🔧 Fix LaTeX BEFORE KaTeX preparation
   candidate = repairLatex(candidate);
-candidate = prepareMathForKaTeX(candidate);
 
+  // Prepare for KaTeX
+  candidate = prepareMathForKaTeX(candidate);
 
-
-  // Broken check (relaxed)
-  const fracCount = (candidate.match(/\\frac|\\dfrac/g) || []).length;
-  const openBraces  = (candidate.match(/\{/g)  || []).length;
-  const closeBraces = (candidate.match(/\}/g) || []).length;
-
-  const isVeryBroken =
-    candidate.length < 4 ||
-    candidate.trim() === '' ||
-    candidate.startsWith('frac{') ||
-    candidate === 'frac' ||
-    (fracCount > 0 && openBraces === 0 && closeBraces === 0);
-
-  if (isVeryBroken) {
-    let fallback = candidate;
-    if (fallback.includes('\\frac') && !fallback.includes('}{')) {
-      fallback = fallback.replace(/\\frac\s*\{([^}]*)\}?/, '\\frac{$1}{?}');
-    }
-    let result = '$$';
-    result += fallback;
-    result += '$$';
-    return result;
+  // Extra safety: avoid very short fragments
+  if (candidate.length < 2) {
+    return '$$\\text{No solution found}$$';
   }
 
-  // ── SAFE WRAPPING – only concatenation, no backticks, no ${} ───────────
-  const eqMatch = candidate.match(/^(.+?)\s*=\s*(.+)$/);
-  if (eqMatch) {
-    const left  = eqMatch[1].trim();
-    const right = eqMatch[2].trim();
-
-    let result = left;
-    result += ' = $';
-    result += right;
-    result += '$';
-    return result;
-  }
-
-  // Inline for short
-  if (!candidate.includes('=') && candidate.length < 80 && !candidate.includes('\\\\')) {
-    let result = '$';
-    result += candidate.trim();
-    result += '$';
-    return result;
-  }
-
-  // Display for everything else
+  // Always render as display math for clean UI
   let result = '$$';
   result += candidate;
   result += '$$';
+
   return result;
 };
+
 
   const finalAnswer = extractFinalAnswer(result.text || '');
 
@@ -284,6 +257,9 @@ function repairLatex(candidate) {
   // Fix missing \frac
   fixed = fixed.replace(/(^|[^\\])frac\{/g, '$1\\frac{');
 
+  // Fix fractions missing denominator
+  fixed = fixed.replace(/\\frac\{([^}]*)\}(?!\{)/g, '\\frac{$1}{?}');
+
   // Balance braces
   const open = (fixed.match(/\{/g) || []).length;
   const close = (fixed.match(/\}/g) || []).length;
@@ -298,9 +274,14 @@ function repairLatex(candidate) {
   // Fix incomplete subscripts
   fixed = fixed.replace(/_\{([^}]*)$/, '_{$1}');
 
+  // Fix incomplete exponent without braces (e^3x type cuts)
+  fixed = fixed.replace(/\^([^\s+\-*/=]+)/g, '^{$1}');
+
+  // Remove trailing math delimiters if broken
+  fixed = fixed.replace(/\$+$/, '');
+
   return fixed.trim();
 }
-
 
 
 
