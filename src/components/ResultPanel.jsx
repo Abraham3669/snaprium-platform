@@ -21,7 +21,6 @@ export default function ResultPanel({ result, loading, onClose }) {
   if (!result?.image) return null;
 
 const extractFinalAnswer = (text) => {
-
   if (!text || !text.trim()) {
     return '$$\\text{No solution found}$$';
   }
@@ -29,17 +28,18 @@ const extractFinalAnswer = (text) => {
   let cleaned = text
     .trim()
     .replace(/\r\n|\r/g, '\n')
-    .replace(/\n{3,}/g, '\n\n');
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\n+/g, '\n');
 
   let candidate = null;
 
-  // 1️⃣ BOXED answers (best signal)
+  // 1. Last \boxed{} — best
   const boxed = [...cleaned.matchAll(/\\boxed\{([\s\S]*?)\}/g)];
   if (boxed.length) {
     candidate = boxed[boxed.length - 1][1].trim();
   }
 
-  // 2️⃣ Explicit "Final answer"
+  // 2. Keyword match
   if (!candidate) {
     const finalMatch = cleaned.match(
       /(final answer|answer|result|solution)[:=\s\-→]*([^\n]+)/i
@@ -49,7 +49,7 @@ const extractFinalAnswer = (text) => {
     }
   }
 
-  // 3️⃣ Last display math $$...$$
+  // 3. Last display math
   if (!candidate) {
     const display = [...cleaned.matchAll(/\$\$([\s\S]*?)\$\$/g)];
     if (display.length) {
@@ -57,16 +57,12 @@ const extractFinalAnswer = (text) => {
     }
   }
 
-  // 4️⃣ Last equation line
+  // 4. Last equation-like line
   if (!candidate) {
     const lines = cleaned.split('\n').reverse();
-
     for (const line of lines) {
-
       const l = line.trim();
-
       if (!l) continue;
-
       if (
         l.includes('=') ||
         l.includes('\\frac') ||
@@ -79,7 +75,7 @@ const extractFinalAnswer = (text) => {
     }
   }
 
-  // 5️⃣ Fraction fallback
+  // 5. Plain fraction fallback
   if (!candidate) {
     const fraction = cleaned.match(/\d+\s*\/\s*\d+/);
     if (fraction) {
@@ -98,23 +94,23 @@ const extractFinalAnswer = (text) => {
     .replace(/\\boxed\{([\s\S]*?)\}/g, '$1')
     .trim();
 
-  // Repair latex
+  // Repair and prepare
   candidate = repairLatex(candidate);
+  candidate = prepareMathForKaTeX(candidate);
 
-  // Convert plain fractions to latex
-  candidate = candidate.replace(
-    /(\d+)\s*\/\s*(\d+)/g,
-    '\\frac{$1}{$2}'
-  );
+  // Final safety: force balanced delimiters
+  let wrapped = '$$' + candidate + '$$';
 
-  // Final sanity check
-  if (candidate.length < 2) {
-    return '$$\\text{No solution found}$$';
+  // If it's a short equation, prefer inline
+  if (candidate.includes('=') && candidate.length < 60) {
+    wrapped = candidate.split('=').map(part => part.trim()).join(' = $') + '$';
+    wrapped = wrapped.replace(' = $', ' = $') + '$'; // ensure closing
   }
 
-  return '$$' + candidate + '$$';
-};
+  console.log("Final answer sent to ReactMarkdown:", wrapped);
 
+  return wrapped;
+};
 
 
   const finalAnswer = extractFinalAnswer(result.text || '');
