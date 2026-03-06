@@ -68,7 +68,7 @@ const extractFinalAnswer = (text) => {
   }
 
   if (!candidate) {
-    return '$$\\text{See the detailed steps below}$$';
+    return '';  // ← no fallback message
   }
 
   candidate = candidate
@@ -91,23 +91,34 @@ const extractFinalAnswer = (text) => {
     (fracCount > 0 && openBraces === 0 && closeBraces === 0);
 
   if (isVeryBroken) {
-    return '$$\\text{See steps below}$$';
+    return '\\text{Answer: ' + candidate + '}';  // ← shows text instead of hiding
   }
 
-  // ── Wrapping logic – safe version ─────────────────────────────────────
+  // ── Wrapping logic – safe concatenation ────────────────────────────────
   const eqMatch = candidate.match(/^(.+?)\s*=\s*(.+)$/);
   if (eqMatch) {
     const left  = eqMatch[1].trim();
     const right = eqMatch[2].trim();
-    return left + " = $" + right + "$";
+    let result = left;
+    result += " = $";
+    result += right;
+    result += "$";
+    return result;
   }
 
   if (!candidate.includes('=') && candidate.length < 80 && !candidate.includes('\\\\')) {
-    return "$" + candidate.trim() + "$";
+    let result = "$";
+    result += candidate.trim();
+    result += "$";
+    return result;
   }
 
-  return "$$" + candidate + "$$";
+  let result = "$$";
+  result += candidate;
+  result += "$$";
+  return result;
 };
+
 
 
 
