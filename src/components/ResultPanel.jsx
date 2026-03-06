@@ -23,24 +23,20 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   const preparedSteps = prepareMathForKaTeX(fullText);
 
-  // ────────────────────────────────────────────────
-  // Extract final answer — improved to handle full content
-  // ────────────────────────────────────────────────
+  // Extract final answer with proper brace balancing
   const finalAnswerRaw = extractFinalAnswer(fullText);
 
-  // Debug: see exactly what we're trying to render in final answer
+  // Debug logs
   console.log('Final Answer RAW extracted:', finalAnswerRaw);
   console.log('Full result.text length:', fullText.length);
-  console.log('Full result.text last 300 chars:', fullText.slice(-300));
+  console.log('Full result.text last 400 chars:\n', fullText.slice(-400));
 
-  // Safety wrap: if it looks like math but isn't wrapped, add display math
+  // Auto-wrap in display math if it looks like math but isn't already wrapped
   let finalAnswerContent = finalAnswerRaw.trim();
   if (
     finalAnswerContent &&
-    !finalAnswerContent.startsWith('$') &&
-    !finalAnswerContent.startsWith('$$') &&
-    !finalAnswerContent.startsWith('\\[') &&
-    (finalAnswerContent.includes('\\') || finalAnswerContent.match(/[=≈√π∫∑^⁄]/))
+    !finalAnswerContent.match(/^\$\$[\s\S]*\$\$|\$[\s\S]*\$|\\\[[\s\S]*\\\]/) &&
+    (finalAnswerContent.includes('\\') || finalAnswerContent.match(/[=\-+*/^√π∫∑()[\]{}]/))
   ) {
     finalAnswerContent = `$$${finalAnswerContent}$$`;
   }
@@ -65,7 +61,6 @@ export default function ResultPanel({ result, loading, onClose }) {
         <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
           {!loading && result?.text && (
             <>
-              {/* Final Answer Block */}
               <div
                 className="final-answer mb-6 p-6 md:p-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-lg)] text-center overflow-hidden"
                 style={{ background: 'linear-gradient(135deg, var(--accent-glow), transparent 70%)' }}
@@ -75,21 +70,19 @@ export default function ResultPanel({ result, loading, onClose }) {
                 </h3>
 
                 <div
-                  className="text-3xl md:text-5xl font-extrabold text-[var(--text-primary)] leading-tight min-h-[6rem] flex items-center justify-center overflow-x-auto px-4 py-4"
+                  className="text-3xl md:text-5xl font-extrabold text-[var(--text-primary)] leading-tight min-h-[6rem] flex items-center justify-center overflow-x-auto px-4 py-6"
                 >
                   <ReactMarkdown
                     remarkPlugins={[remarkMath]}
                     rehypePlugins={[rehypeKatex]}
                     components={{
-                      p: ({ children }) => (
-                        <div className="inline-block text-center">{children}</div>
-                      ),
+                      p: ({ children }) => <div className="inline-block text-center">{children}</div>,
                       div: ({ node, className, children, ...props }) =>
                         className?.includes('katex-display')
                           ? (
                             <div
                               className="katex-display-final mx-auto text-center my-4"
-                              style={{ fontSize: '1.6em', lineHeight: 1.25 }}
+                              style={{ fontSize: '1.65em', lineHeight: 1.3 }}
                               {...props}
                             >
                               {children}
@@ -98,12 +91,12 @@ export default function ResultPanel({ result, loading, onClose }) {
                           : <div {...props}>{children}</div>,
                     }}
                   >
-                    {finalAnswerContent || '\\text{No final answer detected}'}
+                    {finalAnswerContent || '\\text{—}'}
                   </ReactMarkdown>
                 </div>
               </div>
 
-              {/* Toggle Button */}
+              {/* Toggle + Steps + Feedback unchanged */}
               <button
                 onClick={() => setShowSteps(!showSteps)}
                 className="w-full py-3.5 px-5 mb-5 bg-[var(--accent)] hover:bg-[var(--accent-dark)] text-white font-medium rounded-lg shadow-md transition-all flex items-center justify-center gap-2"
@@ -114,7 +107,6 @@ export default function ResultPanel({ result, loading, onClose }) {
                 </span>
               </button>
 
-              {/* Steps Section */}
               <div
                 ref={stepsRef}
                 className="overflow-hidden transition-all duration-500 ease-in-out"
@@ -127,75 +119,85 @@ export default function ResultPanel({ result, loading, onClose }) {
                   <h4 className="text-xl font-semibold text-[var(--text-primary)] mb-5">
                     Step-by-Step Solution
                   </h4>
-
                   <div className="prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)]">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkMath]}
-                      rehypePlugins={[rehypeKatex]}
-                    >
+                    <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
                       {preparedSteps}
                     </ReactMarkdown>
                   </div>
                 </div>
               </div>
 
-              {/* Feedback */}
               <div className="feedback-bar mt-6 flex justify-center gap-4">
-                {/* ... your feedback buttons unchanged ... */}
+                {/* your feedback buttons */}
               </div>
             </>
           )}
 
-          {loading && (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              Solving your problem...
-            </div>
-          )}
+          {loading && <div className="text-center py-8 text-gray-500 dark:text-gray-400">Solving your problem...</div>}
         </div>
       </div>
     </div>
   );
 }
 
-// Improved extraction — grabs full boxed content, even multi-line
+// ────────────────────────────────────────────────
+// New: Properly balanced brace extraction for last \boxed{...}
 function extractFinalAnswer(rawText) {
   if (!rawText) return '';
 
-  // 1. Try to capture the LAST \boxed{...} with everything inside (multi-line ok)
-  const boxedRegex = /\\boxed\{([\s\S]*?)\}(?![^]*?\\boxed)/;
-  const boxedMatch = rawText.match(boxedRegex);
-  if (boxedMatch && boxedMatch[1]) {
-    const content = boxedMatch[1].trim();
-    console.log('Extracted from \\boxed:', content);
-    return content;
+  // Find the position of the LAST \boxed{
+  const boxedPositions = [];
+  let pos = 0;
+  while ((pos = rawText.indexOf('\\boxed{', pos)) !== -1) {
+    boxedPositions.push(pos);
+    pos += 7; // skip \boxed{
   }
 
-  // 2. Fallback: last 1–3 lines that look like the conclusion
-  const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
-  if (lines.length === 0) return '';
-
-  // Look backward for lines with math indicators
-  let candidate = '';
-  for (let i = lines.length - 1; i >= Math.max(0, lines.length - 4); i--) {
-    const line = lines[i];
-    if (line.match(/[=≈≈√∫∑π\\frac\\boxed]/) || line.match(/^\s*[-−]?\d+(\.\d+)?\s*$/)) {
-      candidate = line + (candidate ? '\n' + candidate : '');
-    }
+  if (boxedPositions.length === 0) {
+    console.log('No \\boxed found → using fallback');
+    return fallbackLastLines(rawText);
   }
 
-  if (candidate) {
-    console.log('Fallback multi-line candidate:', candidate);
-    return candidate;
+  const startIndex = boxedPositions[boxedPositions.length - 1] + 7; // after \boxed{
+  let braceCount = 1;
+  let i = startIndex;
+  let content = '';
+
+  while (i < rawText.length && braceCount > 0) {
+    const char = rawText[i];
+    content += char;
+
+    if (char === '{') braceCount++;
+    if (char === '}') braceCount--;
+
+    i++;
   }
 
-  // Last resort: very last non-empty line, cleaned
-  let last = lines[lines.length - 1];
-  last = last.replace(/^(Final answer|Answer|Result|So|Therefore|Hence|Thus|We have|Equals?):\s*/i, '').trim();
-  console.log('Last line fallback:', last);
-  return last;
+  // Remove the last } we added
+  content = content.slice(0, -1).trim();
+
+  console.log('Extracted full boxed content (balanced):', content);
+  return content;
 }
 
-// Your original prepare function (unchanged)
+// Fallback if no boxed or extraction fails
+function fallbackLastLines(rawText) {
+  const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
+  if (lines.length < 1) return '';
+
+  let candidate = '';
+  for (let i = lines.length - 1; i >= Math.max(0, lines.length - 5); i--) {
+    let line = lines[i];
+    line = line.replace(/^(Final answer|Answer|Result|So|Therefore|Hence|Thus):?\s*/i, '').trim();
+    if (line) candidate = line + (candidate ? '\n' + candidate : '');
+    if (line.includes('=') || line.includes('\\frac') || line.match(/^\s*[-−]?\d+(\.\d+)?\s*$/)) break;
+  }
+
+  console.log('Fallback candidate:', candidate);
+  return candidate || lines[lines.length - 1];
+}
+
+// Your prepareMathForKaTeX (unchanged)
 function prepareMathForKaTeX(rawText) {
   if (!rawText) return '';
 
