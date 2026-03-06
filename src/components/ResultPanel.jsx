@@ -176,7 +176,7 @@ export default function ResultPanel({ result, loading, onClose }) {
   candidate = prepareMathForKaTeX(candidate);   // keep your original prepare function
 
   // ────────────────────────────────────────────────
-   // Final wrapping – prefer display style for final answers
+   // Final wrapping – fractions & most answers look MUCH better in display style
   let wrapped;
 
   if (candidate.includes('=')) {
@@ -184,20 +184,22 @@ export default function ResultPanel({ result, loading, onClose }) {
     if (parts.length === 2) {
       const left = parts[0].trim();
       const right = parts[1].trim();
-      wrapped = `${left} = $${right}$`;   // inline right side is ok
+      wrapped = `${left} = $${right}$`;
     } else {
       wrapped = `$$${candidate}$$`;
     }
   } else {
-    // Almost always use display math for clean look
+    // Default to display math — looks clean & professional
     wrapped = `$$${candidate}$$`;
   }
 
   console.log("[DEBUG] Final wrapped answer:", wrapped);
-
   return wrapped;
+
 };
 
+
+console.log("[DEBUG] Candidate BEFORE repair:", candidate);
 
 
 
@@ -333,52 +335,62 @@ export default function ResultPanel({ result, loading, onClose }) {
   );
 }
 
-// IMPROVED repairLatex – only fixes clearly broken fractions
+// ────────────────────────────────────────────────
+// IMPROVED repairLatex – only fixes **clearly broken** fractions
+// ────────────────────────────────────────────────
 function repairLatex(str) {
   if (!str) return str;
 
   let fixed = str.trim();
 
-  // 1. Fix missing \frac prefix (LLM often forgets the backslash)
+  // 1. Fix missing backslash before frac (very common in LLM output)
   fixed = fixed.replace(/(^|[^\\])frac\{/g, '$1\\frac{');
 
-  // 2. Convert plain number/number → \frac (before any frac fixing)
+  // 2. Convert plain a / b → \frac{a}{b}   (safety net for non-LaTeX output)
   fixed = fixed.replace(
     /(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)(?!\s*\/)/g,
     '\\frac{$1}{$2}'
   );
 
   // ────────────────────────────────────────────────
-  // 3. Fix ONLY clearly incomplete \frac{xxx}  (no second { after it)
-  //    We match \frac{...} where the } is NOT followed by another {
-  //    But we skip if there's already a } somewhere inside (heuristic for valid frac)
+  // 3. ONLY fix **incomplete** \frac — when there's NO second { ... } part
+  //    We look for \frac{xxx} where the content has NO }{ inside it
+  //    and it's not followed by another { shortly after
   fixed = fixed.replace(
-    /\\frac\{([^}]+)\}([^}])/g,   // } followed by something that's not }
-    (match, num, after) => {
-      // If there's already a second argument somewhere → don't touch
-      if (num.includes('}{') || num.includes('}/') || after.trim() === '') {
+    /\\frac\{([^}{]+)\}(?!\s*\{)/g,
+    (match, content) => {
+      const trimmed = content.trim();
+      // If it already contains }{ → it's probably valid → skip
+      if (trimmed.includes('}{')) {
         return match;
       }
-      // Otherwise it's likely missing denominator
-      return `\\frac{${num.trim()}}{1}`;
+      // If it's empty or just junk → fix to {1}
+      if (!trimmed || trimmed === '{}') {
+        return '\\frac{}{1}'; // or whatever fallback you prefer
+      }
+      // Otherwise assume missing denominator
+      return `\\frac{${trimmed}}{1}`;
     }
   );
 
-  // 4. Catch trailing incomplete (most common broken case)
-  fixed = fixed.replace(/\\frac\{([^}]*)(?=$|[^\}])/g, '\\frac{$1}{1}');
+  // 4. Catch very broken trailing frac (no closing } at all)
+  fixed = fixed.replace(
+    /\\frac\{([^}\\]+)(?=$|\s|[^\}])/g,
+    '\\frac{$1}{1}'
+  );
 
-  // 5. Fix unbraced ^ and _
+  // 5. Fix missing braces on ^ and _
   fixed = fixed.replace(/\^([a-zA-Z0-9]+)/g, '^{$1}');
   fixed = fixed.replace(/_([a-zA-Z0-9]+)/g, '_{$1}');
 
-  // 6. Balance braces gently (only small mismatch)
+  // 6. Gentle brace balancing (small mismatches only)
   const open = (fixed.match(/\{/g) || []).length;
   const close = (fixed.match(/\}/g) || []).length;
   if (open > close && open - close <= 6) {
     fixed += '}'.repeat(open - close);
   }
 
-  // 7. Clean junk
+  // 7. Clean extra/empty braces
   fixed = fixed
     .replace(/\{\s*\{/g, '{')
     .replace(/\}\s*\}/g, '}')
@@ -387,7 +399,6 @@ function repairLatex(str) {
 
   return fixed;
 }
-
 
 
 function prepareMathForKaTeX(rawText) {
