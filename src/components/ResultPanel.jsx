@@ -20,12 +20,7 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   if (!result?.image) return null;
 
-  // ────────────────────────────────────────────────
-  //  No more extractFinalAnswer / repair logic here
-  //  You can decide later what to show in the top card
-  // ────────────────────────────────────────────────
-
-  // For now — showing the full text in the card (you'll probably change this)
+  // Full text for steps only
   const fullText = result.text || '';
 
   // Clean version for steps (keeping your prepare function)
@@ -55,7 +50,7 @@ export default function ResultPanel({ result, loading, onClose }) {
         <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
           {!loading && result?.text && (
             <>
-              {/* Final Answer Block – clean slate */}
+              {/* Final Answer Block – empty inside */}
               <div
                 className="final-answer mb-6 p-6 md:p-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-lg)] text-center overflow-hidden"
                 style={{ background: 'linear-gradient(135deg, var(--accent-glow), transparent 70%)' }}
@@ -80,15 +75,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                           : <div {...props}>{children}</div>,
                     }}
                   >
-                    {/* 
-                      RIGHT NOW showing full text — replace this with your new logic later 
-                      Popular options:
-                      1. `$$\\text{Answer coming soon}$$`
-                      2. First \boxed{} if backend starts sending it
-                      3. Last line of text
-                      4. Nothing → just remove the whole card for now
-                    */}
-                    {preparedSteps}
+                    {''} {/* Empty – nothing appears inside */}
                   </ReactMarkdown>
                 </div>
               </div>
