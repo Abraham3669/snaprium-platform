@@ -199,7 +199,7 @@ export default function ResultPanel({ result, loading, onClose }) {
 };
 
 
-console.log("[DEBUG] Candidate BEFORE repair:", candidate);
+
 
 
 
