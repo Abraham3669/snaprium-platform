@@ -21,7 +21,9 @@ export default function ResultPanel({ result, loading, onClose }) {
   if (!result?.image) return null;
 
 const extractFinalAnswer = (text) => {
-  if (!text?.trim()) return '$$\\text{No solution found}$$';
+  if (!text || !text.trim()) {
+    return '$$\\text{No solution found}$$';
+  }
 
   let cleaned = text
     .trim()
@@ -31,11 +33,13 @@ const extractFinalAnswer = (text) => {
 
   let candidate = null;
 
+  // 1. Last \boxed{...}
   const boxedMatches = [...cleaned.matchAll(/\\boxed\{([\s\S]*?)\}/g)];
   if (boxedMatches.length > 0) {
     candidate = boxedMatches[boxedMatches.length - 1][1].trim();
   }
 
+  // 2. Last display math
   if (!candidate) {
     const displayMatches = [...cleaned.matchAll(/\$\$([\s\S]*?)\$\$|\\\[([\s\S]*?)\\\]/g)];
     if (displayMatches.length > 0) {
@@ -44,12 +48,14 @@ const extractFinalAnswer = (text) => {
     }
   }
 
+  // 3. Keyword
   if (!candidate) {
     const keywordRegex = /(?:final answer|answer|result|solution|therefore|thus|conclusion|so|we get)[:=\s→-]?\s*([\s\S]*?)(?=\n{2,}|$)/is;
     const match = cleaned.match(keywordRegex);
-    if (match?.[1]) candidate = match[1].trim();
+    if (match && match[1]) candidate = match[1].trim();
   }
 
+  // 4. Last plausible line
   if (!candidate) {
     const lines = cleaned.split('\n').filter(Boolean);
     for (let i = lines.length - 1; i >= 0; i--) {
@@ -71,6 +77,7 @@ const extractFinalAnswer = (text) => {
     return '';
   }
 
+  // Cleanup
   candidate = candidate
     .replace(/^[\s$\\[\]]+|[\s$\\[\]]+$/g, '')
     .replace(/^\\boxed\{([\s\S]*)\}$/, '$1')
@@ -79,6 +86,7 @@ const extractFinalAnswer = (text) => {
 
   candidate = prepareMathForKaTeX(candidate);
 
+  // Broken check (relaxed)
   const fracCount = (candidate.match(/\\frac|\\dfrac/g) || []).length;
   const openBraces  = (candidate.match(/\{/g)  || []).length;
   const closeBraces = (candidate.match(/\}/g) || []).length;
@@ -101,30 +109,32 @@ const extractFinalAnswer = (text) => {
     return result;
   }
 
-  // ── Wrapping logic – plain concatenation only (no backticks) ────────────
+  // ── SAFE WRAPPING – only concatenation, no backticks, no ${} ───────────
   const eqMatch = candidate.match(/^(.+?)\s*=\s*(.+)$/);
   if (eqMatch) {
     const left  = eqMatch[1].trim();
     const right = eqMatch[2].trim();
 
-    let wrapped = left;
-    wrapped += ' = $';
-    wrapped += right;
-    wrapped += '$';
-    return wrapped;
+    let result = left;
+    result += ' = $';
+    result += right;
+    result += '$';
+    return result;
   }
 
+  // Inline for short
   if (!candidate.includes('=') && candidate.length < 80 && !candidate.includes('\\\\')) {
-    let wrapped = '$';
-    wrapped += candidate.trim();
-    wrapped += '$';
-    return wrapped;
+    let result = '$';
+    result += candidate.trim();
+    result += '$';
+    return result;
   }
 
-  let wrapped = '$$';
-  wrapped += candidate;
-  wrapped += '$$';
-  return wrapped;
+  // Display for everything else
+  let result = '$$';
+  result += candidate;
+  result += '$$';
+  return result;
 };
 
   const finalAnswer = extractFinalAnswer(result.text || '');
