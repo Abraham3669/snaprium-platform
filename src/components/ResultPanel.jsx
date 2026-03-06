@@ -84,7 +84,10 @@ const extractFinalAnswer = (text) => {
     .replace(/\\boxed\{([\s\S]*?)\}/g, '$1')
     .trim();
 
-  candidate = prepareMathForKaTeX(candidate);
+  candidate = repairLatex(candidate);
+candidate = prepareMathForKaTeX(candidate);
+
+
 
   // Broken check (relaxed)
   const fracCount = (candidate.match(/\\frac|\\dfrac/g) || []).length;
@@ -176,7 +179,7 @@ const extractFinalAnswer = (text) => {
                 </h3>
 
                 <div
-                  className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-[var(--text-primary)] leading-tight min-h-[4rem] flex items-center justify-center overflow-x-auto px-2"
+                  className="text-3xl md:text-4xl font-extrabold text-[var(--text-primary)] leading-tight min-h-[4rem] flex items-center justify-center overflow-x-auto px-2"
                 >
                   <ReactMarkdown
                     remarkPlugins={[remarkMath]}
@@ -268,6 +271,40 @@ const extractFinalAnswer = (text) => {
   );
 }
 
+
+
+
+
+
+function repairLatex(candidate) {
+  if (!candidate) return candidate;
+
+  let fixed = candidate;
+
+  // Fix missing \frac
+  fixed = fixed.replace(/(^|[^\\])frac\{/g, '$1\\frac{');
+
+  // Balance braces
+  const open = (fixed.match(/\{/g) || []).length;
+  const close = (fixed.match(/\}/g) || []).length;
+
+  if (open > close) {
+    fixed += '}'.repeat(open - close);
+  }
+
+  // Fix incomplete exponents
+  fixed = fixed.replace(/\^\{([^}]*)$/, '^{$1}');
+
+  // Fix incomplete subscripts
+  fixed = fixed.replace(/_\{([^}]*)$/, '_{$1}');
+
+  return fixed.trim();
+}
+
+
+
+
+
 function prepareMathForKaTeX(rawText) {
   if (!rawText) return '';
 
@@ -294,3 +331,5 @@ function prepareMathForKaTeX(rawText) {
 
   return text;
 }
+
+
