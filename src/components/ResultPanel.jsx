@@ -20,11 +20,16 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   if (!result?.image) return null;
 
-  // Full text for steps only
+  // Full text for both steps and final answer extraction
   const fullText = result.text || '';
 
   // Clean version for steps (keeping your prepare function)
   const preparedSteps = prepareMathForKaTeX(fullText);
+
+  // ────────────────────────────────────────────────
+  // Extract the final answer (usually the boxed part)
+  // ────────────────────────────────────────────────
+  const finalAnswerContent = extractFinalAnswer(fullText);
 
   return (
     <div className="result-panel">
@@ -50,7 +55,7 @@ export default function ResultPanel({ result, loading, onClose }) {
         <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
           {!loading && result?.text && (
             <>
-              {/* Final Answer Block – empty inside */}
+              {/* Final Answer Block */}
               <div
                 className="final-answer mb-6 p-6 md:p-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-lg)] text-center overflow-hidden"
                 style={{ background: 'linear-gradient(135deg, var(--accent-glow), transparent 70%)' }}
@@ -75,7 +80,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                           : <div {...props}>{children}</div>,
                     }}
                   >
-                    {''} {/* Empty – nothing appears inside */}
+                    {finalAnswerContent || '\\text{—}'}
                   </ReactMarkdown>
                 </div>
               </div>
@@ -152,7 +157,44 @@ export default function ResultPanel({ result, loading, onClose }) {
   );
 }
 
-// Keep your prepare function (it's still useful for the steps)
+// ────────────────────────────────────────────────
+// Extract final answer — tries boxed first, then fallback
+// ────────────────────────────────────────────────
+function extractFinalAnswer(rawText) {
+  if (!rawText) return '';
+
+  // Most common: last \boxed{...}
+  const boxedMatch = rawText.match(/\\boxed\{([\s\S]*?)\}(?![^]*?\\boxed)/);
+  if (boxedMatch && boxedMatch[1]) {
+    return boxedMatch[1].trim();
+  }
+
+  // Fallback 1: last line that looks like it contains the answer
+  const lines = rawText.split('\n').filter(line => line.trim());
+  if (lines.length === 0) return '';
+
+  let lastLine = lines[lines.length - 1].trim();
+
+  // Remove common prefixes
+  lastLine = lastLine
+    .replace(/^(Final answer|Answer|Result|So|Therefore|Hence|Thus):?\s*/i, '')
+    .replace(/^(The answer is|We get|Equals):?\s*/i, '')
+    .trim();
+
+  // If it's already wrapped in $$ or display math, keep it
+  if (lastLine.startsWith('$$') || lastLine.startsWith('\\[')) {
+    return lastLine;
+  }
+
+  // Otherwise wrap simple answers in inline math if they look numeric/mathy
+  if (lastLine.match(/^[−−-]?[\d,.\/πe√^()+\-×÷= ]+$/) || lastLine.includes('\\frac')) {
+    return `$${lastLine}$`;
+  }
+
+  return lastLine;
+}
+
+// Keep your prepare function (unchanged)
 function prepareMathForKaTeX(rawText) {
   if (!rawText) return '';
 
