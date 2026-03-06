@@ -23,13 +23,23 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   const preparedSteps = prepareMathForKaTeX(fullText);
 
-  // Extract ALL boxed answers
-  const allBoxedAnswers = extractAllBoxedAnswers(fullText);
+  // Extract final answer with proper brace balancing
+  const finalAnswerRaw = extractFinalAnswer(fullText);
 
   // Debug logs
-  console.log('All extracted boxed answers:', allBoxedAnswers);
-  console.log('Full text length:', fullText.length);
-  console.log('Last 400 chars:\n', fullText.slice(-400));
+  console.log('Final Answer RAW extracted:', finalAnswerRaw);
+  console.log('Full result.text length:', fullText.length);
+  console.log('Full result.text last 400 chars:\n', fullText.slice(-400));
+
+  // Auto-wrap in display math if it looks like math but isn't already wrapped
+  let finalAnswerContent = finalAnswerRaw.trim();
+  if (
+    finalAnswerContent &&
+    !finalAnswerContent.match(/^\$\$[\s\S]*\$\$|\$[\s\S]*\$|\\\[[\s\S]*\\\]/) &&
+    (finalAnswerContent.includes('\\') || finalAnswerContent.match(/[=\-+*/^√π∫∑()[\]{}]/))
+  ) {
+    finalAnswerContent = `$$${finalAnswerContent}$$`;
+  }
 
   return (
     <div className="result-panel">
@@ -51,63 +61,46 @@ export default function ResultPanel({ result, loading, onClose }) {
         <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
           {!loading && result?.text && (
             <>
-              {/* Final Answer Block – uniform size for all answers */}
               <div
-                className="final-answer mb-6 p-6 md:p-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-lg)] text-center overflow-hidden"
-                style={{ background: 'linear-gradient(135deg, var(--accent-glow), transparent 70%)' }}
+                className="final-answer mb-6 p-6 md:p-10 rounded-3xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-xl)] text-center overflow-hidden"
+                style={{ background: 'linear-gradient(135deg, var(--accent-glow) 0%, transparent 70%)' }}
               >
-                <h3 className="text-2xl font-bold text-[var(--text-secondary)] mb-6 tracking-tight">
-                  Final Answer{allBoxedAnswers.length > 1 ? 's' : ''}
+                <h3 className="text-3xl md:text-4xl font-bold text-[var(--text-secondary)] mb-6 tracking-tight">
+                  Final Answer
                 </h3>
 
-                <div className="space-y-8">
-                  {allBoxedAnswers.length > 0 ? (
-                    allBoxedAnswers.map((answer, index) => (
-                      <div
-                        key={index}
-                        className="overflow-x-auto scrollbar-thin scrollbar-thumb-[var(--accent)] scrollbar-track-transparent"
-                      >
-                        <div
-                          className="flex items-center justify-center px-4 py-6 text-3xl md:text-5xl font-extrabold text-[var(--text-primary)] leading-tight min-h-[6rem]"
-                        >
-                          <ReactMarkdown
-                            remarkPlugins={[remarkMath]}
-                            rehypePlugins={[rehypeKatex]}
-                            components={{
-                              p: ({ children }) => (
-                                <div className="inline-block text-center whitespace-nowrap min-w-fit">
-                                  {children}
-                                </div>
-                              ),
-                              div: ({ node, className, children, ...props }) =>
-                                className?.includes('katex-display') ? (
-                                  <div
-                                    className="katex-display-final mx-auto text-center whitespace-nowrap"
-                                    style={{
-                                      fontSize: '1.65em',
-                                      lineHeight: 1.3,
-                                    }}
-                                    {...props}
-                                  >
-                                    {children}
-                                  </div>
-                                ) : (
-                                  <div {...props}>{children}</div>
-                                ),
-                            }}
-                          >
-                            {answer.startsWith('$$') || answer.startsWith('\\[')
-                              ? answer
-                              : `$$${answer}$$`}
-                          </ReactMarkdown>
+                <div
+                  className="text-4xl md:text-6xl lg:text-7xl font-black text-[var(--text-primary)] leading-none min-h-[8rem] md:min-h-[10rem] lg:min-h-[12rem] flex items-center justify-center overflow-x-auto px-6 py-8 scrollbar-thin scrollbar-thumb-[var(--accent)] scrollbar-track-transparent scrollbar-thumb-rounded-full"
+                  style={{
+                    maxWidth: '100%',
+                    WebkitOverflowScrolling: 'touch',
+                  }}
+                >
+                  <ReactMarkdown
+                    remarkPlugins={[remarkMath]}
+                    rehypePlugins={[rehypeKatex]}
+                    components={{
+                      p: ({ children }) => (
+                        <div className="inline-block text-center whitespace-nowrap min-w-fit">
+                          {children}
                         </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-3xl md:text-4xl font-bold text-[var(--text-primary)] opacity-70 py-8">
-                      No final answer detected
-                    </div>
-                  )}
+                      ),
+                      div: ({ node, className, children, ...props }) =>
+                        className?.includes('katex-display')
+                          ? (
+                            <div
+                              className="katex-display-final mx-auto text-center whitespace-nowrap my-2"
+                              style={{ fontSize: '1.9em', lineHeight: 1.25 }}
+                              {...props}
+                            >
+                              {children}
+                            </div>
+                          )
+                          : <div {...props}>{children}</div>,
+                    }}
+                  >
+                    {finalAnswerContent || '\\text{—}'}
+                  </ReactMarkdown>
                 </div>
               </div>
 
@@ -180,39 +173,57 @@ export default function ResultPanel({ result, loading, onClose }) {
 }
 
 // ────────────────────────────────────────────────
-// Extract ALL boxed answers
-function extractAllBoxedAnswers(rawText) {
-  if (!rawText) return [];
+// Extract last boxed answer (balanced braces)
+function extractFinalAnswer(rawText) {
+  if (!rawText) return '';
 
-  const answers = [];
+  let lastStart = -1;
   let pos = 0;
 
   while ((pos = rawText.indexOf('\\boxed{', pos)) !== -1) {
-    const startIndex = pos + 7;
-    let braceCount = 1;
-    let i = startIndex;
-    let content = '';
-
-    while (i < rawText.length && braceCount > 0) {
-      const char = rawText[i];
-      content += char;
-      if (char === '{') braceCount++;
-      if (char === '}') braceCount--;
-      i++;
-    }
-
-    // Remove the trailing }
-    content = content.slice(0, -1).trim();
-
-    if (content) {
-      answers.push(content);
-    }
-
-    pos = i;
+    lastStart = pos;
+    pos += 7;
   }
 
-  console.log('Extracted boxed count:', answers.length);
-  return answers;
+  if (lastStart === -1) {
+    console.log('No \\boxed found → fallback');
+    return fallbackLastLines(rawText);
+  }
+
+  const startIndex = lastStart + 7;
+  let braceCount = 1;
+  let i = startIndex;
+  let content = '';
+
+  while (i < rawText.length && braceCount > 0) {
+    const char = rawText[i];
+    content += char;
+    if (char === '{') braceCount++;
+    if (char === '}') braceCount--;
+    i++;
+  }
+
+  content = content.slice(0, -1).trim();
+
+  console.log('Extracted last boxed:', content);
+  return content;
+}
+
+// Fallback
+function fallbackLastLines(rawText) {
+  const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
+  if (lines.length < 1) return '';
+
+  let candidate = '';
+  for (let i = lines.length - 1; i >= Math.max(0, lines.length - 5); i--) {
+    let line = lines[i];
+    line = line.replace(/^(Final answer|Answer|Result|So|Therefore|Hence|Thus):?\s*/i, '').trim();
+    if (line) candidate = line + (candidate ? '\n' + candidate : '');
+    if (line.includes('=') || line.includes('\\frac') || /^\s*[-−]?\d+(\.\d+)?\s*$/.test(line)) break;
+  }
+
+  console.log('Fallback:', candidate);
+  return candidate || lines[lines.length - 1];
 }
 
 // prepareMathForKaTeX
