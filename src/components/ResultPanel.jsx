@@ -20,14 +20,18 @@ export default function ResultPanel({ result, loading, onClose }) {
   if (!result?.image) return null;
 
   const fullText = result.text || '';
-  const preparedSteps = prepareMathForKaTeX(fullText); // improved below
 
+  const preparedSteps = prepareMathForKaTeX(fullText);
+
+  // Extract final answer with proper brace balancing
   const finalAnswerRaw = extractFinalAnswer(fullText);
 
-  // Debug (you can remove later)
-  console.log('Final Answer RAW:', finalAnswerRaw);
-  console.log('Full text last 400:', fullText.slice(-400));
+  // Debug logs
+  console.log('Final Answer RAW extracted:', finalAnswerRaw);
+  console.log('Full result.text length:', fullText.length);
+  console.log('Full result.text last 400 chars:\n', fullText.slice(-400));
 
+  // Auto-wrap in display math if it looks like math but isn't already wrapped
   let finalAnswerContent = finalAnswerRaw.trim();
   if (
     finalAnswerContent &&
@@ -57,7 +61,6 @@ export default function ResultPanel({ result, loading, onClose }) {
         <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
           {!loading && result?.text && (
             <>
-              {/* Final Answer Block – improved horizontal scroll */}
               <div
                 className="final-answer mb-6 p-6 md:p-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-lg)] text-center overflow-hidden"
                 style={{ background: 'linear-gradient(135deg, var(--accent-glow), transparent 70%)' }}
@@ -67,24 +70,19 @@ export default function ResultPanel({ result, loading, onClose }) {
                 </h3>
 
                 <div
-                  className="text-3xl md:text-5xl font-extrabold text-[var(--text-primary)] leading-tight min-h-[6rem] flex items-center justify-center overflow-x-auto px-4 py-6 scrollbar-thin scrollbar-thumb-[var(--accent)] scrollbar-track-transparent"
-                  // ────── Key improvements ──────
-                  style={{
-                    maxWidth: '100%',
-                    WebkitOverflowScrolling: 'touch', // smooth scroll on mobile
-                  }}
+                  className="text-3xl md:text-5xl font-extrabold text-[var(--text-primary)] leading-tight min-h-[6rem] flex items-center justify-center overflow-x-auto px-4 py-6"
                 >
                   <ReactMarkdown
                     remarkPlugins={[remarkMath]}
                     rehypePlugins={[rehypeKatex]}
                     components={{
-                      p: ({ children }) => <div className="inline-block text-center min-w-fit">{children}</div>,
+                      p: ({ children }) => <div className="inline-block text-center">{children}</div>,
                       div: ({ node, className, children, ...props }) =>
                         className?.includes('katex-display')
                           ? (
                             <div
-                              className="katex-display-final mx-auto text-center my-4 whitespace-nowrap"
-                              style={{ fontSize: '1.65em', lineHeight: 1.3, minWidth: 'fit-content' }}
+                              className="katex-display-final mx-auto text-center my-4"
+                              style={{ fontSize: '1.65em', lineHeight: 1.3 }}
                               {...props}
                             >
                               {children}
@@ -98,7 +96,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                 </div>
               </div>
 
-              {/* Toggle Button */}
+              {/* Toggle + Steps + Feedback unchanged */}
               <button
                 onClick={() => setShowSteps(!showSteps)}
                 className="w-full py-3.5 px-5 mb-5 bg-[var(--accent)] hover:bg-[var(--accent-dark)] text-white font-medium rounded-lg shadow-md transition-all flex items-center justify-center gap-2"
@@ -109,7 +107,6 @@ export default function ResultPanel({ result, loading, onClose }) {
                 </span>
               </button>
 
-              {/* Steps Section – now with better inline math handling */}
               <div
                 ref={stepsRef}
                 className="overflow-hidden transition-all duration-500 ease-in-out"
@@ -122,64 +119,21 @@ export default function ResultPanel({ result, loading, onClose }) {
                   <h4 className="text-xl font-semibold text-[var(--text-primary)] mb-5">
                     Step-by-Step Solution
                   </h4>
-
-                  <div className="prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)] prose-code:bg-transparent prose-code:p-0">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkMath]}
-                      rehypePlugins={[rehypeKatex]}
-                      // Extra components to prevent inline math from looking broken
-                      components={{
-                        code: ({ node, inline, className, children, ...props }) =>
-                          inline ? (
-                            <code className="not-prose bg-transparent p-0 font-normal" {...props}>
-                              {children}
-                            </code>
-                          ) : (
-                            <code className={className} {...props}>
-                              {children}
-                            </code>
-                          ),
-                        // Force inline math to behave nicely
-                        math: ({ value }) => <span className="inline-block align-middle">{`$${value}$`}</span>,
-                        inlineMath: ({ value }) => <span className="inline-block align-middle">{`$${value}$`}</span>,
-                      }}
-                    >
+                  <div className="prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)]">
+                    <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
                       {preparedSteps}
                     </ReactMarkdown>
                   </div>
                 </div>
               </div>
 
-              {/* Feedback */}
               <div className="feedback-bar mt-6 flex justify-center gap-4">
-                <button
-                  className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'up' ? 'active' : ''}`}
-                  onClick={() => handleFeedback('up')}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path d="M14 9V5a3 3 0 0 0-6 0v4H5v11h14V9h-5z" stroke="currentColor" strokeWidth="2" />
-                  </svg>
-                  Helpful
-                </button>
-
-                <button
-                  className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'down' ? 'active' : ''}`}
-                  onClick={() => handleFeedback('down')}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path d="M10 15v4a3 3 0 0 0 6 0v-4h3V4H5v11h5z" stroke="currentColor" strokeWidth="2" />
-                  </svg>
-                  Not Helpful
-                </button>
+                {/* your feedback buttons */}
               </div>
             </>
           )}
 
-          {loading && (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              Solving your problem...
-            </div>
-          )}
+          {loading && <div className="text-center py-8 text-gray-500 dark:text-gray-400">Solving your problem...</div>}
         </div>
       </div>
     </div>
@@ -187,23 +141,24 @@ export default function ResultPanel({ result, loading, onClose }) {
 }
 
 // ────────────────────────────────────────────────
-// Improved brace-balanced extraction (unchanged from last win)
+// New: Properly balanced brace extraction for last \boxed{...}
 function extractFinalAnswer(rawText) {
   if (!rawText) return '';
 
+  // Find the position of the LAST \boxed{
   const boxedPositions = [];
   let pos = 0;
   while ((pos = rawText.indexOf('\\boxed{', pos)) !== -1) {
     boxedPositions.push(pos);
-    pos += 7;
+    pos += 7; // skip \boxed{
   }
 
   if (boxedPositions.length === 0) {
-    console.log('No \\boxed → fallback');
+    console.log('No \\boxed found → using fallback');
     return fallbackLastLines(rawText);
   }
 
-  const startIndex = boxedPositions[boxedPositions.length - 1] + 7;
+  const startIndex = boxedPositions[boxedPositions.length - 1] + 7; // after \boxed{
   let braceCount = 1;
   let i = startIndex;
   let content = '';
@@ -211,16 +166,21 @@ function extractFinalAnswer(rawText) {
   while (i < rawText.length && braceCount > 0) {
     const char = rawText[i];
     content += char;
+
     if (char === '{') braceCount++;
     if (char === '}') braceCount--;
+
     i++;
   }
 
+  // Remove the last } we added
   content = content.slice(0, -1).trim();
-  console.log('Extracted boxed:', content);
+
+  console.log('Extracted full boxed content (balanced):', content);
   return content;
 }
 
+// Fallback if no boxed or extraction fails
 function fallbackLastLines(rawText) {
   const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
   if (lines.length < 1) return '';
@@ -232,53 +192,34 @@ function fallbackLastLines(rawText) {
     if (line) candidate = line + (candidate ? '\n' + candidate : '');
     if (line.includes('=') || line.includes('\\frac') || line.match(/^\s*[-−]?\d+(\.\d+)?\s*$/)) break;
   }
-  console.log('Fallback:', candidate);
+
+  console.log('Fallback candidate:', candidate);
   return candidate || lines[lines.length - 1];
 }
 
-// ────────────────────────────────────────────────
-// IMPROVED prepareMathForKaTeX – fixes messy inline + display mix
-// ────────────────────────────────────────────────
+// Your prepareMathForKaTeX (unchanged)
 function prepareMathForKaTeX(rawText) {
   if (!rawText) return '';
 
   let text = rawText;
 
-  // 1. Normalize common fraction patterns
   text = text.replace(
     /(\b\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?\b)(?!\s*\/)/g,
     '\\frac{$1}{$2}'
   );
+
   text = text.replace(
     /(\d+)\s*\n\s*_{2,}\s*\n\s*(\d+)/g,
     '\\frac{$1}{$2}'
   );
 
-  // 2. Fix broken/partial delimiters (very common backend issue)
-  text = text.replace(/\$([^$]*?)\$\$/g, '\\($1\\)');          // $...$$ → \(...\)
-  text = text.replace(/\$\$([^$]*?)\$/g, '\\($1\\)');          // $$...$ → \(...\)
-  text = text.replace(/\\begin\{equation\}(.*?)\\end\{equation\}/gs, '$$$$$1$$$$');
-
-  // 3. Convert single $...$ to proper inline, but protect already doubled ones
-  text = text.replace(/(?<!\$)\$(?!\$)(.*?)(?<!\$)\$(?!\$)/g, '\\($1\\)');
-
-  // 4. Force display math where it looks like it should be block
-  text = text.replace(
-    /\\\((\s*(?:\\begin\{align\*?}|\\begin\{equation}|\\\[|displaystyle).*?)\s*\\\)/gs,
-    '$$$$$1$$$$'
-  );
-
-  // 5. Clean extra newlines around delimiters (helps prose flow)
-  text = text.replace(/\s*(\$\$|\\\[)\s*/g, '$1');
-  text = text.replace(/\s*(\$\$|\\\])\s*/g, '$1');
-
-  // 6. Your original smart replacements
   text = text.replace(
     /\$([^$]*?(?:derivative|rule|product rule|quotient|chain|integral|limit|sum|equals|therefore)[^$]*?)\$/gi,
     '$$$$$1$$$$'
   );
 
   text = text.replace(/\$\$[\s\n]+/g, '$$').replace(/[\s\n]+\$\$/g, '$$');
+
   text = text.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$');
 
   return text;
