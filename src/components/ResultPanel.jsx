@@ -20,184 +20,16 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   if (!result?.image) return null;
 
-  const extractFinalAnswer = (text) => {
-  if (!text || !text.trim()) {
-    return '$$\\text{No solution found}$$';
-  }
-
-  let cleaned = text
-    .trim()
-    .replace(/\r\n|\r/g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .replace(/\n+/g, '\n');
-
-  let candidate = null;
-
-  // 1. Last \boxed{} — highest priority
-  const boxed = [...cleaned.matchAll(/\\boxed\{([\s\S]*?)\}/g)];
-  if (boxed.length) {
-    candidate = boxed[boxed.length - 1][1].trim();
-  }
-
-  // 2. Keyword match
-  if (!candidate) {
-    const finalMatch = cleaned.match(
-      /(final answer|answer|result|solution|therefore|thus|conclusion)[:=\s\-→]*([\s\S]*?)(?=\n{2,}|$)/i
-    );
-    if (finalMatch) {
-      candidate = finalMatch[2].trim();
-    }
-  }
-
-  // 3. Last display math block
-  if (!candidate) {
-    const display = [...cleaned.matchAll(/\$\$([\s\S]*?)\$\$/g)];
-    if (display.length) {
-      candidate = display[display.length - 1][1].trim();
-    }
-  }
-
-  // 4. Last math-looking line
-  if (!candidate) {
-    const lines = cleaned.split('\n').reverse();
-    for (const line of lines) {
-      const l = line.trim();
-      if (!l) continue;
-      if (
-        l.includes('=') ||
-        l.includes('\\frac') ||
-        l.includes('^') ||
-        l.includes('_') ||
-        l.includes('\\int') ||
-        l.includes('\\lim') ||
-        l.includes('\\sum') ||
-        l.includes('\\der') ||
-        l.includes('d/dx') ||
-        l.includes('dy/dx') ||
-        l.includes('\\sqrt') ||
-        l.includes('\\sin') ||
-        l.includes('\\cos') ||
-        l.includes('\\log') ||
-        l.includes('\\ln') ||
-        l.includes('\\tan') ||
-        l.includes('\\sec') ||
-        l.includes('\\csc') ||
-        l.includes('\\cot')
-      ) {
-        candidate = l;
-        break;
-      }
-    }
-  }
-
-  // 5. Plain fraction fallback
-  if (!candidate) {
-    const fraction = cleaned.match(/\d+\s*\/\s*\d+/);
-    if (fraction) {
-      candidate = fraction[0];
-    }
-  }
-
-  if (!candidate) {
-    return '$$\\text{No solution found}$$';
-  }
-
   // ────────────────────────────────────────────────
-  // Remove wrappers
-  candidate = candidate
-    .replace(/^\$+|\$+$/g, '')
-    .replace(/^\\\[|\\\]$/g, '')
-    .replace(/\\boxed\{([\s\S]*?)\}/g, '$1')
-    .trim();
-
+  //  No more extractFinalAnswer / repair logic here
+  //  You can decide later what to show in the top card
   // ────────────────────────────────────────────────
-  // IMPROVED repairLatex – much less aggressive
-  // ────────────────────────────────────────────────
-  function repairLatex(str) {
-    if (!str) return str;
 
-    let fixed = str.trim();
+  // For now — showing the full text in the card (you'll probably change this)
+  const fullText = result.text || '';
 
-    // Fix missing \frac prefix (very common LLM typo)
-    fixed = fixed.replace(/(^|[^\\])frac\{/g, '$1\\frac{');
-
-    // Convert plain a/b → \frac{a}{b}
-    fixed = fixed.replace(
-      /(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)(?!\s*\/)/g,
-      '\\frac{$1}{$2}'
-    );
-
-    // ────────────────────────────────────────────────
-    // Only fix obviously broken \frac (missing second argument)
-    // We are now **very careful** not to touch valid fractions
-    fixed = fixed.replace(
-      /\\frac\{([^}]+)\}(?!\s*\{)(?![^{]*\})/g,
-      (match, numerator) => {
-        // Skip if it already looks complete or complex
-        if (
-          numerator.includes('}{') ||           // already has denominator
-          numerator.includes('/') ||            // has inline /
-          /\d\s*[-+*/^]\s*\d/.test(numerator) || // looks like expression
-          numerator.trim() === ''               // empty → don't force 1
-        ) {
-          return match;
-        }
-
-        return `\\frac{${numerator.trim()}}{1}`;
-      }
-    );
-
-    // Last-ditch: incomplete at end of string
-    fixed = fixed.replace(/\\frac\{([^}]*)$/, '\\frac{$1}{1}');
-
-    // Fix exponents & subscripts without braces
-    fixed = fixed.replace(/\^([a-zA-Z0-9]+)/g, '^{$1}');
-    fixed = fixed.replace(/_([a-zA-Z0-9]+)/g, '_{$1}');
-
-    // Gentle brace balancing (only small imbalance)
-    const open = (fixed.match(/\{/g) || []).length;
-    const close = (fixed.match(/\}/g) || []).length;
-    if (open > close && open - close <= 5) {
-      fixed += '}'.repeat(open - close);
-    }
-
-    // Clean junk braces
-    fixed = fixed
-      .replace(/\{\s*\{/g, '{')
-      .replace(/\}\s*\}/g, '}')
-      .replace(/\{\}/g, '')
-      .trim();
-
-    return fixed;
-  }
-
-  // ────────────────────────────────────────────────
-  candidate = repairLatex(candidate);
-  candidate = prepareMathForKaTeX(candidate);   // keep your original prepare function
-
-  // Final wrapping
-  let wrapped = `$$${candidate}$$`;  // ← always display style for final answer
-
-  // Optional: only use inline if extremely short and no complex math
-  if (candidate.length < 30 && !/\\frac|\\sqrt|\\sum|\\int/.test(candidate)) {
-    wrapped = `$${candidate}$`;
-  }
-
-  console.log("[DEBUG] Final wrapped answer:", wrapped);
-  return wrapped;
-
-};
-
-
-
-
-
-
-
-  const finalAnswer = extractFinalAnswer(result.text || '');
-
-  // Optional debug: uncomment to see what’s actually being rendered
-  console.log("Final answer sent to ReactMarkdown:", finalAnswer);
+  // Clean version for steps (keeping your prepare function)
+  const preparedSteps = prepareMathForKaTeX(fullText);
 
   return (
     <div className="result-panel">
@@ -223,7 +55,7 @@ export default function ResultPanel({ result, loading, onClose }) {
         <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
           {!loading && result?.text && (
             <>
-              {/* Final Answer Block */}
+              {/* Final Answer Block – clean slate */}
               <div
                 className="final-answer mb-6 p-6 md:p-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-lg)] text-center overflow-hidden"
                 style={{ background: 'linear-gradient(135deg, var(--accent-glow), transparent 70%)' }}
@@ -248,7 +80,15 @@ export default function ResultPanel({ result, loading, onClose }) {
                           : <div {...props}>{children}</div>,
                     }}
                   >
-                    {finalAnswer}
+                    {/* 
+                      RIGHT NOW showing full text — replace this with your new logic later 
+                      Popular options:
+                      1. `$$\\text{Answer coming soon}$$`
+                      2. First \boxed{} if backend starts sending it
+                      3. Last line of text
+                      4. Nothing → just remove the whole card for now
+                    */}
+                    {preparedSteps}
                   </ReactMarkdown>
                 </div>
               </div>
@@ -283,7 +123,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                       remarkPlugins={[remarkMath]}
                       rehypePlugins={[rehypeKatex]}
                     >
-                      {prepareMathForKaTeX(result.text || '')}
+                      {preparedSteps}
                     </ReactMarkdown>
                   </div>
                 </div>
@@ -325,72 +165,7 @@ export default function ResultPanel({ result, loading, onClose }) {
   );
 }
 
-// ────────────────────────────────────────────────
-// IMPROVED repairLatex – only fixes **clearly broken** fractions
-// ────────────────────────────────────────────────
-function repairLatex(str) {
-  if (!str) return str;
-
-  let fixed = str.trim();
-
-  // 1. Fix common "frac" without backslash
-  fixed = fixed.replace(/(^|[^\\])frac\{/g, '$1\\frac{');
-
-  // 2. Turn plain 5/4 into proper fraction early (safety net)
-  fixed = fixed.replace(
-    /(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)(?![^{]*\})/g,
-    '\\frac{$1}{$2}'
-  );
-
-  // ────────────────────────────────────────────────
-  // 3. Fix ONLY fractions that are missing the denominator part
-  //    Condition: \frac{...} where there is NO second { anywhere after
-  //    This avoids touching \frac{a}{b}
-  fixed = fixed.replace(
-    /\\frac\{([^}]+)\}((?![^{]*\{)|\s*$)/g,
-    (match, numerator, after) => {
-      const numTrim = numerator.trim();
-      
-      // Already has denominator → do NOT touch
-      if (numTrim.includes('}{') || numTrim.includes('}/')) {
-        return match;
-      }
-
-      // Missing denominator case → add {1}
-      return `\\frac{${numTrim}}{1}`;
-    }
-  );
-
-  // 4. Catch broken frac with no closing brace at all
-  fixed = fixed.replace(
-    /\\frac\{([^}\\]+)(?=$|\s|[^}])/g,
-    '\\frac{$1}{1}'
-  );
-
-  // 5. Fix exponents & subscripts without braces
-  fixed = fixed.replace(/\^([a-zA-Z0-9]+)/g, '^{$1}');
-  fixed = fixed.replace(/_([a-zA-Z0-9]+)/g, '_{$1}');
-
-  // 6. Balance braces if only slightly off
-  const open = (fixed.match(/\{/g) || []).length;
-  const close = (fixed.match(/\}/g) || []).length;
-  if (open > close && open - close <= 6) {
-    fixed += '}'.repeat(open - close);
-  }
-
-  // 7. Clean junk braces
-  fixed = fixed
-    .replace(/\{\s*\{/g, '{')
-    .replace(/\}\s*\}/g, '}')
-    .replace(/\{\}/g, '')
-    .trim();
-
-  return fixed;
-}
-
-
-
-
+// Keep your prepare function (it's still useful for the steps)
 function prepareMathForKaTeX(rawText) {
   if (!rawText) return '';
 
