@@ -98,20 +98,39 @@ const extractFinalAnswer = (text) => {
   candidate = repairLatex(candidate);
   candidate = prepareMathForKaTeX(candidate);
 
-  // Final safety: force balanced delimiters
-  let wrapped = '$$' + candidate + '$$';
+  // Safety net: fix obviously incomplete frac
+  if (candidate.includes('\\frac') && !candidate.includes('}{')) {
+    candidate = candidate.replace(/\\frac\{([^}]*)\}/g, '\\frac{$1}{?}');
+    candidate = candidate.replace(/\\frac\{([^}]*)$/, '\\frac{$1}{?}');
+  }
 
-  // If it's a short equation, prefer inline
-  if (candidate.includes('=') && candidate.length < 60) {
-    wrapped = candidate.split('=').map(part => part.trim()).join(' = $') + '$';
-    wrapped = wrapped.replace(' = $', ' = $') + '$'; // ensure closing
+  // Final wrapping – SAFE concatenation only
+  let wrapped;
+
+  // Prefer inline for equations (looks best in your big font)
+  if (candidate.includes('=')) {
+    const parts = candidate.split('=');
+    if (parts.length === 2) {
+      const left = parts[0].trim();
+      const right = parts[1].trim();
+      wrapped = left + ' = $' + right + '$';
+    } else {
+      wrapped = '$' + candidate + '$';
+    }
+  } else {
+    // Short non-equation → inline
+    if (candidate.length < 60 && !candidate.includes('\\\\')) {
+      wrapped = '$' + candidate + '$';
+    } else {
+      // Complex → display
+      wrapped = '$$' + candidate + '$$';
+    }
   }
 
   console.log("Final answer sent to ReactMarkdown:", wrapped);
 
   return wrapped;
 };
-
 
   const finalAnswer = extractFinalAnswer(result.text || '');
 
