@@ -292,12 +292,14 @@ function repairLatex(candidate) {
   // Fix subscripts like x_2 → x_{2}
   fixed = fixed.replace(/_([a-zA-Z0-9]+)/g, '_{$1}');
 
-  // Force default denominator 1 for incomplete fractions
+  // ONLY add default {1} when there is NO denominator group at all
+  // \frac{num} → \frac{num}{1}
   fixed = fixed.replace(/\\frac\{([^}]*)\}(?!\{)/g, '\\frac{$1}{1}');
-  fixed = fixed.replace(/\\frac\{([^}]*)\}\{\}/g, '\\frac{$1}{1}');
-  fixed = fixed.replace(/\\frac\{([^}]*)$/, '\\frac{$1}{1}');
 
-  // Fix \frac with no braces at all (rare case)
+  // If denominator group exists (even empty \frac{num}{}), leave it
+  // KaTeX will show empty space under the line — clean and correct
+
+  // Fix \frac with no braces at all (very rare)
   fixed = fixed.replace(/\\frac\s+(\d+)/g, '\\frac{$1}{1}');
 
   // Gentle brace balancing (only if slightly off)
