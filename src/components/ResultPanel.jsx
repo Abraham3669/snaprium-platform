@@ -58,13 +58,13 @@ const extractFinalAnswer = (text) => {
     const lines = cleaned.split('\n').filter(Boolean);
     for (let i = lines.length - 1; i >= 0; i--) {
       const line = lines[i].trim();
-      if (line.length < 6) continue; // lowered from 10 — allows short equations
+      if (line.length < 6) continue;
       if (
         line.includes('\\boxed') ||
         line.includes('\\frac') ||
         line.match(/(f'|f''|[a-z]\(x\))\s*=/) ||
         line.match(/\\(sqrt|sum|int|prod|lim|e\^{|sin|cos|ln|log|x\^)/) ||
-        line.includes('=') // allow simple equations
+        line.includes('=')
       ) {
         candidate = line;
         break;
@@ -83,10 +83,10 @@ const extractFinalAnswer = (text) => {
     .replace(/\\boxed\{([\s\S]*?)\}/g, '$1')
     .trim();
 
-  // Prepare like steps section
+  // Prepare
   candidate = prepareMathForKaTeX(candidate);
 
-  // ── Relaxed protection: only block extremely broken cases ──
+  // Relaxed broken check
   const fracCount = (candidate.match(/\\frac|\\dfrac/g) || []).length;
   const openBraces  = (candidate.match(/\{/g)  || []).length;
   const closeBraces = (candidate.match(/\}/g) || []).length;
@@ -95,29 +95,26 @@ const extractFinalAnswer = (text) => {
     candidate.length < 5 ||
     candidate.trim() === '' ||
     candidate.startsWith('frac{') ||
-    (fracCount > 0 && candidate.includes('\\frac') && !candidate.includes('}{'));
+    (fracCount > 0 && !candidate.includes('}{'));
 
   if (isVeryBroken) {
     return '$$\\text{See steps below}$$';
   }
 
-  // ── Wrapping logic ────────────────────────────────────────────────
+  // ── Wrapping logic – safer version ─────────────────────────────────────
   const eqMatch = candidate.match(/^(.+?)\s*=\s*(.+)$/);
   if (eqMatch) {
     const left  = eqMatch[1].trim();
     const right = eqMatch[2].trim();
-    return `${left} = $${right}$`;
+    return left + ' = $' + right + '$';
   }
 
-  // Most short math → try inline first
-  if (candidate.length < 80 && !candidate.includes('\\\\')) {
-    return `$${candidate}$`;
+  if (!candidate.includes('=') && candidate.length < 80 && !candidate.includes('  ')) {
+    return '$' + candidate.trim() + '$';
   }
 
-  // Longer / complex → display
-  return `$$${candidate}$$`;
+  return '$$' + candidate + '$$';
 };
-
 
 
   const finalAnswer = extractFinalAnswer(result.text || '');
