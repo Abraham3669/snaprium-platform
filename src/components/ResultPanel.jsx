@@ -33,23 +33,23 @@ const extractFinalAnswer = (text) => {
 
   let candidate = null;
 
-  // 1. Last \boxed{} — best
+  // 1. Last \boxed{} – highest priority
   const boxed = [...cleaned.matchAll(/\\boxed\{([\s\S]*?)\}/g)];
   if (boxed.length) {
     candidate = boxed[boxed.length - 1][1].trim();
   }
 
-  // 2. Keyword match
+  // 2. Keyword match (improved to capture more)
   if (!candidate) {
     const finalMatch = cleaned.match(
-      /(final answer|answer|result|solution)[:=\s\-→]*([^\n]+)/i
+      /(final answer|answer|result|solution|therefore|thus|conclusion)[:=\s\-→]*([\s\S]*?)(?=\n{2,}|$)/i
     );
     if (finalMatch) {
       candidate = finalMatch[2].trim();
     }
   }
 
-  // 3. Last display math
+  // 3. Last display math block
   if (!candidate) {
     const display = [...cleaned.matchAll(/\$\$([\s\S]*?)\$\$/g)];
     if (display.length) {
@@ -57,7 +57,7 @@ const extractFinalAnswer = (text) => {
     }
   }
 
-  // 4. Last equation-like line
+  // 4. Last equation-like line (more permissive for calculus)
   if (!candidate) {
     const lines = cleaned.split('\n').reverse();
     for (const line of lines) {
@@ -67,7 +67,12 @@ const extractFinalAnswer = (text) => {
         l.includes('=') ||
         l.includes('\\frac') ||
         l.includes('^') ||
-        l.includes('_')
+        l.includes('_') ||
+        l.includes('\\int') ||
+        l.includes('\\lim') ||
+        l.includes('\\sum') ||
+        l.includes('\\der') ||
+        l.includes('d/dx')
       ) {
         candidate = l;
         break;
@@ -98,16 +103,9 @@ const extractFinalAnswer = (text) => {
   candidate = repairLatex(candidate);
   candidate = prepareMathForKaTeX(candidate);
 
-  // Safety net: fix obviously incomplete frac
-  if (candidate.includes('\\frac') && !candidate.includes('}{')) {
-    candidate = candidate.replace(/\\frac\{([^}]*)\}/g, '\\frac{$1}{?}');
-    candidate = candidate.replace(/\\frac\{([^}]*)$/, '\\frac{$1}{?}');
-  }
-
-  // Final wrapping – SAFE concatenation only
+  // Final wrapping – always balanced, prefer inline for most math
   let wrapped;
 
-  // Prefer inline for equations (looks best in your big font)
   if (candidate.includes('=')) {
     const parts = candidate.split('=');
     if (parts.length === 2) {
@@ -118,19 +116,19 @@ const extractFinalAnswer = (text) => {
       wrapped = '$' + candidate + '$';
     }
   } else {
-    // Short non-equation → inline
-    if (candidate.length < 60 && !candidate.includes('\\\\')) {
+    // Inline for short-to-medium math (covers most calculus)
+    if (candidate.length < 150 && !candidate.includes('\\\\')) {
       wrapped = '$' + candidate + '$';
     } else {
-      // Complex → display
       wrapped = '$$' + candidate + '$$';
     }
   }
 
   console.log("Final answer sent to ReactMarkdown:", wrapped);
-
   return wrapped;
 };
+
+
 
   const finalAnswer = extractFinalAnswer(result.text || '');
 
@@ -273,7 +271,7 @@ function repairLatex(candidate) {
 
   let fixed = candidate.trim();
 
-  // Fix missing \frac
+  // Fix missing \frac prefix
   fixed = fixed.replace(/(^|[^\\])frac\{/g, '$1\\frac{');
 
   // Convert plain fractions 5/2 → \frac{5}{2}
@@ -288,28 +286,27 @@ function repairLatex(candidate) {
   // Fix subscript like x_2 → x_{2}
   fixed = fixed.replace(/_([a-zA-Z0-9]+)/g, '_{$1}');
 
-  // Fix incomplete \frac{a}
-  fixed = fixed.replace(/\\frac\{([^}]*)\}(?!\{)/g, '\\frac{$1}{1}');
+  // Only fix incomplete \frac if clearly missing denominator
+  fixed = fixed.replace(/\\frac\{([^}]*)\}(?!\{)/g, '\\frac{$1}{}');
 
-  // Fix incomplete \frac{a}{ }
-  fixed = fixed.replace(/\\frac\{([^}]*)\}\{\}/g, '\\frac{$1}{1}');
+  // Do NOT add 1 or ? — let KaTeX show empty denominator (cleaner)
 
-  // Balance braces
+  // Gentle brace balancing (only if slightly off)
   const open = (fixed.match(/\{/g) || []).length;
   const close = (fixed.match(/\}/g) || []).length;
 
-  if (open > close) {
+  if (open > close && open - close < 4) {
     fixed += '}'.repeat(open - close);
   }
 
-  // Remove duplicated braces safely
+  // Clean up extra braces safely
   fixed = fixed
     .replace(/\{\s*\{/g, '{')
-    .replace(/\}\s*\}/g, '}');
+    .replace(/\}\s*\}/g, '}')
+    .replace(/\{\}/g, '');
 
   return fixed.trim();
 }
-
 
 
 
