@@ -292,13 +292,12 @@ function repairLatex(candidate) {
   // Fix subscripts like x_2 → x_{2}
   fixed = fixed.replace(/_([a-zA-Z0-9]+)/g, '_{$1}');
 
-  // Force default denominator 1 for incomplete fractions
-  fixed = fixed.replace(/\\frac\{([^}]*)\}(?!\{)/g, '\\frac{$1}{1}');
-  fixed = fixed.replace(/\\frac\{([^}]*)\}\{\}/g, '\\frac{$1}{1}');
-  fixed = fixed.replace(/\\frac\{([^}]*)$/, '\\frac{$1}{1}');
-
-  // Fix \frac with no braces at all (rare case)
-  fixed = fixed.replace(/\\frac\s+(\d+)/g, '\\frac{$1}{1}');
+  // Only add default denominator if missing completely (no second brace)
+fixed = fixed.replace(/\\frac\{([^}]*)\}(?!\{)/g, (match, p1) => {
+  // If it already contains another {...} inside, skip
+  if (match.includes('}{')) return match;
+  return `\\frac{${p1}}{1}`;
+});
 
   // Gentle brace balancing (only if slightly off)
   const open = (fixed.match(/\{/g) || []).length;
