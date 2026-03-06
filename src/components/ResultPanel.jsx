@@ -20,92 +20,97 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   if (!result?.image) return null;
 
-  // ────────────────────────────────────────────────
-  // Very robust final answer extraction – improved for f'(x) = e^{3x} style
-  // ────────────────────────────────────────────────
   const extractFinalAnswer = (text) => {
-    if (!text?.trim()) return '$$\\text{No solution found}$$';
+  if (!text?.trim()) return '$$\\text{No solution found}$$';
 
-    let cleaned = text
-      .trim()
-      .replace(/\r\n|\r/g, '\n')
-      .replace(/\n{3,}/g, '\n\n')
-      .replace(/\n+/g, '\n');
+  let cleaned = text
+    .trim()
+    .replace(/\r\n|\r/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\n+/g, '\n');
 
-    let candidate = null;
+  let candidate = null;
 
-    // 1. Last \boxed{} — highest priority
-    const boxedMatches = [...cleaned.matchAll(/\\boxed\{([\s\S]*?)\}/g)];
-    if (boxedMatches.length > 0) {
-      candidate = boxedMatches[boxedMatches.length - 1][1].trim();
+  // 1. Last \boxed{} – best source
+  const boxedMatches = [...cleaned.matchAll(/\\boxed\{([\s\S]*?)\}/g)];
+  if (boxedMatches.length > 0) {
+    candidate = boxedMatches[boxedMatches.length - 1][1].trim();
+  }
+
+  // 2. Last $$...$$ or \[...\]
+  if (!candidate) {
+    const displayMatches = [...cleaned.matchAll(/\$\$([\s\S]*?)\$\$|\\\[([\s\S]*?)\\\]/g)];
+    if (displayMatches.length > 0) {
+      const last = displayMatches[displayMatches.length - 1];
+      candidate = (last[1] || last[2]).trim();
     }
+  }
 
-    // 2. Last full display math block
-    if (!candidate) {
-      const displayMatches = [...cleaned.matchAll(/\$\$([\s\S]*?)\$\$|\\\[([\s\S]*?)\\\]/g)];
-      if (displayMatches.length > 0) {
-        const last = displayMatches[displayMatches.length - 1];
-        candidate = (last[1] || last[2]).trim();
+  // 3. Keyword fallback – capture more reliably
+  if (!candidate) {
+    const keywordRegex = /(?:final answer|answer|result|solution|therefore|thus|conclusion|so|we get)[:=\s→-]?\s*([\s\S]*?)(?=\n{2,}|$)/is;
+    const match = cleaned.match(keywordRegex);
+    if (match?.[1]) candidate = match[1].trim();
+  }
+
+  // 4. Last math-looking line – stricter to avoid fragments
+  if (!candidate) {
+    const lines = cleaned.split('\n').filter(Boolean);
+    for (let i = lines.length - 1; i >= 0; i--) {
+      const line = lines[i].trim();
+      // Only take if it has a decent math indicator AND not obviously incomplete
+      if (
+        (line.match(/\\(frac|dfrac|sqrt|sum|int|prod|lim|e\^\{|sin|cos|ln|log)/) && line.length > 12) ||
+        line.match(/(f'|f''|[a-z]\(x\))\s*=/) ||
+        line.match(/^\s*[a-zA-Z0-9^{}[\]()+\-*/= ]{8,60}\s*$/)
+      ) {
+        candidate = line;
+        break;
       }
     }
+  }
 
-    // 3. Keyword fallback
-    if (!candidate) {
-      const keywordRegex = /(?:final answer|answer|result|solution|therefore|thus|conclusion|so|we get)[:=\s→-]*(.+?)(?=\n{2,}|$)/is;
-      const match = cleaned.match(keywordRegex);
-      if (match?.[1]) candidate = match[1].trim();
-    }
+  if (!candidate) {
+    return '$$\\text{See step-by-step solution below}$$';
+  }
 
-    // 4. Last reasonable math line
-    if (!candidate) {
-      const lines = cleaned.split('\n').filter(Boolean);
-      for (let i = lines.length - 1; i >= 0; i--) {
-        const line = lines[i].trim();
-        if (
-          line.match(/(f'|f''|[a-zA-Z]\(x\)|[a-zA-Z]_?[a-zA-Z]?)\s*=/) ||
-          line.match(/\\(frac|sqrt|sum|int|prod|lim|e\^\{|sin|cos|ln|log|boxed)/) ||
-          line.match(/^\s*[a-zA-Z0-9'()^=+\-*/ ]{1,60}\s*$/)
-        ) {
-          candidate = line;
-          break;
-        }
-      }
-    }
+  // ── Cleanup ───────────────────────────────────────────────────────────
+  candidate = candidate
+    .replace(/^[\s$\\[\]]+|[\s$\\[\]]+$/g, '')
+    .replace(/^\\boxed\{([\s\S]*)\}$/, '$1')
+    .replace(/\\boxed\{([\s\S]*?)\}/g, '$1')
+    .trim();
 
-    if (!candidate) {
-      return '$$\\text{See the step-by-step solution below}$$';
-    }
+  // ── NEW: Protect against obviously broken frac ────────────────────────
+  const fracOpen = (candidate.match(/\\frac|\\dfrac/g) || []).length;
+  const braceOpen = (candidate.match(/\{/g) || []).length;
+  const braceClose = (candidate.match(/\}/g) || []).length;
 
-    // ── Cleanup ───────────────────────────────────────────────────────────
-    candidate = candidate
-      .replace(/^[\s$\\[\]]+|[\s$\\[\]]+$/g, '')
-      .replace(/^\\boxed\{([\s\S]*)\}$/, '$1')
-      .replace(/\\boxed\{([\s\S]*?)\}/g, '$1')
-      .trim();
+  if (fracOpen > 0 && Math.abs(braceOpen - braceClose) > fracOpen * 2) {
+    // Unbalanced frac → fallback instead of garbage
+    return '$$\\text{See detailed steps below for the answer}$$';
+  }
 
-    // ── IMPROVED WRAPPING LOGIC ──────────────────────────────────────────
-    // Case 1: Looks like an equation → wrap only the right-hand side in inline math
-    const equationMatch = candidate.match(/^(.+?)\s*=\s*(.+)$/);
-    if (equationMatch) {
-      const left = equationMatch[1].trim();
-      const right = equationMatch[2].trim();
-      // Protect right side if it already has delimiters
-      const rightWrapped = right.includes('$') || right.includes('$$') ? right : `$${right}$`;
-      return `${left} = ${rightWrapped}`;
-    }
+  // ── Wrapping logic ────────────────────────────────────────────────────
+  const equationMatch = candidate.match(/^(.+?)\s*=\s*(.+)$/);
+  if (equationMatch) {
+    const left = equationMatch[1].trim();
+    const right = equationMatch[2].trim();
+    const rightWrapped = right.includes('$') || right.includes('$$') ? right : `$${right}$`;
+    return `${left} = ${rightWrapped}`;
+  }
 
-    // Case 2: Pure math expression (no = sign) → display math
-    const isPureMath = !candidate.includes('=') &&
-                       !candidate.includes(' ') &&
-                       candidate.match(/^[a-zA-Z0-9^{}[\]()+\-*/= ]+$/);
-    if (isPureMath) {
-      return `$${candidate}$`; // inline for short symbols
-    }
+  const isPureMath = !candidate.includes('=') &&
+                     candidate.match(/^[a-zA-Z0-9^{}[\]()+\-*/\\ ]+$/) &&
+                     !candidate.includes('  '); // avoid prose
 
-    // Case 3: Everything else → full display math
-    return `$$${candidate}$$`;
-  };
+  if (isPureMath) {
+    return `$${candidate}$`; // inline for symbols/short
+  }
 
+  // Default safe fallback
+  return `$$${candidate}$$`;
+};
   const finalAnswer = extractFinalAnswer(result.text || '');
 
   // Optional: uncomment to debug what is actually being sent to KaTeX
