@@ -21,75 +21,85 @@ export default function ResultPanel({ result, loading, onClose }) {
   if (!result?.image) return null;
 
   // ────────────────────────────────────────────────
-  // Very robust final answer extraction (updated 2026)
+  // Very robust final answer extraction (improved 2026)
   // ────────────────────────────────────────────────
   const extractFinalAnswer = (text) => {
     if (!text?.trim()) return '$$\\text{No solution found}$$';
 
-    let cleaned = text.trim().replace(/\n{3,}/g, '\n\n').replace(/\n+/g, '\n');
+    let cleaned = text
+      .trim()
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/\n+/g, '\n')
+      .replace(/\r/g, ''); // just in case
 
-    // === Priority 1: Extract content inside \boxed{} ===
+    // Priority 1: Content inside the LAST \boxed{...}
     let boxedContent = null;
-    const boxedMatch = cleaned.match(/\\boxed\{([\s\S]*?)\}/);
-    if (boxedMatch && boxedMatch[1]?.trim()) {
-      boxedContent = boxedMatch[1].trim();
+    const boxedMatches = [...cleaned.matchAll(/\\boxed\{([\s\S]*?)\}/g)];
+    if (boxedMatches.length > 0) {
+      const lastBox = boxedMatches[boxedMatches.length - 1];
+      boxedContent = lastBox[1]?.trim() || null;
     }
 
-    // === Priority 2: Last complete $$...$$ block ===
+    // Priority 2: Last complete display math block $$...$$
     const displayMatches = [...cleaned.matchAll(/\$\$([\s\S]*?)\$\$/g)];
     let lastDisplay = null;
     if (displayMatches.length > 0) {
       lastDisplay = displayMatches[displayMatches.length - 1][1].trim();
     }
 
-    // === Choose best candidate ===
+    // Choose best candidate
     let candidate = boxedContent || lastDisplay;
 
-    // === Fallback: keyword search ===
+    // Fallback: keyword-based (final answer, therefore, etc.)
     if (!candidate) {
-      const keywordRegex = /(?:final answer|answer|result|solution|therefore|thus|conclusion|so|we get)[:=\s→-]*([\s\S]*?)(?=\n{2,}|$)/i;
+      const keywordRegex =
+        /(?:final answer|answer|result|solution|therefore|thus|conclusion|so|we get)[:=\s→-]*([\s\S]*?)(?=\n{2,}|$)/i;
       const match = cleaned.match(keywordRegex);
       if (match?.[1]) {
-        candidate = match[1].trim()
-          .replace(/\\boxed\{([\s\S]*?)\}/, '$1') // remove outer boxed if present
-          .replace(/^[$\s\\]+|[$\s\\]+$/, '')     // strip stray delimiters
-          .trim();
+        candidate = match[1].trim();
       }
     }
 
-    // === Last resort: last math-looking line ===
+    // Last resort: last math-ish line
     if (!candidate) {
       const lines = cleaned.split('\n').filter(Boolean);
       for (let i = lines.length - 1; i >= 0; i--) {
         let line = lines[i].trim();
-        if (line.includes('\\') || /[=\-+\*/^(){}\[\]\d]/.test(line)) {
-          line = line.replace(/\\boxed\{([\s\S]*?)\}/, '$1')
-                     .replace(/^[$\s\\]+|[$\s\\]+$/, '')
-                     .trim();
+        if (line.match(/\\(frac|sqrt|sum|int|prod|lim|boxed|[a-z]{2,})|\$\$.*?\$\$|\$[^$]+\$|[=+\-*/^(){}\[\]\d]/)) {
           candidate = line;
           break;
         }
       }
     }
 
-    // === Final safety net ===
     if (!candidate) {
-      return '$$\\text{See steps below}$$';
+      return '$$\\text{See step-by-step solution below}$$';
     }
 
-    // === Force display math if it looks like math but isn't wrapped ===
-    const looksLikeMath = candidate.match(/\\(frac|sqrt|sum|int|prod|lim|boxed|sin|cos|tan|log|ln|[a-z]{2,})|\d+\/\d+|[=+\-*/^()\\{}]/);
-    if (looksLikeMath && !candidate.includes('$$') && !candidate.startsWith('$')) {
-      candidate = `$$${candidate}$$`;
-    }
-
-    // === Clean double-wrapping or junk ===
+    // ── Aggressive normalization ───────────────────────────────────────
     candidate = candidate
-      .replace(/^\$\$+\s*|\s*\$\$+$/g, '$$')   // normalize delimiters
-      .replace(/\\boxed\{([\s\S]*?)\}/g, '$1') // remove any leftover boxed
+      // Remove outer math delimiters (we will add correct ones ourselves)
+      .replace(/^[\s$\\[\]]+|[\s$\\[\]]+$/g, '')
+      // Remove any \boxed wrapper (we want clean content)
+      .replace(/\\boxed\{([\s\S]*?)\}/g, '$1')
+      // Remove stray inner $$ or single $ pairs that would break parsing
+      .replace(/^\$\$|\$\$$/g, '')
+      .replace(/^\$|\$$/g, '')
+      // Remove multiple consecutive delimiters
+      .replace(/[\$]{3,}/g, '$$')
       .trim();
 
-    return candidate || '$$\\text{No final answer extracted}$$';
+    // Decide final wrapping
+    // Most final answers look best in display math in a prominent box
+    const forceDisplayMath = true; // ← you can set to false if you prefer inline for very short answers
+
+    if (forceDisplayMath) {
+      return `$$${candidate}$$`;
+    } else {
+      // Optional: inline for very short / symbolic answers
+      const isShort = candidate.length < 40 && !candidate.includes('\\\\') && !candidate.includes('\\begin');
+      return isShort ? `$${candidate}$` : `$$${candidate}$$`;
+    }
   };
 
   const finalAnswer = extractFinalAnswer(result.text || '');
@@ -119,7 +129,7 @@ export default function ResultPanel({ result, loading, onClose }) {
           {!loading && result?.text && (
             <>
               {/* Final Answer Block */}
-              <div 
+              <div
                 className="final-answer mb-6 p-6 md:p-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-lg)] text-center overflow-hidden"
                 style={{ background: 'linear-gradient(135deg, var(--accent-glow), transparent 70%)' }}
               >
@@ -127,18 +137,24 @@ export default function ResultPanel({ result, loading, onClose }) {
                   Final Answer
                 </h3>
 
-                <div 
+                <div
                   className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-[var(--text-primary)] leading-tight min-h-[4rem] flex items-center justify-center overflow-x-auto px-2"
                 >
                   <ReactMarkdown
                     remarkPlugins={[remarkMath]}
                     rehypePlugins={[rehypeKatex]}
                     components={{
-                      p: ({children}) => <div className="inline-block text-center">{children}</div>,
-                      div: ({node, className, children, ...props}) => 
-                        className?.includes('katex-display')
-                          ? <div className="katex-display-final mx-auto text-center" {...props}>{children}</div>
-                          : <div {...props}>{children}</div>
+                      p: ({ children }) => (
+                        <div className="inline-block text-center">{children}</div>
+                      ),
+                      div: ({ node, className, children, ...props }) =>
+                        className?.includes('katex-display') ? (
+                          <div className="katex-display-final mx-auto text-center" {...props}>
+                            {children}
+                          </div>
+                        ) : (
+                          <div {...props}>{children}</div>
+                        ),
                     }}
                   >
                     {finalAnswer}
@@ -170,7 +186,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                   <h4 className="text-xl font-semibold text-[var(--text-primary)] mb-5">
                     Step-by-Step Solution
                   </h4>
-                  
+
                   <div className="prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)]">
                     <ReactMarkdown
                       remarkPlugins={[remarkMath]}
