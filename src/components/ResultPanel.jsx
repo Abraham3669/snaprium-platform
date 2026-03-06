@@ -292,16 +292,15 @@ function repairLatex(candidate) {
   // Fix subscripts like x_2 → x_{2}
   fixed = fixed.replace(/_([a-zA-Z0-9]+)/g, '_{$1}');
 
-  // Fix incomplete \frac{num} → \frac{num}{1}
+  // Force default denominator 1 for incomplete fractions
   fixed = fixed.replace(/\\frac\{([^}]*)\}(?!\{)/g, '\\frac{$1}{1}');
-
-  // Fix incomplete \frac{num}{ } (empty denom)
   fixed = fixed.replace(/\\frac\{([^}]*)\}\{\}/g, '\\frac{$1}{1}');
+  fixed = fixed.replace(/\\frac\{([^}]*)$/, '\\frac{$1}{1}');
 
-  // Fix \frac with no braces at all (rare case from logs)
+  // Fix \frac with no braces at all (rare case)
   fixed = fixed.replace(/\\frac\s+(\d+)/g, '\\frac{$1}{1}');
 
-  // Gentle brace balancing (only if slightly off – avoid breaking complex)
+  // Gentle brace balancing (only if slightly off)
   const open = (fixed.match(/\{/g) || []).length;
   const close = (fixed.match(/\}/g) || []).length;
 
@@ -317,7 +316,6 @@ function repairLatex(candidate) {
 
   return fixed.trim();
 }
-
 
 
 
