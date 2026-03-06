@@ -96,6 +96,24 @@ const extractFinalAnswer = (text) => {
   // 🔧 Fix LaTeX BEFORE KaTeX preparation
   candidate = repairLatex(candidate);
 
+  // Reject clearly broken fragments
+if (
+  candidate.length < 3 ||
+  candidate === 'text' ||
+  candidate.startsWith('text{') ||
+  candidate === 'For' ||
+  candidate === 'frac' ||
+ candidate.match(/\\frac\{[^}]*\}$/) ||   // incomplete fraction
+  candidate.match(/\^[^{]*$/)            // broken exponent
+) {
+  return '$$\\text{No solution found}$$';
+}
+
+
+
+
+
+
   // Prepare for KaTeX
   candidate = prepareMathForKaTeX(candidate);
 
@@ -252,36 +270,45 @@ const extractFinalAnswer = (text) => {
 function repairLatex(candidate) {
   if (!candidate) return candidate;
 
-  let fixed = candidate;
+  let fixed = candidate.trim();
 
   // Fix missing \frac
   fixed = fixed.replace(/(^|[^\\])frac\{/g, '$1\\frac{');
 
-  // Fix fractions missing denominator
-  fixed = fixed.replace(/\\frac\{([^}]*)\}(?!\{)/g, '\\frac{$1}{?}');
+  // Fix exponent like e^3 -> e^{3}
+  fixed = fixed.replace(/\^([a-zA-Z0-9]+)/g, '^{$1}');
 
-  // Balance braces
-  const open = (fixed.match(/\{/g) || []).length;
-  const close = (fixed.match(/\}/g) || []).length;
+  // Fix subscript like x_2 -> x_{2}
+  fixed = fixed.replace(/_([a-zA-Z0-9]+)/g, '_{$1}');
 
-  if (open > close) {
-    fixed += '}'.repeat(open - close);
-  }
+  /// Fix incomplete \frac{a}
+fixed = fixed.replace(/\\frac\{([^}]*)\}(?!\{)/g, '\\frac{$1}{1}');
 
-  // Fix incomplete exponents
-  fixed = fixed.replace(/\^\{([^}]*)$/, '^{$1}');
+// Fix incomplete \frac{a}{ }
+fixed = fixed.replace(/\\frac\{([^}]*)\}\{\}/g, '\\frac{$1}{1}');
 
-  // Fix incomplete subscripts
-  fixed = fixed.replace(/_\{([^}]*)$/, '_{$1}');
+// Balance braces
+const open = (fixed.match(/\{/g) || []).length;
+const close = (fixed.match(/\}/g) || []).length;
 
-  // Fix incomplete exponent without braces (e^3x type cuts)
-  fixed = fixed.replace(/\^([^\s+\-*/=]+)/g, '^{$1}');
+if (open > close) {
+  fixed += '}'.repeat(open - close);
+}
 
-  // Remove trailing math delimiters if broken
-  fixed = fixed.replace(/\$+$/, '');
+
+
+  // Remove double braces
+  // Remove duplicated braces safely
+fixed = fixed.replace(/\{\s*\{/g, '{').replace(/\}\s*\}/g, '}');
+
 
   return fixed.trim();
 }
+
+
+
+
+
 
 
 
