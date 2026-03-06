@@ -203,9 +203,6 @@ export default function ResultPanel({ result, loading, onClose }) {
   return wrapped;
 };
 
-  console.log("Final answer sent to ReactMarkdown:", wrapped);
-  return wrapped;
-};
 
 
 
