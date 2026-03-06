@@ -39,10 +39,10 @@ const extractFinalAnswer = (text) => {
     candidate = boxed[boxed.length - 1][1].trim();
   }
 
-  // 2. Keyword match (improved to capture more)
+  // 2. Keyword match – improved capture
   if (!candidate) {
     const finalMatch = cleaned.match(
-      /(final answer|answer|result|solution|therefore|thus|conclusion)[:=\s\-→]*([\s\S]*?)(?=\n{2,}|$)/i
+      /(final answer|answer|result|solution|therefore|thus)[:=\s\-→]*([\s\S]*?)(?=\n{2,}|$)/i
     );
     if (finalMatch) {
       candidate = finalMatch[2].trim();
@@ -57,7 +57,7 @@ const extractFinalAnswer = (text) => {
     }
   }
 
-  // 4. Last equation-like line (more permissive for calculus)
+  // 4. Last equation-like line – more permissive for calculus
   if (!candidate) {
     const lines = cleaned.split('\n').reverse();
     for (const line of lines) {
@@ -71,8 +71,8 @@ const extractFinalAnswer = (text) => {
         l.includes('\\int') ||
         l.includes('\\lim') ||
         l.includes('\\sum') ||
-        l.includes('\\der') ||
-        l.includes('d/dx')
+        l.includes('d/dx') ||
+        l.includes('dy/dx')
       ) {
         candidate = l;
         break;
@@ -103,7 +103,7 @@ const extractFinalAnswer = (text) => {
   candidate = repairLatex(candidate);
   candidate = prepareMathForKaTeX(candidate);
 
-  // Final wrapping – always balanced, prefer inline for most math
+  // Prefer inline math for most answers (big font looks great)
   let wrapped;
 
   if (candidate.includes('=')) {
@@ -116,8 +116,8 @@ const extractFinalAnswer = (text) => {
       wrapped = '$' + candidate + '$';
     }
   } else {
-    // Inline for short-to-medium math (covers most calculus)
-    if (candidate.length < 150 && !candidate.includes('\\\\')) {
+    // Inline for short-to-medium (covers calculus)
+    if (candidate.length < 180 && !candidate.includes('\\\\')) {
       wrapped = '$' + candidate + '$';
     } else {
       wrapped = '$$' + candidate + '$$';
@@ -127,7 +127,6 @@ const extractFinalAnswer = (text) => {
   console.log("Final answer sent to ReactMarkdown:", wrapped);
   return wrapped;
 };
-
 
 
   const finalAnswer = extractFinalAnswer(result.text || '');
@@ -274,32 +273,30 @@ function repairLatex(candidate) {
   // Fix missing \frac prefix
   fixed = fixed.replace(/(^|[^\\])frac\{/g, '$1\\frac{');
 
-  // Convert plain fractions 5/2 → \frac{5}{2}
+  // Convert plain fractions
   fixed = fixed.replace(
     /(\d+)\s*\/\s*(\d+)/g,
     '\\frac{$1}{$2}'
   );
 
-  // Fix exponent like e^3 → e^{3}
+  // Fix exponents
   fixed = fixed.replace(/\^([a-zA-Z0-9]+)/g, '^{$1}');
 
-  // Fix subscript like x_2 → x_{2}
+  // Fix subscripts
   fixed = fixed.replace(/_([a-zA-Z0-9]+)/g, '_{$1}');
 
-  // Only fix incomplete \frac if clearly missing denominator
+  // Fix incomplete \frac (empty denominator is OK for KaTeX)
   fixed = fixed.replace(/\\frac\{([^}]*)\}(?!\{)/g, '\\frac{$1}{}');
-
-  // Do NOT add 1 or ? — let KaTeX show empty denominator (cleaner)
 
   // Gentle brace balancing (only if slightly off)
   const open = (fixed.match(/\{/g) || []).length;
   const close = (fixed.match(/\}/g) || []).length;
 
-  if (open > close && open - close < 4) {
+  if (open > close && open - close < 5) {
     fixed += '}'.repeat(open - close);
   }
 
-  // Clean up extra braces safely
+  // Clean extra braces
   fixed = fixed
     .replace(/\{\s*\{/g, '{')
     .replace(/\}\s*\}/g, '}')
@@ -307,7 +304,6 @@ function repairLatex(candidate) {
 
   return fixed.trim();
 }
-
 
 
 
