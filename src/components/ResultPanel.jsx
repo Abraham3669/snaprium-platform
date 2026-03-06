@@ -20,7 +20,7 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   if (!result?.image) return null;
 
-  const extractFinalAnswer = (text) => {
+ const extractFinalAnswer = (text) => {
   if (!text?.trim()) return '$$\\text{No solution found}$$';
 
   let cleaned = text
@@ -31,13 +31,13 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   let candidate = null;
 
-  // Priority 1: Last \boxed{...} — highest trust
+  // Priority 1: Last \boxed{...}
   const boxedMatches = [...cleaned.matchAll(/\\boxed\{([\s\S]*?)\}/g)];
   if (boxedMatches.length > 0) {
     candidate = boxedMatches[boxedMatches.length - 1][1].trim();
   }
 
-  // Priority 2: Last complete display math block
+  // Priority 2: Last display math block
   if (!candidate) {
     const displayMatches = [...cleaned.matchAll(/\$\$([\s\S]*?)\$\$|\\\[([\s\S]*?)\\\]/g)];
     if (displayMatches.length > 0) {
@@ -46,24 +46,24 @@ export default function ResultPanel({ result, loading, onClose }) {
     }
   }
 
-  // Priority 3: Keyword-based capture (greedier end boundary)
+  // Priority 3: Keyword phrase
   if (!candidate) {
     const keywordRegex = /(?:final answer|answer|result|solution|therefore|thus|conclusion|so|we get)[:=\s→-]?\s*([\s\S]*?)(?=\n{2,}|$)/is;
     const match = cleaned.match(keywordRegex);
     if (match?.[1]) candidate = match[1].trim();
   }
 
-  // Priority 4: Last plausible math line — stricter length & structure
+  // Priority 4: Last plausible math line
   if (!candidate) {
     const lines = cleaned.split('\n').filter(Boolean);
     for (let i = lines.length - 1; i >= 0; i--) {
       const line = lines[i].trim();
-      if (line.length < 10) continue; // skip tiny fragments like "\frac{5"
+      if (line.length < 10) continue;
       if (
         line.includes('\\boxed') ||
-        (line.includes('\\frac') && line.includes('}{')) || // requires both braces
+        (line.includes('\\frac') && line.includes('}{')) ||
         line.match(/(f'|f''|[a-z]\(x\))\s*=/) ||
-        line.match(/\\(sqrt|sum|int|prod|lim|e\^{|sin|cos|ln|log)/)
+        line.match(/\\(sqrt|sum|int|prod|lim|e\^{)/)
       ) {
         candidate = line;
         break;
@@ -75,30 +75,36 @@ export default function ResultPanel({ result, loading, onClose }) {
     return '$$\\text{See the detailed steps below}$$';
   }
 
-  // Cleanup outer junk
+  // Cleanup
   candidate = candidate
     .replace(/^[\s$\\[\]]+|[\s$\\[\]]+$/g, '')
     .replace(/^\\boxed\{([\s\S]*)\}$/, '$1')
     .replace(/\\boxed\{([\s\S]*?)\}/g, '$1')
     .trim();
 
-  // ── Apply the same preparation that helps steps render well ──
+  // Apply same preparation as steps
   candidate = prepareMathForKaTeX(candidate);
 
-  // ── Stronger protection against broken frac after preparation ──
+  // Emergency junk filter
+  if (
+    candidate.length < 8 ||
+    (candidate.includes('\\frac') && candidate.length < 12) ||
+    candidate.startsWith('frac') ||
+    candidate === 'frac{5'
+  ) {
+    return '$$\\text{See steps below}$$';
+  }
+
+  // Stronger frac balance check
   const fracCount = (candidate.match(/\\frac|\\dfrac/g) || []).length;
   const openBraces  = (candidate.match(/\{/g)  || []).length;
   const closeBraces = (candidate.match(/\}/g) || []).length;
 
   if (fracCount > 0 && (openBraces < fracCount * 2 || closeBraces < fracCount * 2)) {
-    // Still broken → render as plain text (prevents "frac{5" mess)
     return `\\text{Answer: ${candidate}}`;
-    // Alternative (cleaner but less informative):
-    // return '$$\\text{See steps below}$$';
   }
 
-  // ── Wrapping logic ────────────────────────────────────────────────
-  // Case: looks like equation → wrap only right side in inline math
+  // Wrapping
   const eqMatch = candidate.match(/^(.+?)\s*=\s*(.+)$/);
   if (eqMatch) {
     const left  = eqMatch[1].trim();
@@ -106,12 +112,10 @@ export default function ResultPanel({ result, loading, onClose }) {
     return `${left} = $${right}$`;
   }
 
-  // Case: short pure math/symbol → inline
   if (!candidate.includes('=') && candidate.length < 60 && !candidate.includes('  ')) {
     return `$${candidate}$`;
   }
 
-  // Default: full display math
   return `$$${candidate}$$`;
 };
 
