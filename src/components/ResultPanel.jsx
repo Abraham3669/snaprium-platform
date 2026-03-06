@@ -31,38 +31,39 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   let candidate = null;
 
-  // 1. Last \boxed{} – best source
+  // Priority 1: Last \boxed{...}
   const boxedMatches = [...cleaned.matchAll(/\\boxed\{([\s\S]*?)\}/g)];
   if (boxedMatches.length > 0) {
     candidate = boxedMatches[boxedMatches.length - 1][1].trim();
   }
 
-  // 2. Last $$...$$ or \[...\]
+  // Priority 2: Last display math block
   if (!candidate) {
     const displayMatches = [...cleaned.matchAll(/\$\$([\s\S]*?)\$\$|\\\[([\s\S]*?)\\\]/g)];
     if (displayMatches.length > 0) {
       const last = displayMatches[displayMatches.length - 1];
-      candidate = (last[1] || last[2]).trim();
+      candidate = (last[1] || last[2] || '').trim();
     }
   }
 
-  // 3. Keyword fallback – capture more reliably
+  // Priority 3: Keyword phrase
   if (!candidate) {
     const keywordRegex = /(?:final answer|answer|result|solution|therefore|thus|conclusion|so|we get)[:=\s→-]?\s*([\s\S]*?)(?=\n{2,}|$)/is;
     const match = cleaned.match(keywordRegex);
     if (match?.[1]) candidate = match[1].trim();
   }
 
-  // 4. Last math-looking line – stricter to avoid fragments
+  // Priority 4: Last plausible math line (avoid tiny fragments)
   if (!candidate) {
     const lines = cleaned.split('\n').filter(Boolean);
     for (let i = lines.length - 1; i >= 0; i--) {
       const line = lines[i].trim();
-      // Only take if it has a decent math indicator AND not obviously incomplete
+      if (line.length < 8) continue; // skip very short fragments
       if (
-        (line.match(/\\(frac|dfrac|sqrt|sum|int|prod|lim|e\^\{|sin|cos|ln|log)/) && line.length > 12) ||
+        line.includes('\\boxed') ||
+        line.includes('\\frac') && line.includes('}{') ||
         line.match(/(f'|f''|[a-z]\(x\))\s*=/) ||
-        line.match(/^\s*[a-zA-Z0-9^{}[\]()+\-*/= ]{8,60}\s*$/)
+        line.match(/\\(sqrt|sum|int|prod|lim|e\^{)/)
       ) {
         candidate = line;
         break;
@@ -71,44 +72,41 @@ export default function ResultPanel({ result, loading, onClose }) {
   }
 
   if (!candidate) {
-    return '$$\\text{See step-by-step solution below}$$';
+    return '$$\\text{See the detailed steps below}$$';
   }
 
-  // ── Cleanup ───────────────────────────────────────────────────────────
+  // Cleanup outer junk
   candidate = candidate
     .replace(/^[\s$\\[\]]+|[\s$\\[\]]+$/g, '')
     .replace(/^\\boxed\{([\s\S]*)\}$/, '$1')
     .replace(/\\boxed\{([\s\S]*?)\}/g, '$1')
     .trim();
 
-  // ── NEW: Protect against obviously broken frac ────────────────────────
-  const fracOpen = (candidate.match(/\\frac|\\dfrac/g) || []).length;
-  const braceOpen = (candidate.match(/\{/g) || []).length;
-  const braceClose = (candidate.match(/\}/g) || []).length;
+  // ── CRITICAL CHECK: Block obviously broken frac/dfrac ──
+  const fracCount = (candidate.match(/\\frac|\\dfrac/g) || []).length;
+  const openBraces  = (candidate.match(/\{/g)  || []).length;
+  const closeBraces = (candidate.match(/\}/g) || []).length;
 
-  if (fracOpen > 0 && Math.abs(braceOpen - braceClose) > fracOpen * 2) {
-    // Unbalanced frac → fallback instead of garbage
-    return '$$\\text{See detailed steps below for the answer}$$';
+  if (fracCount > 0 && (openBraces < fracCount * 2 || closeBraces < fracCount * 2)) {
+    // Incomplete fraction detected → don't render as math
+    return `\\text{Answer involves a fraction – see steps below}`;
   }
 
-  // ── Wrapping logic ────────────────────────────────────────────────────
-  const equationMatch = candidate.match(/^(.+?)\s*=\s*(.+)$/);
-  if (equationMatch) {
-    const left = equationMatch[1].trim();
-    const right = equationMatch[2].trim();
-    const rightWrapped = right.includes('$') || right.includes('$$') ? right : `$${right}$`;
-    return `${left} = ${rightWrapped}`;
+  // ── Wrapping ──────────────────────────────────────────────────────────
+  // Equation style: wrap only right-hand side
+  const eqMatch = candidate.match(/^(.+?)\s*=\s*(.+)$/);
+  if (eqMatch) {
+    const left  = eqMatch[1].trim();
+    const right = eqMatch[2].trim();
+    return `${left} = $${right}$`;
   }
 
-  const isPureMath = !candidate.includes('=') &&
-                     candidate.match(/^[a-zA-Z0-9^{}[\]()+\-*/\\ ]+$/) &&
-                     !candidate.includes('  '); // avoid prose
-
-  if (isPureMath) {
-    return `$${candidate}$`; // inline for symbols/short
+  // Short pure math → inline
+  if (!candidate.includes('=') && candidate.length < 60 && !candidate.includes('  ')) {
+    return `$${candidate}$`;
   }
 
-  // Default safe fallback
+  // Everything else → try display math (but we already blocked bad frac)
   return `$$${candidate}$$`;
 };
   const finalAnswer = extractFinalAnswer(result.text || '');
