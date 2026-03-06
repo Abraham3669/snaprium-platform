@@ -20,119 +20,124 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   if (!result?.image) return null;
 
-const extractFinalAnswer = (text) => {
-  if (!text || !text.trim()) {
-    return '$$\\text{No solution found}$$';
-  }
-
-  let cleaned = text
-    .trim()
-    .replace(/\r\n|\r/g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .replace(/\n+/g, '\n');
-
-  let candidate = null;
-
-  // 1. Last \boxed{} – highest priority
-  const boxed = [...cleaned.matchAll(/\\boxed\{([\s\S]*?)\}/g)];
-  if (boxed.length) {
-    candidate = boxed[boxed.length - 1][1].trim();
-  }
-
-  // 2. Keyword match – improved capture
-  if (!candidate) {
-    const finalMatch = cleaned.match(
-      /(final answer|answer|result|solution|therefore|thus)[:=\s\-→]*([\s\S]*?)(?=\n{2,}|$)/i
-    );
-    if (finalMatch) {
-      candidate = finalMatch[2].trim();
+  const extractFinalAnswer = (text) => {
+    if (!text || !text.trim()) {
+      return '$$\\text{No solution found}$$';
     }
-  }
 
-  // 3. Last display math block
-  if (!candidate) {
-    const display = [...cleaned.matchAll(/\$\$([\s\S]*?)\$\$/g)];
-    if (display.length) {
-      candidate = display[display.length - 1][1].trim();
+    let cleaned = text
+      .trim()
+      .replace(/\r\n|\r/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/\n+/g, '\n');
+
+    let candidate = null;
+
+    // 1. Last \boxed{} — best
+    const boxed = [...cleaned.matchAll(/\\boxed\{([\s\S]*?)\}/g)];
+    if (boxed.length) {
+      candidate = boxed[boxed.length - 1][1].trim();
     }
-  }
 
-  // 4. Last equation-like line – more permissive for calculus
-  if (!candidate) {
-    const lines = cleaned.split('\n').reverse();
-    for (const line of lines) {
-      const l = line.trim();
-      if (!l) continue;
-      if (
-        l.includes('=') ||
-        l.includes('\\frac') ||
-        l.includes('^') ||
-        l.includes('_') ||
-        l.includes('\\int') ||
-        l.includes('\\lim') ||
-        l.includes('\\sum') ||
-        l.includes('d/dx') ||
-        l.includes('dy/dx')
-      ) {
-        candidate = l;
-        break;
+    // 2. Keyword match – improved capture
+    if (!candidate) {
+      const finalMatch = cleaned.match(
+        /(final answer|answer|result|solution|therefore|thus|conclusion)[:=\s\-→]*([\s\S]*?)(?=\n{2,}|$)/i
+      );
+      if (finalMatch) {
+        candidate = finalMatch[2].trim();
       }
     }
-  }
 
-  // 5. Plain fraction fallback
-  if (!candidate) {
-    const fraction = cleaned.match(/\d+\s*\/\s*\d+/);
-    if (fraction) {
-      candidate = fraction[0];
+    // 3. Last display math block
+    if (!candidate) {
+      const display = [...cleaned.matchAll(/\$\$([\s\S]*?)\$\$/g)];
+      if (display.length) {
+        candidate = display[display.length - 1][1].trim();
+      }
     }
-  }
 
-  if (!candidate) {
-    return '$$\\text{No solution found}$$';
-  }
+    // 4. Last equation-like line – more permissive for complex/calculus
+    if (!candidate) {
+      const lines = cleaned.split('\n').reverse();
+      for (const line of lines) {
+        const l = line.trim();
+        if (!l) continue;
+        if (
+          l.includes('=') ||
+          l.includes('\\frac') ||
+          l.includes('^') ||
+          l.includes('_') ||
+          l.includes('\\int') ||
+          l.includes('\\lim') ||
+          l.includes('\\sum') ||
+          l.includes('\\der') ||
+          l.includes('d/dx') ||
+          l.includes('dy/dx') ||
+          l.includes('\\sqrt') ||
+          l.includes('\\sin') ||
+          l.includes('\\cos') ||
+          l.includes('\\log') ||
+          l.includes('\\ln')
+        ) {
+          candidate = l;
+          break;
+        }
+      }
+    }
 
-  // Remove wrappers
-  candidate = candidate
-    .replace(/^\$+|\$+$/g, '')
-    .replace(/^\\\[|\\\]$/g, '')
-    .replace(/\\boxed\{([\s\S]*?)\}/g, '$1')
-    .trim();
+    // 5. Plain fraction fallback
+    if (!candidate) {
+      const fraction = cleaned.match(/\d+\s*\/\s*\d+/);
+      if (fraction) {
+        candidate = fraction[0];
+      }
+    }
 
-  // Repair and prepare
-  candidate = repairLatex(candidate);
-  candidate = prepareMathForKaTeX(candidate);
+    if (!candidate) {
+      return '$$\\text{No solution found}$$';
+    }
 
-  // Prefer inline math for most answers (big font looks great)
-  let wrapped;
+    // Remove wrappers
+    candidate = candidate
+      .replace(/^\$+|\$+$/g, '')
+      .replace(/^\\\[|\\\]$/g, '')
+      .replace(/\\boxed\{([\s\S]*?)\}/g, '$1')
+      .trim();
 
-  if (candidate.includes('=')) {
-    const parts = candidate.split('=');
-    if (parts.length === 2) {
-      const left = parts[0].trim();
-      const right = parts[1].trim();
-      wrapped = left + ' = $' + right + '$';
+    // Repair and prepare
+    candidate = repairLatex(candidate);
+    candidate = prepareMathForKaTeX(candidate);
+
+    // Final wrapping – prefer inline for almost everything
+    let wrapped;
+
+    if (candidate.includes('=')) {
+      const parts = candidate.split('=');
+      if (parts.length === 2) {
+        const left = parts[0].trim();
+        const right = parts[1].trim();
+        wrapped = left + ' = $' + right + '$';
+      } else {
+        wrapped = '$' + candidate + '$';
+      }
     } else {
-      wrapped = '$' + candidate + '$';
+      // Inline for short-to-medium (covers most calculus)
+      if (candidate.length < 200) {
+        wrapped = '$' + candidate + '$';
+      } else {
+        wrapped = '$$' + candidate + '$$';
+      }
     }
-  } else {
-    // Inline for short-to-medium (covers calculus)
-    if (candidate.length < 180 && !candidate.includes('\\\\')) {
-      wrapped = '$' + candidate + '$';
-    } else {
-      wrapped = '$$' + candidate + '$$';
-    }
-  }
 
-  console.log("Final answer sent to ReactMarkdown:", wrapped);
-  return wrapped;
-};
-
+    console.log("Final answer sent to ReactMarkdown:", wrapped);
+    return wrapped;
+  };
 
   const finalAnswer = extractFinalAnswer(result.text || '');
 
   // Optional debug: uncomment to see what’s actually being rendered
-   console.log("Final answer sent to ReactMarkdown:", finalAnswer);
+  console.log("Final answer sent to ReactMarkdown:", finalAnswer);
 
   return (
     <div className="result-panel">
@@ -260,11 +265,6 @@ const extractFinalAnswer = (text) => {
   );
 }
 
-
-
-
-
-
 function repairLatex(candidate) {
   if (!candidate) return candidate;
 
@@ -285,8 +285,14 @@ function repairLatex(candidate) {
   // Fix subscripts
   fixed = fixed.replace(/_([a-zA-Z0-9]+)/g, '_{$1}');
 
-  // Fix incomplete \frac (empty denominator is OK for KaTeX)
-  fixed = fixed.replace(/\\frac\{([^}]*)\}(?!\{)/g, '\\frac{$1}{}');
+  // Fix incomplete \frac — add default denominator 1
+  fixed = fixed.replace(/\\frac\{([^}]*)\}(?!\{)/g, '\\frac{$1}{1}');
+
+  // Fix incomplete \frac{num}{ (empty denom)
+  fixed = fixed.replace(/\\frac\{([^}]*)\}\{\}/g, '\\frac{$1}{1}');
+
+  // Fix \frac with no braces at all (rare)
+  fixed = fixed.replace(/\\frac\s+(\d+)/g, '\\frac{$1}{1}');
 
   // Gentle brace balancing (only if slightly off)
   const open = (fixed.match(/\{/g) || []).length;
@@ -296,7 +302,7 @@ function repairLatex(candidate) {
     fixed += '}'.repeat(open - close);
   }
 
-  // Clean extra braces
+  // Clean extra/empty braces
   fixed = fixed
     .replace(/\{\s*\{/g, '{')
     .replace(/\}\s*\}/g, '}')
@@ -304,11 +310,6 @@ function repairLatex(candidate) {
 
   return fixed.trim();
 }
-
-
-
-
-
 
 function prepareMathForKaTeX(rawText) {
   if (!rawText) return '';
@@ -336,5 +337,3 @@ function prepareMathForKaTeX(rawText) {
 
   return text;
 }
-
-
