@@ -3138,7 +3138,7 @@ button.w-full.py-3\.5:active {
 
 
 
-/* Photomath-style HUGE Final Answer – all sizing in CSS */
+/* Final Answer Card – clean & professional */
 .final-answer {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -3148,14 +3148,14 @@ button.w-full.py-3\.5:active {
 }
 
 .final-answer-header {
-  font-size: 2rem;                   /* ~32px – big header */
+  font-size: 2rem;
   font-weight: 700;
   color: var(--text-secondary);
   padding: 1.75rem 1.5rem 0.75rem;
   letter-spacing: -0.025em;
 }
 
-/* Huge scrollable container */
+/* Scrollable area for huge answer */
 .answer-container {
   min-height: 14rem;
   padding: 1.5rem 1.5rem 3.5rem;
@@ -3165,7 +3165,6 @@ button.w-full.py-3\.5:active {
   scrollbar-color: var(--accent) transparent;
 }
 
-/* WebKit scrollbars */
 .answer-container::-webkit-scrollbar {
   height: 10px;
 }
@@ -3180,27 +3179,28 @@ button.w-full.py-3\.5:active {
   background-color: var(--accent-dark);
 }
 
-/* KaTeX – very large & bold (Photomath level) */
-.katex {
-  font-size: 3.8em !important;       /* main huge size – feel free to try 4em or 4.2em */
+/* ONLY final answer gets huge KaTeX size */
+.huge-katex-display .katex,
+.answer-container .katex {
+  font-size: 4.2em !important;      /* ← very big — change to 4.5em or 5em if you want even larger */
   font-weight: 900 !important;
   color: var(--text-primary);
   line-height: 1.25;
 }
 
-.katex-display {
+.huge-katex-display .katex-display,
+.answer-container .katex-display {
   margin: 1.5rem 0;
-  padding: 0.75rem 0;
 }
 
-/* No wrapping for long expressions */
-.katex-html {
+.huge-katex-display .katex-html,
+.answer-container .katex-html {
   white-space: nowrap !important;
 }
 
-/* Extra boldness on operators/symbols */
-.katex .mord,
-.katex .mop,
-.katex .mbin {
+/* Extra bold on symbols (optional) */
+.huge-katex-display .katex .mord,
+.huge-katex-display .katex .mop,
+.huge-katex-display .katex .mbin {
   font-weight: 900;
 }

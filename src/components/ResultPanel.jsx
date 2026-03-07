@@ -58,7 +58,7 @@ export default function ResultPanel({ result, loading, onClose }) {
         <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
           {!loading && result?.text && (
             <>
-              {/* Photomath-style HUGE Final Answer – no inline styles */}
+              {/* Final Answer Card – only this one gets huge math */}
               <div className="final-answer mb-6 md:mb-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-md)] overflow-hidden">
                 <h3 className="final-answer-header">
                   Final Answer
@@ -76,7 +76,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                       ),
                       div: ({ node, className, children, ...props }) =>
                         className?.includes('katex-display')
-                          ? <div className="katex-display-final mx-auto text-center whitespace-nowrap my-4" {...props}>
+                          ? <div className="huge-katex-display mx-auto text-center whitespace-nowrap my-4" {...props}>
                               {children}
                             </div>
                           : <div {...props}>{children}</div>,
@@ -98,7 +98,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                 </span>
               </button>
 
-              {/* Steps Section */}
+              {/* Steps Section – normal KaTeX size */}
               <div
                 ref={stepsRef}
                 className="overflow-hidden transition-all duration-500 ease-in-out"
@@ -156,7 +156,7 @@ export default function ResultPanel({ result, loading, onClose }) {
 }
 
 // ────────────────────────────────────────────────
-// Extract last boxed answer (balanced braces)
+// Extract last boxed answer
 function extractFinalAnswer(rawText) {
   if (!rawText) return '';
 
