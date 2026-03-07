@@ -58,69 +58,71 @@ export default function ResultPanel({ result, loading, onClose }) {
         <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
           {!loading && result?.text && (
             <>
-              {/* Final Answer Card – only this section gets massive math */}
-             <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden">
+              {/* ─── FINAL ANSWER (BIG) ──────────────────────────────────────── */}
+              <div className="final-answer-card mb-8 rounded-2xl border border-blue-200 dark:border-blue-800/50 bg-gradient-to-br from-blue-50/60 to-indigo-50/40 dark:from-gray-800/60 dark:to-indigo-950/30 shadow-xl overflow-hidden">
+                <h3 className="px-6 py-4 text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+                  Final Answer
+                </h3>
 
-  <h3 className="final-answer-header px-6 py-4 text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-    Final Answer
-  </h3>
+                <div className="p-8 pb-10 flex justify-center items-center min-h-[160px] md:min-h-[220px]">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkMath]}
+                    rehypePlugins={[rehypeKatex]}
+                    components={{
+                      p: ({ children }) => (
+                        <div className="inline-block text-center whitespace-nowrap min-w-fit">
+                          {children}
+                        </div>
+                      ),
+                      div: ({ node, className, children, ...props }) =>
+                        className?.includes('katex-display') ? (
+                          <div
+                            className="huge-final-katex mx-auto text-center"
+                            style={{ fontSize: '320%' }} // 280–420% is usually perfect — tune here
+                            {...props}
+                          >
+                            {children}
+                          </div>
+                        ) : (
+                          <div {...props}>{children}</div>
+                        ),
+                    }}
+                  >
+                    {finalAnswerContent || '\\text{No final answer detected}'}
+                  </ReactMarkdown>
+                </div>
+              </div>
 
-  <div className="massive-answer-container p-8 pb-10 flex justify-center items-center min-h-[180px]">
-    <ReactMarkdown
-      remarkPlugins={[remarkMath]}
-      rehypePlugins={[rehypeKatex]}
-      components={{
-        p: ({children}) => (
-          <div className="inline-block text-center whitespace-nowrap min-w-fit">
-            {children}
-          </div>
-        ),
-        div: ({node, className, children, ...props}) =>
-          className?.includes('katex-display') ? (
-            <div
-              className="massive-katex-display mx-auto text-center"
-              {...props}
-            >
-              {children}
-            </div>
-          ) : (
-            <div className="massive-fallback-text" {...props}>
-              {children}
-            </div>
-          ),
-      }}
-    >
-      {finalAnswerContent || '\\text{-}'}
-    </ReactMarkdown>
-  </div>
-</div>
-
-              {/* Toggle Button */}
+              {/* ─── TOGGLE STEPS ────────────────────────────────────────────── */}
               <button
                 onClick={() => setShowSteps(!showSteps)}
-                className="w-full py-3.5 px-5 mb-5 bg-[var(--accent)] hover:bg-[var(--accent-dark)] text-white font-medium rounded-lg shadow-md transition-all flex items-center justify-center gap-2"
+                className="w-full py-3.5 px-5 mb-6 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white font-medium rounded-xl shadow-lg transition-all flex items-center justify-center gap-2.5"
               >
-                {showSteps ? 'Hide Step-by-Step' : 'Show Step-by-Step'}
+                {showSteps ? 'Hide Steps' : 'Show Step-by-Step Solution'}
                 <span className="text-xl transition-transform duration-300">
                   {showSteps ? '▲' : '▼'}
                 </span>
               </button>
 
-              {/* Steps Section – normal size */}
+              {/* ─── STEPS (normal size) ─────────────────────────────────────── */}
               <div
                 ref={stepsRef}
                 className="overflow-hidden transition-all duration-500 ease-in-out"
                 style={{
-                  maxHeight: showSteps ? `${stepsRef.current?.scrollHeight || 2000}px` : '0px',
+                  maxHeight: showSteps ? `${stepsRef.current?.scrollHeight || 3000}px` : '0px',
                   opacity: showSteps ? 1 : 0,
                 }}
               >
-                <div className="pt-1 pb-8 px-1">
-                  <h4 className="text-xl font-semibold text-[var(--text-primary)] mb-5">
+                <div className="pt-2 pb-10 px-2">
+                  <h4 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-6">
                     Step-by-Step Solution
                   </h4>
-                  <div className="prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)]">
-                    <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                  <div className="prose-headings:text-gray-900 dark:prose-headings:text-gray-100 prose-p:text-gray-700 dark:prose-p:text-gray-300">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkMath]}
+                      rehypePlugins={[rehypeKatex]}
+                      // NO custom huge components here → stays normal size
+                    >
                       {preparedSteps}
                     </ReactMarkdown>
                   </div>
@@ -128,33 +130,26 @@ export default function ResultPanel({ result, loading, onClose }) {
               </div>
 
               {/* Feedback */}
-              <div className="feedback-bar mt-6 flex justify-center gap-4">
+              <div className="feedback-bar mt-8 flex justify-center gap-5">
                 <button
-                  className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'up' ? 'active' : ''}`}
+                  className={`feedback-btn flex items-center gap-2.5 px-6 py-3 rounded-xl border ${feedback === 'up' ? 'bg-green-100 border-green-500 text-green-700' : 'border-gray-300 hover:bg-gray-100'} transition-colors`}
                   onClick={() => handleFeedback('up')}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path d="M14 9V5a3 3 0 0 0-6 0v4H5v11h14V9h-5z" stroke="currentColor" strokeWidth="2" />
-                  </svg>
-                  Helpful
+                  👍 Helpful
                 </button>
-
                 <button
-                  className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'down' ? 'active' : ''}`}
+                  className={`feedback-btn flex items-center gap-2.5 px-6 py-3 rounded-xl border ${feedback === 'down' ? 'bg-red-100 border-red-500 text-red-700' : 'border-gray-300 hover:bg-gray-100'} transition-colors`}
                   onClick={() => handleFeedback('down')}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path d="M10 15v4a3 3 0 0 0 6 0v-4h3V4H5v11h5z" stroke="currentColor" strokeWidth="2" />
-                  </svg>
-                  Not Helpful
+                  👎 Not Helpful
                 </button>
               </div>
             </>
           )}
 
           {loading && (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              Solving your problem...
+            <div className="text-center py-10 text-gray-500 dark:text-gray-400 italic">
+              Working on your solution...
             </div>
           )}
         </div>
@@ -164,7 +159,9 @@ export default function ResultPanel({ result, loading, onClose }) {
 }
 
 // ────────────────────────────────────────────────
-// Extract last boxed answer
+// Your helper functions remain unchanged
+// ────────────────────────────────────────────────
+
 function extractFinalAnswer(rawText) {
   if (!rawText) return '';
 
@@ -200,7 +197,6 @@ function extractFinalAnswer(rawText) {
   return content;
 }
 
-// Fallback
 function fallbackLastLines(rawText) {
   const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
   if (lines.length < 1) return '';
@@ -217,7 +213,6 @@ function fallbackLastLines(rawText) {
   return candidate || lines[lines.length - 1];
 }
 
-// prepareMathForKaTeX
 function prepareMathForKaTeX(rawText) {
   if (!rawText) return '';
 
