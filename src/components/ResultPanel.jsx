@@ -39,106 +39,137 @@ export default function ResultPanel({ result, loading, onClose }) {
   }
 
   return (
-  <div className="result-panel">
-    <div className="result-panel-header">
-      <h2>Solution</h2>
-      <button className="close-btn" onClick={onClose}>✕</button>
-    </div>
-
-    <div className="result-panel-content">
-      <div className="image-wrapper">
-        <img className="result-image" src={result.image} alt="Cropped preview" />
-        {loading && (
-          <div className="scan-overlay">
-            <div className="scan-line"></div>
-          </div>
-        )}
+    <div className="result-panel">
+      <div className="result-panel-header">
+        <h2>Solution</h2>
+        <button className="close-btn" onClick={onClose}>✕</button>
       </div>
 
-      <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
-        {!loading && result?.text && (
-          <>
-            {/* Final Answer Card – BIG & PROUD */}
-            <div className="final-answer mb-6 md:mb-10 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-lg)] overflow-hidden">
-              <h3 className="final-answer-header px-6 pt-5 pb-3 text-2xl md:text-3xl font-bold text-center">
-                Final Answer
-              </h3>
+      <div className="result-panel-content">
+        <div className="image-wrapper">
+          <img className="result-image" src={result.image} alt="Cropped preview" />
+          {loading && (
+            <div className="scan-overlay">
+              <div className="scan-line"></div>
+            </div>
+          )}
+        </div>
 
-              <div className="massive-answer-container">
-                <ReactMarkdown
-                  remarkPlugins={[remarkMath]}
-                  rehypePlugins={[rehypeKatex]}
-                  components={{
-                    p: ({ children }) => (
-                      <div className="inline-block text-center leading-tight min-w-fit">
-                        {children}
-                      </div>
-                    ),
-                    div: ({ node, className, children, ...props }) =>
-                      className?.includes('katex-display') ? (
-                        <div className="block massive-katex mx-auto my-2 md:my-4" {...props}>
-                          {children}
-                        </div>
-                      ) : (
-                        <div className="massive-text" {...props}>
+        <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
+          {!loading && result?.text && (
+            <>
+              {/* ── FINAL ANSWER ── EXTREMELY HUGE VERSION ── */}
+              <div className="final-answer mb-8 md:mb-12 rounded-3xl border-2 border-indigo-500/40 bg-gradient-to-b from-slate-800/60 to-slate-900/60 shadow-2xl overflow-hidden min-h-[300px] md:min-h-[420px] flex flex-col">
+                <h3 className="final-answer-header text-4xl md:text-5xl font-black text-center py-6 md:py-8 bg-gradient-to-r from-indigo-900/40 via-purple-900/30 to-indigo-900/40 text-white tracking-tight">
+                  FINAL ANSWER
+                </h3>
+
+                <div className="massive-answer-container flex-1 flex items-center justify-center px-4 py-6 md:py-12 text-center overflow-visible">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkMath]}
+                    rehypePlugins={[rehypeKatex]}
+                    components={{
+                      p: ({ children }) => (
+                        <div className="giant-text text-5xl md:text-7xl lg:text-8xl font-extrabold leading-tight tracking-tight text-white">
                           {children}
                         </div>
                       ),
-                  }}
-                >
-                  {finalAnswerContent || '\\text{—}'}
-                </ReactMarkdown>
-              </div>
-            </div>
-
-            {/* Toggle Button */}
-            <button
-              onClick={() => setShowSteps(!showSteps)}
-              className="w-full py-3.5 px-5 mb-6 bg-[var(--accent)] hover:bg-[var(--accent-dark)] text-white font-medium rounded-lg shadow-md transition-all flex items-center justify-center gap-2"
-            >
-              {showSteps ? 'Hide Step-by-Step' : 'Show Step-by-Step'}
-              <span className="text-xl transition-transform duration-300">
-                {showSteps ? '▲' : '▼'}
-              </span>
-            </button>
-
-            {/* Steps Section – normal size */}
-            <div
-              ref={stepsRef}
-              className="overflow-hidden transition-all duration-500 ease-in-out"
-              style={{
-                maxHeight: showSteps ? `${stepsRef.current?.scrollHeight || 2000}px` : '0px',
-                opacity: showSteps ? 1 : 0,
-              }}
-            >
-              <div className="pt-1 pb-10 px-2 md:px-4">
-                <h4 className="text-xl font-semibold text-[var(--text-primary)] mb-5">
-                  Step-by-Step Solution
-                </h4>
-                <div className="prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)]">
-                  <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                    {preparedSteps}
+                      div: ({ node, className, children, ...props }) =>
+                        className?.includes('katex-display') ? (
+                          <div
+                            className="giant-katex-display scale-125 md:scale-150 lg:scale-175 transform-gpu origin-center text-white"
+                            style={{ lineHeight: 1.05 }}
+                            {...props}
+                          >
+                            {children}
+                          </div>
+                        ) : (
+                          <div className="giant-text text-5xl md:text-7xl lg:text-8xl font-extrabold leading-tight tracking-tight text-white" {...props}>
+                            {children}
+                          </div>
+                        ),
+                    }}
+                  >
+                    {finalAnswerContent || '\\Huge\\text{—}'}
                   </ReactMarkdown>
                 </div>
               </div>
-            </div>
+              {/* ──────────────────────────────────────────────── */}
 
-            {/* Feedback */}
-            <div className="feedback-bar mt-6 flex justify-center gap-4">
-              {/* ... unchanged ... */}
-            </div>
-          </>
-        )}
+              {/* Toggle Button */}
+              <button
+                onClick={() => setShowSteps(!showSteps)}
+                className="w-full py-4 px-6 mb-6 text-lg md:text-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg transition-all flex items-center justify-center gap-3"
+              >
+                {showSteps ? 'Hide Steps' : 'Show Step-by-Step Solution'}
+                <span className="text-2xl transition-transform duration-300">
+                  {showSteps ? '▲' : '▼'}
+                </span>
+              </button>
 
-        {loading && (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-            Solving your problem...
-          </div>
-        )}
+              {/* Steps Section – normal size */}
+              <div
+                ref={stepsRef}
+                className="overflow-hidden transition-all duration-500 ease-in-out"
+                style={{
+                  maxHeight: showSteps ? `${stepsRef.current?.scrollHeight || 2000}px` : '0px',
+                  opacity: showSteps ? 1 : 0,
+                }}
+              >
+                <div className="pt-2 pb-10 px-2 md:px-4">
+                  <h4 className="text-2xl font-bold text-white mb-6">
+                    Step-by-Step Solution
+                  </h4>
+                  <div className="prose-headings:text-white prose-p:text-gray-300 prose-li:text-gray-300 prose-strong:text-white max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                      {preparedSteps}
+                    </ReactMarkdown>
+                  </div>
+                </div>
+              </div>
+
+              {/* Feedback */}
+              <div className="feedback-bar mt-8 flex justify-center gap-6">
+                <button
+                  className={`feedback-btn flex items-center gap-3 px-6 py-3 text-lg rounded-xl transition-all ${
+                    feedback === 'up'
+                      ? 'bg-green-600 text-white'
+                      : 'bg-gray-700 hover:bg-gray-600 text-gray-200'
+                  }`}
+                  onClick={() => handleFeedback('up')}
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M14 9V5a3 3 0 0 0-6 0v4H5v11h14V9h-5z" />
+                  </svg>
+                  Helpful
+                </button>
+
+                <button
+                  className={`feedback-btn flex items-center gap-3 px-6 py-3 text-lg rounded-xl transition-all ${
+                    feedback === 'down'
+                      ? 'bg-red-600 text-white'
+                      : 'bg-gray-700 hover:bg-gray-600 text-gray-200'
+                  }`}
+                  onClick={() => handleFeedback('down')}
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M10 15v4a3 3 0 0 0 6 0v-4h3V4H5v11h5z" />
+                  </svg>
+                  Not Helpful
+                </button>
+              </div>
+            </>
+          )}
+
+          {loading && (
+            <div className="text-center py-12 text-xl text-gray-400">
+              Solving your problem...
+            </div>
+          )}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
 }
 
 // ────────────────────────────────────────────────
