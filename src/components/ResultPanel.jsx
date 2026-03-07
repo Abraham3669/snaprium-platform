@@ -58,13 +58,13 @@ export default function ResultPanel({ result, loading, onClose }) {
         <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
           {!loading && result?.text && (
             <>
-              {/* Final Answer Card – only this section gets massive math */}
-              <div className="final-answer mb-6 md:mb-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-md)] overflow-hidden">
-                <h3 className="final-answer-header">
+              {/* Final Answer – massive display only here */}
+              <div className="final-answer-card mb-6 md:mb-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-md)] overflow-hidden">
+                <h3 className="final-answer-title">
                   Final Answer
                 </h3>
 
-                <div className="massive-answer-container">
+                <div className="final-answer-content">
                   <ReactMarkdown
                     remarkPlugins={[remarkMath]}
                     rehypePlugins={[rehypeKatex]}
@@ -76,10 +76,10 @@ export default function ResultPanel({ result, loading, onClose }) {
                       ),
                       div: ({ node, className, children, ...props }) =>
                         className?.includes('katex-display')
-                          ? <div className="massive-katex-display mx-auto text-center whitespace-nowrap my-4" {...props}>
+                          ? <div className="final-katex-display mx-auto text-center whitespace-nowrap my-4" {...props}>
                               {children}
                             </div>
-                          : <div className="massive-fallback-text" {...props}>
+                          : <div className="final-fallback-text" {...props}>
                               {children}
                             </div>,
                     }}
@@ -100,7 +100,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                 </span>
               </button>
 
-              {/* Steps Section – normal size */}
+              {/* Steps Section – normal KaTeX size */}
               <div
                 ref={stepsRef}
                 className="overflow-hidden transition-all duration-500 ease-in-out"

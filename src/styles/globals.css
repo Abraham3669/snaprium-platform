@@ -3138,8 +3138,8 @@ button.w-full.py-3\.5:active {
 
 
 
-/* Final Answer Card – clean professional look */
-.final-answer {
+/* Final Answer Card – clean professional base */
+.final-answer-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -3147,73 +3147,61 @@ button.w-full.py-3\.5:active {
   overflow: hidden;
 }
 
-/* Header */
-.final-answer-header {
-  font-size: 2rem; /* slightly smaller than before */
+.final-answer-title {
+  font-size: 2.25rem; /* ~36px */
   font-weight: 700;
   color: var(--text-secondary);
-  padding: 1.2rem 1.5rem 0.5rem; /* reduced vertical padding */
-  letter-spacing: -0.02em;
+  padding: 1.75rem 1.5rem 1rem;
+  letter-spacing: -0.025em;
 }
 
-/* Massive container for final answer – reduced vertical size */
+/* Massive container for the final answer */
 .massive-answer-container {
-  min-height: 6rem; /* reduced from 16rem */
-  padding: 0.8rem 1.5rem 1.2rem; /* compact padding */
+  min-height: 18rem;
+  padding: 2rem 1.5rem 4.5rem;
   overflow-x: auto;
-  overflow-y: hidden; /* prevent vertical scroll */
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: var(--accent) transparent;
 }
 
-/* WebKit scrollbars */
 .massive-answer-container::-webkit-scrollbar {
-  height: 10px;
+  height: 12px;
 }
 .massive-answer-container::-webkit-scrollbar-track {
   background: transparent;
 }
 .massive-answer-container::-webkit-scrollbar-thumb {
   background-color: var(--accent);
-  border-radius: 5px;
+  border-radius: 6px;
 }
 .massive-answer-container::-webkit-scrollbar-thumb:hover {
   background-color: var(--accent-dark);
 }
 
-/* ONLY final answer gets extremely large KaTeX */
+/* ONLY the final answer gets EXTREMELY large KaTeX */
 .massive-katex-display .katex,
 .massive-answer-container .katex {
-  font-size: clamp(4.5rem, 6vw, 6.5rem) !important; /* HUGE, responsive */
+  font-size: 5.2em !important;  /* ← extremely large – adjust to 5.5em or 6em if still not enough */
   font-weight: 900 !important;
   color: var(--text-primary);
-  line-height: 1.1;
+  line-height: 1.15;
 }
 
-/* Reduce spacing around display math */
 .massive-katex-display .katex-display,
 .massive-answer-container .katex-display {
-  margin: 0.3rem 0;
+  margin: 2rem 0;
 }
 
-/* Keep expressions horizontal */
 .massive-katex-display .katex-html,
 .massive-answer-container .katex-html {
   white-space: nowrap !important;
 }
 
-/* Extra bold symbols/operators */
-.massive-katex-display .katex .mord,
-.massive-katex-display .katex .mop,
-.massive-katex-display .katex .mbin {
-  font-weight: 900;
-}
-
-/* Fallback text when no KaTeX */
+/* Fallback text when no KaTeX (also huge) */
 .massive-fallback-text {
-  font-size: clamp(4rem, 6vw, 5.5rem); /* HUGE, responsive */
+  font-size: 9rem; /* 144px on desktop – massive */
   font-weight: 900;
-  line-height: 1.1;
+  line-height: 1;
   color: var(--text-primary);
 }
