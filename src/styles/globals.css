@@ -3138,7 +3138,7 @@ button.w-full.py-3\.5:active {
 
 
 
-/* Photomath-style Final Answer – Compact but HUGE math */
+/* Photomath-style HUGE Final Answer – all sizing in CSS */
 .final-answer {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -3147,58 +3147,60 @@ button.w-full.py-3\.5:active {
   overflow: hidden;
 }
 
-/* Title */
-.final-answer h3 {
-  font-size: 1.6rem;
+.final-answer-header {
+  font-size: 2rem;                   /* ~32px – big header */
   font-weight: 700;
   color: var(--text-secondary);
-  padding: 1.2rem 1.5rem 0.4rem;
+  padding: 1.75rem 1.5rem 0.75rem;
+  letter-spacing: -0.025em;
 }
 
-/* Answer container (reduce vertical size) */
-.final-answer .answer-container {
-  min-height: 6rem;            /* reduced from 12rem */
+/* Huge scrollable container */
+.answer-container {
+  min-height: 14rem;
+  padding: 1.5rem 1.5rem 3.5rem;
   overflow-x: auto;
-  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: var(--accent) transparent;
-  padding: 0.6rem 1.5rem 1.2rem;
 }
 
-/* Scrollbars */
-.final-answer .answer-container::-webkit-scrollbar {
+/* WebKit scrollbars */
+.answer-container::-webkit-scrollbar {
   height: 10px;
 }
-
-.final-answer .answer-container::-webkit-scrollbar-thumb {
+.answer-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.answer-container::-webkit-scrollbar-thumb {
   background-color: var(--accent);
-  border-radius: 6px;
+  border-radius: 5px;
+}
+.answer-container::-webkit-scrollbar-thumb:hover {
+  background-color: var(--accent-dark);
 }
 
-/* VERY HUGE math (override JSX sizes) */
-.final-answer .katex,
-.final-answer .katex-display-final {
-  font-size: clamp(3.5rem, 6vw, 6rem) !important;
+/* KaTeX – very large & bold (Photomath level) */
+.katex {
+  font-size: 3.8em !important;       /* main huge size – feel free to try 4em or 4.2em */
   font-weight: 900 !important;
-  line-height: 1.1 !important;
   color: var(--text-primary);
+  line-height: 1.25;
 }
 
-/* Reduce vertical spacing */
-.final-answer .katex-display {
-  margin: 0.3rem 0 !important;
+.katex-display {
+  margin: 1.5rem 0;
+  padding: 0.75rem 0;
 }
 
-/* Keep expressions horizontal */
-.final-answer .katex-html {
+/* No wrapping for long expressions */
+.katex-html {
   white-space: nowrap !important;
 }
 
-/* Strong bold symbols */
-.final-answer .katex .mord,
-.final-answer .katex .mop,
-.final-answer .katex .mbin {
+/* Extra boldness on operators/symbols */
+.katex .mord,
+.katex .mop,
+.katex .mbin {
   font-weight: 900;
 }
-
