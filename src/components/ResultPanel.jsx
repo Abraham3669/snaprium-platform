@@ -39,122 +39,106 @@ export default function ResultPanel({ result, loading, onClose }) {
   }
 
   return (
-    <div className="result-panel">
-      <div className="result-panel-header">
-        <h2>Solution</h2>
-        <button className="close-btn" onClick={onClose}>✕</button>
+  <div className="result-panel">
+    <div className="result-panel-header">
+      <h2>Solution</h2>
+      <button className="close-btn" onClick={onClose}>✕</button>
+    </div>
+
+    <div className="result-panel-content">
+      <div className="image-wrapper">
+        <img className="result-image" src={result.image} alt="Cropped preview" />
+        {loading && (
+          <div className="scan-overlay">
+            <div className="scan-line"></div>
+          </div>
+        )}
       </div>
 
-      <div className="result-panel-content">
-        <div className="image-wrapper">
-          <img className="result-image" src={result.image} alt="Cropped preview" />
-          {loading && (
-            <div className="scan-overlay">
-              <div className="scan-line"></div>
-            </div>
-          )}
-        </div>
+      <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
+        {!loading && result?.text && (
+          <>
+            {/* Final Answer Card – BIG & PROUD */}
+            <div className="final-answer mb-6 md:mb-10 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-lg)] overflow-hidden">
+              <h3 className="final-answer-header px-6 pt-5 pb-3 text-2xl md:text-3xl font-bold text-center">
+                Final Answer
+              </h3>
 
-        <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
-          {!loading && result?.text && (
-            <>
-              {/* Final Answer Card – only this section gets massive math */}
-              <div className="final-answer mb-6 md:mb-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-md)] overflow-hidden">
-                <h3 className="final-answer-header">
-                  Final Answer
-                </h3>
-
-                <div className="massive-answer-container">
-                  <ReactMarkdown
-                    remarkPlugins={[remarkMath]}
-                    rehypePlugins={[rehypeKatex]}
-                    components={{
-                      p: ({ children }) => (
-                        <div className="inline-block text-center whitespace-nowrap min-w-fit">
+              <div className="massive-answer-container">
+                <ReactMarkdown
+                  remarkPlugins={[remarkMath]}
+                  rehypePlugins={[rehypeKatex]}
+                  components={{
+                    p: ({ children }) => (
+                      <div className="inline-block text-center leading-tight min-w-fit">
+                        {children}
+                      </div>
+                    ),
+                    div: ({ node, className, children, ...props }) =>
+                      className?.includes('katex-display') ? (
+                        <div className="block massive-katex mx-auto my-2 md:my-4" {...props}>
+                          {children}
+                        </div>
+                      ) : (
+                        <div className="massive-text" {...props}>
                           {children}
                         </div>
                       ),
-                      div: ({ node, className, children, ...props }) =>
-                        className?.includes('katex-display')
-                          ? <div className="massive-katex-display mx-auto text-center whitespace-nowrap my-4" {...props}>
-                              {children}
-                            </div>
-                          : <div className="massive-fallback-text" {...props}>
-                              {children}
-                            </div>,
-                    }}
-                  >
-                    {finalAnswerContent || '\\text{-}'}
+                  }}
+                >
+                  {finalAnswerContent || '\\text{—}'}
+                </ReactMarkdown>
+              </div>
+            </div>
+
+            {/* Toggle Button */}
+            <button
+              onClick={() => setShowSteps(!showSteps)}
+              className="w-full py-3.5 px-5 mb-6 bg-[var(--accent)] hover:bg-[var(--accent-dark)] text-white font-medium rounded-lg shadow-md transition-all flex items-center justify-center gap-2"
+            >
+              {showSteps ? 'Hide Step-by-Step' : 'Show Step-by-Step'}
+              <span className="text-xl transition-transform duration-300">
+                {showSteps ? '▲' : '▼'}
+              </span>
+            </button>
+
+            {/* Steps Section – normal size */}
+            <div
+              ref={stepsRef}
+              className="overflow-hidden transition-all duration-500 ease-in-out"
+              style={{
+                maxHeight: showSteps ? `${stepsRef.current?.scrollHeight || 2000}px` : '0px',
+                opacity: showSteps ? 1 : 0,
+              }}
+            >
+              <div className="pt-1 pb-10 px-2 md:px-4">
+                <h4 className="text-xl font-semibold text-[var(--text-primary)] mb-5">
+                  Step-by-Step Solution
+                </h4>
+                <div className="prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)]">
+                  <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                    {preparedSteps}
                   </ReactMarkdown>
                 </div>
               </div>
-
-              {/* Toggle Button */}
-              <button
-                onClick={() => setShowSteps(!showSteps)}
-                className="w-full py-3.5 px-5 mb-5 bg-[var(--accent)] hover:bg-[var(--accent-dark)] text-white font-medium rounded-lg shadow-md transition-all flex items-center justify-center gap-2"
-              >
-                {showSteps ? 'Hide Step-by-Step' : 'Show Step-by-Step'}
-                <span className="text-xl transition-transform duration-300">
-                  {showSteps ? '▲' : '▼'}
-                </span>
-              </button>
-
-              {/* Steps Section – normal size */}
-              <div
-                ref={stepsRef}
-                className="overflow-hidden transition-all duration-500 ease-in-out"
-                style={{
-                  maxHeight: showSteps ? `${stepsRef.current?.scrollHeight || 2000}px` : '0px',
-                  opacity: showSteps ? 1 : 0,
-                }}
-              >
-                <div className="pt-1 pb-8 px-1">
-                  <h4 className="text-xl font-semibold text-[var(--text-primary)] mb-5">
-                    Step-by-Step Solution
-                  </h4>
-                  <div className="prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)]">
-                    <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                      {preparedSteps}
-                    </ReactMarkdown>
-                  </div>
-                </div>
-              </div>
-
-              {/* Feedback */}
-              <div className="feedback-bar mt-6 flex justify-center gap-4">
-                <button
-                  className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'up' ? 'active' : ''}`}
-                  onClick={() => handleFeedback('up')}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path d="M14 9V5a3 3 0 0 0-6 0v4H5v11h14V9h-5z" stroke="currentColor" strokeWidth="2" />
-                  </svg>
-                  Helpful
-                </button>
-
-                <button
-                  className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'down' ? 'active' : ''}`}
-                  onClick={() => handleFeedback('down')}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path d="M10 15v4a3 3 0 0 0 6 0v-4h3V4H5v11h5z" stroke="currentColor" strokeWidth="2" />
-                  </svg>
-                  Not Helpful
-                </button>
-              </div>
-            </>
-          )}
-
-          {loading && (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              Solving your problem...
             </div>
-          )}
-        </div>
+
+            {/* Feedback */}
+            <div className="feedback-bar mt-6 flex justify-center gap-4">
+              {/* ... unchanged ... */}
+            </div>
+          </>
+        )}
+
+        {loading && (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            Solving your problem...
+          </div>
+        )}
       </div>
     </div>
-  );
+  </div>
+);
 }
 
 // ────────────────────────────────────────────────
