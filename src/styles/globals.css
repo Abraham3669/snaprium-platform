@@ -3138,51 +3138,31 @@ button.w-full.py-3\.5:active {
 
 
 
-.massive-answer-container .massive-katex-display {
-  font-size: 5rem !important;        /* HUGE math */
-  font-weight: 900 !important;       /* extra bold */
-  color: var(--text-primary) !important;
-  line-height: 1.1 !important;       /* tight for big math */
-  text-align: center !important;     /* center */
-  margin: 1rem auto !important;
-  white-space: nowrap !important;    /* prevent line breaks inside fractions */
-}
-
-/* For smaller screens, scale down nicely */
-@media (max-width: 1024px) {
-  .massive-answer-container .massive-katex-display {
-    font-size: 4rem !important;
-  }
-}
-
-@media (max-width: 768px) {
-  .massive-answer-container .massive-katex-display {
-    font-size: 3rem !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .massive-answer-container .massive-katex-display {
-    font-size: 2.5rem !important;
-  }
-}
-
-/* fallback text (in case ReactMarkdown wraps it in div without katex-display) */
-.massive-fallback-text {
-  font-size: 5rem;
-  font-weight: 900;
-  color: var(--text-primary);
-  text-align: center;
-  line-height: 1.1;
-  white-space: nowrap;
-  margin: 1rem auto;
-}
-
+/* Target KaTeX inside the final answer card */
 .massive-answer-container .katex {
-  font-size: 4rem !important;
-  font-weight: 800 !important;
+  font-size: 5rem !important;
+  font-weight: 900 !important;
+  line-height: 1.1 !important;
+  color: var(--text-primary) !important;
 }
 
+/* For display math */
+.massive-answer-container .katex-display {
+  margin: 1rem auto !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+}
+
+/* Responsive scaling */
+@media (max-width: 1024px) {
+  .massive-answer-container .katex { font-size: 4rem !important; }
+}
+@media (max-width: 768px) {
+  .massive-answer-container .katex { font-size: 3rem !important; }
+}
+@media (max-width: 480px) {
+  .massive-answer-container .katex { font-size: 2.5rem !important; }
+}
 
 
 
