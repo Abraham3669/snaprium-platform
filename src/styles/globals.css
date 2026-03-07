@@ -3138,74 +3138,41 @@ button.w-full.py-3\.5:active {
 
 
 
-/* Final Answer Card – clean base */
-.final-answer-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-md);
-  overflow: hidden;
+/* src/styles/global.css or wherever your tailwind overrides live */
+
+/* Final Answer KaTeX – Big, Bold, Centered */
+.final-katex-display {
+  font-size: 4rem;           /* Huge, can adjust for responsiveness */
+  font-weight: 900;          /* Extra bold */
+  color: var(--text-primary); /* Match your theme */
+  line-height: 1.1;          /* Tight for large math */
+  text-align: center;
+  margin: 1rem auto;         /* Center horizontally */
+  white-space: nowrap;       /* Keep fractions intact horizontally */
 }
 
-.final-answer-title {
-  font-size: 1.75rem; /* normal title size */
-  font-weight: 700;
-  color: var(--text-secondary);
-  padding: 1.5rem 1.5rem 0.75rem;
-  letter-spacing: -0.02em;
+/* For smaller screens, scale down slightly */
+@media (max-width: 768px) {
+  .final-katex-display {
+    font-size: 3rem;
+  }
 }
 
-/* Container for the huge final answer */
-.final-answer-content {
-  min-height: 16rem;
-  padding: 1.5rem 1.5rem 4rem;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: var(--accent) transparent;
+@media (max-width: 480px) {
+  .final-katex-display {
+    font-size: 2.5rem;
+  }
 }
 
-.final-answer-content::-webkit-scrollbar {
-  height: 10px;
-}
-.final-answer-content::-webkit-scrollbar-track {
-  background: transparent;
-}
-.final-answer-content::-webkit-scrollbar-thumb {
-  background-color: var(--accent);
-  border-radius: 5px;
-}
-.final-answer-content::-webkit-scrollbar-thumb:hover {
-  background-color: var(--accent-dark);
+
+.final-answer-card .katex {
+  font-size: 3rem;      /* inline math inside final answer card */
+  font-weight: 800;
 }
 
-/* Make ONLY the final answer KaTeX extremely large */
-.final-katex-display .katex {
-  font-size: 5.5em !important;   /* ← this is the key – very big, increase to 6em if needed */
-  font-weight: 900 !important;
-  color: var(--text-primary);
-  line-height: 1.15;
-}
 
-.final-katex-display .katex-display {
-  margin: 2rem 0;
-}
 
-.final-katex-display .katex-html {
-  white-space: nowrap !important;
-}
 
-/* Fallback text when no KaTeX (also huge) */
-.final-fallback-text {
-  font-size: 10rem; /* 160px+ on desktop – massive */
-  font-weight: 900;
-  line-height: 1;
-  color: var(--text-primary);
-}
 
-/* Extra bold on operators/symbols in final answer */
-.final-katex-display .katex .mord,
-.final-katex-display .katex .mop,
-.final-katex-display .katex .mbin {
-  font-weight: 900;
-}
+
+
