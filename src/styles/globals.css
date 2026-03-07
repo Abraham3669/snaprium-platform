@@ -3138,7 +3138,7 @@ button.w-full.py-3\.5:active {
 
 
 
-/* Final Answer Card – clean & professional */
+/* Final Answer Card – clean professional look */
 .final-answer {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -3148,59 +3148,67 @@ button.w-full.py-3\.5:active {
 }
 
 .final-answer-header {
-  font-size: 2rem;
+  font-size: 2.125rem; /* ~34px – big but clean header */
   font-weight: 700;
   color: var(--text-secondary);
-  padding: 1.75rem 1.5rem 0.75rem;
+  padding: 1.75rem 1.5rem 1rem;
   letter-spacing: -0.025em;
 }
 
-/* Scrollable area for huge answer */
-.answer-container {
-  min-height: 14rem;
-  padding: 1.5rem 1.5rem 3.5rem;
+/* Massive container for final answer */
+.massive-answer-container {
+  min-height: 16rem;
+  padding: 2rem 1.5rem 4rem;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: var(--accent) transparent;
 }
 
-.answer-container::-webkit-scrollbar {
+.massive-answer-container::-webkit-scrollbar {
   height: 10px;
 }
-.answer-container::-webkit-scrollbar-track {
+.massive-answer-container::-webkit-scrollbar-track {
   background: transparent;
 }
-.answer-container::-webkit-scrollbar-thumb {
+.massive-answer-container::-webkit-scrollbar-thumb {
   background-color: var(--accent);
   border-radius: 5px;
 }
-.answer-container::-webkit-scrollbar-thumb:hover {
+.massive-answer-container::-webkit-scrollbar-thumb:hover {
   background-color: var(--accent-dark);
 }
 
-/* ONLY final answer gets huge KaTeX size */
-.huge-katex-display .katex,
-.answer-container .katex {
-  font-size: 4.2em !important;      /* ← very big — change to 4.5em or 5em if you want even larger */
+/* ONLY final answer gets extremely large KaTeX */
+.massive-katex-display .katex,
+.massive-answer-container .katex {
+  font-size: 4.8em !important; /* ← very big – Photomath huge */
   font-weight: 900 !important;
   color: var(--text-primary);
-  line-height: 1.25;
+  line-height: 1.2;
 }
 
-.huge-katex-display .katex-display,
-.answer-container .katex-display {
-  margin: 1.5rem 0;
+.massive-katex-display .katex-display,
+.massive-answer-container .katex-display {
+  margin: 1.75rem 0;
 }
 
-.huge-katex-display .katex-html,
-.answer-container .katex-html {
+.massive-katex-display .katex-html,
+.massive-answer-container .katex-html {
   white-space: nowrap !important;
 }
 
-/* Extra bold on symbols (optional) */
-.huge-katex-display .katex .mord,
-.huge-katex-display .katex .mop,
-.huge-katex-display .katex .mbin {
+/* Extra bold symbols/operators */
+.massive-katex-display .katex .mord,
+.massive-katex-display .katex .mop,
+.massive-katex-display .katex .mbin {
   font-weight: 900;
+}
+
+/* Fallback text when no KaTeX (very large too) */
+.massive-fallback-text {
+  font-size: 6rem; /* 96px+ on desktop – enormous */
+  font-weight: 900;
+  line-height: 1;
+  color: var(--text-primary);
 }

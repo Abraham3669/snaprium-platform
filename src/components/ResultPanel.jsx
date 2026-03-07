@@ -58,13 +58,13 @@ export default function ResultPanel({ result, loading, onClose }) {
         <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
           {!loading && result?.text && (
             <>
-              {/* Final Answer Card – only this one gets huge math */}
+              {/* Final Answer Card – only this section gets massive math */}
               <div className="final-answer mb-6 md:mb-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-md)] overflow-hidden">
                 <h3 className="final-answer-header">
                   Final Answer
                 </h3>
 
-                <div className="answer-container">
+                <div className="massive-answer-container">
                   <ReactMarkdown
                     remarkPlugins={[remarkMath]}
                     rehypePlugins={[rehypeKatex]}
@@ -76,10 +76,12 @@ export default function ResultPanel({ result, loading, onClose }) {
                       ),
                       div: ({ node, className, children, ...props }) =>
                         className?.includes('katex-display')
-                          ? <div className="huge-katex-display mx-auto text-center whitespace-nowrap my-4" {...props}>
+                          ? <div className="massive-katex-display mx-auto text-center whitespace-nowrap my-4" {...props}>
                               {children}
                             </div>
-                          : <div {...props}>{children}</div>,
+                          : <div className="massive-fallback-text" {...props}>
+                              {children}
+                            </div>,
                     }}
                   >
                     {finalAnswerContent || '\\text{-}'}
@@ -98,7 +100,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                 </span>
               </button>
 
-              {/* Steps Section – normal KaTeX size */}
+              {/* Steps Section – normal size */}
               <div
                 ref={stepsRef}
                 className="overflow-hidden transition-all duration-500 ease-in-out"
