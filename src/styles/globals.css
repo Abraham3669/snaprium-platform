@@ -3138,7 +3138,7 @@ button.w-full.py-3\.5:active {
 
 
 
-/* Photomath-style HUGE Final Answer */
+/* Photomath-style Final Answer – Compact but HUGE math */
 .final-answer {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -3147,58 +3147,58 @@ button.w-full.py-3\.5:active {
   overflow: hidden;
 }
 
+/* Title */
 .final-answer h3 {
-  font-size: 1.875rem; /* 30px */
+  font-size: 1.6rem;
   font-weight: 700;
   color: var(--text-secondary);
-  padding: 1.5rem 1.5rem 0.5rem;
+  padding: 1.2rem 1.5rem 0.4rem;
 }
 
-/* Scrollable huge answer area */
+/* Answer container (reduce vertical size) */
 .final-answer .answer-container {
-  min-height: 12rem;
+  min-height: 6rem;            /* reduced from 12rem */
   overflow-x: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: var(--accent) transparent;
-  padding: 1rem 1.5rem 2.5rem;
+  padding: 0.6rem 1.5rem 1.2rem;
 }
 
-/* WebKit scrollbars */
+/* Scrollbars */
 .final-answer .answer-container::-webkit-scrollbar {
   height: 10px;
 }
-.final-answer .answer-container::-webkit-scrollbar-track {
-  background: transparent;
-}
+
 .final-answer .answer-container::-webkit-scrollbar-thumb {
   background-color: var(--accent);
-  border-radius: 5px;
-}
-.final-answer .answer-container::-webkit-scrollbar-thumb:hover {
-  background-color: var(--accent-dark);
+  border-radius: 6px;
 }
 
-/* KaTeX – very big & bold like Photomath */
-.final-answer .katex {
-  font-size: 3.5em !important; /* main size — huge */
+/* VERY HUGE math (override JSX sizes) */
+.final-answer .katex,
+.final-answer .katex-display-final {
+  font-size: clamp(3.5rem, 6vw, 6rem) !important;
   font-weight: 900 !important;
+  line-height: 1.1 !important;
   color: var(--text-primary);
-  line-height: 1.25;
 }
 
+/* Reduce vertical spacing */
 .final-answer .katex-display {
-  margin: 1.5rem 0;
+  margin: 0.3rem 0 !important;
 }
 
-/* No wrapping on long expressions */
+/* Keep expressions horizontal */
 .final-answer .katex-html {
   white-space: nowrap !important;
 }
 
-/* Extra boldness on symbols/operators */
+/* Strong bold symbols */
 .final-answer .katex .mord,
 .final-answer .katex .mop,
 .final-answer .katex .mbin {
   font-weight: 900;
 }
+
