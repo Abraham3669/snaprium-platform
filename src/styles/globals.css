@@ -3138,7 +3138,7 @@ button.w-full.py-3\.5:active {
 
 
 
-/* FINAL ANSWER CARD */
+/* Photomath-style HUGE Final Answer */
 .final-answer {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -3147,44 +3147,58 @@ button.w-full.py-3\.5:active {
   overflow: hidden;
 }
 
-/* Title */
 .final-answer h3 {
-  font-size: 1.6rem;
+  font-size: 1.875rem; /* 30px */
   font-weight: 700;
   color: var(--text-secondary);
-  margin-bottom: 0.2rem;
+  padding: 1.5rem 1.5rem 0.5rem;
 }
 
-/* Container */
+/* Scrollable huge answer area */
 .final-answer .answer-container {
-  min-height: 5rem; /* smaller vertical card */
+  min-height: 12rem;
   overflow-x: auto;
-  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) transparent;
+  padding: 1rem 1.5rem 2.5rem;
 }
 
-/* MASSIVE FINAL ANSWER */
-.final-answer .katex-display-final {
-  font-size: 4.5rem !important;   /* VERY BIG */
-  font-weight: 900 !important;
-  line-height: 1.1 !important;
+/* WebKit scrollbars */
+.final-answer .answer-container::-webkit-scrollbar {
+  height: 10px;
+}
+.final-answer .answer-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.final-answer .answer-container::-webkit-scrollbar-thumb {
+  background-color: var(--accent);
+  border-radius: 5px;
+}
+.final-answer .answer-container::-webkit-scrollbar-thumb:hover {
+  background-color: var(--accent-dark);
 }
 
-/* Also enlarge KaTeX internally */
+/* KaTeX – very big & bold like Photomath */
 .final-answer .katex {
-  font-size: 1.4em !important;
+  font-size: 3.5em !important; /* main size — huge */
+  font-weight: 900 !important;
+  color: var(--text-primary);
+  line-height: 1.25;
 }
 
-/* Remove vertical spacing */
 .final-answer .katex-display {
-  margin: 0.2rem 0 !important;
+  margin: 1.5rem 0;
 }
 
-/* Keep long answers horizontal */
+/* No wrapping on long expressions */
 .final-answer .katex-html {
   white-space: nowrap !important;
 }
 
-
-
-
+/* Extra boldness on symbols/operators */
+.final-answer .katex .mord,
+.final-answer .katex .mop,
+.final-answer .katex .mbin {
+  font-weight: 900;
+}
