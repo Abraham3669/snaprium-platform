@@ -3147,24 +3147,27 @@ button.w-full.py-3\.5:active {
   overflow: hidden;
 }
 
+/* Header */
 .final-answer-header {
-  font-size: 2.125rem; /* ~34px – big but clean header */
+  font-size: 2rem; /* slightly smaller than before */
   font-weight: 700;
   color: var(--text-secondary);
-  padding: 1.75rem 1.5rem 1rem;
-  letter-spacing: -0.025em;
+  padding: 1.2rem 1.5rem 0.5rem; /* reduced vertical padding */
+  letter-spacing: -0.02em;
 }
 
-/* Massive container for final answer */
+/* Massive container for final answer – reduced vertical size */
 .massive-answer-container {
-  min-height: 16rem;
-  padding: 2rem 1.5rem 4rem;
+  min-height: 6rem; /* reduced from 16rem */
+  padding: 0.8rem 1.5rem 1.2rem; /* compact padding */
   overflow-x: auto;
+  overflow-y: hidden; /* prevent vertical scroll */
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: var(--accent) transparent;
 }
 
+/* WebKit scrollbars */
 .massive-answer-container::-webkit-scrollbar {
   height: 10px;
 }
@@ -3182,17 +3185,19 @@ button.w-full.py-3\.5:active {
 /* ONLY final answer gets extremely large KaTeX */
 .massive-katex-display .katex,
 .massive-answer-container .katex {
-  font-size: 4.8em !important; /* ← very big – Photomath huge */
+  font-size: clamp(4.5rem, 6vw, 6.5rem) !important; /* HUGE, responsive */
   font-weight: 900 !important;
   color: var(--text-primary);
-  line-height: 1.2;
+  line-height: 1.1;
 }
 
+/* Reduce spacing around display math */
 .massive-katex-display .katex-display,
 .massive-answer-container .katex-display {
-  margin: 1.75rem 0;
+  margin: 0.3rem 0;
 }
 
+/* Keep expressions horizontal */
 .massive-katex-display .katex-html,
 .massive-answer-container .katex-html {
   white-space: nowrap !important;
@@ -3205,10 +3210,10 @@ button.w-full.py-3\.5:active {
   font-weight: 900;
 }
 
-/* Fallback text when no KaTeX (very large too) */
+/* Fallback text when no KaTeX */
 .massive-fallback-text {
-  font-size: 6rem; /* 96px+ on desktop – enormous */
+  font-size: clamp(4rem, 6vw, 5.5rem); /* HUGE, responsive */
   font-weight: 900;
-  line-height: 1;
+  line-height: 1.1;
   color: var(--text-primary);
 }
