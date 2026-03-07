@@ -3138,7 +3138,7 @@ button.w-full.py-3\.5:active {
 
 
 
-/* Final Answer Card – clean professional base */
+/* Final Answer Card – clean base */
 .final-answer-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -3148,60 +3148,64 @@ button.w-full.py-3\.5:active {
 }
 
 .final-answer-title {
-  font-size: 2.25rem; /* ~36px */
+  font-size: 1.75rem; /* normal title size */
   font-weight: 700;
   color: var(--text-secondary);
-  padding: 1.75rem 1.5rem 1rem;
-  letter-spacing: -0.025em;
+  padding: 1.5rem 1.5rem 0.75rem;
+  letter-spacing: -0.02em;
 }
 
-/* Massive container for the final answer */
-.massive-answer-container {
-  min-height: 18rem;
-  padding: 2rem 1.5rem 4.5rem;
+/* Container for the huge final answer */
+.final-answer-content {
+  min-height: 16rem;
+  padding: 1.5rem 1.5rem 4rem;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: var(--accent) transparent;
 }
 
-.massive-answer-container::-webkit-scrollbar {
-  height: 12px;
+.final-answer-content::-webkit-scrollbar {
+  height: 10px;
 }
-.massive-answer-container::-webkit-scrollbar-track {
+.final-answer-content::-webkit-scrollbar-track {
   background: transparent;
 }
-.massive-answer-container::-webkit-scrollbar-thumb {
+.final-answer-content::-webkit-scrollbar-thumb {
   background-color: var(--accent);
-  border-radius: 6px;
+  border-radius: 5px;
 }
-.massive-answer-container::-webkit-scrollbar-thumb:hover {
+.final-answer-content::-webkit-scrollbar-thumb:hover {
   background-color: var(--accent-dark);
 }
 
-/* ONLY the final answer gets EXTREMELY large KaTeX */
-.massive-katex-display .katex,
-.massive-answer-container .katex {
-  font-size: 5.2em !important;  /* ← extremely large – adjust to 5.5em or 6em if still not enough */
+/* Make ONLY the final answer KaTeX extremely large */
+.final-katex-display .katex {
+  font-size: 5.5em !important;   /* ← this is the key – very big, increase to 6em if needed */
   font-weight: 900 !important;
   color: var(--text-primary);
   line-height: 1.15;
 }
 
-.massive-katex-display .katex-display,
-.massive-answer-container .katex-display {
+.final-katex-display .katex-display {
   margin: 2rem 0;
 }
 
-.massive-katex-display .katex-html,
-.massive-answer-container .katex-html {
+.final-katex-display .katex-html {
   white-space: nowrap !important;
 }
 
 /* Fallback text when no KaTeX (also huge) */
-.massive-fallback-text {
-  font-size: 9rem; /* 144px on desktop – massive */
+.final-fallback-text {
+  font-size: 10rem; /* 160px+ on desktop – massive */
   font-weight: 900;
   line-height: 1;
   color: var(--text-primary);
+}
+
+/* Extra bold on operators/symbols in final answer */
+.final-katex-display .katex .mord,
+.final-katex-display .katex .mop,
+.final-katex-display .katex .mbin {
+  font-weight: 900;
 }

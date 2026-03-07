@@ -58,13 +58,13 @@ export default function ResultPanel({ result, loading, onClose }) {
         <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
           {!loading && result?.text && (
             <>
-              {/* Final Answer – massive display only here */}
+              {/* Final Answer Card */}
               <div className="final-answer-card mb-6 md:mb-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-md)] overflow-hidden">
-                <h3 className="final-answer-title">
+                <h3 className="final-answer-title text-2xl md:text-3xl font-bold text-[var(--text-secondary)] px-6 pt-6 md:pt-8 pb-4">
                   Final Answer
                 </h3>
 
-                <div className="final-answer-content">
+                <div className="final-answer-content px-6 pb-10 md:pb-12 min-h-[14rem] overflow-x-auto">
                   <ReactMarkdown
                     remarkPlugins={[remarkMath]}
                     rehypePlugins={[rehypeKatex]}
@@ -79,7 +79,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                           ? <div className="final-katex-display mx-auto text-center whitespace-nowrap my-4" {...props}>
                               {children}
                             </div>
-                          : <div className="final-fallback-text" {...props}>
+                          : <div className="final-fallback-text text-6xl md:text-8xl lg:text-9xl font-black text-[var(--text-primary)] leading-tight" {...props}>
                               {children}
                             </div>,
                     }}
@@ -100,7 +100,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                 </span>
               </button>
 
-              {/* Steps Section – normal KaTeX size */}
+              {/* Steps Section – normal size */}
               <div
                 ref={stepsRef}
                 className="overflow-hidden transition-all duration-500 ease-in-out"
