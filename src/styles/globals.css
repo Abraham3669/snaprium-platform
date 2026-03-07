@@ -3138,36 +3138,49 @@ button.w-full.py-3\.5:active {
 
 
 
-/* src/styles/global.css or wherever your tailwind overrides live */
-
-/* Final Answer KaTeX – Big, Bold, Centered */
-.final-katex-display {
-  font-size: 4rem;           /* Huge, can adjust for responsiveness */
-  font-weight: 900;          /* Extra bold */
-  color: var(--text-primary); /* Match your theme */
-  line-height: 1.1;          /* Tight for large math */
-  text-align: center;
-  margin: 1rem auto;         /* Center horizontally */
-  white-space: nowrap;       /* Keep fractions intact horizontally */
+.massive-answer-container .massive-katex-display {
+  font-size: 5rem !important;        /* HUGE math */
+  font-weight: 900 !important;       /* extra bold */
+  color: var(--text-primary) !important;
+  line-height: 1.1 !important;       /* tight for big math */
+  text-align: center !important;     /* center */
+  margin: 1rem auto !important;
+  white-space: nowrap !important;    /* prevent line breaks inside fractions */
 }
 
-/* For smaller screens, scale down slightly */
+/* For smaller screens, scale down nicely */
+@media (max-width: 1024px) {
+  .massive-answer-container .massive-katex-display {
+    font-size: 4rem !important;
+  }
+}
+
 @media (max-width: 768px) {
-  .final-katex-display {
-    font-size: 3rem;
+  .massive-answer-container .massive-katex-display {
+    font-size: 3rem !important;
   }
 }
 
 @media (max-width: 480px) {
-  .final-katex-display {
-    font-size: 2.5rem;
+  .massive-answer-container .massive-katex-display {
+    font-size: 2.5rem !important;
   }
 }
 
+/* fallback text (in case ReactMarkdown wraps it in div without katex-display) */
+.massive-fallback-text {
+  font-size: 5rem;
+  font-weight: 900;
+  color: var(--text-primary);
+  text-align: center;
+  line-height: 1.1;
+  white-space: nowrap;
+  margin: 1rem auto;
+}
 
-.final-answer-card .katex {
-  font-size: 3rem;      /* inline math inside final answer card */
-  font-weight: 800;
+.massive-answer-container .katex {
+  font-size: 4rem !important;
+  font-weight: 800 !important;
 }
 
 

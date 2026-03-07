@@ -58,13 +58,13 @@ export default function ResultPanel({ result, loading, onClose }) {
         <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
           {!loading && result?.text && (
             <>
-              {/* Final Answer Card */}
-              <div className="final-answer-card mb-6 md:mb-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-md)] overflow-hidden">
-                <h3 className="final-answer-title text-2xl md:text-3xl font-bold text-[var(--text-secondary)] px-6 pt-6 md:pt-8 pb-4">
+              {/* Final Answer Card – only this section gets massive math */}
+              <div className="final-answer mb-6 md:mb-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-md)] overflow-hidden">
+                <h3 className="final-answer-header">
                   Final Answer
                 </h3>
 
-                <div className="final-answer-content px-6 pb-10 md:pb-12 min-h-[14rem] overflow-x-auto">
+                <div className="massive-answer-container">
                   <ReactMarkdown
                     remarkPlugins={[remarkMath]}
                     rehypePlugins={[rehypeKatex]}
@@ -76,10 +76,10 @@ export default function ResultPanel({ result, loading, onClose }) {
                       ),
                       div: ({ node, className, children, ...props }) =>
                         className?.includes('katex-display')
-                          ? <div className="final-katex-display mx-auto text-center whitespace-nowrap my-4" {...props}>
+                          ? <div className="massive-katex-display mx-auto text-center whitespace-nowrap my-4" {...props}>
                               {children}
                             </div>
-                          : <div className="final-fallback-text text-6xl md:text-8xl lg:text-9xl font-black text-[var(--text-primary)] leading-tight" {...props}>
+                          : <div className="massive-fallback-text" {...props}>
                               {children}
                             </div>,
                     }}
