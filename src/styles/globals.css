@@ -3138,77 +3138,52 @@ button.w-full.py-3\.5:active {
 
 
 
-/* Final Answer – Compact Professional Style */
+/* FINAL ANSWER CARD */
 .final-answer {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-md);
   overflow: hidden;
-  padding: 0.75rem 1rem; /* smaller vertical padding */
 }
 
 /* Title */
 .final-answer h3 {
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   font-weight: 700;
   color: var(--text-secondary);
-  letter-spacing: -0.02em;
-  margin-bottom: 0.4rem; /* tighter spacing */
+  margin-bottom: 0.2rem;
 }
 
-/* Scrollable container */
+/* Container */
 .final-answer .answer-container {
-  min-height: 4rem; /* much smaller vertical size */
+  min-height: 5rem; /* smaller vertical card */
   overflow-x: auto;
-  overflow-y: hidden; /* remove vertical scroll */
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: var(--accent) transparent;
-  padding-bottom: 0.5rem;
 }
 
-/* WebKit scrollbars */
-.final-answer .answer-container::-webkit-scrollbar {
-  height: 8px;
-}
-
-.final-answer .answer-container::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.final-answer .answer-container::-webkit-scrollbar-thumb {
-  background-color: var(--accent);
-  border-radius: 4px;
-}
-
-.final-answer .answer-container::-webkit-scrollbar-thumb:hover {
-  background-color: var(--accent-dark);
-}
-
-/* BIGGER & STRONGER math */
-.final-answer .katex {
-  font-size: 3em !important; /* bigger math */
+/* MASSIVE FINAL ANSWER */
+.final-answer .katex-display-final {
+  font-size: 4.5rem !important;   /* VERY BIG */
   font-weight: 900 !important;
-  color: var(--text-primary);
-  line-height: 1.1; /* tighter */
+  line-height: 1.1 !important;
 }
 
-/* Remove large vertical margins */
+/* Also enlarge KaTeX internally */
+.final-answer .katex {
+  font-size: 1.4em !important;
+}
+
+/* Remove vertical spacing */
 .final-answer .katex-display {
-  margin: 0.3rem 0 !important;
+  margin: 0.2rem 0 !important;
 }
 
-/* Prevent wrapping so answers stay horizontal */
+/* Keep long answers horizontal */
 .final-answer .katex-html {
   white-space: nowrap !important;
 }
-
-
-.final-answer .katex {
-  font-size: clamp(2.5rem, 3vw, 3.5rem) !important;
-}
-
 
 
 
