@@ -3138,33 +3138,7 @@ button.w-full.py-3\.5:active {
 
 
 
-.giant-katex-display .katex {
-  font-size: 2.4em !important;
-  line-height: 1.05 !important;
-}
 
-.giant-katex-display .katex-display {
-  margin: 0.4em 0 !important;
-}
-
-@media (min-width: 768px) {
-  .giant-katex-display .katex {
-    font-size: 3.2em !important;
-  }
-}
-
-@media (min-width: 1024px) {
-  .giant-katex-display .katex {
-    font-size: 4em !important;
-  }
-}
-
-/* Optional: make sure very long answers don't break layout too badly */
-.giant-katex-display {
-  max-width: 100%;
-  overflow-x: auto;
-  padding: 0.5rem;
-}
 
 
 
