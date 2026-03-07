@@ -3139,6 +3139,20 @@ button.w-full.py-3\.5:active {
 
 
 
+.massive-katex-display,
+.massive-katex-display .katex,
+.massive-katex-display .katex-display,
+.massive-katex-display .katex-html {
+  font-size: 3.6rem !important;
+  line-height: 1.12 !important;
+}
+
+.massive-katex-display .katex .mord.textstyle,
+.massive-katex-display .katex .mbin,
+.massive-katex-display .katex .mrel {
+  font-size: inherit !important;
+}
+
 
 
 
