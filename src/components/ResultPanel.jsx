@@ -59,35 +59,41 @@ export default function ResultPanel({ result, loading, onClose }) {
           {!loading && result?.text && (
             <>
               {/* Final Answer Card – only this section gets massive math */}
-              <div className="final-answer mb-6 md:mb-8 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-md)] overflow-hidden">
-                <h3 className="final-answer-header">
-                  Final Answer
-                </h3>
+             <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden">
 
-                <div className="massive-answer-container">
-                  <ReactMarkdown
-                    remarkPlugins={[remarkMath]}
-                    rehypePlugins={[rehypeKatex]}
-                    components={{
-                      p: ({ children }) => (
-                        <div className="inline-block text-center whitespace-nowrap min-w-fit">
-                          {children}
-                        </div>
-                      ),
-                      div: ({ node, className, children, ...props }) =>
-                        className?.includes('katex-display')
-                          ? <div className="massive-katex-display mx-auto text-center whitespace-nowrap my-4" {...props}>
-                              {children}
-                            </div>
-                          : <div className="massive-fallback-text" {...props}>
-                              {children}
-                            </div>,
-                    }}
-                  >
-                    {finalAnswerContent || '\\text{-}'}
-                  </ReactMarkdown>
-                </div>
-              </div>
+  <h3 className="final-answer-header px-6 py-4 text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+    Final Answer
+  </h3>
+
+  <div className="massive-answer-container p-8 pb-10 flex justify-center items-center min-h-[180px]">
+    <ReactMarkdown
+      remarkPlugins={[remarkMath]}
+      rehypePlugins={[rehypeKatex]}
+      components={{
+        p: ({children}) => (
+          <div className="inline-block text-center whitespace-nowrap min-w-fit">
+            {children}
+          </div>
+        ),
+        div: ({node, className, children, ...props}) =>
+          className?.includes('katex-display') ? (
+            <div
+              className="massive-katex-display mx-auto text-center"
+              {...props}
+            >
+              {children}
+            </div>
+          ) : (
+            <div className="massive-fallback-text" {...props}>
+              {children}
+            </div>
+          ),
+      }}
+    >
+      {finalAnswerContent || '\\text{-}'}
+    </ReactMarkdown>
+  </div>
+</div>
 
               {/* Toggle Button */}
               <button
