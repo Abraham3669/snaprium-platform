@@ -71,30 +71,16 @@ export default function ResultPanel({ result, loading, onClose }) {
   style={{ fontSize: "42px" }}
 >
                   <ReactMarkdown
-                    remarkPlugins={[remarkMath]}
-                    rehypePlugins={[rehypeKatex]}
-                    components={{
-                      p: ({ children }) => (
-                        <div className="text-center">
-                          {children}
-                        </div>
-                      ),
-
-                      div: ({ node, className, children, ...props }) =>
-                        className?.includes('katex-display') ? (
-                          <div
-                            className="massive-katex-display mx-auto text-center"
-                            {...props}
-                          >
-                            {children}
-                          </div>
-                        ) : (
-                          <div className="massive-fallback-text" {...props}>
-                            {children}
-                          </div>
-                        ),
-                    }}
-                  >
+  remarkPlugins={[remarkMath]}
+  rehypePlugins={[rehypeKatex]}
+  components={{
+    p: ({children}) => (
+      <div className="text-center">
+        {children}
+      </div>
+    )
+  }}
+>
                     {finalAnswerContent || '\\text{-}'}
                   </ReactMarkdown>
                 </div>
