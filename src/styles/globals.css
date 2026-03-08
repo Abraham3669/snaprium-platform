@@ -3367,6 +3367,43 @@ button.w-full.py-3\.5:active {
 
 
 
+
+
+
+
+/* ── Usually the missing pieces for stubborn inline math ── */
+
+/* 1. Force superscripts to be readable but not gigantic */
+.katex .msupsub {
+  font-size: 0.78em !important;     /* ← key change: often 0.78–0.84 works best */
+  vertical-align: 0.36em !important; /* ← tune between 0.32 and 0.42 */
+}
+
+/* 2. Make sure the whole math run sits on the text baseline properly */
+.katex {
+  vertical-align: baseline !important;
+  line-height: 1.1 !important;
+}
+
+/* 3. Give tall inline constructs (fractions, roots) better vertical positioning */
+.katex .mfrac,
+.katex .mroot {
+  vertical-align: -0.18em !important;  /* ← negative value pulls it down a bit */
+}
+
+/* 4. Slightly increase overall math size — this is often the decider */
+.inline-katex,
+.step-by-step-content .katex {
+  font-size: 1.085em !important;     /* ← try 1.08 to 1.12 */
+}
+
+/* 5. Prevent line-height collapse when math is present */
+.step-by-step-content p:has(.katex) {
+  min-height: 2.1em;
+  line-height: 1.82 !important;
+}
+
+
 /* ── Fix inline math consistency & baseline issues ── */
 .step-by-step-content .inline-katex {
   font-size: 1.075em;               /* 1.07–1.09 is usually the sweet spot */
