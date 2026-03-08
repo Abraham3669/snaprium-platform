@@ -1232,6 +1232,29 @@ header.header {
 
 
 
+/* Premium spinner – adaptive for light & dark */
+.loading-spinner {
+  width: 54px;
+  height: 54px;
+  border: 6px solid rgba(0, 0, 0, 0.12);           /* subtle dark track in light mode */
+  border-top: 6px solid #111827;                   /* gray-900 ≈ black-ish */
+  border-radius: 50%;
+  animation: spin 1.15s cubic-bezier(0.55, 0.055, 0.675, 0.19) infinite;
+}
+
+/* Dark mode spinner – light colored accent */
+.dark .loading-spinner {
+  border: 6px solid rgba(255, 255, 255, 0.14);     /* subtle light track */
+  border-top: 6px solid #c7d2fe;                   /* indigo-300 – visible & pretty */
+  /* Alternative high-contrast option: border-top: 6px solid #ffffff; */
+}
+
+/* Optional: if you want the spinner to feel more "premium" in dark mode */
+.dark .loading-spinner {
+  box-shadow: 0 0 12px rgba(199, 210, 254, 0.25);  /* soft indigo glow */
+}
+
+
 
 
 
