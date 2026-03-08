@@ -3145,6 +3145,28 @@ button.w-full.py-3\.5:active {
 
 
 
+/* MASSIVE final answer math */
+.massive-answer-container .katex {
+  font-size: 2.8rem !important;
+  line-height: 1.2;
+}
 
+/* Display math (fractions, integrals etc) */
+.massive-answer-container .katex-display {
+  font-size: 3rem !important;
+  margin: 0 auto;
+}
+
+/* Make fractions scale properly */
+.massive-answer-container .mfrac {
+  font-size: 1.05em;
+}
+
+
+
+
+.massive-answer-container .katex {
+  font-size: 3.5rem !important;
+}
 
 
