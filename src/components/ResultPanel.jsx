@@ -65,9 +65,9 @@ export default function ResultPanel({ result, loading, onClose }) {
     Final Answer
   </h3>
 
-  <div
-  className="massive-answer-container katex-display-final-container p-8 pb-10 flex justify-center items-center min-h-[220px]"
-  style={{ fontSize: "64px", lineHeight: 1.2 }}
+ <div
+  className="massive-answer-container katex-display-final p-8 pb-10 flex justify-center items-center min-h-[220px]"
+  style={{ overflowX: 'auto' }}
 >
   <ReactMarkdown
     remarkPlugins={[remarkMath]}
