@@ -1446,116 +1446,6 @@ header.header {
 
 
 
-/* ---------- Feedback Buttons (Professional Toggle) ---------- */
-.feedback-bar {
-  width: 100%;
-  margin-top: 2rem;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.8rem;
-
-  flex-wrap: wrap;        /* allows clean wrapping */
-  text-align: center;
-}
-
-/* ---------- Feedback Buttons (Responsive Professional) ---------- */
-
-.feedback-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.45rem;
-
-  padding: 0.55rem 1.2rem;
-  min-width: 120px;
-
-  font-size: 0.85rem;
-  font-weight: 600;
-
-  border-radius: var(--radius-pill);
-  border: 1.5px solid var(--border);
-
-  background: transparent;
-  color: var(--text-secondary);
-
-  cursor: pointer;
-  transition: all 0.22s ease;
-  white-space: nowrap;
-}
-
-/* Hover */
-.feedback-btn:hover {
-  transform: translateY(-2px);
-  border-color: var(--accent);
-  color: var(--accent);
-  box-shadow: 0 6px 16px var(--accent-glow);
-}
-
-/* Active (stays blue) */
-.feedback-btn.active {
-  background: var(--accent);
-  color: #fff;
-  border-color: var(--accent);
-  box-shadow: 0 6px 20px var(--accent-glow);
-}
-
-/* Dark mode */
-[data-theme="dark"] .feedback-btn {
-  border-color: rgba(255,255,255,0.08);
-  color: var(--text-secondary);
-}
-
-
-@media (max-width: 480px) {
-  .feedback-bar {
-    gap: 0.6rem;
-  }
-
-  .feedback-btn {
-    flex: 1 1 auto;
-    min-width: 0;
-    padding: 0.5rem 0.9rem;
-    font-size: 0.8rem;
-  }
-}
-
-
-
-/* Hover effect */
-.feedback-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px var(--accent-glow);
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-/* Active (clicked) — stays blue */
-.feedback-btn.active {
-  background: var(--accent);
-  color: #ffffff;
-  border-color: var(--accent);
-  box-shadow: 0 8px 24px var(--accent-glow);
-  transform: translateY(-1px);
-}
-
-/* Dark mode refinement */
-[data-theme="dark"] .feedback-btn {
-  border-color: rgba(255,255,255,0.08);
-  color: var(--text-secondary);
-}
-
-[data-theme="dark"] .feedback-btn:hover {
-  color: var(--accent);
-  border-color: var(--accent);
-}
-
-[data-theme="dark"] .feedback-btn.active {
-  background: var(--accent);
-  color: #ffffff;
-}
-
 
 
 
@@ -3318,4 +3208,156 @@ button.w-full.py-3\.5:active {
 /* Optional: Integrals and big operators scale nicely */
 .katex-display-final .bigop {
   font-size: 1em !important;
+}
+
+
+
+
+
+
+
+
+
+
+/* ==========================================
+   Feedback Buttons – Refined for JSX layout
+   ========================================== */
+
+/* Container */
+
+.feedback-bar {
+
+  width: 100%;
+  margin-top: 2rem;
+
+  display: flex;
+  flex-direction: row;
+
+  justify-content: center;
+  align-items: center;
+
+  gap: 0.75rem;
+
+  flex-wrap: nowrap;        /* PREVENT vertical stacking */
+
+}
+
+
+
+/* Buttons */
+
+.feedback-btn {
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 0.45rem;
+
+  padding: 0.55rem 1.1rem;
+
+  font-size: 0.85rem;
+  font-weight: 600;
+
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--border);
+
+  background: transparent;
+  color: var(--text-secondary);
+
+  cursor: pointer;
+
+  white-space: nowrap;
+
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease;
+
+}
+
+
+
+/* Hover */
+
+.feedback-btn:hover {
+
+  transform: translateY(-2px);
+
+  border-color: var(--accent);
+  color: var(--accent);
+
+  box-shadow: 0 6px 16px var(--accent-glow);
+
+}
+
+
+
+/* Active state */
+
+.feedback-btn.active {
+
+  background: var(--accent);
+  color: #ffffff;
+
+  border-color: var(--accent);
+
+  box-shadow: 0 6px 20px var(--accent-glow);
+
+}
+
+
+
+/* ===============================
+   Mobile Fix
+   =============================== */
+
+@media (max-width: 480px) {
+
+  .feedback-bar {
+
+    justify-content: center;
+    gap: 0.6rem;
+
+  }
+
+  .feedback-btn {
+
+    flex: 1 1 auto;       /* buttons share row width */
+    max-width: 180px;
+
+    padding: 0.5rem 0.8rem;
+
+    font-size: 0.8rem;
+
+  }
+
+}
+
+
+
+/* ===============================
+   Dark Mode
+   =============================== */
+
+[data-theme="dark"] .feedback-btn {
+
+  border-color: rgba(255,255,255,0.08);
+  color: var(--text-secondary);
+
+}
+
+[data-theme="dark"] .feedback-btn:hover {
+
+  color: var(--accent);
+  border-color: var(--accent);
+
+}
+
+[data-theme="dark"] .feedback-btn.active {
+
+  background: var(--accent);
+  color: #ffffff;
+
 }
