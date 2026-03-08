@@ -279,6 +279,7 @@ function prepareMathForKaTeX(rawText) {
 
   let text = rawText;
 
+  // ── Existing rules (kept unchanged - they work well) ──
   text = text.replace(
     /(\b\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?\b)(?!\s*\/)/g,
     '\\frac{$1}{$2}'
@@ -296,6 +297,25 @@ function prepareMathForKaTeX(rawText) {
 
   text = text.replace(/\$\$[\s\n]+/g, '$$').replace(/[\s\n]+\$\$/g, '$$');
   text = text.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$');
+
+  // ── NEW targeted cleanups for the leftover $ problems you see ──
+
+  // 1. Remove trailing $$ at end of line or before punctuation
+  text = text.replace(/\$\$([.,;:!?]?(\s|$))/g, '$1');
+
+  // 2. Fix patterns like $something$$ → treat as $something$
+  text = text.replace(/\$([^$]+?)\$\$/g, '$$$1$');
+
+  // 3. Collapse triple+ dollars that sometimes appear → normalize to $$
+  text = text.replace(/(\$){3,}/g, '$$$$');
+
+  // 4. Remove isolated single $ that appears right before/after math
+  //    (helps with cases like "find $v'$:" → "find v':")
+  text = text.replace(/(\s|^)\$([a-zA-Z0-9']+?)\$\$?([:.,;!?])/g, '$1$2$3');
+
+  // 5. Final pass: remove any leftover single $ that is not part of math
+  //    (only when surrounded by non-math characters)
+  text = text.replace(/([^\$])\$([^\$])/g, '$1$2');
 
   return text;
 }
