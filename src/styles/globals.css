@@ -3120,16 +3120,15 @@ button.w-full.py-3\.5:active {
 
 
 
-
 .katex-display-final {
-  font-size: 1.8em !important;     /* or 2em, 2.2em — play with it */
+  font-size: 1.8em !important;   /* adjust to taste */
+  font-weight: 700 !important;   /* bold */
   margin: 0.8em 0 !important;
   line-height: 1.2 !important;
 }
 
-/* Nicer fraction line in big display */
 .katex-display .mfrac .frac-line {
-  height: 2.5px !important;
+  height: 2.5px !important;      /* thicker fraction lines */
 }
 
 

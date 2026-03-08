@@ -65,36 +65,24 @@ export default function ResultPanel({ result, loading, onClose }) {
     Final Answer
   </h3>
 
-  <div className="massive-answer-container p-8 pb-10 flex justify-center items-center min-h-[180px]">
-    <ReactMarkdown
-      remarkPlugins={[remarkMath]}
-      rehypePlugins={[rehypeKatex]}
-      components={{
-        p: ({children}) => (
-          <div className="inline-block text-center whitespace-nowrap min-w-fit">
-            {children}
-          </div>
-        ),
-
-        
-        div: ({node, className, children, ...props}) =>
-          className?.includes('katex-display') ? (
-            <div
-              className="massive-katex-display mx-auto text-center"
-              {...props}
-            >
-              {children}
-            </div>
-          ) : (
-            <div className="massive-fallback-text" {...props}>
-              {children}
-            </div>
-          ),
-      }}
-    >
-      {finalAnswerContent || '\\text{-}'}
-    </ReactMarkdown>
-  </div>
+  <div
+  className="massive-answer-container katex-display-final p-8 pb-10 flex justify-center items-center min-h-[180px]"
+>
+  <ReactMarkdown
+    remarkPlugins={[remarkMath]}
+    rehypePlugins={[rehypeKatex]}
+    components={{
+      p: ({ children }) => (
+        <div className="inline-block text-center whitespace-nowrap min-w-fit">
+          {children}
+        </div>
+      ),
+      // Remove div override for KaTeX to let the CSS apply properly
+    }}
+  >
+    {finalAnswerContent || '\\text{-}'}
+  </ReactMarkdown>
+</div>
 </div>
 
               {/* Toggle Button */}
