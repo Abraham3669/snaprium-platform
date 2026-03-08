@@ -66,7 +66,8 @@ export default function ResultPanel({ result, loading, onClose }) {
   </h3>
 
   <div
-  className="massive-answer-container katex-display-final p-8 pb-10 flex justify-center items-center min-h-[180px]"
+  className="massive-answer-container katex-display-final-container p-8 pb-10 flex justify-center items-center min-h-[220px]"
+  style={{ fontSize: "64px", lineHeight: 1.2 }}
 >
   <ReactMarkdown
     remarkPlugins={[remarkMath]}
@@ -77,7 +78,6 @@ export default function ResultPanel({ result, loading, onClose }) {
           {children}
         </div>
       ),
-      // Remove div override for KaTeX to let the CSS apply properly
     }}
   >
     {finalAnswerContent || '\\text{-}'}

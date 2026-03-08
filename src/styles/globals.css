@@ -3120,24 +3120,24 @@ button.w-full.py-3\.5:active {
 
 
 
-.katex-display-final {
-  font-size: 1.8em !important;   /* adjust to taste */
-  font-weight: 700 !important;   /* bold */
-  margin: 0.8em 0 !important;
-  line-height: 1.2 !important;
+.katex-display-final-container {
+  overflow-x: auto;       /* enable horizontal scroll */
+  overflow-y: hidden;     /* prevent vertical scroll */
+  padding-bottom: 0.5em;  /* optional: space below for comfort */
+  scrollbar-width: thin;  /* Firefox: thinner scrollbar */
+  -ms-overflow-style: auto; /* IE 10+ */
 }
 
-.katex-display .mfrac .frac-line {
-  height: 2.5px !important;      /* thicker fraction lines */
-}
-
-
-
-
-
-
-.katex-display {
-  font-size: 3rem;
+/* Optional: small shadow gradient to hint scrollability */
+.katex-display-final-container::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 30px;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(to left, rgba(255,255,255,0.5), transparent);
 }
 
 
