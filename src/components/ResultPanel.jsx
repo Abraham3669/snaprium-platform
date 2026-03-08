@@ -66,7 +66,10 @@ export default function ResultPanel({ result, loading, onClose }) {
                   Final Answer
                 </h3>
 
-                <div className="massive-answer-container p-8 pb-10 flex justify-center items-center min-h-[180px]">
+                <div
+  className="massive-answer-container p-8 pb-10 flex justify-center items-center min-h-[180px]"
+  style={{ fontSize: "42px" }}
+>
                   <ReactMarkdown
                     remarkPlugins={[remarkMath]}
                     rehypePlugins={[rehypeKatex]}
