@@ -3139,18 +3139,24 @@ button.w-full.py-3\.5:active {
 
 
 
-.massive-katex-display,
-.massive-katex-display .katex,
-.massive-katex-display .katex-display,
-.massive-katex-display .katex-html {
-  font-size: 3.6rem !important;
-  line-height: 1.12 !important;
+/* In your global CSS file or inside ResultPanel with <style> */
+.massive-answer-container .katex {
+  font-size: 2.8em !important;   /* ← main knob — try 2.4–3.5em */
 }
 
-.massive-katex-display .katex .mord.textstyle,
-.massive-katex-display .katex .mbin,
-.massive-katex-display .katex .mrel {
+.massive-answer-container .katex .base {
   font-size: inherit !important;
+}
+
+/* Optional – make it even more prominent */
+.massive-answer-container .katex-display {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.massive-answer-container .katex-html {
+  display: inline-flex;
+  align-items: center;
 }
 
 
