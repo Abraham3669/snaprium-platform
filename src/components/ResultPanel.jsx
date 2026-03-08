@@ -162,40 +162,49 @@ export default function ResultPanel({ result, loading, onClose }) {
 
                     {/* ── IMPROVED INLINE MATH RENDERING ── */}
                     <div className="step-by-step-content prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)]">
-                      <ReactMarkdown
-                        remarkPlugins={[remarkMath]}
-                        rehypePlugins={[
-                          [
-                            rehypeKatex,
-                            {
-                              output: 'html',
-                              throwOnError: false,
-                              strict: 'ignore',
-                              trust: true,
-                              fleqn: false,
-                              displayMode: false, // not really needed here
-                              // You can add custom macros if desired
-                              // macros: {
-                              //   "\\dx": "\\,\\mathrm{d}x",
-                              //   "\\diff": "\\,\\mathrm{d}",
-                              // },
-                            },
-                          ],
-                        ]}
-                        components={{
-                          // Better inline math wrapper
-                          inlineMath: ({ value }) => (
-                            <span className="inline-katex">{value}</span>
-                          ),
-                          // Slightly better paragraph spacing
-                          paragraph: ({ children }) => (
-                            <p className="my-3.5 leading-relaxed tracking-wide">{children}</p>
-                          ),
-                        }}
-                      >
-                        {preparedSteps}
-                      </ReactMarkdown>
-                    </div>
+  <ReactMarkdown
+    remarkPlugins={[remarkMath]}
+    rehypePlugins={[
+      [
+        rehypeKatex,
+        {
+          output: 'html',
+          throwOnError: false,
+          strict: 'ignore',
+          trust: true,
+          fleqn: false,
+          // These help prevent common inline rendering glitches
+          macros: {
+            "\\coth": "\\operatorname{coth}",
+            "\\csch": "\\operatorname{csch}",
+            "\\sech": "\\operatorname{sech}",
+          },
+        },
+      ],
+    ]}
+    components={{
+      // Custom inline math wrapper – most important for consistency
+      inlineMath: ({ value }) => (
+        <span className="inline-katex font-medium align-middle">
+          {value}
+        </span>
+      ),
+      // Better paragraph handling
+      paragraph: ({ children }) => (
+        <p className="my-3.5 leading-7 tracking-wide">{children}</p>
+      ),
+      // Optional: force better baseline for math-heavy paragraphs
+      text: ({ children, node }) => {
+        if (node.children?.some(child => child.type === 'inlineMath')) {
+          return <span className="inline-math-paragraph">{children}</span>;
+        }
+        return children;
+      },
+    }}
+  >
+    {preparedSteps}
+  </ReactMarkdown>
+</div>
                   </div>
                 </div>
 

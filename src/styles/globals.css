@@ -3367,34 +3367,43 @@ button.w-full.py-3\.5:active {
 
 
 
-/* Better inline math appearance – add these rules */
-.step-by-step-content .inline-katex {
-  font-size: 1.06em;
-  padding: 0 0.12em;
-  font-weight: 450;           /* or 500 if you prefer slightly bolder */
-}
-
-.step-by-step-content .katex {
-  font-size: 1.06em !important;
-}
-
-.step-by-step-content .katex-html {
+/* ── Inline math improvements ── */
+.inline-katex {
+  font-size: 1.07em;              /* 1.06–1.09 usually ideal */
+  line-height: 1;
   vertical-align: baseline !important;
+  display: inline-block;
+  margin: 0 0.08em;
 }
 
-/* Tiny breathing room around operators and sub/superscripts */
-.step-by-step-content .katex .mord,
-.step-by-step-content .katex .mbin,
-.step-by-step-content .katex .mrel {
-  margin: 0 0.04em;
+/* Prevent superscripts/subscripts from looking crushed */
+.katex .msupsub {
+  font-size: 0.85em !important;   /* adjust 0.82–0.9 */
+  vertical-align: 0.35em;         /* tweak this value: 0.3–0.45 */
 }
 
-.step-by-step-content .katex .msupsub {
-  margin-left: 0.08em;
-  margin-right: 0.08em;
+/* Better operator spacing */
+.katex .mbin,
+.katex .mrel {
+  margin: 0 0.12em 0 0.1em;
 }
 
-/* Optional: slightly more line height for better readability */
+/* Fix baseline shift when math is mixed with text */
+.inline-math-paragraph,
 .step-by-step-content p {
-  line-height: 1.68;
+  line-height: 1.75 !important;   /* 1.68–1.82 range */
+  margin-bottom: 1.1em;
+}
+
+/* Make fractions and tall symbols behave better inline */
+.katex .mfrac .frac-line,
+.katex .mfrac .numerator,
+.katex .mfrac .denominator {
+  line-height: 1.1;
+}
+
+/* Optional: slightly bolder math font for clarity */
+.katex {
+  font-weight: 450 !important;
+  /* or 500 if you want it more pronounced */
 }
