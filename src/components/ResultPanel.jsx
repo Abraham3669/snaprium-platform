@@ -19,25 +19,41 @@ export default function ResultPanel({ result, loading, onClose }) {
     // Later: send to backend
   };
 
-  useEffect(() => {
-    if (!loading) {
-      setShowAnalyzing(false);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      return;
-    }
+  // src/components/ResultPanel.jsx
+// ──────────────────────────────────────────────────────────────
 
-    // Reset
+useEffect(() => {
+  if (!loading) {
     setShowAnalyzing(false);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    return;
+  }
 
-    // Show "Analyzing..." only AFTER scan animation should be finished
-    timeoutRef.current = setTimeout(() => {
-      setShowAnalyzing(true);
-    }, 4800); // ≈ time of your scan animation (4.8s in CSS)
+  // Reset
+  setShowAnalyzing(false);
 
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, [loading]);
+  // Show "Analyzing..." ≈ right after scan finishes
+  // Use 5000–5200 ms — tune this value to match your @keyframes scan duration
+  timeoutRef.current = setTimeout(() => {
+  setShowAnalyzing(true);
+}, 3300);     // 3.3 seconds — gives ~300 ms buffer after scan finishes    // <--- most important tuning knob
+
+  return () => clearTimeout(timeoutRef.current);
+}, [loading]);
+
+// Add this new piece of state to trigger entrance animation only once
+const [revealReady, setRevealReady] = useState(false);
+
+useEffect(() => {
+  if (!loading && result?.text) {
+    // Small delay so removal of loading UI doesn't feel abrupt
+    const timer = setTimeout(() => {
+      setRevealReady(true);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }
+}, [loading, result?.text]);
 
   if (!result?.image) return null;
 
@@ -81,22 +97,22 @@ export default function ResultPanel({ result, loading, onClose }) {
         </div>
 
         <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
-          {loading ? (
-            <div className="loading-messages min-h-[180px] flex flex-col items-center justify-center py-12 px-6 text-center">
-              {showAnalyzing ? (
-                <>
-                  <p className="text-xl font-semibold text-gray-800 dark:text-gray-200 animate-pulse">
-                    Analyzing your solution...
-                  </p>
-                  <div className="mt-8">
-                    <div className="w-10 h-10 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
-                  </div>
-                </>
-              ) : (
-                // During scan → no text, just visual feedback
-                <div className="h-24" /> // spacer to prevent layout jump
-              )}
-            </div>
+  {loading ? (
+    <div className="loading-messages min-h-[220px] flex flex-col items-center justify-center py-12 px-6 text-center">
+      {showAnalyzing ? (
+        <div className="fade-in-scale">
+          <p className="text-xl font-semibold text-gray-800 dark:text-gray-200 animate-pulse">
+            Analyzing your solution…
+          </p>
+          <div className="mt-8">
+            <div className="loading-spinner w-12 h-12" />
+          </div>
+        </div>
+      ) : (
+        // During scan: keep space reserved → prevents ugly layout jump later
+        <div className="h-32" />
+      )}
+    </div>
           ) : (
             result?.text && (
               <>
