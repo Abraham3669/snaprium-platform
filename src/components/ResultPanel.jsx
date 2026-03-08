@@ -65,34 +65,23 @@ export default function ResultPanel({ result, loading, onClose }) {
     Final Answer
   </h3>
 
-  <div className="massive-answer-container p-8 pb-10 flex justify-center items-center min-h-[180px]">
+ <div className="massive-answer-container p-8 pb-10 flex justify-center items-center min-h-[220px]">
+  <div
+    style={{
+      fontSize: 'clamp(2.4rem, 11vw, 4.5rem)',   // ← main size control – feel free to tune
+      lineHeight: '1.15',
+      fontWeight: '600',                         // optional: makes it look bolder
+      maxWidth: '100%',                          // prevents overflow on very wide math
+    }}
+  >
     <ReactMarkdown
       remarkPlugins={[remarkMath]}
       rehypePlugins={[rehypeKatex]}
-      components={{
-        p: ({children}) => (
-          <div className="inline-block text-center whitespace-nowrap min-w-fit">
-            {children}
-          </div>
-        ),
-        div: ({node, className, children, ...props}) =>
-          className?.includes('katex-display') ? (
-            <div
-              className="massive-katex-display mx-auto text-center"
-              {...props}
-            >
-              {children}
-            </div>
-          ) : (
-            <div className="massive-fallback-text" {...props}>
-              {children}
-            </div>
-          ),
-      }}
     >
-      {finalAnswerContent || '\\text{-}'}
+      {finalAnswerContent || '\\text{—}'}
     </ReactMarkdown>
   </div>
+</div>
 </div>
 
               {/* Toggle Button */}
