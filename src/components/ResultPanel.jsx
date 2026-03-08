@@ -23,25 +23,22 @@ export default function ResultPanel({ result, loading, onClose }) {
   // ─── Timing control ───────────────────────────────────────
   useEffect(() => {
     if (loading) {
-      // Reset when new scan starts
       setScanFinished(false);
       setShowAnalyzing(false);
 
-      // After ~3.3 seconds → consider scan done → show Analyzing…
       timeoutRef.current = setTimeout(() => {
         setScanFinished(true);
         setShowAnalyzing(true);
-      }, 3300); // ← tune this to match your scan animation duration
+      }, 3300);
 
       return () => clearTimeout(timeoutRef.current);
     } else {
-      // Result arrived → hide analyzing
       setShowAnalyzing(false);
       clearTimeout(timeoutRef.current);
     }
   }, [loading]);
 
-  // Small delay before revealing final result (avoids flash)
+  // Small delay before revealing final result
   const [revealReady, setRevealReady] = useState(false);
 
   useEffect(() => {
@@ -109,7 +106,6 @@ export default function ResultPanel({ result, loading, onClose }) {
                   </div>
                 </div>
               ) : (
-                // Reserve space during scanning so layout doesn't jump later
                 <div className="h-32" />
               )}
             </div>
@@ -163,8 +159,40 @@ export default function ResultPanel({ result, loading, onClose }) {
                     <h4 className="text-xl font-semibold text-[var(--text-primary)] mb-5">
                       Step-by-Step Solution
                     </h4>
-                    <div className="prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)]">
-                      <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+
+                    {/* ── IMPROVED INLINE MATH RENDERING ── */}
+                    <div className="step-by-step-content prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)]">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkMath]}
+                        rehypePlugins={[
+                          [
+                            rehypeKatex,
+                            {
+                              output: 'html',
+                              throwOnError: false,
+                              strict: 'ignore',
+                              trust: true,
+                              fleqn: false,
+                              displayMode: false, // not really needed here
+                              // You can add custom macros if desired
+                              // macros: {
+                              //   "\\dx": "\\,\\mathrm{d}x",
+                              //   "\\diff": "\\,\\mathrm{d}",
+                              // },
+                            },
+                          ],
+                        ]}
+                        components={{
+                          // Better inline math wrapper
+                          inlineMath: ({ value }) => (
+                            <span className="inline-katex">{value}</span>
+                          ),
+                          // Slightly better paragraph spacing
+                          paragraph: ({ children }) => (
+                            <p className="my-3.5 leading-relaxed tracking-wide">{children}</p>
+                          ),
+                        }}
+                      >
                         {preparedSteps}
                       </ReactMarkdown>
                     </div>
@@ -201,7 +229,7 @@ export default function ResultPanel({ result, loading, onClose }) {
   );
 }
 
-// ── Your helper functions (unchanged) ──
+// ── Helper functions remain unchanged ──
 function extractFinalAnswer(rawText) {
   if (!rawText) return '';
 

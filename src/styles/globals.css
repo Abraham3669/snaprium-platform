@@ -3361,3 +3361,40 @@ button.w-full.py-3\.5:active {
   color: #ffffff;
 
 }
+
+
+
+
+
+
+/* Better inline math appearance – add these rules */
+.step-by-step-content .inline-katex {
+  font-size: 1.06em;
+  padding: 0 0.12em;
+  font-weight: 450;           /* or 500 if you prefer slightly bolder */
+}
+
+.step-by-step-content .katex {
+  font-size: 1.06em !important;
+}
+
+.step-by-step-content .katex-html {
+  vertical-align: baseline !important;
+}
+
+/* Tiny breathing room around operators and sub/superscripts */
+.step-by-step-content .katex .mord,
+.step-by-step-content .katex .mbin,
+.step-by-step-content .katex .mrel {
+  margin: 0 0.04em;
+}
+
+.step-by-step-content .katex .msupsub {
+  margin-left: 0.08em;
+  margin-right: 0.08em;
+}
+
+/* Optional: slightly more line height for better readability */
+.step-by-step-content p {
+  line-height: 1.68;
+}
