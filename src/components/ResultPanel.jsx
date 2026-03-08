@@ -10,6 +10,7 @@ export default function ResultPanel({ result, loading, onClose }) {
   const [showSteps, setShowSteps] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [showAnalyzing, setShowAnalyzing] = useState(false);
+  const [scanFinished, setScanFinished] = useState(false);
 
   const stepsRef = useRef(null);
   const timeoutRef = useRef(null);
@@ -19,41 +20,40 @@ export default function ResultPanel({ result, loading, onClose }) {
     // Later: send to backend
   };
 
-  // src/components/ResultPanel.jsx
-// ──────────────────────────────────────────────────────────────
+  // ─── Timing control ───────────────────────────────────────
+  useEffect(() => {
+    if (loading) {
+      // Reset when new scan starts
+      setScanFinished(false);
+      setShowAnalyzing(false);
 
-useEffect(() => {
-  if (!loading) {
-    setShowAnalyzing(false);
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    return;
-  }
+      // After ~3.3 seconds → consider scan done → show Analyzing…
+      timeoutRef.current = setTimeout(() => {
+        setScanFinished(true);
+        setShowAnalyzing(true);
+      }, 3300); // ← tune this to match your scan animation duration
 
-  // Reset
-  setShowAnalyzing(false);
+      return () => clearTimeout(timeoutRef.current);
+    } else {
+      // Result arrived → hide analyzing
+      setShowAnalyzing(false);
+      clearTimeout(timeoutRef.current);
+    }
+  }, [loading]);
 
-  // Show "Analyzing..." ≈ right after scan finishes
-  // Use 5000–5200 ms — tune this value to match your @keyframes scan duration
-  timeoutRef.current = setTimeout(() => {
-  setShowAnalyzing(true);
-}, 3300);     // 3.3 seconds — gives ~300 ms buffer after scan finishes    // <--- most important tuning knob
+  // Small delay before revealing final result (avoids flash)
+  const [revealReady, setRevealReady] = useState(false);
 
-  return () => clearTimeout(timeoutRef.current);
-}, [loading]);
-
-// Add this new piece of state to trigger entrance animation only once
-const [revealReady, setRevealReady] = useState(false);
-
-useEffect(() => {
-  if (!loading && result?.text) {
-    // Small delay so removal of loading UI doesn't feel abrupt
-    const timer = setTimeout(() => {
-      setRevealReady(true);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }
-}, [loading, result?.text]);
+  useEffect(() => {
+    if (!loading && result?.text) {
+      const timer = setTimeout(() => {
+        setRevealReady(true);
+      }, 400);
+      return () => clearTimeout(timer);
+    } else {
+      setRevealReady(false);
+    }
+  }, [loading, result?.text]);
 
   if (!result?.image) return null;
 
@@ -81,7 +81,7 @@ useEffect(() => {
         <div className="image-wrapper relative">
           <img className="result-image" src={result.image} alt="Cropped preview" />
 
-          {loading && (
+          {loading && !scanFinished && (
             <div className="scan-overlay absolute inset-0 pointer-events-none">
               <div className="scan-grid absolute inset-0"></div>
               <div className="scan-line absolute"></div>
@@ -97,24 +97,25 @@ useEffect(() => {
         </div>
 
         <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
-  {loading ? (
-    <div className="loading-messages min-h-[220px] flex flex-col items-center justify-center py-12 px-6 text-center">
-      {showAnalyzing ? (
-        <div className="fade-in-scale">
-          <p className="text-xl font-semibold text-gray-800 dark:text-gray-200 animate-pulse">
-            Analyzing your solution…
-          </p>
-          <div className="mt-8">
-            <div className="loading-spinner w-12 h-12" />
-          </div>
-        </div>
-      ) : (
-        // During scan: keep space reserved → prevents ugly layout jump later
-        <div className="h-32" />
-      )}
-    </div>
+          {loading ? (
+            <div className="loading-messages min-h-[220px] flex flex-col items-center justify-center py-12 px-6 text-center">
+              {showAnalyzing ? (
+                <div className="fade-in-scale">
+                  <p className="text-xl font-semibold text-gray-800 dark:text-gray-200 animate-pulse">
+                    Analyzing your solution…
+                  </p>
+                  <div className="mt-8">
+                    <div className="loading-spinner w-12 h-12" />
+                  </div>
+                </div>
+              ) : (
+                // Reserve space during scanning so layout doesn't jump later
+                <div className="h-32" />
+              )}
+            </div>
           ) : (
-            result?.text && (
+            result?.text &&
+            revealReady && (
               <>
                 <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden">
                   <h3 className="final-answer-header px-6 py-4 text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
@@ -122,7 +123,7 @@ useEffect(() => {
                   </h3>
                   <div
                     className="massive-answer-container katex-display-final-container p-8 pb-10 flex justify-center items-center min-h-[220px]"
-                    style={{ fontSize: "64px", lineHeight: 1.2 }}
+                    style={{ fontSize: '64px', lineHeight: 1.2 }}
                   >
                     <ReactMarkdown
                       remarkPlugins={[remarkMath]}
@@ -171,7 +172,6 @@ useEffect(() => {
                 </div>
 
                 <div className="feedback-bar mt-6 flex justify-center gap-4">
-                  {/* feedback buttons unchanged */}
                   <button
                     className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'up' ? 'active' : ''}`}
                     onClick={() => handleFeedback('up')}
@@ -201,13 +201,7 @@ useEffect(() => {
   );
 }
 
-// ── Your helper functions remain unchanged ──
-
-// ────────────────────────────────────────────────
-// Helper functions unchanged...
-// (extractFinalAnswer, fallbackLastLines, prepareMathForKaTeX - copy from your original)
-// ────────────────────────────────────────────────
-// Your existing helper functions (unchanged)
+// ── Your helper functions (unchanged) ──
 function extractFinalAnswer(rawText) {
   if (!rawText) return '';
 
@@ -219,10 +213,7 @@ function extractFinalAnswer(rawText) {
     pos += 7;
   }
 
-  if (lastStart === -1) {
-    console.log('No \\boxed found → fallback');
-    return fallbackLastLines(rawText);
-  }
+  if (lastStart === -1) return fallbackLastLines(rawText);
 
   const startIndex = lastStart + 7;
   let braceCount = 1;
@@ -237,10 +228,7 @@ function extractFinalAnswer(rawText) {
     i++;
   }
 
-  content = content.slice(0, -1).trim();
-
-  console.log('Extracted last boxed:', content);
-  return content;
+  return content.slice(0, -1).trim();
 }
 
 function fallbackLastLines(rawText) {
@@ -255,7 +243,6 @@ function fallbackLastLines(rawText) {
     if (line.includes('=') || line.includes('\\frac') || /^\s*[-−]?\d+(\.\d+)?\s*$/.test(line)) break;
   }
 
-  console.log('Fallback:', candidate);
   return candidate || lines[lines.length - 1];
 }
 
@@ -280,7 +267,6 @@ function prepareMathForKaTeX(rawText) {
   );
 
   text = text.replace(/\$\$[\s\n]+/g, '$$').replace(/[\s\n]+\$\$/g, '$$');
-
   text = text.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$');
 
   return text;
