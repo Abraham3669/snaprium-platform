@@ -1039,25 +1039,75 @@ header.header {
 }
 
 
-.scan-glow {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(59,130,246,0.12) 45%,
-    rgba(59,130,246,0.12) 55%,
-    transparent 100%
-  );
-  animation: gentle-scan 8s ease-in-out infinite;
-  pointer-events: none;
+/* ──────────────────────────────────────────────
+   Loading Messages (phased status text)
+─────────────────────────────────────────────── */
+.loading-messages {
+  position: relative;
+  min-height: 120px; /* prevents jump when text appears */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
 }
 
-@keyframes gentle-scan {
-  0%, 100%   { transform: translateX(-100%); opacity: 0; }
-  10%        { opacity: 0.6; }
-  50%        { transform: translateX(100%); opacity: 0.8; }
-  90%        { opacity: 0.4; }
+.loading-messages p {
+  margin: 0;
+  font-size: 1.125rem; /* 18px */
+  font-weight: 500;
+  color: #374151; /* gray-700 */
+  transition: opacity 0.8s ease, transform 0.6s ease;
+}
+
+.dark .loading-messages p {
+  color: #d1d5db; /* gray-300 */
+}
+
+/* Subtle pulse animation for active phase text */
+@keyframes subtle-pulse {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.015); }
+}
+
+.loading-messages p.animate-pulse {
+  animation: subtle-pulse 2.5s ease-in-out infinite;
+}
+
+/* Optional spinner for long waits */
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 4px solid rgba(59, 130, 246, 0.2); /* blue-500 with opacity */
+  border-top-color: var(--accent, #3b82f6); /* your accent color */
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Ensure scan-line runs ONLY ONCE and doesn't loop */
+.scan-line {
+  animation: scan 3.2s cubic-bezier(0.4, 0, 0.6, 1) forwards !important;
+  /* ^ 'forwards' keeps it at final state (off-screen), no repeat */
+}
+
+/* Optional: fade out the entire overlay smoothly when loading ends */
+.image-wrapper {
+  transition: all 0.6s ease;
+}
+
+.image-wrapper.loading-done::after { /* you can add .loading-done class via JS if wanted */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(1px);
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  pointer-events: none;
 }
 
 
