@@ -1039,51 +1039,25 @@ header.header {
 }
 
 
-.image-wrapper {
-  position: relative;
-  overflow: hidden;
-  border-radius: 16px;
-  box-shadow: 0 10px 38px -10px rgba(0,0,0,0.18);
-  background: #f8f9fc;
-  isolation: isolate;     /* modern stacking context helper */
-}
-
-.result-image {
-  width: 100%;
-  height: auto;
-  display: block;
-  transition: transform 0.4s ease, filter 0.6s ease;
-}
-
-/* Very subtle "being processed" state */
-.image-wrapper.processing::after {
-  content: "";
+.scan-glow {
   position: absolute;
   inset: 0;
   background: linear-gradient(
-    135deg,
-    rgba(59,130,246,0.07) 0%,
-    rgba(139,92,246,0.07) 100%
+    90deg,
+    transparent 0%,
+    rgba(59,130,246,0.12) 45%,
+    rgba(59,130,246,0.12) 55%,
+    transparent 100%
   );
-  opacity: 0;
-  transition: opacity 0.8s ease;
+  animation: gentle-scan 8s ease-in-out infinite;
   pointer-events: none;
 }
 
-.image-wrapper.processing::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  backdrop-filter: blur(2px);   /* very soft frost */
-  -webkit-backdrop-filter: blur(2px);
-  background: rgba(255,255,255,0.05);
-  opacity: 0;
-  transition: opacity 0.8s ease;
-}
-
-.image-wrapper.processing::after,
-.image-wrapper.processing::before {
-  opacity: 1;
+@keyframes gentle-scan {
+  0%, 100%   { transform: translateX(-100%); opacity: 0; }
+  10%        { opacity: 0.6; }
+  50%        { transform: translateX(100%); opacity: 0.8; }
+  90%        { opacity: 0.4; }
 }
 
 
