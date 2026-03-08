@@ -3143,6 +3143,28 @@ button.w-full.py-3\.5:active {
 
 
 
+.katex-display-final {
+  font-weight: 700 !important;  
+  margin: 1em 0 !important;      
+  font-size: 64px;               /* container font size */
+  line-height: 1.2 !important;
+}
+
+/* Make fractions scale properly */
+.katex-display-final .mfrac {
+  font-size: 1em !important;      /* inherit full container size */
+}
+
+/* Thicker fraction line for big math */
+.katex-display-final .mfrac .frac-line {
+  height: 4px !important;         /* thicker line than before */
+}
+
+
+
+.katex-display-final .sqrt-line {
+  border-top-width: 4px !important; /* thicker for big radicals */
+}
 
 
 
