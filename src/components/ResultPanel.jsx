@@ -35,7 +35,7 @@ export default function ResultPanel({ result, loading, onClose }) {
     !finalAnswerContent.match(/^\$\$[\s\S]*\$\$|\$[\s\S]*\$|\\\[[\s\S]*\\\]/) &&
     (finalAnswerContent.includes('\\') || finalAnswerContent.match(/[=\-+*/^√π∫∑()[\]{}]/))
   ) {
-    finalAnswerContent = `\n\n$$${finalAnswerContent}$$\n\n`;
+    finalAnswerContent = `$$${finalAnswerContent}$$`;
   }
 
   return (
@@ -55,36 +55,47 @@ export default function ResultPanel({ result, loading, onClose }) {
           )}
         </div>
 
-        {/* REMOVED prose HERE so KaTeX scaling works */}
-        <div className="solution-area max-w-none">
+        <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
           {!loading && result?.text && (
             <>
               {/* Final Answer Card – only this section gets massive math */}
-              <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden">
+             <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden">
 
-                <h3 className="final-answer-header px-6 py-4 text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-                  Final Answer
-                </h3>
+  <h3 className="final-answer-header px-6 py-4 text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+    Final Answer
+  </h3>
 
-                <div
-  className="massive-answer-container p-8 pb-10 flex justify-center items-center min-h-[180px]"
-  style={{ fontSize: "42px" }}
->
-                  <ReactMarkdown
-  remarkPlugins={[remarkMath]}
-  rehypePlugins={[rehypeKatex]}
-  components={{
-    p: ({children}) => (
-      <div className="text-center">
-        {children}
-      </div>
-    )
-  }}
->
-                    {finalAnswerContent || '\\text{-}'}
-                  </ReactMarkdown>
-                </div>
-              </div>
+  <div className="massive-answer-container p-8 pb-10 flex justify-center items-center min-h-[180px]">
+    <ReactMarkdown
+      remarkPlugins={[remarkMath]}
+      rehypePlugins={[rehypeKatex]}
+      components={{
+        p: ({children}) => (
+          <div className="inline-block text-center whitespace-nowrap min-w-fit">
+            {children}
+          </div>
+        ),
+
+        
+        div: ({node, className, children, ...props}) =>
+          className?.includes('katex-display') ? (
+            <div
+              className="massive-katex-display mx-auto text-center"
+              {...props}
+            >
+              {children}
+            </div>
+          ) : (
+            <div className="massive-fallback-text" {...props}>
+              {children}
+            </div>
+          ),
+      }}
+    >
+      {finalAnswerContent || '\\text{-}'}
+    </ReactMarkdown>
+  </div>
+</div>
 
               {/* Toggle Button */}
               <button
@@ -110,14 +121,11 @@ export default function ResultPanel({ result, loading, onClose }) {
                   <h4 className="text-xl font-semibold text-[var(--text-primary)] mb-5">
                     Step-by-Step Solution
                   </h4>
-
-                  {/* PROSE APPLIED ONLY TO STEPS */}
-                  <div className="prose prose-lg dark:prose-invert max-w-none prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)]">
+                  <div className="prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)]">
                     <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
                       {preparedSteps}
                     </ReactMarkdown>
                   </div>
-
                 </div>
               </div>
 
