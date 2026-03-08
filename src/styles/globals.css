@@ -1046,183 +1046,293 @@ header.header {
 
 
 
-
 /* ================================================
    Result Panel – Full Loading & Reveal Styles
-   (Scanning white version + professional animations)
+   (Scanner once + analyzing blink)
    ================================================ */
 
-/* ── Image wrapper & scan overlay ── */
+
+/* ─────────────────────────────────────────────
+   Image wrapper
+──────────────────────────────────────────── */
+
 .image-wrapper {
   position: relative;
   overflow: hidden;
   border-radius: 12px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
   transition: all 0.8s ease-out;
 }
+
+
+/* ─────────────────────────────────────────────
+   Scanner Overlay
+──────────────────────────────────────────── */
 
 .scan-overlay {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  transition: opacity 1.2s ease-out;
 }
+
+
+/* Scanner grid */
 
 .scan-grid {
   position: absolute;
   inset: 0;
-  background: 
+
+  background:
     linear-gradient(to right, rgba(255,255,255,0.06) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(255,255,255,0.06) 1px, transparent 1px);
+
   background-size: 40px 40px;
-  opacity: 0.4;
-  animation: gridFade 6s ease-in-out infinite;
+
+  opacity: 0.45;
 }
 
+
+/* Scanner line */
+
 .scan-line {
+
   position: absolute;
   left: 0;
   right: 0;
+
   height: 3px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent);
-  box-shadow: 0 0 20px 8px rgba(255,255,255,0.5);
-  animation: scan 3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  animation-delay: 0.4s;
+
+  background:
+    linear-gradient(90deg, transparent, rgba(255,255,255,0.95), transparent);
+
+  box-shadow:
+    0 0 18px 6px rgba(255,255,255,0.55);
+
+  animation: scanOnce 3s cubic-bezier(0.4,0,0.2,1) forwards;
+
   will-change: top, opacity;
 }
+
+
+/* Scanner corners */
 
 .scan-corners {
   position: absolute;
   inset: 0;
 }
 
-.corner-tl, .corner-tr, .corner-bl, .corner-br {
+.corner-tl,
+.corner-tr,
+.corner-bl,
+.corner-br {
+
   position: absolute;
+
   width: 40px;
   height: 40px;
-  border: 3px solid rgba(255,255,255,0.7);
-  box-shadow: 0 0 12px rgba(255,255,255,0.6);
-  opacity: 0.9;
+
+  border: 3px solid rgba(255,255,255,0.75);
+
+  box-shadow:
+    0 0 12px rgba(255,255,255,0.55);
+
 }
 
-.corner-tl { top: 12px; left: 12px; border-right: none; border-bottom: none; }
-.corner-tr { top: 12px; right: 12px; border-left: none; border-bottom: none; }
-.corner-bl { bottom: 12px; left: 12px; border-right: none; border-top: none; }
-.corner-br { bottom: 12px; right: 12px; border-left: none; border-top: none; }
+.corner-tl { top: 12px; left: 12px; border-right:none; border-bottom:none; }
+.corner-tr { top: 12px; right:12px; border-left:none; border-bottom:none; }
+.corner-bl { bottom:12px; left:12px; border-right:none; border-top:none; }
+.corner-br { bottom:12px; right:12px; border-left:none; border-top:none; }
 
-/* Scanning animation (3 seconds, white glow) */
-@keyframes scan {
-  0%    { top: -25%; opacity: 0; }
-  8%    { opacity: 1; }
-  92%   { top: 125%; opacity: 1; }
-  100%  { top: 130%; opacity: 0; }
+
+/* Scanner animation (runs once) */
+
+@keyframes scanOnce {
+
+  0% {
+    top:-25%;
+    opacity:0;
+  }
+
+  8% {
+    opacity:1;
+  }
+
+  92% {
+    top:125%;
+    opacity:1;
+  }
+
+  100% {
+    top:130%;
+    opacity:0;
+  }
+
 }
 
-@keyframes gridFade {
-  0%, 100% { opacity: 0.35; }
-  50%      { opacity: 0.6; }
-}
 
-/* ── Loading messages area ── */
+
+/* ─────────────────────────────────────────────
+   Loading / analyzing area
+──────────────────────────────────────────── */
+
 .loading-messages {
-  min-height: 220px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 28px;
-  padding: 3rem 1.5rem;
-  text-align: center;
+
+  min-height:220px;
+
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+
+  gap:28px;
+
+  padding:3rem 1.5rem;
+
+  text-align:center;
 }
 
-.loading-messages p {
-  margin: 0;
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: #374151;           /* gray-700 light */
-  transition: all 0.7s ease;
+
+
+/* analyzing text */
+
+.analyzing-text {
+
+  margin:0;
+
+  font-size:1.35rem;
+  font-weight:600;
+
+  color:#374151;
+
+  animation: analyzingBlink 1.4s ease-in-out infinite;
+
 }
 
-.dark .loading-messages p {
-  color: #e5e7eb;           /* gray-200 dark */
+.dark .analyzing-text {
+  color:#e5e7eb;
 }
 
-/* Fade-in + slight scale for analyzing text & spinner */
+
+/* blinking animation */
+
+@keyframes analyzingBlink {
+
+  0%   { opacity:0.25; }
+  50%  { opacity:1; }
+  100% { opacity:0.25; }
+
+}
+
+
+
+/* smooth appear */
+
 .fade-in-scale {
-  opacity: 0;
-  transform: scale(0.94);
-  animation: appearSmooth 0.85s cubic-bezier(0.23, 1, 0.32, 1) forwards;
-  animation-delay: 0.15s;
+
+  opacity:0;
+  transform:scale(0.94);
+
+  animation: appearSmooth 0.85s cubic-bezier(0.23,1,0.32,1) forwards;
+
 }
 
 @keyframes appearSmooth {
+
   to {
-    opacity: 1;
-    transform: scale(1);
+    opacity:1;
+    transform:scale(1);
   }
+
 }
 
-/* Premium spinner (white theme friendly) */
-.loading-spinner {
-  width: 52px;
-  height: 52px;
-  border: 6px solid rgba(255,255,255,0.15);
-  border-top: 6px solid #ffffff;
-  border-radius: 50%;
-  animation: spin 1.1s cubic-bezier(0.55, 0.055, 0.675, 0.19) infinite;
-}
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
 
-/* ── Final result entrance animation ── */
+/* ─────────────────────────────────────────────
+   Result reveal animation
+──────────────────────────────────────────── */
+
 .result-reveal-wrapper {
-  opacity: 0;
-  transform: translateY(28px);
-  transition: all 0.9s cubic-bezier(0.22, 1, 0.36, 1);
-  transition-delay: 0.12s;
+
+  opacity:0;
+  transform:translateY(28px);
+
+  transition:all 0.9s cubic-bezier(0.22,1,0.36,1);
+  transition-delay:0.12s;
+
 }
 
 .result-reveal-wrapper.revealed {
-  opacity: 1;
-  transform: translateY(0);
+
+  opacity:1;
+  transform:translateY(0);
+
 }
 
-/* Optional: gentle stagger for children (final answer → button → steps) */
+
+/* stagger children */
+
 .result-reveal-wrapper.revealed > * {
-  opacity: 0;
-  transform: translateY(18px);
+
+  opacity:0;
+  transform:translateY(18px);
+
   animation: fadeUpChildren 0.75s forwards;
-  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  animation-timing-function:cubic-bezier(0.22,1,0.36,1);
+
 }
 
-.result-reveal-wrapper.revealed > *:nth-child(1) { animation-delay: 0.15s; }
-.result-reveal-wrapper.revealed > *:nth-child(2) { animation-delay: 0.28s; }
-.result-reveal-wrapper.revealed > *:nth-child(3) { animation-delay: 0.42s; }
-.result-reveal-wrapper.revealed > *:nth-child(4) { animation-delay: 0.56s; }
+.result-reveal-wrapper.revealed > *:nth-child(1) { animation-delay:0.15s; }
+.result-reveal-wrapper.revealed > *:nth-child(2) { animation-delay:0.28s; }
+.result-reveal-wrapper.revealed > *:nth-child(3) { animation-delay:0.42s; }
+.result-reveal-wrapper.revealed > *:nth-child(4) { animation-delay:0.56s; }
 
 @keyframes fadeUpChildren {
+
   to {
-    opacity: 1;
-    transform: translateY(0);
+    opacity:1;
+    transform:translateY(0);
   }
+
 }
 
-/* Optional: smoother expand for step-by-step section */
+
+
+/* step expand */
+
 .overflow-hidden {
-  transition: max-height 0.7s ease-out, opacity 0.7s ease-out;
+
+  transition:
+    max-height 0.7s ease-out,
+    opacity 0.7s ease-out;
+
 }
 
-/* Dark mode adjustments (if needed) */
+
+
+/* ─────────────────────────────────────────────
+   Dark mode adjustments
+──────────────────────────────────────────── */
+
 .dark .scan-line {
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.75), transparent);
-  box-shadow: 0 0 24px 10px rgba(255,255,255,0.35);
+
+  background:
+    linear-gradient(90deg, transparent, rgba(255,255,255,0.75), transparent);
+
+  box-shadow:
+    0 0 24px 10px rgba(255,255,255,0.35);
+
 }
 
-.dark .corner-tl, .dark .corner-tr, .dark .corner-bl, .dark .corner-br {
-  border-color: rgba(255,255,255,0.6);
-  box-shadow: 0 0 16px rgba(255,255,255,0.4);
+.dark .corner-tl,
+.dark .corner-tr,
+.dark .corner-bl,
+.dark .corner-br {
+
+  border-color:rgba(255,255,255,0.6);
+
+  box-shadow:
+    0 0 16px rgba(255,255,255,0.4);
+
 }
 
 
