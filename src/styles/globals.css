@@ -1046,6 +1046,7 @@ header.header {
 
 
 
+
 /* ================================================
    Result Panel – Full Loading & Reveal Styles
    (Scanning white version + professional animations)
@@ -1161,16 +1162,6 @@ header.header {
   }
 }
 
-/* Blinking animation for analyzing text */
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
-
-.animate-blink {
-  animation: blink 1.2s ease-in-out infinite;
-}
-
 /* Premium spinner (white theme friendly) */
 .loading-spinner {
   width: 52px;
@@ -1233,6 +1224,7 @@ header.header {
   border-color: rgba(255,255,255,0.6);
   box-shadow: 0 0 16px rgba(255,255,255,0.4);
 }
+
 
 
 

@@ -19,38 +19,41 @@ export default function ResultPanel({ result, loading, onClose }) {
     // Later: send to backend
   };
 
-  useEffect(() => {
-    if (!loading) {
-      setShowAnalyzing(false);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      return;
-    }
+  // src/components/ResultPanel.jsx
+// ──────────────────────────────────────────────────────────────
 
-    // Reset
+useEffect(() => {
+  if (!loading) {
     setShowAnalyzing(false);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    return;
+  }
 
-    // Show "Analyzing..." right after scan finishes
-    // Use 3500 ms — tuned to match scan duration (3s animation + 0.4s delay + buffer)
-    timeoutRef.current = setTimeout(() => {
-      setShowAnalyzing(true);
-    }, 3500); // Adjusted for precise timing after scan completes
+  // Reset
+  setShowAnalyzing(false);
 
-    return () => clearTimeout(timeoutRef.current);
-  }, [loading]);
+  // Show "Analyzing..." ≈ right after scan finishes
+  // Use 5000–5200 ms — tune this value to match your @keyframes scan duration
+  timeoutRef.current = setTimeout(() => {
+  setShowAnalyzing(true);
+}, 3300);     // 3.3 seconds — gives ~300 ms buffer after scan finishes    // <--- most important tuning knob
 
-  // Add this new piece of state to trigger entrance animation only once
-  const [revealReady, setRevealReady] = useState(false);
+  return () => clearTimeout(timeoutRef.current);
+}, [loading]);
 
-  useEffect(() => {
-    if (!loading && result?.text) {
-      // Small delay so removal of loading UI doesn't feel abrupt
-      const timer = setTimeout(() => {
-        setRevealReady(true);
-      }, 300);
+// Add this new piece of state to trigger entrance animation only once
+const [revealReady, setRevealReady] = useState(false);
 
-      return () => clearTimeout(timer);
-    }
-  }, [loading, result?.text]);
+useEffect(() => {
+  if (!loading && result?.text) {
+    // Small delay so removal of loading UI doesn't feel abrupt
+    const timer = setTimeout(() => {
+      setRevealReady(true);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }
+}, [loading, result?.text]);
 
   if (!result?.image) return null;
 
@@ -94,25 +97,25 @@ export default function ResultPanel({ result, loading, onClose }) {
         </div>
 
         <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
-          {loading ? (
-            <div className="loading-messages min-h-[220px] flex flex-col items-center justify-center py-12 px-6 text-center">
-              {showAnalyzing ? (
-                <div className="fade-in-scale">
-                  <p className="text-xl font-semibold text-gray-800 dark:text-gray-200 animate-blink">
-                    Analyzing your solution…
-                  </p>
-                  <div className="mt-8">
-                    <div className="loading-spinner w-12 h-12" />
-                  </div>
-                </div>
-              ) : (
-                // During scan: keep space reserved → prevents ugly layout jump later
-                <div className="h-32" />
-              )}
-            </div>
+  {loading ? (
+    <div className="loading-messages min-h-[220px] flex flex-col items-center justify-center py-12 px-6 text-center">
+      {showAnalyzing ? (
+        <div className="fade-in-scale">
+          <p className="text-xl font-semibold text-gray-800 dark:text-gray-200 animate-pulse">
+            Analyzing your solution…
+          </p>
+          <div className="mt-8">
+            <div className="loading-spinner w-12 h-12" />
+          </div>
+        </div>
+      ) : (
+        // During scan: keep space reserved → prevents ugly layout jump later
+        <div className="h-32" />
+      )}
+    </div>
           ) : (
             result?.text && (
-              <div className={`result-reveal-wrapper ${revealReady ? 'revealed' : ''}`}>
+              <>
                 <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden">
                   <h3 className="final-answer-header px-6 py-4 text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
                     Final Answer
@@ -168,6 +171,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                 </div>
 
                 <div className="feedback-bar mt-6 flex justify-center gap-4">
+                  {/* feedback buttons unchanged */}
                   <button
                     className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'up' ? 'active' : ''}`}
                     onClick={() => handleFeedback('up')}
@@ -188,7 +192,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                     Not Helpful
                   </button>
                 </div>
-              </div>
+              </>
             )
           )}
         </div>
@@ -197,7 +201,13 @@ export default function ResultPanel({ result, loading, onClose }) {
   );
 }
 
-// Helper functions
+// ── Your helper functions remain unchanged ──
+
+// ────────────────────────────────────────────────
+// Helper functions unchanged...
+// (extractFinalAnswer, fallbackLastLines, prepareMathForKaTeX - copy from your original)
+// ────────────────────────────────────────────────
+// Your existing helper functions (unchanged)
 function extractFinalAnswer(rawText) {
   if (!rawText) return '';
 
