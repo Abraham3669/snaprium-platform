@@ -3137,7 +3137,9 @@ button.w-full.py-3\.5:active {
 
 
 
-
+.katex-display {
+  font-size: 3rem;
+}
 
 
 

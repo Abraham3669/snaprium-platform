@@ -35,7 +35,7 @@ export default function ResultPanel({ result, loading, onClose }) {
     !finalAnswerContent.match(/^\$\$[\s\S]*\$\$|\$[\s\S]*\$|\\\[[\s\S]*\\\]/) &&
     (finalAnswerContent.includes('\\') || finalAnswerContent.match(/[=\-+*/^√π∫∑()[\]{}]/))
   ) {
-    finalAnswerContent = `$$${finalAnswerContent}$$`;
+    finalAnswerContent = `\n\n$$${finalAnswerContent}$$\n\n`;
   }
 
   return (
