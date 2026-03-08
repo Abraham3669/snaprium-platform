@@ -3120,15 +3120,17 @@ button.w-full.py-3\.5:active {
 
 
 
+/* ─────────── Container for horizontal scroll ─────────── */
 .katex-display-final-container {
   overflow-x: auto;       /* enable horizontal scroll */
   overflow-y: hidden;     /* prevent vertical scroll */
   padding-bottom: 0.5em;  /* optional: space below for comfort */
   scrollbar-width: thin;  /* Firefox: thinner scrollbar */
   -ms-overflow-style: auto; /* IE 10+ */
+  position: relative;     /* required for gradient hint */
 }
 
-/* Optional: small shadow gradient to hint scrollability */
+/* Optional gradient to hint scrollability */
 .katex-display-final-container::after {
   content: '';
   position: absolute;
@@ -3140,34 +3142,32 @@ button.w-full.py-3\.5:active {
   background: linear-gradient(to left, rgba(255,255,255,0.5), transparent);
 }
 
-
-
-
+/* ─────────── Final Answer Styling ─────────── */
 .katex-display-final {
   font-weight: 700 !important;  
   margin: 1em 0 !important;      
   font-size: 64px;               /* container font size */
   line-height: 1.2 !important;
+  white-space: nowrap;           /* prevent wrapping inside container */
 }
 
-/* Make fractions scale properly */
+/* ─────────── Fractions ─────────── */
 .katex-display-final .mfrac {
-  font-size: 1em !important;      /* inherit full container size */
+  font-size: 1.05em !important;   /* scale numerator/denominator fully */
+  display: inline-block !important;
 }
 
-/* Thicker fraction line for big math */
+/* Thicker fraction line */
 .katex-display-final .mfrac .frac-line {
-  height: 4px !important;         /* thicker line than before */
+  height: 4px !important;
 }
 
-
-
+/* ─────────── Radicals / square roots ─────────── */
 .katex-display-final .sqrt-line {
   border-top-width: 4px !important; /* thicker for big radicals */
 }
 
-
-
-
-
-
+/* Optional: Integrals and big operators scale nicely */
+.katex-display-final .bigop {
+  font-size: 1em !important;
+}
