@@ -148,65 +148,56 @@ export default function ResultPanel({ result, loading, onClose }) {
                 </button>
 
                 <div
-                  ref={stepsRef}
-                  className="overflow-hidden transition-all duration-500 ease-in-out"
-                  style={{
-                    maxHeight: showSteps ? `${stepsRef.current?.scrollHeight || 2000}px` : '0px',
-                    opacity: showSteps ? 1 : 0,
-                  }}
-                >
-                  <div className="pt-1 pb-8 px-1">
-                    <h4 className="text-xl font-semibold text-[var(--text-primary)] mb-5">
-                      Step-by-Step Solution
-                    </h4>
+  ref={stepsRef}
+  className="overflow-hidden transition-all duration-500 ease-in-out"
+  style={{
+    maxHeight: showSteps ? `${stepsRef.current?.scrollHeight || 2000}px` : '0px',
+    opacity: showSteps ? 1 : 0,
+  }}
+>
+  <div className="pt-1 pb-8 px-1">
+    <h4 className="text-xl font-semibold text-[var(--text-primary)] mb-5">
+      Step-by-Step Solution
+    </h4>
 
-                    {/* ── IMPROVED INLINE MATH RENDERING ── */}
-                    <div className="step-by-step-content prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)]">
-  <ReactMarkdown
-    remarkPlugins={[remarkMath]}
-    rehypePlugins={[
-      [
-        rehypeKatex,
-        {
-          output: 'html',
-          throwOnError: false,
-          strict: 'ignore',
-          trust: true,
-          fleqn: false,
-          // These help prevent common inline rendering glitches
-          macros: {
-            "\\coth": "\\operatorname{coth}",
-            "\\csch": "\\operatorname{csch}",
-            "\\sech": "\\operatorname{sech}",
-          },
-        },
-      ],
-    ]}
-    components={{
-      // Custom inline math wrapper – most important for consistency
-      inlineMath: ({ value }) => (
-        <span className="inline-katex font-medium align-middle">
-          {value}
-        </span>
-      ),
-      // Better paragraph handling
-      paragraph: ({ children }) => (
-        <p className="my-3.5 leading-7 tracking-wide">{children}</p>
-      ),
-      // Optional: force better baseline for math-heavy paragraphs
-      text: ({ children, node }) => {
-        if (node.children?.some(child => child.type === 'inlineMath')) {
-          return <span className="inline-math-paragraph">{children}</span>;
-        }
-        return children;
-      },
-    }}
-  >
-    {preparedSteps}
-  </ReactMarkdown>
+    {/* Improved rendering container */}
+    <div className="step-by-step-content prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)] leading-relaxed">
+      <ReactMarkdown
+        remarkPlugins={[remarkMath]}
+        rehypePlugins={[
+          [
+            rehypeKatex,
+            {
+              output: 'html',
+              throwOnError: false,
+              strict: 'ignore',
+              trust: true,
+              fleqn: false,
+              macros: {
+                // Optional: cleaner operator names (helps readability)
+                "\\coth": "\\operatorname{coth}",
+                "\\csch": "\\operatorname{csch}",
+                "\\sech": "\\operatorname{sech}",
+              },
+            },
+          ],
+        ]}
+        components={{
+          inlineMath: ({ value }) => (
+            <span className="inline-katex align-baseline font-medium">
+              {value}
+            </span>
+          ),
+          paragraph: ({ children }) => (
+            <p className="my-4 leading-7 tracking-wide">{children}</p>
+          ),
+        }}
+      >
+        {preparedSteps}
+      </ReactMarkdown>
+    </div>
+  </div>
 </div>
-                  </div>
-                </div>
 
                 <div className="feedback-bar mt-6 flex justify-center gap-4">
                   <button

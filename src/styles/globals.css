@@ -3367,43 +3367,49 @@ button.w-full.py-3\.5:active {
 
 
 
-/* ── Inline math improvements ── */
-.inline-katex {
-  font-size: 1.07em;              /* 1.06–1.09 usually ideal */
+/* ── Fix inline math consistency & baseline issues ── */
+.step-by-step-content .inline-katex {
+  font-size: 1.075em;               /* 1.07–1.09 is usually the sweet spot */
   line-height: 1;
   vertical-align: baseline !important;
   display: inline-block;
-  margin: 0 0.08em;
+  margin: 0 0.1em;
+  position: relative;
+  top: 0.04em;                      /* tiny upward nudge if still sits low */
 }
 
-/* Prevent superscripts/subscripts from looking crushed */
-.katex .msupsub {
-  font-size: 0.85em !important;   /* adjust 0.82–0.9 */
-  vertical-align: 0.35em;         /* tweak this value: 0.3–0.45 */
+/* Better superscript/subscript sizing & positioning */
+.katex .msupsub,
+.katex .msupsub .vlist-t {
+  font-size: 0.82em !important;     /* 0.8–0.85; smaller but readable */
+  vertical-align: 0.38em !important; /* key: adjust 0.32–0.42 to fit your font */
 }
 
-/* Better operator spacing */
+/* Operator spacing (helps with ^, fractions, etc.) */
 .katex .mbin,
-.katex .mrel {
-  margin: 0 0.12em 0 0.1em;
+.katex .mrel,
+.katex .mord + .mbin,
+.katex .mord + .mrel {
+  margin: 0 0.12em;
 }
 
-/* Fix baseline shift when math is mixed with text */
-.inline-math-paragraph,
-.step-by-step-content p {
-  line-height: 1.75 !important;   /* 1.68–1.82 range */
-  margin-bottom: 1.1em;
+/* Stabilize line height when inline fractions or roots appear */
+.step-by-step-content p,
+.step-by-step-content li {
+  line-height: 1.78 !important;     /* 1.75–1.85 prevents crowding */
+  min-height: 1.8em;                /* avoids squish on tall inline math */
 }
 
-/* Make fractions and tall symbols behave better inline */
-.katex .mfrac .frac-line,
-.katex .mfrac .numerator,
-.katex .mfrac .denominator {
-  line-height: 1.1;
+/* Fractions behave better inline */
+.katex .mfrac {
+  vertical-align: -0.22em;          /* slight downward shift if fraction sits high */
 }
 
-/* Optional: slightly bolder math font for clarity */
+.katex .mfrac .frac-line {
+  border-width: 1.2px !important;   /* slightly thicker line for visibility */
+}
+
+/* Overall KaTeX font tweaks for better harmony with text */
 .katex {
-  font-weight: 450 !important;
-  /* or 500 if you want it more pronounced */
+  font-weight: 450 !important;      /* or 500 for bolder look */
 }
