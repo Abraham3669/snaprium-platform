@@ -1039,180 +1039,52 @@ header.header {
 }
 
 
-/* ──────────────────────────────────────────────
-   Scanner Overlay
-─────────────────────────────────────────────── */
-
-.scan-overlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
+.image-wrapper {
+  position: relative;
   overflow: hidden;
-
-  background: linear-gradient(
-    to bottom,
-    rgba(0,0,0,0.05) 0%,
-    rgba(0,0,0,0.35) 50%,
-    rgba(0,0,0,0.05) 100%
-  );
+  border-radius: 16px;
+  box-shadow: 0 10px 38px -10px rgba(0,0,0,0.18);
+  background: #f8f9fc;
+  isolation: isolate;     /* modern stacking context helper */
 }
 
-
-/* ──────────────────────────────────────────────
-   AI Grid (gives OCR / AI analysis feel)
-─────────────────────────────────────────────── */
-
-.scan-grid {
-  position: absolute;
-  inset: 0;
-
-  background-image:
-    linear-gradient(rgba(0,255,157,0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,255,157,0.08) 1px, transparent 1px);
-
-  background-size: 28px 28px;
-
-  opacity: 0.45;
+.result-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  transition: transform 0.4s ease, filter 0.6s ease;
 }
 
-
-/* ──────────────────────────────────────────────
-   Scan Beam
-─────────────────────────────────────────────── */
-
-.scan-line {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 6px;
-
-  background: linear-gradient(
-    to right,
-    transparent 0%,
-    #00ff9d 45%,
-    #00ff9d 55%,
-    transparent 100%
-  );
-
-  box-shadow:
-    0 0 18px #00ff9d,
-    0 0 40px rgba(0,255,157,0.55);
-
-  animation: scan 1.4s cubic-bezier(0.4,0,0.6,1) 2;
-}
-
-
-/* Glow around scan beam */
-
-.scan-line::after {
+/* Very subtle "being processed" state */
+.image-wrapper.processing::after {
   content: "";
   position: absolute;
-  inset: -24px 0 -24px 0;
-
+  inset: 0;
   background: linear-gradient(
-    to bottom,
-    transparent,
-    rgba(0,255,157,0.35),
-    transparent
+    135deg,
+    rgba(59,130,246,0.07) 0%,
+    rgba(139,92,246,0.07) 100%
   );
-
-  opacity: 0.7;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  pointer-events: none;
 }
 
-
-/* ──────────────────────────────────────────────
-   Scan animation
-─────────────────────────────────────────────── */
-
-@keyframes scan {
-
-  0% {
-    top: -10%;
-    opacity: 0.3;
-  }
-
-  8% {
-    opacity: 1;
-  }
-
-  45% {
-    top: 102%;
-    opacity: 1;
-  }
-
-  60% {
-    opacity: 0.4;
-  }
-
-  100% {
-    top: 110%;
-    opacity: 0;
-  }
-
-}
-
-
-/* ──────────────────────────────────────────────
-   AI Detection Corners
-─────────────────────────────────────────────── */
-
-.scan-corners {
+.image-wrapper.processing::before {
+  content: "";
   position: absolute;
   inset: 0;
+  backdrop-filter: blur(2px);   /* very soft frost */
+  -webkit-backdrop-filter: blur(2px);
+  background: rgba(255,255,255,0.05);
+  opacity: 0;
+  transition: opacity 0.8s ease;
 }
 
-.scan-corners span {
-  position: absolute;
-  width: 30px;
-  height: 30px;
-  border: 3px solid #00ff9d;
+.image-wrapper.processing::after,
+.image-wrapper.processing::before {
+  opacity: 1;
 }
-
-/* corners */
-
-.corner-tl {
-  top: 0;
-  left: 0;
-  border-right: none;
-  border-bottom: none;
-}
-
-.corner-tr {
-  top: 0;
-  right: 0;
-  border-left: none;
-  border-bottom: none;
-}
-
-.corner-bl {
-  bottom: 0;
-  left: 0;
-  border-right: none;
-  border-top: none;
-}
-
-.corner-br {
-  bottom: 0;
-  right: 0;
-  border-left: none;
-  border-top: none;
-}
-
-
-/* ──────────────────────────────────────────────
-   Processing text
-─────────────────────────────────────────────── */
-
-.processing-text {
-  text-align: center;
-  color: #555;
-  font-size: 0.96rem;
-  margin: 18px 0 24px;
-  font-style: italic;
-  opacity: 0.9;
-}
-
-
 
 
 
