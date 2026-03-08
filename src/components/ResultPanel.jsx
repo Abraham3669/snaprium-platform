@@ -20,28 +20,24 @@ export default function ResultPanel({ result, loading, onClose }) {
     // Later: send to backend
   };
 
-  // Manage phased loading messages
   useEffect(() => {
     if (!loading) {
-      // API done → clear everything
       setLoadingPhase(0);
       if (timeoutRef1.current) clearTimeout(timeoutRef1.current);
       if (timeoutRef2.current) clearTimeout(timeoutRef2.current);
       return;
     }
 
-    // Start with phase 0 (scanning) when loading begins
     setLoadingPhase(0);
 
-    // After ~3s total → show first message (phase 1)
+    // Show first message sooner (~1.5s after loading starts)
     timeoutRef1.current = setTimeout(() => {
       setLoadingPhase(1);
-      
-      // After another 3s from first message → show second (phase 2)
+      // Second message after +3s from first
       timeoutRef2.current = setTimeout(() => {
         setLoadingPhase(2);
       }, 3000);
-    }, 3000); // Adjust this delay if scan feels too fast/slow (e.g. 2500–4000ms)
+    }, 1500); // <-- Reduced for quicker feedback
 
     return () => {
       if (timeoutRef1.current) clearTimeout(timeoutRef1.current);
@@ -68,7 +64,6 @@ export default function ResultPanel({ result, loading, onClose }) {
     finalAnswerContent = `$$${finalAnswerContent}$$`;
   }
 
-  // Loading messages based on phase
   const getLoadingMessage = () => {
     if (loadingPhase === 0) return "Scanning your problem...";
     if (loadingPhase === 1) return "Analyzing steps...";
@@ -84,19 +79,17 @@ export default function ResultPanel({ result, loading, onClose }) {
       </div>
 
       <div className="result-panel-content">
-        <div className="image-wrapper">
+        <div className="image-wrapper relative">
           <img className="result-image" src={result.image} alt="Cropped preview" />
 
           {loading && (
-            <div className="scan-overlay">
-              {/* AI analysis grid – always visible during loading */}
-              <div className="scan-grid"></div>
+            <div className="scan-overlay absolute inset-0 pointer-events-none">
+              <div className="scan-grid absolute inset-0"></div>
 
-              {/* Scan beam – only in phase 0, runs once */}
-              {loadingPhase === 0 && <div className="scan-line"></div>}
+              {/* Beam always during loading, but animation only once via CSS */}
+              <div className="scan-line absolute"></div>
 
-              {/* Detection corners – keep during all loading phases */}
-              <div className="scan-corners">
+              <div className="scan-corners absolute inset-0">
                 <span className="corner-tl"></span>
                 <span className="corner-tr"></span>
                 <span className="corner-bl"></span>
@@ -108,26 +101,25 @@ export default function ResultPanel({ result, loading, onClose }) {
 
         <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
           {loading ? (
-            <div className="loading-messages text-center py-12 px-6">
-              <div 
-                className={`transition-opacity duration-800 ease-in-out ${loadingPhase >= 1 ? 'opacity-100' : 'opacity-0'}`}
-              >
-                <p className="text-lg font-medium text-gray-700 dark:text-gray-300 animate-pulse">
-                  {getLoadingMessage()}
-                </p>
-              </div>
+            <div className="loading-messages min-h-[180px] flex flex-col items-center justify-center py-12 px-6 text-center">
+              <p
+  className={`text-xl font-medium transition-all duration-700 ease-in-out transform
+    ${loadingPhase >= 1 ? 'opacity-100 scale-100 visible-pulse' : 'opacity-0 scale-95'}`}
+  style={{ color: loadingPhase === 2 ? '#111827' : '#4b5563' }} // darker for phase 2 emphasis
+>
+  {getLoadingMessage()}
+</p>
 
-              {/* Optional: subtle spinner for very long waits */}
               {loadingPhase === 2 && (
-                <div className="mt-6">
-                  <div className="inline-block w-8 h-8 border-4 border-t-[var(--accent)] border-gray-300 rounded-full animate-spin"></div>
+                <div className="mt-8">
+                  <div className="w-10 h-10 border-4 border-gray-300 border-t-[var(--accent)] rounded-full animate-spin"></div>
                 </div>
               )}
             </div>
           ) : (
             result?.text && (
+              // ... (your final answer card, toggle, steps, feedback - unchanged)
               <>
-                {/* Final Answer Card */}
                 <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden">
                   <h3 className="final-answer-header px-6 py-4 text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
                     Final Answer
@@ -152,7 +144,6 @@ export default function ResultPanel({ result, loading, onClose }) {
                   </div>
                 </div>
 
-                {/* Toggle Button */}
                 <button
                   onClick={() => setShowSteps(!showSteps)}
                   className="w-full py-3.5 px-5 mb-5 bg-[var(--accent)] hover:bg-[var(--accent-dark)] text-white font-medium rounded-lg shadow-md transition-all flex items-center justify-center gap-2"
@@ -163,7 +154,6 @@ export default function ResultPanel({ result, loading, onClose }) {
                   </span>
                 </button>
 
-                {/* Steps Section */}
                 <div
                   ref={stepsRef}
                   className="overflow-hidden transition-all duration-500 ease-in-out"
@@ -184,7 +174,6 @@ export default function ResultPanel({ result, loading, onClose }) {
                   </div>
                 </div>
 
-                {/* Feedback */}
                 <div className="feedback-bar mt-6 flex justify-center gap-4">
                   <button
                     className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'up' ? 'active' : ''}`}
@@ -215,6 +204,9 @@ export default function ResultPanel({ result, loading, onClose }) {
   );
 }
 
+// ────────────────────────────────────────────────
+// Helper functions unchanged...
+// (extractFinalAnswer, fallbackLastLines, prepareMathForKaTeX - copy from your original)
 // ────────────────────────────────────────────────
 // Your existing helper functions (unchanged)
 function extractFinalAnswer(rawText) {
