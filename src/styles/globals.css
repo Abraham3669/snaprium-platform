@@ -997,8 +997,7 @@ header.header {
 
 
 /* ──────────────────────────────────────────────
-   Scanning animation over the preview image
-   Faster, more energetic feel (perceived wait shorter)
+   Image preview container
 ─────────────────────────────────────────────── */
 
 .image-wrapper {
@@ -1019,6 +1018,7 @@ header.header {
 }
 
 /* Responsive max-width */
+
 @media (min-width: 768px) {
   .image-wrapper {
     max-width: 620px;
@@ -1038,26 +1038,54 @@ header.header {
   }
 }
 
-/* Scanning overlay & line – FASTER animation */
+
+/* ──────────────────────────────────────────────
+   Scanner Overlay
+─────────────────────────────────────────────── */
+
 .scan-overlay {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  overflow: hidden;
+
   background: linear-gradient(
     to bottom,
-    rgba(0, 0, 0, 0.08) 0%,
-    rgba(0, 0, 0, 0.35) 45%,
-    rgba(0, 0, 0, 0.35) 55%,
-    rgba(0, 0, 0, 0.08) 100%
+    rgba(0,0,0,0.05) 0%,
+    rgba(0,0,0,0.35) 50%,
+    rgba(0,0,0,0.05) 100%
   );
-  opacity: 0.92;
 }
+
+
+/* ──────────────────────────────────────────────
+   AI Grid (gives OCR / AI analysis feel)
+─────────────────────────────────────────────── */
+
+.scan-grid {
+  position: absolute;
+  inset: 0;
+
+  background-image:
+    linear-gradient(rgba(0,255,157,0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,157,0.08) 1px, transparent 1px);
+
+  background-size: 28px 28px;
+
+  opacity: 0.45;
+}
+
+
+/* ──────────────────────────────────────────────
+   Scan Beam
+─────────────────────────────────────────────── */
 
 .scan-line {
   position: absolute;
   left: 0;
   right: 0;
-  height: 5px;
+  height: 6px;
+
   background: linear-gradient(
     to right,
     transparent 0%,
@@ -1065,38 +1093,116 @@ header.header {
     #00ff9d 55%,
     transparent 100%
   );
-  box-shadow: 
+
+  box-shadow:
     0 0 18px #00ff9d,
-    0 0 36px rgba(0, 255, 157, 0.5);
-  animation: scan 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite; /* FASTER duration */
-  pointer-events: none;
+    0 0 40px rgba(0,255,157,0.55);
+
+  animation: scan 1.4s cubic-bezier(0.4,0,0.6,1) 2;
 }
+
+
+/* Glow around scan beam */
 
 .scan-line::after {
   content: "";
   position: absolute;
   inset: -24px 0 -24px 0;
-  background: linear-gradient(to bottom, transparent, rgba(0, 255, 157, 0.35), transparent);
+
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(0,255,157,0.35),
+    transparent
+  );
+
   opacity: 0.7;
-  animation: pulse-glow 1.4s infinite; /* subtle pulse synced with scan */
 }
 
-/* Faster scan animation */
+
+/* ──────────────────────────────────────────────
+   Scan animation
+─────────────────────────────────────────────── */
+
 @keyframes scan {
-  0%   { top: -10%; opacity: 0.4; }
-  5%   { opacity: 1; }
-  45%  { top: 102%; opacity: 1; }
-  50%  { opacity: 0.4; }
-  100% { top: 110%; opacity: 0; }
+
+  0% {
+    top: -10%;
+    opacity: 0.3;
+  }
+
+  8% {
+    opacity: 1;
+  }
+
+  45% {
+    top: 102%;
+    opacity: 1;
+  }
+
+  60% {
+    opacity: 0.4;
+  }
+
+  100% {
+    top: 110%;
+    opacity: 0;
+  }
+
 }
 
-/* Subtle glow pulse (makes it feel more active) */
-@keyframes pulse-glow {
-  0%, 100% { opacity: 0.7; }
-  50%      { opacity: 1; }
+
+/* ──────────────────────────────────────────────
+   AI Detection Corners
+─────────────────────────────────────────────── */
+
+.scan-corners {
+  position: absolute;
+  inset: 0;
 }
 
-/* Processing text (optional – smaller & cleaner) */
+.scan-corners span {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border: 3px solid #00ff9d;
+}
+
+/* corners */
+
+.corner-tl {
+  top: 0;
+  left: 0;
+  border-right: none;
+  border-bottom: none;
+}
+
+.corner-tr {
+  top: 0;
+  right: 0;
+  border-left: none;
+  border-bottom: none;
+}
+
+.corner-bl {
+  bottom: 0;
+  left: 0;
+  border-right: none;
+  border-top: none;
+}
+
+.corner-br {
+  bottom: 0;
+  right: 0;
+  border-left: none;
+  border-top: none;
+}
+
+
+/* ──────────────────────────────────────────────
+   Processing text
+─────────────────────────────────────────────── */
+
 .processing-text {
   text-align: center;
   color: #555;
@@ -1105,10 +1211,6 @@ header.header {
   font-style: italic;
   opacity: 0.9;
 }
-   
-
-
-
 
 
 

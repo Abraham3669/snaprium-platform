@@ -48,11 +48,26 @@ export default function ResultPanel({ result, loading, onClose }) {
       <div className="result-panel-content">
         <div className="image-wrapper">
           <img className="result-image" src={result.image} alt="Cropped preview" />
+
           {loading && (
-            <div className="scan-overlay">
-              <div className="scan-line"></div>
-            </div>
-          )}
+  <div className="scan-overlay">
+
+    {/* AI analysis grid */}
+    <div className="scan-grid"></div>
+
+    {/* scan beam */}
+    <div className="scan-line"></div>
+
+    {/* detection corners */}
+    <div className="scan-corners">
+      <span className="corner-tl"></span>
+      <span className="corner-tr"></span>
+      <span className="corner-bl"></span>
+      <span className="corner-br"></span>
+    </div>
+
+  </div>
+)}
         </div>
 
         <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
