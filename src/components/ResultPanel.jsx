@@ -9,11 +9,10 @@ import 'katex/dist/katex.min.css';
 export default function ResultPanel({ result, loading, onClose }) {
   const [showSteps, setShowSteps] = useState(false);
   const [feedback, setFeedback] = useState(null);
-  const [loadingPhase, setLoadingPhase] = useState(0); // 0: scanning, 1: first msg, 2: second msg
+  const [showAnalyzing, setShowAnalyzing] = useState(false);
 
   const stepsRef = useRef(null);
-  const timeoutRef1 = useRef(null);
-  const timeoutRef2 = useRef(null);
+  const timeoutRef = useRef(null);
 
   const handleFeedback = (type) => {
     setFeedback(type);
@@ -22,26 +21,21 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   useEffect(() => {
     if (!loading) {
-      setLoadingPhase(0);
-      if (timeoutRef1.current) clearTimeout(timeoutRef1.current);
-      if (timeoutRef2.current) clearTimeout(timeoutRef2.current);
+      setShowAnalyzing(false);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
       return;
     }
 
-    setLoadingPhase(0);
+    // Reset
+    setShowAnalyzing(false);
 
-    // Show first message sooner (~1.5s after loading starts)
-    timeoutRef1.current = setTimeout(() => {
-      setLoadingPhase(1);
-      // Second message after +3s from first
-      timeoutRef2.current = setTimeout(() => {
-        setLoadingPhase(2);
-      }, 3000);
-    }, 1500); // <-- Reduced for quicker feedback
+    // Show "Analyzing..." only AFTER scan animation should be finished
+    timeoutRef.current = setTimeout(() => {
+      setShowAnalyzing(true);
+    }, 4800); // ≈ time of your scan animation (4.8s in CSS)
 
     return () => {
-      if (timeoutRef1.current) clearTimeout(timeoutRef1.current);
-      if (timeoutRef2.current) clearTimeout(timeoutRef2.current);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, [loading]);
 
@@ -51,10 +45,6 @@ export default function ResultPanel({ result, loading, onClose }) {
   const preparedSteps = prepareMathForKaTeX(fullText);
   const finalAnswerRaw = extractFinalAnswer(fullText);
 
-  console.log('Final Answer RAW extracted:', finalAnswerRaw);
-  console.log('Full result.text length:', fullText.length);
-  console.log('Full result.text last 400 chars:\n', fullText.slice(-400));
-
   let finalAnswerContent = finalAnswerRaw.trim();
   if (
     finalAnswerContent &&
@@ -63,13 +53,6 @@ export default function ResultPanel({ result, loading, onClose }) {
   ) {
     finalAnswerContent = `$$${finalAnswerContent}$$`;
   }
-
-  const getLoadingMessage = () => {
-    if (loadingPhase === 0) return "Scanning your problem...";
-    if (loadingPhase === 1) return "Analyzing steps...";
-    if (loadingPhase === 2) return "Preparing final solution... this may take a moment";
-    return "Solving your problem...";
-  };
 
   return (
     <div className="result-panel">
@@ -85,8 +68,6 @@ export default function ResultPanel({ result, loading, onClose }) {
           {loading && (
             <div className="scan-overlay absolute inset-0 pointer-events-none">
               <div className="scan-grid absolute inset-0"></div>
-
-              {/* Beam always during loading, but animation only once via CSS */}
               <div className="scan-line absolute"></div>
 
               <div className="scan-corners absolute inset-0">
@@ -102,23 +83,22 @@ export default function ResultPanel({ result, loading, onClose }) {
         <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
           {loading ? (
             <div className="loading-messages min-h-[180px] flex flex-col items-center justify-center py-12 px-6 text-center">
-              <p
-  className={`text-xl font-medium transition-all duration-700 ease-in-out transform
-    ${loadingPhase >= 1 ? 'opacity-100 scale-100 visible-pulse' : 'opacity-0 scale-95'}`}
-  style={{ color: loadingPhase === 2 ? '#111827' : '#4b5563' }} // darker for phase 2 emphasis
->
-  {getLoadingMessage()}
-</p>
-
-              {loadingPhase === 2 && (
-                <div className="mt-8">
-                  <div className="w-10 h-10 border-4 border-gray-300 border-t-[var(--accent)] rounded-full animate-spin"></div>
-                </div>
+              {showAnalyzing ? (
+                <>
+                  <p className="text-xl font-semibold text-gray-800 dark:text-gray-200 animate-pulse">
+                    Analyzing your solution...
+                  </p>
+                  <div className="mt-8">
+                    <div className="w-10 h-10 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+                  </div>
+                </>
+              ) : (
+                // During scan → no text, just visual feedback
+                <div className="h-24" /> // spacer to prevent layout jump
               )}
             </div>
           ) : (
             result?.text && (
-              // ... (your final answer card, toggle, steps, feedback - unchanged)
               <>
                 <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden">
                   <h3 className="final-answer-header px-6 py-4 text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
@@ -175,6 +155,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                 </div>
 
                 <div className="feedback-bar mt-6 flex justify-center gap-4">
+                  {/* feedback buttons unchanged */}
                   <button
                     className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'up' ? 'active' : ''}`}
                     onClick={() => handleFeedback('up')}
@@ -203,6 +184,8 @@ export default function ResultPanel({ result, loading, onClose }) {
     </div>
   );
 }
+
+// ── Your helper functions remain unchanged ──
 
 // ────────────────────────────────────────────────
 // Helper functions unchanged...
