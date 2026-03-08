@@ -1,4 +1,3 @@
-
 // src/components/ResultPanel.jsx
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -8,54 +7,43 @@ import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 
 export default function ResultPanel({ result, loading, onClose }) {
-
   const [showSteps, setShowSteps] = useState(false);
   const [feedback, setFeedback] = useState(null);
-
   const [showAnalyzing, setShowAnalyzing] = useState(false);
-  const [scanFinished, setScanFinished] = useState(false);
 
   const stepsRef = useRef(null);
   const timeoutRef = useRef(null);
 
   const handleFeedback = (type) => {
     setFeedback(type);
+    // Later: send to backend
   };
 
-  /* ─────────────────────────────────────────────
-     Scan once → then show analyzing
-  ───────────────────────────────────────────── */
-
   useEffect(() => {
-
     if (!loading) {
       setShowAnalyzing(false);
-      setScanFinished(false);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       return;
     }
 
+    // Reset
     setShowAnalyzing(false);
-    setScanFinished(false);
 
+    // Show "Analyzing..." right after scan finishes
+    // Use 3500 ms — tuned to match scan duration (3s animation + 0.4s delay + buffer)
     timeoutRef.current = setTimeout(() => {
-      setScanFinished(true);
       setShowAnalyzing(true);
-    }, 3000); // must match scan animation duration
+    }, 3500); // Adjusted for precise timing after scan completes
 
     return () => clearTimeout(timeoutRef.current);
-
   }, [loading]);
 
-
-  /* ─────────────────────────────────────────────
-     Result reveal animation
-  ───────────────────────────────────────────── */
-
+  // Add this new piece of state to trigger entrance animation only once
   const [revealReady, setRevealReady] = useState(false);
 
   useEffect(() => {
     if (!loading && result?.text) {
+      // Small delay so removal of loading UI doesn't feel abrupt
       const timer = setTimeout(() => {
         setRevealReady(true);
       }, 300);
@@ -64,7 +52,6 @@ export default function ResultPanel({ result, loading, onClose }) {
     }
   }, [loading, result?.text]);
 
-
   if (!result?.image) return null;
 
   const fullText = result.text || '';
@@ -72,7 +59,6 @@ export default function ResultPanel({ result, loading, onClose }) {
   const finalAnswerRaw = extractFinalAnswer(fullText);
 
   let finalAnswerContent = finalAnswerRaw.trim();
-
   if (
     finalAnswerContent &&
     !finalAnswerContent.match(/^\$\$[\s\S]*\$\$|\$[\s\S]*\$|\\\[[\s\S]*\\\]/) &&
@@ -83,31 +69,18 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   return (
     <div className="result-panel">
-
       <div className="result-panel-header">
         <h2>Solution</h2>
         <button className="close-btn" onClick={onClose}>✕</button>
       </div>
 
       <div className="result-panel-content">
-
-        {/* IMAGE PREVIEW */}
-
         <div className="image-wrapper relative">
+          <img className="result-image" src={result.image} alt="Cropped preview" />
 
-          <img
-            className="result-image"
-            src={result.image}
-            alt="Cropped preview"
-          />
-
-          {/* SCANNER OVERLAY (ONLY DURING SCAN) */}
-
-          {loading && !scanFinished && (
+          {loading && (
             <div className="scan-overlay absolute inset-0 pointer-events-none">
-
               <div className="scan-grid absolute inset-0"></div>
-
               <div className="scan-line absolute"></div>
 
               <div className="scan-corners absolute inset-0">
@@ -116,58 +89,38 @@ export default function ResultPanel({ result, loading, onClose }) {
                 <span className="corner-bl"></span>
                 <span className="corner-br"></span>
               </div>
-
             </div>
           )}
-
         </div>
 
-
-        {/* SOLUTION AREA */}
-
         <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
-
           {loading ? (
-
             <div className="loading-messages min-h-[220px] flex flex-col items-center justify-center py-12 px-6 text-center">
-
               {showAnalyzing ? (
-
                 <div className="fade-in-scale">
-
-                  <p className="analyzing-text">
+                  <p className="text-xl font-semibold text-gray-800 dark:text-gray-200 animate-blink">
                     Analyzing your solution…
                   </p>
-
+                  <div className="mt-8">
+                    <div className="loading-spinner w-12 h-12" />
+                  </div>
                 </div>
-
               ) : (
-
-                <div className="h-32"></div>
-
+                // During scan: keep space reserved → prevents ugly layout jump later
+                <div className="h-32" />
               )}
-
             </div>
-
           ) : (
-
             result?.text && (
-
               <div className={`result-reveal-wrapper ${revealReady ? 'revealed' : ''}`}>
-
-                {/* FINAL ANSWER */}
-
                 <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden">
-
                   <h3 className="final-answer-header px-6 py-4 text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
                     Final Answer
                   </h3>
-
                   <div
                     className="massive-answer-container katex-display-final-container p-8 pb-10 flex justify-center items-center min-h-[220px]"
                     style={{ fontSize: "64px", lineHeight: 1.2 }}
                   >
-
                     <ReactMarkdown
                       remarkPlugins={[remarkMath]}
                       rehypePlugins={[rehypeKatex]}
@@ -181,13 +134,8 @@ export default function ResultPanel({ result, loading, onClose }) {
                     >
                       {finalAnswerContent || '\\text{-}'}
                     </ReactMarkdown>
-
                   </div>
-
                 </div>
-
-
-                {/* SHOW STEPS BUTTON */}
 
                 <button
                   onClick={() => setShowSteps(!showSteps)}
@@ -199,9 +147,6 @@ export default function ResultPanel({ result, loading, onClose }) {
                   </span>
                 </button>
 
-
-                {/* STEPS SECTION */}
-
                 <div
                   ref={stepsRef}
                   className="overflow-hidden transition-all duration-500 ease-in-out"
@@ -210,37 +155,26 @@ export default function ResultPanel({ result, loading, onClose }) {
                     opacity: showSteps ? 1 : 0,
                   }}
                 >
-
                   <div className="pt-1 pb-8 px-1">
-
                     <h4 className="text-xl font-semibold text-[var(--text-primary)] mb-5">
                       Step-by-Step Solution
                     </h4>
-
                     <div className="prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)]">
-
-                      <ReactMarkdown
-                        remarkPlugins={[remarkMath]}
-                        rehypePlugins={[rehypeKatex]}
-                      >
+                      <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
                         {preparedSteps}
                       </ReactMarkdown>
-
                     </div>
-
                   </div>
-
                 </div>
 
-
-                {/* FEEDBACK */}
-
                 <div className="feedback-bar mt-6 flex justify-center gap-4">
-
                   <button
                     className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'up' ? 'active' : ''}`}
                     onClick={() => handleFeedback('up')}
                   >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path d="M14 9V5a3 3 0 0 0-6 0v4H5v11h14V9h-5z" stroke="currentColor" strokeWidth="2" />
+                    </svg>
                     Helpful
                   </button>
 
@@ -248,32 +182,23 @@ export default function ResultPanel({ result, loading, onClose }) {
                     className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'down' ? 'active' : ''}`}
                     onClick={() => handleFeedback('down')}
                   >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path d="M10 15v4a3 3 0 0 0 6 0v-4h3V4H5v11h5z" stroke="currentColor" strokeWidth="2" />
+                    </svg>
                     Not Helpful
                   </button>
-
                 </div>
-
               </div>
-
             )
-
           )}
-
         </div>
-
       </div>
-
     </div>
   );
 }
 
-
-/* ─────────────────────────────────────────────
-   Helper functions (unchanged)
-──────────────────────────────────────────── */
-
+// Helper functions
 function extractFinalAnswer(rawText) {
-
   if (!rawText) return '';
 
   let lastStart = -1;
@@ -285,59 +210,46 @@ function extractFinalAnswer(rawText) {
   }
 
   if (lastStart === -1) {
+    console.log('No \\boxed found → fallback');
     return fallbackLastLines(rawText);
   }
 
   const startIndex = lastStart + 7;
-
   let braceCount = 1;
   let i = startIndex;
   let content = '';
 
   while (i < rawText.length && braceCount > 0) {
-
     const char = rawText[i];
-
     content += char;
-
     if (char === '{') braceCount++;
     if (char === '}') braceCount--;
-
     i++;
   }
 
   content = content.slice(0, -1).trim();
 
+  console.log('Extracted last boxed:', content);
   return content;
-
 }
 
-
 function fallbackLastLines(rawText) {
-
   const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
-
   if (lines.length < 1) return '';
 
   let candidate = '';
-
   for (let i = lines.length - 1; i >= Math.max(0, lines.length - 5); i--) {
-
     let line = lines[i];
-
     line = line.replace(/^(Final answer|Answer|Result|So|Therefore|Hence|Thus):?\s*/i, '').trim();
-
     if (line) candidate = line + (candidate ? '\n' + candidate : '');
-
     if (line.includes('=') || line.includes('\\frac') || /^\s*[-−]?\d+(\.\d+)?\s*$/.test(line)) break;
   }
 
+  console.log('Fallback:', candidate);
   return candidate || lines[lines.length - 1];
 }
 
-
 function prepareMathForKaTeX(rawText) {
-
   if (!rawText) return '';
 
   let text = rawText;
@@ -363,4 +275,3 @@ function prepareMathForKaTeX(rawText) {
 
   return text;
 }
-
