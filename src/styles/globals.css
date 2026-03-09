@@ -3371,45 +3371,47 @@ button.w-full.py-3\.5:active {
 
 
 
-/* ── Inline KaTeX improvements – tuned for readability & natural look ── */
+/* ── Inline KaTeX – tuned for natural superscript height & root clearance ── */
 
-/* Base container for inline math */
+/* Inline math wrapper */
 .step-by-step-content .inline-katex {
   font-size: 1.08em;
   line-height: 1;
-  vertical-align: baseline;
+  vertical-align: baseline !important;
   display: inline-block;
-  margin: 0 0.08em 0 0.06em;
+  margin: 0 0.09em;
 }
 
-/* Main KaTeX element adjustments */
-.step-by-step-content .katex {
+/* Overall KaTeX element */
+.step-by-step-content .katex,
+.inline-katex .katex {
   font-size: 1.08em !important;
   vertical-align: baseline !important;
   line-height: 1.12 !important;
   font-weight: 450;
 }
 
-/* Superscripts & subscripts – lower & more natural position */
+/* Superscripts & subscripts – lowered & more natural position */
 .katex .msupsub,
 .katex .msupsub .vlist-t {
   font-size: 0.80em !important;
-  vertical-align: 0.32em !important;     /* lowered from 0.36–0.38 → less raised */
+  vertical-align: 0.31em !important;   /* ← main fix: less raised than before */
   margin-left: 0.03em;
   margin-right: 0.04em;
 }
 
-/* Square root – pull down slightly to avoid clashing with raised superscripts */
+/* Square root – pulled down a bit + better internal clearance */
+.katex .mroot,
 .katex .sqrt {
-  vertical-align: -0.19em !important;
+  vertical-align: -0.20em !important;
   margin-right: 0.07em;
 }
 
 .katex .sqrt > .vlist-r {
-  margin-top: -0.10em !important;       /* subtle upward shift inside root */
+  margin-top: -0.09em !important;     /* subtle upward shift inside the root */
 }
 
-/* Fractions – better vertical placement & slightly thicker line */
+/* Fractions – balanced vertical position */
 .katex .mfrac {
   vertical-align: -0.20em !important;
 }
@@ -3418,7 +3420,7 @@ button.w-full.py-3\.5:active {
   border-width: 1.25px !important;
 }
 
-/* Operator / relation spacing – prevents cramped look */
+/* Operator / relation spacing */
 .katex .mbin,
 .katex .mrel,
 .katex .mord + .mbin,
@@ -3426,14 +3428,14 @@ button.w-full.py-3\.5:active {
   margin: 0 0.11em;
 }
 
-/* Give paragraphs and list items more vertical breathing room when they contain math */
+/* Give text paragraphs and list items more breathing room when they contain math */
 .step-by-step-content p,
 .step-by-step-content li {
   line-height: 1.80 !important;
   margin-bottom: 1.1em;
 }
 
-/* Extra protection: paragraphs that contain math get minimum height */
+/* Extra safety: paragraphs/lists with math get minimum height */
 .step-by-step-content p:has(.katex),
 .step-by-step-content li:has(.katex) {
   min-height: 2.0em;
