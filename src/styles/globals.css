@@ -3390,15 +3390,14 @@ button.w-full.py-3\.5:active {
   font-weight: 450;
 }
 
-/* Superscripts & subscripts – main fix: lower + noticeably larger */
+/* Superscripts & subscripts – very low position like in many printed math books */
 .katex .msupsub,
 .katex .msupsub .vlist-t {
-  font-size: 0.88em !important;          /* larger so it doesn't look tiny */
-  vertical-align: 0.18em !important;     /* much lower – should clear root bar */
+  font-size: 0.88em !important;          /* reasonably large – not tiny */
+  vertical-align: 0.14em !important;     /* very low – main change you asked for */
   margin-left: 0.04em;
   margin-right: 0.05em;
 }
-
 /* Square root – give it some downward space */
 .katex .mroot,
 .katex .sqrt {
