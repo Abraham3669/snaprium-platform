@@ -1233,25 +1233,66 @@ header.header {
 
 
 /* Premium spinner – adaptive for light & dark */
+/* ── Shimmer loader replacing spinner ── */
+
 .loading-spinner {
-  width: 54px;
-  height: 54px;
-  border: 6px solid rgba(0, 0, 0, 0.12);           /* subtle dark track in light mode */
-  border-top: 6px solid #111827;                   /* gray-900 ≈ black-ish */
-  border-radius: 50%;
-  animation: spin 1.15s cubic-bezier(0.55, 0.055, 0.675, 0.19) infinite;
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-/* Dark mode spinner – light colored accent */
-.dark .loading-spinner {
-  border: 6px solid rgba(255, 255, 255, 0.14);     /* subtle light track */
-  border-top: 6px solid #c7d2fe;                   /* indigo-300 – visible & pretty */
-  /* Alternative high-contrast option: border-top: 6px solid #ffffff; */
+/* Create the 3 shimmer bars */
+.loading-spinner::before,
+.loading-spinner::after,
+.loading-spinner div {
+  content: "";
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    #e5e7eb 25%,
+    #f3f4f6 37%,
+    #e5e7eb 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
 }
 
-/* Optional: if you want the spinner to feel more "premium" in dark mode */
-.dark .loading-spinner {
-  box-shadow: 0 0 12px rgba(199, 210, 254, 0.25);  /* soft indigo glow */
+/* Different widths for realism */
+.loading-spinner::before {
+  width: 100%;
+}
+
+.loading-spinner div {
+  width: 75%;
+}
+
+.loading-spinner::after {
+  width: 90%;
+}
+
+/* Shimmer animation */
+@keyframes shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+/* Dark mode */
+.dark .loading-spinner::before,
+.dark .loading-spinner::after,
+.dark .loading-spinner div {
+  background: linear-gradient(
+    90deg,
+    #374151 25%,
+    #4b5563 37%,
+    #374151 63%
+  );
+  background-size: 400% 100%;
 }
 
 
@@ -3439,3 +3480,10 @@ button.w-full.py-3\.5:active {
   min-height: 2.1em;
   line-height: 1.85 !important;
 }
+
+
+
+
+
+
+
