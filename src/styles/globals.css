@@ -3390,11 +3390,11 @@ button.w-full.py-3\.5:active {
   font-weight: 450;
 }
 
-/* Superscripts & subscripts – very low position like in many printed math books */
+/* Superscripts & subscripts – extremely low position to avoid root bar collision */
 .katex .msupsub,
 .katex .msupsub .vlist-t {
-  font-size: 0.88em !important;          /* reasonably large – not tiny */
-  vertical-align: 0.14em !important;     /* very low – main change you asked for */
+  font-size: 0.88em !important;          /* keep readable size */
+  vertical-align: 0.08em !important;     /* ← brought down significantly more */
   margin-left: 0.04em;
   margin-right: 0.05em;
 }
