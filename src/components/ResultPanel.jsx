@@ -98,11 +98,12 @@ export default function ResultPanel({ result, loading, onClose }) {
             <div className="loading-messages min-h-[220px] flex flex-col items-center justify-center py-12 px-6 text-center">
              {showAnalyzing ? (
   <div className="fade-in-scale text-center">
-    <p className="text-xl font-semibold text-gray-800 dark:text-gray-200 animate-pulse">
-      Analyzing your solution…
+    <p className="text-xl font-semibold text-gray-800 dark:text-gray-200 animate-pulse mb-6">
+      Solving your question…
     </p>
-    
-    <div className="loading-shimmer-container mt-8">
+
+    {/* Full-width shimmer bars */}
+    <div className="loading-shimmer-container">
       <div className="loading-shimmer-bar"></div>
       <div className="loading-shimmer-bar"></div>
       <div className="loading-shimmer-bar"></div>

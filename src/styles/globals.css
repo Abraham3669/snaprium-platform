@@ -1232,66 +1232,95 @@ header.header {
 
 
 
-/* ── Horizontal Shimmer Bars Loader (replaces circle spinner) ── */
+/* ── Full-width Horizontal Shimmer Bars with Soft Moving Glow Band ── */
 .loading-shimmer-container {
-  width: 100%;                    /* stretches to parent/container width */
-  max-width: 300px;               /* optional: limit max width so it doesn't go full-screen */
-  margin: 2rem auto;              /* center it nicely under the text */
+  width: 100%;                    /* stretches full container width */
   display: flex;
   flex-direction: column;
-  gap: 12px;                      /* vertical spacing between bars */
+  gap: 14px;                      /* vertical spacing between bars */
+  margin: 2rem 0;                 /* vertical breathing room */
 }
 
-/* Each individual shimmer bar */
+/* Individual shimmer bar */
 .loading-shimmer-bar {
-  height: 16px;                   /* adjust height as needed (12–20px common) */
+  height: 18px;                   /* adjust 14–22px depending on your design */
   background: linear-gradient(
     90deg,
-    rgba(200, 200, 200, 0.25) 0%,
-    rgba(200, 200, 200, 0.55) 50%,
-    rgba(200, 200, 200, 0.25) 100%
+    rgba(200, 200, 200, 0.15) 0%,
+    rgba(200, 200, 200, 0.35) 40%,
+    rgba(200, 200, 200, 0.15) 80%
   );
-  background-size: 200% 100%;
-  border-radius: 8px;
-  animation: shimmer 1.8s infinite linear;
+  background-size: 300% 100%;
   position: relative;
   overflow: hidden;
+  border-radius: 10px;
 }
 
-/* Light mode – softer grays */
+/* Light mode – soft neutral grays */
 .loading-shimmer-bar {
   background: linear-gradient(
     90deg,
-    rgba(229, 231, 235, 0.35) 0%,    /* gray-200 light */
-    rgba(209, 213, 219, 0.65) 50%,   /* gray-300 */
-    rgba(229, 231, 235, 0.35) 100%
+    rgba(229, 231, 235, 0.25) 0%,    /* gray-200 light */
+    rgba(209, 213, 219, 0.50) 40%,   /* gray-300 */
+    rgba(229, 231, 235, 0.25) 80%
   );
 }
 
-/* Dark mode – deeper, more premium grays */
+/* Dark mode – deeper & more elegant */
 .dark .loading-shimmer-bar {
   background: linear-gradient(
     90deg,
-    rgba(75, 85, 99, 0.30) 0%,       /* gray-600 dark */
-    rgba(107, 114, 128, 0.60) 50%,   /* gray-500 */
-    rgba(75, 85, 99, 0.30) 100%
+    rgba(75, 85, 99, 0.20) 0%,       /* gray-600 dark */
+    rgba(107, 114, 128, 0.45) 40%,   /* gray-500 */
+    rgba(75, 85, 99, 0.20) 80%
   );
 }
 
-/* Optional: subtle glow/pulse on dark mode bars */
-.dark .loading-shimmer-bar {
-  box-shadow: 0 2px 12px rgba(99, 102, 241, 0.12);
+/* The soft glowing band that moves left → right */
+.loading-shimmer-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.35) 45%,
+    transparent 90%
+  );
+  animation: glow-band 2.8s infinite linear;
+  opacity: 0.7;
 }
 
-/* Staggered animation so bars shimmer one after another (very polished look) */
-.loading-shimmer-bar:nth-child(1) { animation-delay: 0s;    }
-.loading-shimmer-bar:nth-child(2) { animation-delay: 0.2s;  }
-.loading-shimmer-bar:nth-child(3) { animation-delay: 0.4s;  }
+/* Dark mode glow band – uses accent color for premium feel */
+.dark .loading-shimmer-bar::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(var(--accent), 0.45) 45%,
+    transparent 90%
+  );
+  opacity: 0.6;
+}
 
-/* Shimmer animation – left to right movement */
-@keyframes shimmer {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+/* Staggered timing – bars start one after another */
+.loading-shimmer-bar:nth-child(1)::after { animation-delay: 0s;    }
+.loading-shimmer-bar:nth-child(2)::after { animation-delay: 0.4s;  }
+.loading-shimmer-bar:nth-child(3)::after { animation-delay: 0.8s;  }
+
+/* Glow band animation – moves smoothly left to right */
+@keyframes glow-band {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%);  }
+}
+
+/* Optional: very subtle overall pulse (looks alive) */
+.loading-shimmer-bar {
+  animation: subtle-pulse 3.5s infinite ease-in-out;
+}
+
+@keyframes subtle-pulse {
+  0%, 100% { opacity: 0.95; }
+  50%      { opacity: 0.75; }
 }
 
 
