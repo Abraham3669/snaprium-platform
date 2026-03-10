@@ -97,13 +97,15 @@ export default function ResultPanel({ result, loading, onClose }) {
           {loading ? (
             <div className="loading-messages min-h-[220px] flex flex-col items-center justify-center py-12 px-6 text-center">
              {showAnalyzing ? (
-  <div className="fade-in-scale">
+  <div className="fade-in-scale text-center">
     <p className="text-xl font-semibold text-gray-800 dark:text-gray-200 animate-pulse">
       Analyzing your solution…
     </p>
-    <div className="mt-8">
-      {/* Old: <div className="loading-spinner w-12 h-12" /> */}
-      <div className="loading-shimmer w-12 h-12" />   {/* ← new shimmer */}
+    
+    <div className="loading-shimmer-container mt-8">
+      <div className="loading-shimmer-bar"></div>
+      <div className="loading-shimmer-bar"></div>
+      <div className="loading-shimmer-bar"></div>
     </div>
   </div>
 ) : (

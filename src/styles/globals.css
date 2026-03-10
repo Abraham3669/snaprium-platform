@@ -1232,56 +1232,66 @@ header.header {
 
 
 
-/* ── Modern Shimmer Loader – replaces old spinner ── */
-.loading-shimmer {
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
+/* ── Horizontal Shimmer Bars Loader (replaces circle spinner) ── */
+.loading-shimmer-container {
+  width: 100%;                    /* stretches to parent/container width */
+  max-width: 300px;               /* optional: limit max width so it doesn't go full-screen */
+  margin: 2rem auto;              /* center it nicely under the text */
+  display: flex;
+  flex-direction: column;
+  gap: 12px;                      /* vertical spacing between bars */
+}
+
+/* Each individual shimmer bar */
+.loading-shimmer-bar {
+  height: 16px;                   /* adjust height as needed (12–20px common) */
   background: linear-gradient(
     90deg,
-    rgba(200, 200, 200, 0.2) 0%,
-    rgba(200, 200, 200, 0.5) 50%,
-    rgba(200, 200, 200, 0.2) 100%
+    rgba(200, 200, 200, 0.25) 0%,
+    rgba(200, 200, 200, 0.55) 50%,
+    rgba(200, 200, 200, 0.25) 100%
   );
   background-size: 200% 100%;
-  animation: shimmer 1.6s infinite linear;
+  border-radius: 8px;
+  animation: shimmer 1.8s infinite linear;
   position: relative;
   overflow: hidden;
 }
 
-/* Light mode base shimmer */
-.loading-shimmer {
+/* Light mode – softer grays */
+.loading-shimmer-bar {
   background: linear-gradient(
     90deg,
-    rgba(229, 231, 235, 0.3) 0%,    /* gray-200 light */
-    rgba(209, 213, 219, 0.6) 50%,   /* gray-300 */
-    rgba(229, 231, 235, 0.3) 100%
+    rgba(229, 231, 235, 0.35) 0%,    /* gray-200 light */
+    rgba(209, 213, 219, 0.65) 50%,   /* gray-300 */
+    rgba(229, 231, 235, 0.35) 100%
   );
 }
 
-/* Dark mode shimmer – softer & more premium */
-.dark .loading-shimmer {
+/* Dark mode – deeper, more premium grays */
+.dark .loading-shimmer-bar {
   background: linear-gradient(
     90deg,
-    rgba(75, 85, 99, 0.25) 0%,      /* gray-600 dark */
-    rgba(107, 114, 128, 0.5) 50%,   /* gray-500 */
-    rgba(75, 85, 99, 0.25) 100%
+    rgba(75, 85, 99, 0.30) 0%,       /* gray-600 dark */
+    rgba(107, 114, 128, 0.60) 50%,   /* gray-500 */
+    rgba(75, 85, 99, 0.30) 100%
   );
 }
 
-/* Optional subtle glow/pulse in dark mode */
-.dark .loading-shimmer {
-  box-shadow: 0 0 16px rgba(99, 102, 241, 0.15); /* indigo-500 glow */
+/* Optional: subtle glow/pulse on dark mode bars */
+.dark .loading-shimmer-bar {
+  box-shadow: 0 2px 12px rgba(99, 102, 241, 0.12);
 }
 
-/* Shimmer animation */
+/* Staggered animation so bars shimmer one after another (very polished look) */
+.loading-shimmer-bar:nth-child(1) { animation-delay: 0s;    }
+.loading-shimmer-bar:nth-child(2) { animation-delay: 0.2s;  }
+.loading-shimmer-bar:nth-child(3) { animation-delay: 0.4s;  }
+
+/* Shimmer animation – left to right movement */
 @keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 
