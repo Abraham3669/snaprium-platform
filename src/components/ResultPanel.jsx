@@ -94,21 +94,12 @@ export default function ResultPanel({ result, loading, onClose }) {
         </div>
 
         <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
-          {loading ? (
-  <div className="loading-messages min-h-[220px] flex flex-col items-center justify-center py-12 px-6 text-center">
+{loading ? (
+  <div className="loading-messages min-h-[220px] flex items-center justify-center py-12 px-6 text-center">
     {showAnalyzing ? (
-      <div className="fade-in-scale w-full"> {/* ← w-full here forces full width */}
-        <p className="text-xl font-semibold text-gray-800 dark:text-gray-200 animate-pulse mb-6">
-          Solving your question…
-        </p>
-
-        {/* Shimmer now stretches full width of loading-messages */}
-        <div className="loading-shimmer-container mx-auto max-w-none w-full px-0">
-          <div className="loading-shimmer-bar"></div>
-          <div className="loading-shimmer-bar"></div>
-          <div className="loading-shimmer-bar"></div>
-        </div>
-      </div>
+      <p className="text-xl font-semibold text-gray-800 dark:text-gray-200 animate-pulse">
+        Solving your question…
+      </p>
     ) : (
       <div className="h-32" />
     )}
