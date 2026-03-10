@@ -1133,17 +1133,17 @@ header.header {
   min-height: 220px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;   /* LEFT ALIGN */
+  align-items: flex-start;
   justify-content: center;
   gap: 28px;
   padding: 3rem 1.5rem;
-  text-align: left;          /* LEFT ALIGN */
+  text-align: left;
 }
 
 .loading-messages p {
   margin: 0;
   font-size: 1.32rem;
-  font-weight: 700;          /* BOLD */
+  font-weight: 700;
   color: #374151;
   transition: all 0.7s ease;
 }
@@ -1216,8 +1216,8 @@ header.header {
 
 /* Dark mode adjustments */
 .dark .scan-line {
-  background: linear-gradient(90deg, transparent, rgba(180, 200, 255, 0.9), transparent);
-  box-shadow: 0 0 28px 12px rgba(100, 140, 255, 0.4);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.95), transparent);
+  box-shadow: 0 0 24px 10px rgba(255,255,255,0.55);
 }
 
 .dark .corner-tl, .dark .corner-tr, .dark .corner-bl, .dark .corner-br {
@@ -1229,8 +1229,6 @@ header.header {
   border: 6px solid rgba(180, 200, 255, 0.2);
   border-top: 6px solid #c7d2fe;
 }
-
-
 
 
 
