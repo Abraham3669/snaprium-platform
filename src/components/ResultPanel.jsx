@@ -5,7 +5,6 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
-import { Bold } from 'lucide-react';
 
 export default function ResultPanel({ result, loading, onClose }) {
   const [showSteps, setShowSteps] = useState(false);
@@ -98,9 +97,9 @@ export default function ResultPanel({ result, loading, onClose }) {
 {loading ? (
   <div className="loading-messages min-h-[220px] flex items-center justify-center py-12 px-6 text-center">
     {showAnalyzing ? (
-      <p className="text-xl font-semibold text-gray-800 dark:text-gray-200 animate-pulse">
-        <Bold>Solving your question…</Bold>
-      </p>
+      <p className="text-xl font-bold text-left text-gray-800 dark:text-gray-200 animate-pulse">
+  Solving your question…
+</p>
     ) : (
       <div className="h-32" />
     )}
