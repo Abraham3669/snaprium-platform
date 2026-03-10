@@ -1234,12 +1234,11 @@ header.header {
 
 /* ── Full-width shimmer bars for ResultPanel solution area ── */
 .loading-shimmer-container {
-  width: 100% !important;
-  max-width: none !important;           /* breaks any parent max-width */
-  align-self: stretch !important;       /* stretches in flex context */
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-  padding: 0 8px;                       /* ← only 8px side space – make 0 4px for wider */
+  width: 100vw !important;                /* full viewport width – ignores parent padding */
+  max-width: none !important;
+  margin-left: calc(-50vw + 50%) !important;   /* centers it relative to viewport */
+  margin-right: calc(-50vw + 50%) !important;
+  padding: 0 4px !important;             /* ← adjust this: 8px, 12px, 16px, 20px */
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -1249,7 +1248,7 @@ header.header {
 
 /* Each shimmer bar — stretches nearly full width */
 .loading-shimmer-bar {
-  width: 100%;                      /* full width inside container */
+  width: 100% !important;
   height: 18px;
   border-radius: 8px;
   position: relative;
