@@ -1233,94 +1233,100 @@ header.header {
 
 
 /* ── Full-width Horizontal Shimmer Bars with Soft Moving Glow Band ── */
+
 .loading-shimmer-container {
-  width: 100%;                    /* stretches full container width */
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 14px;                      /* vertical spacing between bars */
-  margin: 2rem 0;                 /* vertical breathing room */
+  gap: 14px;
+  margin: 2rem 0;
 }
 
 /* Individual shimmer bar */
 .loading-shimmer-bar {
-  height: 18px;                   /* adjust 14–22px depending on your design */
-  background: linear-gradient(
-    90deg,
-    rgba(200, 200, 200, 0.15) 0%,
-    rgba(200, 200, 200, 0.35) 40%,
-    rgba(200, 200, 200, 0.15) 80%
-  );
-  background-size: 300% 100%;
+  height: 18px;
+  border-radius: 10px;
   position: relative;
   overflow: hidden;
-  border-radius: 10px;
-}
 
-/* Light mode – soft neutral grays */
-.loading-shimmer-bar {
   background: linear-gradient(
     90deg,
-    rgba(229, 231, 235, 0.25) 0%,    /* gray-200 light */
-    rgba(209, 213, 219, 0.50) 40%,   /* gray-300 */
+    rgba(229, 231, 235, 0.25) 0%,
+    rgba(209, 213, 219, 0.50) 40%,
     rgba(229, 231, 235, 0.25) 80%
   );
+
+  animation: subtle-pulse 4s ease-in-out infinite;
 }
 
-/* Dark mode – deeper & more elegant */
+/* Make bars look like real text lines */
+.loading-shimmer-bar:nth-child(2) {
+  width: 70%;
+}
+
+.loading-shimmer-bar:nth-child(3) {
+  width: 90%;
+}
+
+/* Dark mode base bar */
 .dark .loading-shimmer-bar {
   background: linear-gradient(
     90deg,
-    rgba(75, 85, 99, 0.20) 0%,       /* gray-600 dark */
-    rgba(107, 114, 128, 0.45) 40%,   /* gray-500 */
+    rgba(75, 85, 99, 0.20) 0%,
+    rgba(107, 114, 128, 0.45) 40%,
     rgba(75, 85, 99, 0.20) 80%
   );
 }
 
-/* The soft glowing band that moves left → right */
+/* Moving glow band */
 .loading-shimmer-bar::after {
   content: "";
   position: absolute;
   inset: 0;
+  width: 200%;
+
   background: linear-gradient(
     90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.35) 45%,
-    transparent 90%
+    transparent,
+    rgba(255, 255, 255, 0.35),
+    transparent
   );
-  animation: glow-band 2.8s infinite linear;
+
+  animation: glow-band 2.6s linear infinite;
+  will-change: transform;
   opacity: 0.7;
 }
 
-/* Dark mode glow band – uses accent color for premium feel */
+/* Dark mode glow */
 .dark .loading-shimmer-bar::after {
   background: linear-gradient(
     90deg,
-    transparent 0%,
-    rgba(var(--accent), 0.45) 45%,
-    transparent 90%
+    transparent,
+    rgba(160, 170, 255, 0.35),
+    transparent
   );
   opacity: 0.6;
 }
 
-/* Staggered timing – bars start one after another */
-.loading-shimmer-bar:nth-child(1)::after { animation-delay: 0s;    }
-.loading-shimmer-bar:nth-child(2)::after { animation-delay: 0.4s;  }
-.loading-shimmer-bar:nth-child(3)::after { animation-delay: 0.8s;  }
+/* Stagger shimmer timing */
+.loading-shimmer-bar:nth-child(1)::after { animation-delay: 0s; }
+.loading-shimmer-bar:nth-child(2)::after { animation-delay: 0.35s; }
+.loading-shimmer-bar:nth-child(3)::after { animation-delay: 0.7s; }
 
-/* Glow band animation – moves smoothly left to right */
+/* Glow band animation */
 @keyframes glow-band {
-  0%   { transform: translateX(-100%); }
-  100% { transform: translateX(100%);  }
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(50%);
+  }
 }
 
-/* Optional: very subtle overall pulse (looks alive) */
-.loading-shimmer-bar {
-  animation: subtle-pulse 3.5s infinite ease-in-out;
-}
-
+/* Subtle pulse to make bars feel alive */
 @keyframes subtle-pulse {
-  0%, 100% { opacity: 0.95; }
-  50%      { opacity: 0.75; }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.92; }
 }
 
 
