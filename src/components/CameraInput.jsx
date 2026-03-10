@@ -40,21 +40,33 @@ export default function CameraInput({ onFileSelect, onOpenDashboard }) {
   };
 
   return (
+    
   <main className="camera-main">
+    
 
     {/* Hero Section */}
     <section className="hero">
-      <div className="container">
-        <h1 className="hero-title">
-          Master Any Problem —
-          <span className="hero-accent"> Just Snap It.</span>
-        </h1>
+  <div className="container text-center">
+    <h1 className="hero-title">
+      Master Any Problem — <span className="hero-accent">Just Snap It.</span>
+    </h1>
+    <p className="hero-subtitle">
+      Turn any problem into a solution with a single snap.
+    </p>
 
-        <p className="hero-subtitle">
-          Turn any problem into a solution with a single snap.
-        </p>
-      </div>
-    </section>
+    {/* Subject / Topic Badges */}
+<div className="subject-badges flex justify-center flex-wrap gap-3 mt-4">
+  <span className="badge">Math</span>
+  <span className="badge">Physics</span>
+  <span className="badge">Algebra</span>
+  <span className="badge">Mechanics</span>
+  <span className="badge">Calculus</span>
+  <span className="badge">Electricity</span>
+  <span className="badge badge-accent">+ More</span>
+</div>
+  </div>
+</section>
+    
 
     {/* Camera & Gallery Buttons */}
     <div className="camera-container container">
