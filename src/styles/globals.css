@@ -1240,7 +1240,7 @@ header.header {
   flex-direction: column;
   gap: 6px;                         /* reduced vertical spacing — bars closer together */
   margin-top: 12px;
-  padding: 0 8px;                   /* small left/right padding — bars almost touch edges */
+  padding: 0 2px;                   /* small left/right padding — bars almost touch edges */
   box-sizing: border-box;
 }
 
