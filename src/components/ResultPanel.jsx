@@ -103,11 +103,11 @@ export default function ResultPanel({ result, loading, onClose }) {
     </p>
 
     {/* Full-width shimmer bars */}
-    <div className="loading-shimmer-container">
-      <div className="loading-shimmer-bar"></div>
-      <div className="loading-shimmer-bar"></div>
-      <div className="loading-shimmer-bar"></div>
-    </div>
+   <div className="loading-shimmer-container">
+  <div className="loading-shimmer-bar"></div>
+  <div className="loading-shimmer-bar"></div>
+  <div className="loading-shimmer-bar"></div>
+</div>
   </div>
 ) : (
   <div className="h-32" />
