@@ -3691,29 +3691,3 @@ button.w-full.py-3\.5:active {
 
 
 
-/* Step-by-step container: tweak inline math */
-.step-by-step-content .inline-katex {
-  display: inline-flex;       /* allows proper vertical alignment */
-  align-items: center;        /* centers it with surrounding text */
-  justify-content: center;    /* horizontal centering inside span */
-  vertical-align: middle;     /* aligns nicely with text */
-  font-size: 1.05em;          /* slightly bigger for readability */
-  line-height: 1.4;           /* avoids collision with text lines */
-  padding: 0 2px;             /* small spacing left/right */
-  margin: 0 1px;              /* tiny margin so primes etc. don't touch letters */
-  white-space: nowrap;         /* prevents breaking inline math */
-  background-color: var(--surface-light);
-  border-radius: 3px;
-}
-
-/* Dark mode support */
-.dark .step-by-step-content .inline-katex {
-  background-color: var(--surface-dark);
-  color: var(--text-primary);
-}
-
-/* Optional: adjust superscripts and primes for inline */
-.step-by-step-content .inline-katex sup {
-  vertical-align: super;
-  font-size: 0.85em;
-}
