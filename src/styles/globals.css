@@ -3586,3 +3586,102 @@ button.w-full.py-3\.5:active {
   font-size: 1rem;
   color: var(--text-secondary);
 }
+
+
+
+
+.frac {
+  display: inline-block;
+  text-align: center;
+  vertical-align: middle;
+  position: relative;
+  top: -2px;     /* moves it slightly upward */
+  left: 3px;     /* moves it slightly to the right */
+}
+
+.frac .top {
+  display: block;
+  border-bottom: 1px solid currentColor;
+  padding: 0 4px;
+  line-height: 1.1;
+}
+
+.frac .bottom {
+  display: block;
+  font-size: 0.85em;
+  line-height: 1.1;
+}
+
+
+
+
+.solution-card {
+  background-color: var(--surface); /* light background for light mode */
+  border: 1px solid var(--border);  /* subtle border for definition */
+  border-radius: 1rem;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08); /* subtle shadow to lift card */
+  transition: all 0.3s ease;
+}
+
+.dark .solution-card {
+  background-color: #1a202c; /* dark surface */
+  border-color: rgba(0, 0, 0, 0.25);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.55);
+}
+
+/* Optional hover lift for interaction */
+.solution-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+}
+
+
+
+
+
+/* Step container and title */
+.solution-step,
+.solution-final {
+  text-align: left; /* titles and step block aligned left */
+  margin-bottom: 1.5rem;
+}
+
+.step-title {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+  text-align: left; /* titles left-aligned */
+}
+
+/* Math formulas centered */
+.step-math {
+  font-size: 1.25rem;
+  line-height: 1.4;
+  color: var(--text-primary);
+  text-align: center; /* math formulas centered under title */
+}
+
+/* Fraction styling (keep previous) */
+.frac {
+  display: inline-block;
+  text-align: center;
+  vertical-align: middle;
+  position: relative;
+  top: -2px;    /* slightly upward */
+  left: 3px;    /* slightly to the right */
+}
+
+.frac .top {
+  display: block;
+  border-bottom: 1px solid currentColor;
+  padding: 0 4px;
+  line-height: 1.1;
+}
+
+.frac .bottom {
+  display: block;
+  font-size: 0.85em;
+  line-height: 1.1;
+}

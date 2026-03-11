@@ -167,63 +167,45 @@ export default function CameraInput({ onFileSelect, onOpenDashboard }) {
 
 {/* Step-by-Step Solution Animation */}
 <section className="solution-demo">
-  <div className="container">
+  <div className="solution-card">
 
-    <h2 className="section-heading">
-      See How Snaprium Solves Problems
-    </h2>
-
-    <div className="solution-card">
-
-      <div className="solution-question">
+  {/* Question preview area */}
+  <div className="solution-question-card">
+    <div className="solution-question-preview">
+      {/* Can be an image or just a highlighted box */}
+      <p className="solution-question">
         A particle has velocity v(t) = 3t² − 4t + 1. Find its displacement function s(t).
+      </p>
+    </div>
+  </div>
+
+  {/* Step-by-step solution */}
+  <div className="solution-steps">
+
+    <div className="solution-step">
+      <div className="step-title">Use the relation between velocity and displacement</div>
+      <div className="step-math">
+        v(t) =
+        <span className="frac">
+          <span className="top">ds</span>
+          <span className="bottom">dt</span>
+        </span>
       </div>
+    </div>
 
-      <div className="solution-steps">
+    <div className="solution-step">
+      <div className="step-title">Integrate the velocity function</div>
+      <div className="step-math">s(t) = ∫ (3t² − 4t + 1) dt</div>
+    </div>
 
-        <div className="solution-step step1">
-          <div className="step-title">
-            Step 1 — Use the relation between velocity and displacement
-          </div>
-          <div className="step-math">
-            v(t) = ds/dt
-          </div>
-        </div>
-
-        <div className="solution-step step2">
-          <div className="step-title">
-            Step 2 — Integrate the velocity function
-          </div>
-          <div className="step-math">
-            s(t) = ∫ (3t² − 4t + 1) dt
-          </div>
-        </div>
-
-        <div className="solution-step step3">
-          <div className="step-title">
-            Step 3 — Integrate each term
-          </div>
-          <div className="step-math">
-            s(t) = t³ − 2t² + t + C
-          </div>
-        </div>
-
-        <div className="solution-final step4">
-          <div className="step-title">
-            Final Answer
-          </div>
-          <div className="step-math">
-            s(t) = t³ − 2t² + t + C
-          </div>
-        </div>
-
-      </div>
-
+    <div className="solution-final">
+      <div className="step-title">Final Answer</div>
+      <div className="step-math">s(t) = t³ − 2t² + t + C</div>
     </div>
 
   </div>
+</div>
 </section>
-
 
 
     {/* CTA Section */}
