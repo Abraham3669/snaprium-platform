@@ -3685,3 +3685,26 @@ button.w-full.py-3\.5:active {
   font-size: 0.85em;
   line-height: 1.1;
 }
+
+
+
+
+
+
+/* Inline math adjustments */
+.step-by-step-content .inline-katex {
+  display: inline-block;        /* keeps it separate from text */
+  vertical-align: baseline;     /* aligns nicely with text */
+  font-size: 1.05em;            /* slightly larger than normal for clarity */
+  line-height: 1.4;             /* prevents overlapping lines */
+  padding: 0 2px;               /* tiny horizontal padding */
+  background-color: var(--surface-light); /* subtle background to highlight */
+  border-radius: 4px;
+  color: var(--text-primary);
+}
+
+/* Dark mode support */
+.dark .step-by-step-content .inline-katex {
+  background-color: var(--surface-dark);
+  color: var(--text-primary);
+}
