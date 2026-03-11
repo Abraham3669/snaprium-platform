@@ -43,15 +43,16 @@ export default function CameraInput({ onFileSelect, onOpenDashboard }) {
     
   <main className="camera-main">
     
+    
 
     {/* Hero Section */}
     <section className="hero">
   <div className="container text-center">
     <h1 className="hero-title">
-      Master Any Problem — <span className="hero-accent">Just Snap It.</span>
+      Snap • Solve • Learn — Faster Than Ever
     </h1>
     <p className="hero-subtitle">
-      Turn any problem into a solution with a single snap.
+      Get step‑by‑step math & physics solutions with explanations and visual steps.
     </p>
 
     {/* Subject / Topic Badges */}
@@ -66,6 +67,8 @@ export default function CameraInput({ onFileSelect, onOpenDashboard }) {
 </div>
   </div>
 </section>
+
+
     
 
     {/* Camera & Gallery Buttons */}
@@ -112,6 +115,10 @@ export default function CameraInput({ onFileSelect, onOpenDashboard }) {
       onChange={handleFileChange}
     />
 
+
+
+    
+
     {/* Why Section */}
     <section>
       <div className="container">
@@ -138,6 +145,86 @@ export default function CameraInput({ onFileSelect, onOpenDashboard }) {
         </div>
       </div>
     </div>
+
+
+
+{/* What Snaprium Solves */}
+<section className="subjects-section">
+  <div className="container">
+    <h2 className="section-heading">
+      Snaprium solves <span className="hero-accent">Math (∫ √ π)</span> and
+      <span className="hero-accent"> Physics (F=ma, E=mc²)</span>
+    </h2>
+
+    <p className="gallery-text">
+  From algebra and calculus to mechanics and electricity and more — Snaprium breaks every problem into clear, step-by-step solutions.
+</p>
+  </div>
+</section>
+
+
+
+
+{/* Step-by-Step Solution Animation */}
+<section className="solution-demo">
+  <div className="container">
+
+    <h2 className="section-heading">
+      See How Snaprium Solves Problems
+    </h2>
+
+    <div className="solution-card">
+
+      <div className="solution-question">
+        A particle has velocity v(t) = 3t² − 4t + 1. Find its displacement function s(t).
+      </div>
+
+      <div className="solution-steps">
+
+        <div className="solution-step step1">
+          <div className="step-title">
+            Step 1 — Use the relation between velocity and displacement
+          </div>
+          <div className="step-math">
+            v(t) = ds/dt
+          </div>
+        </div>
+
+        <div className="solution-step step2">
+          <div className="step-title">
+            Step 2 — Integrate the velocity function
+          </div>
+          <div className="step-math">
+            s(t) = ∫ (3t² − 4t + 1) dt
+          </div>
+        </div>
+
+        <div className="solution-step step3">
+          <div className="step-title">
+            Step 3 — Integrate each term
+          </div>
+          <div className="step-math">
+            s(t) = t³ − 2t² + t + C
+          </div>
+        </div>
+
+        <div className="solution-final step4">
+          <div className="step-title">
+            Final Answer
+          </div>
+          <div className="step-math">
+            s(t) = t³ − 2t² + t + C
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+
 
     {/* CTA Section */}
     <section>

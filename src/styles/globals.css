@@ -3480,3 +3480,109 @@ button.w-full.py-3\.5:active {
 
 
 
+
+
+
+
+
+/* ==============================
+   Solution Demo Section
+============================== */
+
+.solution-demo {
+  margin-top: clamp(4rem, 7vw, 6rem);
+  text-align: center;
+}
+
+/* Card */
+
+.solution-card {
+  margin: 2rem auto;
+  max-width: 520px;
+  padding: 2rem;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+}
+
+/* Question */
+
+.solution-question {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+}
+
+/* Steps container */
+
+.solution-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+/* Step style */
+
+.solution-step {
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  background: var(--surface-mobile);
+  border: 1px solid var(--border);
+  font-size: 0.95rem;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: stepReveal 6s infinite;
+}
+
+/* Final answer */
+
+.solution-final {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* Delays */
+
+.step1 { animation-delay: 0.5s; }
+.step2 { animation-delay: 2s; }
+.step3 { animation-delay: 3.5s; }
+.step4 { animation-delay: 5s; }
+
+/* Animation */
+
+@keyframes stepReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  15% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  85% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+
+
+
+
+.step-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.step-math {
+  font-family: "Times New Roman", serif;
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
