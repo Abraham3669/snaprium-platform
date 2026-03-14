@@ -55,8 +55,12 @@ export default function ResultPanel({ result, loading, onClose }) {
   if (!result?.image) return null;
 
   const fullText = result.text || '';
-  const preparedSteps = prepareMathForKaTeX(fullText);
-  const finalAnswerRaw = extractFinalAnswer(fullText);
+const preparedSteps = prepareMathForKaTeX(fullText);   // ← keep exactly as before
+
+// ←←← ADD THIS LINE (super light)
+const cleanedSteps = lightMathGlueFix(preparedSteps);
+
+const finalAnswerRaw = extractFinalAnswer(fullText);
 
   let finalAnswerContent = finalAnswerRaw.trim();
   if (
@@ -66,6 +70,9 @@ export default function ResultPanel({ result, loading, onClose }) {
   ) {
     finalAnswerContent = `$$${finalAnswerContent}$$`;
   }
+
+
+  
 
   return (
     <div className="result-panel">
@@ -155,41 +162,72 @@ export default function ResultPanel({ result, loading, onClose }) {
       Step-by-Step Solution
     </h4>
 
+
+
+
+
     {/* Improved rendering container */}
     <div className="step-by-step-content prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)] leading-relaxed">
-      <ReactMarkdown
-        remarkPlugins={[remarkMath]}
-        rehypePlugins={[
-          [
-            rehypeKatex,
-            {
-              output: 'html',
-              throwOnError: false,
-              strict: 'ignore',
-              trust: true,
-              fleqn: false,
-              macros: {
-                // Optional: cleaner operator names (helps readability)
-                "\\coth": "\\operatorname{coth}",
-                "\\csch": "\\operatorname{csch}",
-                "\\sech": "\\operatorname{sech}",
-              },
-            },
-          ],
-        ]}
-        components={{
-          inlineMath: ({ value }) => (
-            <span className="inline-katex align-baseline font-medium">
-              {value}
-            </span>
-          ),
-          paragraph: ({ children }) => (
-            <p className="my-4 leading-7 tracking-wide">{children}</p>
-          ),
-        }}
-      >
-        {preparedSteps}
-      </ReactMarkdown>
+<ReactMarkdown
+  remarkPlugins={[remarkMath]}
+  rehypePlugins={[
+    [
+      rehypeKatex,
+      {
+        output: 'html',
+        throwOnError: false,
+        strict: 'ignore',
+        trust: true,
+        fleqn: false,  // or true if you prefer left-aligned display math
+        macros: {
+          "\\coth": "\\operatorname{coth}",
+          "\\csch": "\\operatorname{csch}",
+          "\\sech": "\\operatorname{sech}",
+        },
+      },
+    ],
+  ]}
+  components={{
+    // Improved inline math: uses renderToString for reliability + tiny spacing
+    inlineMath: ({ value }) => (
+      <span className="inline-katex align-baseline mx-[0.08em] font-medium text-[1.05em]">
+        <span
+          dangerouslySetInnerHTML={{
+            __html:
+              window.katex?.renderToString(value.trim(), {
+                throwOnError: false,
+                displayMode: false,
+              }) || value,
+          }}
+        />
+      </span>
+    ),
+
+    // Paragraphs with better breathing room around math
+    paragraph: ({ children }) => (
+      <p className="my-4 leading-7 tracking-wide break-words [&>.inline-katex]:mx-[0.1em]">
+        {children}
+      </p>
+    ),
+
+    // Optional: give display math more space in prose
+    math: ({ value }) => (
+      <div className="my-6 overflow-x-auto">
+        <div
+          dangerouslySetInnerHTML={{
+            __html:
+              window.katex?.renderToString(value, {
+                throwOnError: false,
+                displayMode: true,
+              }) || value,
+          }}
+        />
+      </div>
+    ),
+  }}
+>
+  {cleanedSteps}   {/* ← changed from preparedSteps */}
+</ReactMarkdown>
     </div>
   </div>
 </div>
@@ -268,6 +306,19 @@ function fallbackLastLines(rawText) {
 
   return candidate || lines[lines.length - 1];
 }
+
+
+
+// Add this small helper function somewhere in the file (e.g. above the component or in helpers)
+function fixCommonMathGlue(text) {
+  if (!text) return text;
+  // Only targets the exact pattern you showed: $something$$  →  $something$
+  // Also catches $v'$$, $f(x)$$ etc. — very common LLM mistake
+  // Does NOT touch display math $$...$$, newlines, paragraphs, lists, etc.
+  return text.replace(/(\$[^\s$]{1,60}?)\$\$/g, '$1$');
+}
+
+
 
 function prepareMathForKaTeX(rawText) {
   if (!rawText) return '';

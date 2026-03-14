@@ -3698,3 +3698,13 @@ button.w-full.py-3\.5:active {
 
 
 
+.inline-katex {
+  display: inline-block;
+  vertical-align: baseline;   /* or middle — test what looks best */
+  line-height: 1.15;
+}
+
+.katex-display {
+  margin: 1.4em 0 !important;
+  overflow-x: auto;           /* prevents overflow on small screens */
+}
