@@ -157,50 +157,39 @@ export default function ResultPanel({ result, loading, onClose }) {
 
     {/* Improved rendering container */}
     <div className="step-by-step-content prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)] leading-relaxed">
-     <ReactMarkdown
-  remarkPlugins={[remarkMath]}
-  rehypePlugins={[
-    [
-      rehypeKatex,
-      {
-        output: 'html',
-        throwOnError: false,
-        strict: 'ignore',
-        trust: true,
-        fleqn: true, // left-align display math — looks cleaner in prose
-        macros: {
-          "\\diff": "\\mathop{}\\!d",
-          "\\dx": "\\,dx",
-          "\\d": "\\,\\mathrm{d}",
-        },
-      },
-    ],
-  ]}
-  components={{
-    // Cleaner inline math with better spacing & baseline
-    inlineMath: ({ value }) => (
-      <span className="inline-katex align-baseline mx-[0.1em] font-medium text-[1.05em]">
-        {value}
-      </span>
-    ),
-
-    // Better paragraph spacing around math
-    paragraph: ({ children }) => (
-      <p className="my-4 leading-7 tracking-wide break-words [&_.inline-katex]:mx-[0.1em]">
-        {children}
-      </p>
-    ),
-
-    // Display math gets more breathing room
-    math: ({ value }) => (
-      <div className="my-6 flex justify-start">
-        <span className="katex-display block">{value}</span>
-      </div>
-    ),
-  }}
->
-  {preparedSteps}
-</ReactMarkdown>
+      <ReactMarkdown
+        remarkPlugins={[remarkMath]}
+        rehypePlugins={[
+          [
+            rehypeKatex,
+            {
+              output: 'html',
+              throwOnError: false,
+              strict: 'ignore',
+              trust: true,
+              fleqn: false,
+              macros: {
+                // Optional: cleaner operator names (helps readability)
+                "\\coth": "\\operatorname{coth}",
+                "\\csch": "\\operatorname{csch}",
+                "\\sech": "\\operatorname{sech}",
+              },
+            },
+          ],
+        ]}
+        components={{
+          inlineMath: ({ value }) => (
+            <span className="inline-katex align-baseline font-medium">
+              {value}
+            </span>
+          ),
+          paragraph: ({ children }) => (
+            <p className="my-4 leading-7 tracking-wide">{children}</p>
+          ),
+        }}
+      >
+        {preparedSteps}
+      </ReactMarkdown>
     </div>
   </div>
 </div>
@@ -283,47 +272,25 @@ function fallbackLastLines(rawText) {
 function prepareMathForKaTeX(rawText) {
   if (!rawText) return '';
 
-  let text = rawText.trim();
+  let text = rawText;
 
-  // Normalize line endings + collapse excessive newlines
-  text = text.replace(/\r\n?/g, '\n');
-  text = text.replace(/\n{3,}/g, '\n\n');
-
-  // Common fraction fixes from handwritten/underlined style
   text = text.replace(
     /(\b\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?\b)(?!\s*\/)/g,
     '\\frac{$1}{$2}'
   );
-  text = text.replace(/(\d+)\s*\n\s*_{2,}\s*\n\s*(\d+)/g, '\\frac{$1}{$2}');
 
-  // Fix newlines accidentally inside math delimiters
-  text = text.replace(/\$([^$]*?)\n([^$]*?)\$/g, '$1 $2$');
-  text = text.replace(/\$\$([^\n$]*?)\n\s*([^\n$]*?)\n?\$\$/g, '$$ $1 $2 $$');
-
-  // Add missing space before inline math when text is glued
-  text = text.replace(/([a-zA-Z0-9.])(?=\$[^$])/g, '$1 ');
-
-  // Add space after inline math when followed by letter without space
-  text = text.replace(/\$([a-zA-Z])/g, '$ $1');
-
-  // Heuristic: upgrade many broken single-$ short display-like expressions to $$
   text = text.replace(
-    /(?<![\$\\])\$([^$]{10,80}?(?:derivative|rule|product|quotient|chain|d\/dx|f'|g'|∂|∫|∑|lim|→|⇒|=|therefore|hence|thus)[^$]*?)\$(?!\$)/gi,
+    /(\d+)\s*\n\s*_{2,}\s*\n\s*(\d+)/g,
+    '\\frac{$1}{$2}'
+  );
+
+  text = text.replace(
+    /\$([^$]*?(?:derivative|rule|product rule|quotient|chain|integral|limit|sum|equals|therefore)[^$]*?)\$/gi,
     '$$$$$1$$$$'
   );
 
-  // Clean orphan / duplicated dollars
-  text = text.replace(/\$\$[\s\n]*\$\$/g, '$$');
-  text = text.replace(/\$[\s\n]*\$/g, '$');
-  text = text.replace(/[\s\n]+\$\$/g, '$$');
-  text = text.replace(/\$\$[\s\n]+/g, '$$');
-
-  // Convert any remaining \[ \] to $$
+  text = text.replace(/\$\$[\s\n]+/g, '$$').replace(/[\s\n]+\$\$/g, '$$');
   text = text.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$');
-
-  // Final trim around delimiters
-  text = text.replace(/\$\$[\s\t]*\n/g, '$$\n');
-  text = text.replace(/\n[\s\t]*\$\$/g, '\n$$');
 
   return text;
 }

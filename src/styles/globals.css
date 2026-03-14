@@ -3698,24 +3698,3 @@ button.w-full.py-3\.5:active {
 
 
 
-/* Make sure inline math doesn't crash into text */
-.inline-katex {
-  display: inline-block;
-  vertical-align: baseline;
-  line-height: 1.1;
-}
-
-/* Give display math nice spacing in prose */
-.katex-display {
-  margin: 1.6em 0 !important;
-  padding: 0.4em 0;
-}
-
-/* Prevent text from hugging the math too tightly */
-.prose :where(p) {
-  & > .katex + span,
-  & > span + .katex {
-    margin-left: 0.25em;
-    margin-right: 0.25em;
-  }
-}
