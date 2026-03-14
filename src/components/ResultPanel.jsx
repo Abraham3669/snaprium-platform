@@ -158,38 +158,51 @@ export default function ResultPanel({ result, loading, onClose }) {
     {/* Improved rendering container */}
     <div className="step-by-step-content prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)] leading-relaxed">
       <ReactMarkdown
-        remarkPlugins={[remarkMath]}
-        rehypePlugins={[
-          [
-            rehypeKatex,
-            {
-              output: 'html',
-              throwOnError: false,
-              strict: 'ignore',
-              trust: true,
-              fleqn: false,
-              macros: {
-                // Optional: cleaner operator names (helps readability)
-                "\\coth": "\\operatorname{coth}",
-                "\\csch": "\\operatorname{csch}",
-                "\\sech": "\\operatorname{sech}",
-              },
-            },
-          ],
-        ]}
-        components={{
-          inlineMath: ({ value }) => (
-            <span className="inline-katex align-baseline font-medium">
-              {value}
-            </span>
-          ),
-          paragraph: ({ children }) => (
-            <p className="my-4 leading-7 tracking-wide">{children}</p>
-          ),
-        }}
-      >
-        {preparedSteps}
-      </ReactMarkdown>
+  remarkPlugins={[remarkMath]}
+  rehypePlugins={[
+    [
+      rehypeKatex,
+      {
+        output: 'html',
+        throwOnError: false,
+        strict: 'ignore',
+        trust: true,
+        fleqn: false,           // left-aligned equations usually look cleaner in prose
+        macros: {
+          "\\diff": "\\mathop{}\!d",   // nicer looking d for differentials
+          "\\deg": "\\operatorname{deg}",
+          "\\rank": "\\operatorname{rank}",
+        },
+      },
+    ],
+  ]}
+  components={{
+    // Better inline math rendering
+    inlineMath: ({ value }) => (
+      <span className="inline-katex align-baseline font-medium text-[1.05em]">
+        <span dangerouslySetInnerHTML={{
+          __html: window.katex?.renderToString(value, {
+            throwOnError: false,
+            displayMode: false,
+          }) || value
+        }} />
+      </span>
+    ),
+
+    // Make sure paragraphs don't collapse margins weirdly around math
+    paragraph: ({ children }) => (
+      <p className="my-4 leading-7 tracking-wide break-words">{children}</p>
+    ),
+
+    // Optional: math in headings
+    heading: ({ level, children }) => {
+      const Tag = `h${level}`;
+      return <Tag className="mt-6 mb-3">{children}</Tag>;
+    },
+  }}
+>
+  {preparedSteps}
+</ReactMarkdown>
     </div>
   </div>
 </div>
@@ -269,27 +282,54 @@ function fallbackLastLines(rawText) {
   return candidate || lines[lines.length - 1];
 }
 
+
+
+
 function prepareMathForKaTeX(rawText) {
   if (!rawText) return '';
 
-  let text = rawText;
+  let text = rawText.trim();
 
+  // ─── 1. Normalize line endings and collapse multiple blank lines ───
+  text = text.replace(/\r\n?/g, '\n');
+  text = text.replace(/\n{3,}/g, '\n\n');
+
+  // ─── 2. Fix common fraction patterns before any math processing ───
   text = text.replace(
     /(\b\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?\b)(?!\s*\/)/g,
     '\\frac{$1}{$2}'
   );
 
-  text = text.replace(
-    /(\d+)\s*\n\s*_{2,}\s*\n\s*(\d+)/g,
-    '\\frac{$1}{$2}'
-  );
+  // ─── 3. Fix hand-written fractions with underlines (very common in photos) ───
+  text = text.replace(/(\d+)\s*\n\s*_{2,}\s*\n\s*(\d+)/g, '\\frac{$1}{$2}');
 
+  // ─── 4. Protect & fix broken inline math that has newlines inside ───
+  text = text.replace(/\$([^$]*?)\n([^$]*?)\$/g, (match, p1, p2) => {
+    return '$' + p1.trim() + ' ' + p2.trim() + '$';
+  });
+
+  // ─── 5. Convert most suspicious single $…$ → $$…$$ in explanatory sentences ───
+  //     (heuristic: contains typical math words or operators but not already display)
   text = text.replace(
-    /\$([^$]*?(?:derivative|rule|product rule|quotient|chain|integral|limit|sum|equals|therefore)[^$]*?)\$/gi,
+    /(?<![\$\\])\$([^$]*?(?:derivative|rule|product|quotient|chain|integral|limit|sum|equals|therefore|hence|thus|implies|such that|with respect to|d\/dx|f'|g'|∂|∫|∑|lim|→|⇒|=|>|<|≤|≥)[^$]*?)\$(?!\$)/gi,
     '$$$$$1$$$$'
   );
 
-  text = text.replace(/\$\$[\s\n]+/g, '$$').replace(/[\s\n]+\$\$/g, '$$');
+  // ─── 6. Force-fix things like  f'(x)$$  or $$f'(x)$ ──
+  text = text.replace(/\$\$([^$]+?)\$\$/g, (m, content) => {
+    let c = content.trim();
+    // remove stray opening/closing that got duplicated
+    c = c.replace(/^\$\$/, '').replace(/\$\$$/, '');
+    return '$$' + c + '$$';
+  });
+
+  // ─── 7. Clean up consecutive / orphan dollars ───
+  text = text.replace(/\$\$[\s\n]*\$\$/g, '$$');
+  text = text.replace(/\$[\s\n]*\$/g, '$');
+  text = text.replace(/[\s\n]+\$\$/g, '$$');
+  text = text.replace(/\$\$[\s\n]+/g, '$$');
+
+  // ─── 8. Optional: convert \[ \] → $$ (some models still output it) ───
   text = text.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$');
 
   return text;

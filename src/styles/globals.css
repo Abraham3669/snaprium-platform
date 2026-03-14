@@ -3691,3 +3691,20 @@ button.w-full.py-3\.5:active {
 
 
 
+
+
+
+
+
+
+
+/* src/index.css or component css */
+.inline-katex {
+  display: inline-block;
+  vertical-align: middle;   /* sometimes better than baseline */
+  line-height: 1.2;
+}
+
+.katex-display {
+  margin: 1.4em 0 !important;   /* more breathing room for display math */
+}
