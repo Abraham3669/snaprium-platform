@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import katex from 'katex';                     // ← ADDED – this fixes the rendering
 import 'katex/dist/katex.min.css';
 
 export default function ResultPanel({ result, loading, onClose }) {
@@ -55,12 +56,10 @@ export default function ResultPanel({ result, loading, onClose }) {
   if (!result?.image) return null;
 
   const fullText = result.text || '';
-const preparedSteps = prepareMathForKaTeX(fullText);   // ← keep exactly as before
+  const preparedSteps = prepareMathForKaTeX(fullText);
+  const cleanedSteps = fixCommonMathGlue(preparedSteps); // light fix for $...$$ glue
 
-// ←←← ADD THIS LINE (super light)
-const cleanedSteps = lightMathGlueFix(preparedSteps);
-
-const finalAnswerRaw = extractFinalAnswer(fullText);
+  const finalAnswerRaw = extractFinalAnswer(fullText);
 
   let finalAnswerContent = finalAnswerRaw.trim();
   if (
@@ -70,9 +69,6 @@ const finalAnswerRaw = extractFinalAnswer(fullText);
   ) {
     finalAnswerContent = `$$${finalAnswerContent}$$`;
   }
-
-
-  
 
   return (
     <div className="result-panel">
@@ -101,17 +97,17 @@ const finalAnswerRaw = extractFinalAnswer(fullText);
         </div>
 
         <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
-{loading ? (
-  <div className="loading-messages min-h-[220px] flex items-center justify-center py-12 px-6 text-center">
-    {showAnalyzing ? (
-      <p className="text-xl !font-bold text-left text-gray-800 dark:text-gray-200 animate-pulse">
-  Solving your question…
-</p>
-    ) : (
-      <div className="h-32" />
-    )}
-  </div>
-) : (
+          {loading ? (
+            <div className="loading-messages min-h-[220px] flex items-center justify-center py-12 px-6 text-center">
+              {showAnalyzing ? (
+                <p className="text-xl !font-bold text-left text-gray-800 dark:text-gray-200 animate-pulse">
+                  Solving your question…
+                </p>
+              ) : (
+                <div className="h-32" />
+              )}
+            </div>
+          ) : (
             result?.text &&
             revealReady && (
               <>
@@ -150,87 +146,77 @@ const finalAnswerRaw = extractFinalAnswer(fullText);
                 </button>
 
                 <div
-  ref={stepsRef}
-  className="overflow-hidden transition-all duration-500 ease-in-out"
-  style={{
-    maxHeight: showSteps ? `${stepsRef.current?.scrollHeight || 2000}px` : '0px',
-    opacity: showSteps ? 1 : 0,
-  }}
->
-  <div className="pt-1 pb-8 px-1">
-    <h4 className="text-xl font-semibold text-[var(--text-primary)] mb-5">
-      Step-by-Step Solution
-    </h4>
+                  ref={stepsRef}
+                  className="overflow-hidden transition-all duration-500 ease-in-out"
+                  style={{
+                    maxHeight: showSteps ? `${stepsRef.current?.scrollHeight || 2000}px` : '0px',
+                    opacity: showSteps ? 1 : 0,
+                  }}
+                >
+                  <div className="pt-1 pb-8 px-1">
+                    <h4 className="text-xl font-semibold text-[var(--text-primary)] mb-5">
+                      Step-by-Step Solution
+                    </h4>
 
+                    <div className="step-by-step-content prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)] leading-relaxed">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkMath]}
+                        rehypePlugins={[
+                          [
+                            rehypeKatex,
+                            {
+                              output: 'html',
+                              throwOnError: false,
+                              strict: 'ignore',
+                              trust: true,
+                              fleqn: false,
+                              macros: {
+                                "\\coth": "\\operatorname{coth}",
+                                "\\csch": "\\operatorname{csch}",
+                                "\\sech": "\\operatorname{sech}",
+                              },
+                            },
+                          ],
+                        ]}
+                        components={{
+                          inlineMath: ({ value }) => (
+                            <span className="inline-katex align-baseline mx-[0.08em] font-medium text-[1.05em]">
+                              <span
+                                dangerouslySetInnerHTML={{
+                                  __html: katex.renderToString(value.trim(), {
+                                    throwOnError: false,
+                                    displayMode: false,
+                                  }),
+                                }}
+                              />
+                            </span>
+                          ),
 
+                          paragraph: ({ children }) => (
+                            <p className="my-4 leading-7 tracking-wide break-words [&>.inline-katex]:mx-[0.1em]">
+                              {children}
+                            </p>
+                          ),
 
-
-
-    {/* Improved rendering container */}
-    <div className="step-by-step-content prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)] leading-relaxed">
-<ReactMarkdown
-  remarkPlugins={[remarkMath]}
-  rehypePlugins={[
-    [
-      rehypeKatex,
-      {
-        output: 'html',
-        throwOnError: false,
-        strict: 'ignore',
-        trust: true,
-        fleqn: false,  // or true if you prefer left-aligned display math
-        macros: {
-          "\\coth": "\\operatorname{coth}",
-          "\\csch": "\\operatorname{csch}",
-          "\\sech": "\\operatorname{sech}",
-        },
-      },
-    ],
-  ]}
-  components={{
-    // Improved inline math: uses renderToString for reliability + tiny spacing
-    inlineMath: ({ value }) => (
-      <span className="inline-katex align-baseline mx-[0.08em] font-medium text-[1.05em]">
-        <span
-          dangerouslySetInnerHTML={{
-            __html:
-              window.katex?.renderToString(value.trim(), {
-                throwOnError: false,
-                displayMode: false,
-              }) || value,
-          }}
-        />
-      </span>
-    ),
-
-    // Paragraphs with better breathing room around math
-    paragraph: ({ children }) => (
-      <p className="my-4 leading-7 tracking-wide break-words [&>.inline-katex]:mx-[0.1em]">
-        {children}
-      </p>
-    ),
-
-    // Optional: give display math more space in prose
-    math: ({ value }) => (
-      <div className="my-6 overflow-x-auto">
-        <div
-          dangerouslySetInnerHTML={{
-            __html:
-              window.katex?.renderToString(value, {
-                throwOnError: false,
-                displayMode: true,
-              }) || value,
-          }}
-        />
-      </div>
-    ),
-  }}
->
-  {cleanedSteps}   {/* ← changed from preparedSteps */}
-</ReactMarkdown>
-    </div>
-  </div>
-</div>
+                          math: ({ value }) => (
+                            <div className="my-6 overflow-x-auto">
+                              <div
+                                dangerouslySetInnerHTML={{
+                                  __html: katex.renderToString(value, {
+                                    throwOnError: false,
+                                    displayMode: true,
+                                  }),
+                                }}
+                              />
+                            </div>
+                          ),
+                        }}
+                      >
+                        {cleanedSteps}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                </div>
 
                 <div className="feedback-bar mt-6 flex justify-center gap-4">
                   <button
@@ -262,7 +248,7 @@ const finalAnswerRaw = extractFinalAnswer(fullText);
   );
 }
 
-// ── Helper functions remain unchanged ──
+// ── Helper functions ──
 function extractFinalAnswer(rawText) {
   if (!rawText) return '';
 
@@ -307,18 +293,11 @@ function fallbackLastLines(rawText) {
   return candidate || lines[lines.length - 1];
 }
 
-
-
-// Add this small helper function somewhere in the file (e.g. above the component or in helpers)
 function fixCommonMathGlue(text) {
   if (!text) return text;
-  // Only targets the exact pattern you showed: $something$$  →  $something$
-  // Also catches $v'$$, $f(x)$$ etc. — very common LLM mistake
-  // Does NOT touch display math $$...$$, newlines, paragraphs, lists, etc.
+  // Fixes glued inline math like $v'$$ → $v'$
   return text.replace(/(\$[^\s$]{1,60}?)\$\$/g, '$1$');
 }
-
-
 
 function prepareMathForKaTeX(rawText) {
   if (!rawText) return '';
