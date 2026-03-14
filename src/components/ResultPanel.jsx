@@ -157,7 +157,7 @@ export default function ResultPanel({ result, loading, onClose }) {
 
     {/* Improved rendering container */}
     <div className="step-by-step-content prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)] leading-relaxed">
-      <ReactMarkdown
+     <ReactMarkdown
   remarkPlugins={[remarkMath]}
   rehypePlugins={[
     [
@@ -167,38 +167,36 @@ export default function ResultPanel({ result, loading, onClose }) {
         throwOnError: false,
         strict: 'ignore',
         trust: true,
-        fleqn: false,           // left-aligned equations usually look cleaner in prose
+        fleqn: true, // left-align display math — looks cleaner in prose
         macros: {
-          "\\diff": "\\mathop{}\!d",   // nicer looking d for differentials
-          "\\deg": "\\operatorname{deg}",
-          "\\rank": "\\operatorname{rank}",
+          "\\diff": "\\mathop{}\\!d",
+          "\\dx": "\\,dx",
+          "\\d": "\\,\\mathrm{d}",
         },
       },
     ],
   ]}
   components={{
-    // Better inline math rendering
+    // Cleaner inline math with better spacing & baseline
     inlineMath: ({ value }) => (
-      <span className="inline-katex align-baseline font-medium text-[1.05em]">
-        <span dangerouslySetInnerHTML={{
-          __html: window.katex?.renderToString(value, {
-            throwOnError: false,
-            displayMode: false,
-          }) || value
-        }} />
+      <span className="inline-katex align-baseline mx-[0.1em] font-medium text-[1.05em]">
+        {value}
       </span>
     ),
 
-    // Make sure paragraphs don't collapse margins weirdly around math
+    // Better paragraph spacing around math
     paragraph: ({ children }) => (
-      <p className="my-4 leading-7 tracking-wide break-words">{children}</p>
+      <p className="my-4 leading-7 tracking-wide break-words [&_.inline-katex]:mx-[0.1em]">
+        {children}
+      </p>
     ),
 
-    // Optional: math in headings
-    heading: ({ level, children }) => {
-      const Tag = `h${level}`;
-      return <Tag className="mt-6 mb-3">{children}</Tag>;
-    },
+    // Display math gets more breathing room
+    math: ({ value }) => (
+      <div className="my-6 flex justify-start">
+        <span className="katex-display block">{value}</span>
+      </div>
+    ),
   }}
 >
   {preparedSteps}
@@ -282,55 +280,50 @@ function fallbackLastLines(rawText) {
   return candidate || lines[lines.length - 1];
 }
 
-
-
-
 function prepareMathForKaTeX(rawText) {
   if (!rawText) return '';
 
   let text = rawText.trim();
 
-  // ─── 1. Normalize line endings and collapse multiple blank lines ───
+  // Normalize line endings + collapse excessive newlines
   text = text.replace(/\r\n?/g, '\n');
   text = text.replace(/\n{3,}/g, '\n\n');
 
-  // ─── 2. Fix common fraction patterns before any math processing ───
+  // Common fraction fixes from handwritten/underlined style
   text = text.replace(
     /(\b\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?\b)(?!\s*\/)/g,
     '\\frac{$1}{$2}'
   );
-
-  // ─── 3. Fix hand-written fractions with underlines (very common in photos) ───
   text = text.replace(/(\d+)\s*\n\s*_{2,}\s*\n\s*(\d+)/g, '\\frac{$1}{$2}');
 
-  // ─── 4. Protect & fix broken inline math that has newlines inside ───
-  text = text.replace(/\$([^$]*?)\n([^$]*?)\$/g, (match, p1, p2) => {
-    return '$' + p1.trim() + ' ' + p2.trim() + '$';
-  });
+  // Fix newlines accidentally inside math delimiters
+  text = text.replace(/\$([^$]*?)\n([^$]*?)\$/g, '$1 $2$');
+  text = text.replace(/\$\$([^\n$]*?)\n\s*([^\n$]*?)\n?\$\$/g, '$$ $1 $2 $$');
 
-  // ─── 5. Convert most suspicious single $…$ → $$…$$ in explanatory sentences ───
-  //     (heuristic: contains typical math words or operators but not already display)
+  // Add missing space before inline math when text is glued
+  text = text.replace(/([a-zA-Z0-9.])(?=\$[^$])/g, '$1 ');
+
+  // Add space after inline math when followed by letter without space
+  text = text.replace(/\$([a-zA-Z])/g, '$ $1');
+
+  // Heuristic: upgrade many broken single-$ short display-like expressions to $$
   text = text.replace(
-    /(?<![\$\\])\$([^$]*?(?:derivative|rule|product|quotient|chain|integral|limit|sum|equals|therefore|hence|thus|implies|such that|with respect to|d\/dx|f'|g'|∂|∫|∑|lim|→|⇒|=|>|<|≤|≥)[^$]*?)\$(?!\$)/gi,
+    /(?<![\$\\])\$([^$]{10,80}?(?:derivative|rule|product|quotient|chain|d\/dx|f'|g'|∂|∫|∑|lim|→|⇒|=|therefore|hence|thus)[^$]*?)\$(?!\$)/gi,
     '$$$$$1$$$$'
   );
 
-  // ─── 6. Force-fix things like  f'(x)$$  or $$f'(x)$ ──
-  text = text.replace(/\$\$([^$]+?)\$\$/g, (m, content) => {
-    let c = content.trim();
-    // remove stray opening/closing that got duplicated
-    c = c.replace(/^\$\$/, '').replace(/\$\$$/, '');
-    return '$$' + c + '$$';
-  });
-
-  // ─── 7. Clean up consecutive / orphan dollars ───
+  // Clean orphan / duplicated dollars
   text = text.replace(/\$\$[\s\n]*\$\$/g, '$$');
   text = text.replace(/\$[\s\n]*\$/g, '$');
   text = text.replace(/[\s\n]+\$\$/g, '$$');
   text = text.replace(/\$\$[\s\n]+/g, '$$');
 
-  // ─── 8. Optional: convert \[ \] → $$ (some models still output it) ───
+  // Convert any remaining \[ \] to $$
   text = text.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$');
+
+  // Final trim around delimiters
+  text = text.replace(/\$\$[\s\t]*\n/g, '$$\n');
+  text = text.replace(/\n[\s\t]*\$\$/g, '\n$$');
 
   return text;
 }
