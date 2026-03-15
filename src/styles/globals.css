@@ -3708,3 +3708,69 @@ button.w-full.py-3\.5:active {
   margin: 1.4em 0 !important;
   overflow-x: auto;           /* prevents overflow on small screens */
 }
+
+
+
+
+
+
+
+/* Footer */
+.footer {
+  margin-top: 60px;
+  padding: 24px 16px;
+  text-align: center;
+  border-top: 1px solid #eaeaea;
+  background: #fff;
+}
+
+/* Links container */
+.footer-links {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap; /* allows wrapping on small screens */
+  gap: 10px;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+/* Links */
+.footer-links a {
+  text-decoration: none;
+  color: #555;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+  color: #111;
+}
+
+/* Separator */
+.footer-separator {
+  color: #aaa;
+}
+
+/* Copyright text */
+.footer p {
+  font-size: 13px;
+  color: #777;
+  margin: 0;
+}
+
+/* Mobile optimization */
+@media (max-width: 480px) {
+  .footer-links {
+    gap: 6px;
+    font-size: 13px;
+  }
+
+  .footer-separator {
+    display: none; /* removes dots on mobile */
+  }
+
+  .footer-links a {
+    padding: 4px 6px;
+  }
+}
