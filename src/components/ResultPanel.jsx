@@ -160,60 +160,63 @@ export default function ResultPanel({ result, loading, onClose }) {
 
                     <div className="step-by-step-content prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)] leading-relaxed">
                       <ReactMarkdown
-                        remarkPlugins={[remarkMath]}
-                        rehypePlugins={[
-                          [
-                            rehypeKatex,
-                            {
-                              output: 'html',
-                              throwOnError: false,
-                              strict: 'ignore',
-                              trust: true,
-                              fleqn: false,
-                              macros: {
-                                "\\coth": "\\operatorname{coth}",
-                                "\\csch": "\\operatorname{csch}",
-                                "\\sech": "\\operatorname{sech}",
-                              },
-                            },
-                          ],
-                        ]}
-                        components={{
-                          inlineMath: ({ value }) => (
-                            <span className="inline-katex align-baseline mx-[0.08em] font-medium text-[1.05em]">
-                              <span
-                                dangerouslySetInnerHTML={{
-                                  __html: katex.renderToString(value.trim(), {
-                                    throwOnError: false,
-                                    displayMode: false,
-                                  }),
-                                }}
-                              />
-                            </span>
-                          ),
+  remarkPlugins={[remarkMath]}
+  rehypePlugins={[
+    [
+      rehypeKatex,
+      {
+        output: 'html',
+        throwOnError: false,
+        strict: 'ignore',
+        trust: true,
+        fleqn: false,
+        macros: {
+          "\\coth": "\\operatorname{coth}",
+          "\\csch": "\\operatorname{csch}",
+          "\\sech": "\\operatorname{sech}",
+        },
+      },
+    ],
+  ]}
+  components={{
+    inlineMath: ({ value }) => {
+      const trimmedValue = value.trim();
+      return (
+        <span className="inline-katex align-baseline font-medium text-[1.05em] mx-[0.12em]">
+          <span
+            dangerouslySetInnerHTML={{
+              __html: katex.renderToString(trimmedValue, {
+                throwOnError: false,
+                displayMode: false,
+              }),
+            }}
+          />
+        </span>
+      );
+    },
 
-                          paragraph: ({ children }) => (
-                            <p className="my-4 leading-7 tracking-wide break-words [&>.inline-katex]:mx-[0.1em]">
-                              {children}
-                            </p>
-                          ),
+    paragraph: ({ children }) => (
+      <p className="my-4 leading-7 tracking-wide break-words [&>.inline-katex]:mx-[0.12em]">
+        {children}
+      </p>
+    ),
 
-                          math: ({ value }) => (
-                            <div className="my-6 overflow-x-auto">
-                              <div
-                                dangerouslySetInnerHTML={{
-                                  __html: katex.renderToString(value, {
-                                    throwOnError: false,
-                                    displayMode: true,
-                                  }),
-                                }}
-                              />
-                            </div>
-                          ),
-                        }}
-                      >
-                        {cleanedSteps}
-                      </ReactMarkdown>
+    math: ({ value }) => (
+      <div className="my-6 overflow-x-auto text-left">
+        <div
+          dangerouslySetInnerHTML={{
+            __html: katex.renderToString(value, {
+              throwOnError: false,
+              displayMode: true,
+            }),
+          }}
+        />
+      </div>
+    ),
+  }}
+>
+  {cleanedSteps}
+</ReactMarkdown>
                     </div>
                   </div>
                 </div>
@@ -295,32 +298,23 @@ function fallbackLastLines(rawText) {
 
 function fixCommonMathGlue(text) {
   if (!text) return text;
-  // Fixes glued inline math like $v'$$ → $v'$
-  return text.replace(/(\$[^\s$]{1,60}?)\$\$/g, '$1$');
-}
 
-function prepareMathForKaTeX(rawText) {
-  if (!rawText) return '';
+  let fixed = text;
 
-  let text = rawText;
+  // 1. Fix glued inline + extra dollar: $expr$$ → $expr$
+  fixed = fixed.replace(/(\$[^\s$]{1,80}?)\$\$/g, '$1$');
 
-  text = text.replace(
-    /(\b\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?\b)(?!\s*\/)/g,
-    '\\frac{$1}{$2}'
-  );
+  // 2. Fix unbalanced short display-like: $$expr$ → $$expr$$
+  fixed = fixed.replace(/\$\$([^\s$]{1,80}?)\$/g, '$$$$$1$$$$');
 
-  text = text.replace(
-    /(\d+)\s*\n\s*_{2,}\s*\n\s*(\d+)/g,
-    '\\frac{$1}{$2}'
-  );
+  // 3. Add space before inline math if glued to word/number (e.g. to$t → to $t)
+  fixed = fixed.replace(/([a-zA-Z0-9])\$(?![$])/g, '$1 $');
 
-  text = text.replace(
-    /\$([^$]*?(?:derivative|rule|product rule|quotient|chain|integral|limit|sum|equals|therefore)[^$]*?)\$/gi,
-    '$$$$$1$$$$'
-  );
+  // 4. Add space after inline math if next is letter (e.g. $t=3$: → $t=3$ :)
+  fixed = fixed.replace(/\$([a-zA-Z])/g, '$ $1');
 
-  text = text.replace(/\$\$[\s\n]+/g, '$$').replace(/[\s\n]+\$\$/g, '$$');
-  text = text.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$');
+  // 5. Collapse any orphan double dollars with only whitespace
+  fixed = fixed.replace(/\$\$[\s\n]*\$\$/g, '$$');
 
-  return text;
+  return fixed;
 }
