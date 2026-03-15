@@ -3697,38 +3697,21 @@ button.w-full.py-3\.5:active {
 
 
 
-/* Core KaTeX inline styling – prevents baseline wobble and glue */
+
 .inline-katex {
   display: inline-block;
-  vertical-align: baseline;     /* most reliable for text alignment; 'middle' sometimes lifts too high */
-  line-height: 1.15;            /* slightly tighter than normal to avoid extra line height push */
-  margin: 0 0.12em;             /* tiny left/right breathing room – fixes most glued-to-text issues */
+  vertical-align: baseline;   /* or middle — test what looks best */
+  line-height: 1.15;
 }
 
-/* Extra spacing between consecutive inline math or math + text */
-.katex-inline + .katex-inline,
-.inline-katex + span,
-span + .inline-katex,
-.inline-katex + .inline-katex {
-  margin-left: 0.25em;          /* more natural separation when multiple $...$ are close */
-}
-
-/* Make sure prose paragraphs respect the inline spacing */
-.prose p > .inline-katex {
-  margin: 0 0.12em;
-}
-
-/* Display math (block equations) */
 .katex-display {
-  margin: 1.4em 0 !important;   /* good vertical breathing room in prose */
-  overflow-x: auto;             /* horizontal scroll on small screens / long equations */
-  overflow-y: hidden;           /* prevent unwanted vertical scrollbars */
+  margin: 1.4em 0 !important;
+  overflow-x: auto;           /* prevents overflow on small screens */
 }
 
-/* Optional: if you ever see slight baseline shifts on superscripts/subscripts, this can help */
-.katex .base {
-  line-height: 1.15;            /* consistent with inline */
-}
+
+
+
 
 
 

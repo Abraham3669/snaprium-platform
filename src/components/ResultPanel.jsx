@@ -4,103 +4,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import katex from 'katex';
+import katex from 'katex';                     // ← ADDED – this fixes the rendering
 import 'katex/dist/katex.min.css';
-
-// ── Helper functions (moved up to avoid "not defined" issues) ──
-
-function extractFinalAnswer(rawText) {
-  if (!rawText) return '';
-
-  let lastStart = -1;
-  let pos = 0;
-
-  while ((pos = rawText.indexOf('\\boxed{', pos)) !== -1) {
-    lastStart = pos;
-    pos += 7;
-  }
-
-  if (lastStart === -1) return fallbackLastLines(rawText);
-
-  const startIndex = lastStart + 7;
-  let braceCount = 1;
-  let i = startIndex;
-  let content = '';
-
-  while (i < rawText.length && braceCount > 0) {
-    const char = rawText[i];
-    content += char;
-    if (char === '{') braceCount++;
-    if (char === '}') braceCount--;
-    i++;
-  }
-
-  return content.slice(0, -1).trim();
-}
-
-function fallbackLastLines(rawText) {
-  const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
-  if (lines.length < 1) return '';
-
-  let candidate = '';
-  for (let i = lines.length - 1; i >= Math.max(0, lines.length - 5); i--) {
-    let line = lines[i];
-    line = line.replace(/^(Final answer|Answer|Result|So|Therefore|Hence|Thus):?\s*/i, '').trim();
-    if (line) candidate = line + (candidate ? '\n' + candidate : '');
-    if (line.includes('=') || line.includes('\\frac') || /^\s*[-−]?\d+(\.\d+)?\s*$/.test(line)) break;
-  }
-
-  return candidate || lines[lines.length - 1];
-}
-
-function fixCommonMathGlue(text) {
-  if (!text || typeof text !== 'string') return text || '';
-
-  let fixed = text;
-
-  // 1. Fix glued inline + extra dollar: $expr$$ → $expr$
-  fixed = fixed.replace(/(\$[^\s$]{1,80}?)\$\$/g, '$1$');
-
-  // 2. Fix unbalanced short display-like: $$expr$ → $$expr$$
-  fixed = fixed.replace(/\$\$([^\s$]{1,80}?)\$/g, '$$$$$1$$$$');
-
-  // 3. Add space before inline math if glued to word/number
-  fixed = fixed.replace(/([a-zA-Z0-9])\$(?![$])/g, '$1 $');
-
-  // 4. Add space after inline math if next is letter
-  fixed = fixed.replace(/\$([a-zA-Z])/g, '$ $1');
-
-  // 5. Collapse orphan double dollars
-  fixed = fixed.replace(/\$\$[\s\n]*\$\$/g, '$$');
-
-  return fixed;
-}
-
-function prepareMathForKaTeX(rawText) {
-  if (!rawText || typeof rawText !== 'string') return '';
-
-  let text = rawText;
-
-  text = text.replace(
-    /(\b\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?\b)(?!\s*\/)/g,
-    '\\frac{$1}{$2}'
-  );
-
-  text = text.replace(
-    /(\d+)\s*\n\s*_{2,}\s*\n\s*(\d+)/g,
-    '\\frac{$1}{$2}'
-  );
-
-  text = text.replace(
-    /\$([^$]*?(?:derivative|rule|product rule|quotient|chain|integral|limit|sum|equals|therefore)[^$]*?)\$/gi,
-    '$$$$$1$$$$'
-  );
-
-  text = text.replace(/\$\$[\s\n]+/g, '$$').replace(/[\s\n]+\$\$/g, '$$');
-  text = text.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$');
-
-  return text;
-}
 
 export default function ResultPanel({ result, loading, onClose }) {
   const [showSteps, setShowSteps] = useState(false);
@@ -116,7 +21,7 @@ export default function ResultPanel({ result, loading, onClose }) {
     // Later: send to backend
   };
 
-  // Timing control
+  // ─── Timing control ───────────────────────────────────────
   useEffect(() => {
     if (loading) {
       setScanFinished(false);
@@ -134,7 +39,7 @@ export default function ResultPanel({ result, loading, onClose }) {
     }
   }, [loading]);
 
-  // Delay before revealing result
+  // Small delay before revealing final result
   const [revealReady, setRevealReady] = useState(false);
 
   useEffect(() => {
@@ -152,7 +57,7 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   const fullText = result.text || '';
   const preparedSteps = prepareMathForKaTeX(fullText);
-  const cleanedSteps = fixCommonMathGlue(preparedSteps) || '';
+  const cleanedSteps = fixCommonMathGlue(preparedSteps); // light fix for $...$$ glue
 
   const finalAnswerRaw = extractFinalAnswer(fullText);
 
@@ -274,54 +179,40 @@ export default function ResultPanel({ result, loading, onClose }) {
                           ],
                         ]}
                         components={{
-                          inlineMath: ({ value }) => {
-                            if (typeof value !== 'string' || !value.trim()) {
-                              return <span style={{ color: '#888', fontStyle: 'italic' }}>[invalid math]</span>;
-                            }
-                            try {
-                              const html = katex.renderToString(value.trim(), {
-                                throwOnError: false,
-                                displayMode: false,
-                              });
-                              return (
-                                <span className="inline-katex align-baseline font-medium text-[1.05em] mx-[0.12em]">
-                                  <span dangerouslySetInnerHTML={{ __html: html }} />
-                                </span>
-                              );
-                            } catch (err) {
-                              console.error('KaTeX inline error:', err.message, 'Input:', value);
-                              return <span style={{ color: 'orange' }}>[math error]</span>;
-                            }
-                          },
+                          inlineMath: ({ value }) => (
+                            <span className="inline-katex align-baseline mx-[0.08em] font-medium text-[1.05em]">
+                              <span
+                                dangerouslySetInnerHTML={{
+                                  __html: katex.renderToString(value.trim(), {
+                                    throwOnError: false,
+                                    displayMode: false,
+                                  }),
+                                }}
+                              />
+                            </span>
+                          ),
 
                           paragraph: ({ children }) => (
-                            <p className="my-4 leading-7 tracking-wide break-words [&>.inline-katex]:mx-[0.12em]">
+                            <p className="my-4 leading-7 tracking-wide break-words [&>.inline-katex]:mx-[0.1em]">
                               {children}
                             </p>
                           ),
 
-                          math: ({ value }) => {
-                            if (typeof value !== 'string' || !value.trim()) {
-                              return <div style={{ color: '#888' }}>[no equation]</div>;
-                            }
-                            try {
-                              const html = katex.renderToString(value.trim(), {
-                                throwOnError: false,
-                                displayMode: true,
-                              });
-                              return (
-                                <div className="my-6 overflow-x-auto text-left">
-                                  <div dangerouslySetInnerHTML={{ __html: html }} />
-                                </div>
-                              );
-                            } catch (err) {
-                              console.error('KaTeX display error:', err.message, 'Input:', value);
-                              return <div style={{ color: 'red' }}>[equation error]</div>;
-                            }
-                          },
+                          math: ({ value }) => (
+                            <div className="my-6 overflow-x-auto">
+                              <div
+                                dangerouslySetInnerHTML={{
+                                  __html: katex.renderToString(value, {
+                                    throwOnError: false,
+                                    displayMode: true,
+                                  }),
+                                }}
+                              />
+                            </div>
+                          ),
                         }}
                       >
-                        {cleanedSteps || 'No detailed steps available.'}
+                        {cleanedSteps}
                       </ReactMarkdown>
                     </div>
                   </div>
@@ -355,4 +246,72 @@ export default function ResultPanel({ result, loading, onClose }) {
       </div>
     </div>
   );
+}
+
+// ── Helper functions ──
+function extractFinalAnswer(rawText) {
+  if (!rawText) return '';
+
+  let lastStart = -1;
+  let pos = 0;
+
+  while ((pos = rawText.indexOf('\\boxed{', pos)) !== -1) {
+    lastStart = pos;
+    pos += 7;
+  }
+
+  if (lastStart === -1) return fallbackLastLines(rawText);
+
+  const startIndex = lastStart + 7;
+  let braceCount = 1;
+  let i = startIndex;
+  let content = '';
+
+  while (i < rawText.length && braceCount > 0) {
+    const char = rawText[i];
+    content += char;
+    if (char === '{') braceCount++;
+    if (char === '}') braceCount--;
+    i++;
+  }
+
+  return content.slice(0, -1).trim();
+}
+
+function fallbackLastLines(rawText) {
+  const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
+  if (lines.length < 1) return '';
+
+  let candidate = '';
+  for (let i = lines.length - 1; i >= Math.max(0, lines.length - 5); i--) {
+    let line = lines[i];
+    line = line.replace(/^(Final answer|Answer|Result|So|Therefore|Hence|Thus):?\s*/i, '').trim();
+    if (line) candidate = line + (candidate ? '\n' + candidate : '');
+    if (line.includes('=') || line.includes('\\frac') || /^\s*[-−]?\d+(\.\d+)?\s*$/.test(line)) break;
+  }
+
+  return candidate || lines[lines.length - 1];
+}
+
+function fixCommonMathGlue(text) {
+  if (!text) return text;
+
+  let fixed = text;
+
+  // 1. Fix glued inline + extra dollar: $expr$$ → $expr$
+  fixed = fixed.replace(/(\$[^\s$]{1,80}?)\$\$/g, '$1$');
+
+  // 2. Fix unbalanced short display-like: $$expr$ → $$expr$$
+  fixed = fixed.replace(/\$\$([^\s$]{1,80}?)\$/g, '$$$$$1$$$$');
+
+  // 3. Add space before inline math if glued to word/number (e.g. to$t → to $t)
+  fixed = fixed.replace(/([a-zA-Z0-9])\$(?![$])/g, '$1 $');
+
+  // 4. Add space after inline math if next is letter (e.g. $t=3$: → $t=3$ :)
+  fixed = fixed.replace(/\$([a-zA-Z])/g, '$ $1');
+
+  // 5. Collapse any orphan double dollars with only whitespace
+  fixed = fixed.replace(/\$\$[\s\n]*\$\$/g, '$$');
+
+  return fixed;
 }
