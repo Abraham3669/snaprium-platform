@@ -223,10 +223,17 @@ export default function CameraInput({ onFileSelect, onOpenDashboard }) {
 
     <footer className="footer">
   <div className="footer-links">
-    <Link to="/terms">Terms of Service</Link>
-    <span className="footer-separator"> • </span>
-    <Link to="/privacy">Privacy Policy</Link>
-  </div>
+  <Link to="/terms">Terms of Service</Link>
+  <span className="footer-separator"> • </span>
+
+  <Link to="/privacy">Privacy Policy</Link>
+  <span className="footer-separator"> • </span>
+
+  <Link to="/refunds">Refund Policy</Link>
+  <span className="footer-separator"> • </span>
+
+  <Link to="/upgrade">Pricing</Link>
+</div>
   <p>© {new Date().getFullYear()} Snaprium. All rights reserved.</p>
 </footer>
 

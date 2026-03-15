@@ -23,6 +23,7 @@ import { postAPI } from "./utils/apiClient";
 import { doc, updateDoc, increment, serverTimestamp, getDoc } from "firebase/firestore";
 import { auth, db, analytics, logEvent, setUserId } from "./lib/firebase";
 import { useAuth } from "./context/AuthContext";
+import Refund from "./pages/Refund";
 
 function App() {
   const { user } = useAuth();
@@ -319,6 +320,7 @@ function App() {
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/upgrade" element={<Upgrade />} />
+          <Route path="/refunds" element={<Refund />} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
