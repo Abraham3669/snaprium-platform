@@ -295,23 +295,32 @@ function fallbackLastLines(rawText) {
 
 function fixCommonMathGlue(text) {
   if (!text) return text;
+  // Fixes glued inline math like $v'$$ → $v'$
+  return text.replace(/(\$[^\s$]{1,60}?)\$\$/g, '$1$');
+}
 
-  let fixed = text;
+function prepareMathForKaTeX(rawText) {
+  if (!rawText) return '';
 
-  // 1. Fix glued inline + extra dollar: $expr$$ → $expr$
-  fixed = fixed.replace(/(\$[^\s$]{1,80}?)\$\$/g, '$1$');
+  let text = rawText;
 
-  // 2. Fix unbalanced short display-like: $$expr$ → $$expr$$
-  fixed = fixed.replace(/\$\$([^\s$]{1,80}?)\$/g, '$$$$$1$$$$');
+  text = text.replace(
+    /(\b\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?\b)(?!\s*\/)/g,
+    '\\frac{$1}{$2}'
+  );
 
-  // 3. Add space before inline math if glued to word/number (e.g. to$t → to $t)
-  fixed = fixed.replace(/([a-zA-Z0-9])\$(?![$])/g, '$1 $');
+  text = text.replace(
+    /(\d+)\s*\n\s*_{2,}\s*\n\s*(\d+)/g,
+    '\\frac{$1}{$2}'
+  );
 
-  // 4. Add space after inline math if next is letter (e.g. $t=3$: → $t=3$ :)
-  fixed = fixed.replace(/\$([a-zA-Z])/g, '$ $1');
+  text = text.replace(
+    /\$([^$]*?(?:derivative|rule|product rule|quotient|chain|integral|limit|sum|equals|therefore)[^$]*?)\$/gi,
+    '$$$$$1$$$$'
+  );
 
-  // 5. Collapse any orphan double dollars with only whitespace
-  fixed = fixed.replace(/\$\$[\s\n]*\$\$/g, '$$');
+  text = text.replace(/\$\$[\s\n]+/g, '$$').replace(/[\s\n]+\$\$/g, '$$');
+  text = text.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$');
 
-  return fixed;
+  return text;
 }
