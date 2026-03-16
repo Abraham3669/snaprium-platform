@@ -121,8 +121,8 @@ export default function ResultPanel({ result, loading, onClose }) {
                   <div
   className="massive-answer-container katex-display-final-container p-8 pb-10 flex justify-center items-center min-h-[220px]"
   style={{
-    fontSize: '150px',  // BIG
-    lineHeight: 1.05,
+    fontSize: '200px',  // really big
+    lineHeight: 1.0,
     textAlign: 'center',
   }}
 >
@@ -137,7 +137,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                         ),
                       }}
                     >
-                      {`$$\\mathbf{${finalAnswerRaw || '-'}}$$`}
+                    {`$$\\displaystyle\\boldsymbol{${finalAnswerRaw || '-'}}$$`}
                     </ReactMarkdown>
                   </div>
                 </div>
