@@ -119,11 +119,13 @@ export default function ResultPanel({ result, loading, onClose }) {
                     Final Answer
                   </h3>
                   <div
-  className="massive-answer-container katex-display-final-container p-8 pb-10 flex justify-center items-center min-h-[220px]"
+  className="massive-answer-container katex-display-final-container flex justify-center items-center"
   style={{
-    fontSize: '350px',  // HUGE!
+    fontSize: '350px',    // HUGE
     lineHeight: 1.0,
     textAlign: 'center',
+    height: 'auto',       // let math decide
+    maxHeight: '80vh',    // optional: fits viewport
   }}
 >
                     <ReactMarkdown
