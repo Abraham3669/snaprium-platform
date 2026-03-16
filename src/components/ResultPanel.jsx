@@ -159,61 +159,46 @@ export default function ResultPanel({ result, loading, onClose }) {
                     </h4>
 
                     <div className="step-by-step-content prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)] leading-relaxed">
-                      <ReactMarkdown
-                        remarkPlugins={[remarkMath]}
-                        rehypePlugins={[
-                          [
-                            rehypeKatex,
-                            {
-                              output: 'html',
-                              throwOnError: false,
-                              strict: 'ignore',
-                              trust: true,
-                              fleqn: false,
-                              macros: {
-                                "\\coth": "\\operatorname{coth}",
-                                "\\csch": "\\operatorname{csch}",
-                                "\\sech": "\\operatorname{sech}",
-                              },
-                            },
-                          ],
-                        ]}
-                        components={{
-                          inlineMath: ({ value }) => (
-                            <span className="inline-katex align-baseline mx-[0.08em] font-medium text-[1.05em]">
-                              <span
-                                dangerouslySetInnerHTML={{
-                                  __html: katex.renderToString(value.trim(), {
-                                    throwOnError: false,
-                                    displayMode: false,
-                                  }),
-                                }}
-                              />
-                            </span>
-                          ),
+<ReactMarkdown
+  remarkPlugins={[remarkMath]}
+  rehypePlugins={[[rehypeKatex, { /* your options */ }]]}
+  components={{
+    // ─── Most important override ───
+    inlineMath: ({ value }) => {
+      const safeValue = value.trim();
+      if (!safeValue) return null;
 
-                          paragraph: ({ children }) => (
-                            <p className="my-4 leading-7 tracking-wide break-words [&>.inline-katex]:mx-[0.1em]">
-                              {children}
-                            </p>
-                          ),
+      let html;
+      try {
+        html = katex.renderToString(safeValue, {
+          throwOnError: false,
+          displayMode: false,
+          strict: "ignore",
+        });
+      } catch (err) {
+        console.warn("KaTeX inline failed:", safeValue, err);
+        html = `<span class="text-red-600 font-mono">${safeValue}</span>`;
+      }
 
-                          math: ({ value }) => (
-                            <div className="my-6 overflow-x-auto">
-                              <div
-                                dangerouslySetInnerHTML={{
-                                  __html: katex.renderToString(value, {
-                                    throwOnError: false,
-                                    displayMode: true,
-                                  }),
-                                }}
-                              />
-                            </div>
-                          ),
-                        }}
-                      >
-                        {cleanedSteps}
-                      </ReactMarkdown>
+      return (
+        <span
+          className="inline-katex align-baseline mx-[0.12em] font-medium text-[1.04em] leading-none"
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+      );
+    },
+
+    paragraph: ({ children }) => (
+      <p className="my-4 leading-7 tracking-wide break-words [&>.inline-katex]:mx-[0.12em] [&>.inline-katex]:align-baseline">
+        {children}
+      </p>
+    ),
+
+    // keep your math override if you like manual control
+  }}
+>
+  {cleanedSteps}
+</ReactMarkdown>
                     </div>
                   </div>
                 </div>
@@ -293,11 +278,33 @@ function fallbackLastLines(rawText) {
   return candidate || lines[lines.length - 1];
 }
 
+
+
 function fixCommonMathGlue(text) {
   if (!text) return text;
-  // Fixes glued inline math like $v'$$ → $v'$
-  return text.replace(/(\$[^\s$]{1,60}?)\$\$/g, '$1$');
+
+  let t = text;
+
+  // $something$$  →  $something$
+  t = t.replace(/(\$[^\s$]{1,80}?)\$\$/g, '$1$');
+
+  // $$something$  →  $something$
+  t = t.replace(/\$\$([^\s$]{1,80}?)\$/g, '$$$1$');
+
+  // Remove empty $$ pairs that sometimes remain
+  t = t.replace(/\$\$\s*\$\$/g, '');
+
+  // Very common: inline math glued to display right after
+  t = t.replace(/(\$[^\n$]{1,100})\s*\n\s*\$\$/g, '$1$\n$$');
+
+  // Protect against triple dollars (very common LLM mistake)
+  t = t.replace(/\$\$\$/g, '$$');
+
+  return t;
 }
+
+
+
 
 function prepareMathForKaTeX(rawText) {
   if (!rawText) return '';

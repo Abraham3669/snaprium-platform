@@ -3717,6 +3717,7 @@ button.w-full.py-3\.5:active {
 
 
 
+
 /* Footer */
 .footer {
   margin-top: 60px;
@@ -3775,4 +3776,40 @@ button.w-full.py-3\.5:active {
   .footer-links a {
     padding: 4px 6px;
   }
+}
+
+
+
+
+
+
+
+
+
+
+
+/* Recommended additions to your stylesheet */
+.katex {
+  font-size: 1.05em !important;
+}
+
+.katex .mord,
+.katex .mbin,
+.katex .mrel,
+.katex .mord.textstyle,
+.katex .mopen,
+.katex .mclose {
+  margin: 0 0.06em;           /* tighter spacing than default */
+}
+
+.inline-katex {
+  /* prevents baseline jump on tall symbols */
+  vertical-align: -0.08em;
+  line-height: 1.3;
+}
+
+/* Fix common overlap with punctuation */
+p > .inline-katex + .punct,
+.inline-katex + .punct {
+  margin-left: -0.08em;
 }
