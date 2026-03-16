@@ -100,7 +100,10 @@ export default function ResultPanel({ result, loading, onClose }) {
           {loading ? (
             <div className="loading-messages min-h-[220px] flex items-center justify-center py-12 px-6 text-center">
               {showAnalyzing ? (
-                <p className="text-2xl font-black text-left text-gray-900 dark:text-white animate-pulse">
+                <p
+  className="text-2xl text-left text-gray-900 dark:text-white animate-pulse"
+  style={{ fontWeight: 800 }}
+>
   Solving your question…
 </p>
               ) : (
