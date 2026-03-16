@@ -156,13 +156,17 @@ export default function ResultPanel({ result, loading, onClose }) {
                     opacity: showSteps ? 1 : 0,
                   }}
                 >
-                  <div className="pt-1 pb-8 px-1">
-                   <h4
-  className="text-[34px] mb-6"
-  style={{ fontWeight: 800 }}
+                  <div
+  className="mb-6"
+  style={{
+    fontSize: "42px",
+    fontWeight: 900,
+    color: "var(--text-primary)",
+    letterSpacing: "-0.02em"
+  }}
 >
   Step-by-Step Solution
-</h4>
+
 
                     <div className="step-by-step-content prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)] leading-relaxed">
                       <ReactMarkdown
