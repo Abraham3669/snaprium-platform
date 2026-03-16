@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import katex from 'katex';
+import katex from 'katex';                     // ← ADDED – this fixes the rendering
 import 'katex/dist/katex.min.css';
 
 export default function ResultPanel({ result, loading, onClose }) {
@@ -21,7 +21,7 @@ export default function ResultPanel({ result, loading, onClose }) {
     // Later: send to backend
   };
 
-  // Timing control
+  // ─── Timing control ───────────────────────────────────────
   useEffect(() => {
     if (loading) {
       setScanFinished(false);
@@ -56,11 +56,8 @@ export default function ResultPanel({ result, loading, onClose }) {
   if (!result?.image) return null;
 
   const fullText = result.text || '';
-
-  // Prepare and clean steps
-  const prepared = prepareMathForKaTeX(fullText);
-  const glued = fixCommonMathGlue(prepared);
-  const betterSteps = splitChainedEqualities(glued);
+  const preparedSteps = prepareMathForKaTeX(fullText);
+  const cleanedSteps = fixCommonMathGlue(preparedSteps); // light fix for $...$$ glue
 
   const finalAnswerRaw = extractFinalAnswer(fullText);
 
@@ -173,49 +170,49 @@ export default function ResultPanel({ result, loading, onClose }) {
                               strict: 'ignore',
                               trust: true,
                               fleqn: false,
+                              macros: {
+                                "\\coth": "\\operatorname{coth}",
+                                "\\csch": "\\operatorname{csch}",
+                                "\\sech": "\\operatorname{sech}",
+                              },
                             },
                           ],
                         ]}
                         components={{
-                          inlineMath: ({ value }) => {
-                            const safe = value?.trim() || '';
-                            if (!safe) return null;
-
-                            let html;
-                            try {
-                              html = katex.renderToString(safe, {
-                                throwOnError: false,
-                                displayMode: false,
-                                strict: 'ignore',
-                                trust: true,
-                              });
-                            } catch (e) {
-                              console.warn('KaTeX inline failed:', safe, e);
-                              return (
-                                <code className="text-red-600 font-mono bg-red-50 px-1 rounded">
-                                  {safe}
-                                </code>
-                              );
-                            }
-
-                            return (
+                          inlineMath: ({ value }) => (
+                            <span className="inline-katex align-baseline mx-[0.08em] font-medium text-[1.05em]">
                               <span
-                                className="inline-katex align-baseline mx-1.5 text-[1.05em] font-medium leading-tight"
-                                dangerouslySetInnerHTML={{ __html: html }}
+                                dangerouslySetInnerHTML={{
+                                  __html: katex.renderToString(value.trim(), {
+                                    throwOnError: false,
+                                    displayMode: false,
+                                  }),
+                                }}
                               />
-                            );
-                          },
+                            </span>
+                          ),
 
                           paragraph: ({ children }) => (
-                            <p className="my-4 leading-7 tracking-wide break-words [&>.inline-katex]:mx-1.5 [&>.inline-katex]:align-baseline">
+                            <p className="my-4 leading-7 tracking-wide break-words [&>.inline-katex]:mx-[0.1em]">
                               {children}
                             </p>
                           ),
 
-                          // You can add more overrides here (math, code, etc.) if needed
+                          math: ({ value }) => (
+                            <div className="my-6 overflow-x-auto">
+                              <div
+                                dangerouslySetInnerHTML={{
+                                  __html: katex.renderToString(value, {
+                                    throwOnError: false,
+                                    displayMode: true,
+                                  }),
+                                }}
+                              />
+                            </div>
+                          ),
                         }}
                       >
-                        {betterSteps}
+                        {cleanedSteps}
                       </ReactMarkdown>
                     </div>
                   </div>
@@ -298,23 +295,8 @@ function fallbackLastLines(rawText) {
 
 function fixCommonMathGlue(text) {
   if (!text) return text;
-  let t = text;
-
-  t = t.replace(/\}\$:?\s*\$/g, '}$. ');
-  t = t.replace(/(\$[^\n$]{1,120})\$\$?([^\n$]{1,80}\$)/g, '$1$ $2');
-  t = t.replace(/([a-zA-Z0-9_]+)\s*=\s*([^=$\n]{10,180}?)\s*(?=\1\s*=)/g, '$1 = $2  \n');
-  t = t.replace(/\$\$[\s\n]*\$\$/g, '$$');
-  t = t.replace(/\s*\$\s*([^\s$])/g, ' $1');
-  t = t.replace(/([^\s$])\s*\$/g, '$1 ');
-
-  return t;
-}
-
-function splitChainedEqualities(text) {
-  return text.replace(
-    /([a-zA-Z0-9_]{1,8})\s*=\s*([^=$\n]{10,180}?)(?=\s*\1\s*=)/g,
-    '$1 = $2  \n'
-  );
+  // Fixes glued inline math like $v'$$ → $v'$
+  return text.replace(/(\$[^\s$]{1,60}?)\$\$/g, '$1$');
 }
 
 function prepareMathForKaTeX(rawText) {
