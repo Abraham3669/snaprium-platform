@@ -157,12 +157,12 @@ export default function ResultPanel({ result, loading, onClose }) {
                   }}
                 >
                   <div className="pt-1 pb-8 px-1">
-  <h4
-    className="text-[32px] text-[var(--text-primary)] mb-5"
-    style={{ fontWeight: 800 }}
-  >
-    Step-by-Step Solution
-  </h4>
+                   <h4
+  className="text-[34px] mb-6"
+  style={{ fontWeight: 800 }}
+>
+  Step-by-Step Solution
+</h4>
 
                     <div className="step-by-step-content prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)] leading-relaxed">
                       <ReactMarkdown
