@@ -115,17 +115,24 @@ export default function ResultPanel({ result, loading, onClose }) {
             revealReady && (
               <>
                 <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden">
-                  <h3 className="final-answer-header px-6 py-4 text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-                    Final Answer
-                  </h3>
-                  <div
-  className="massive-answer-container katex-display-final-container flex justify-center items-center"
+                  <h3
+  className="final-answer-header px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
   style={{
-    fontSize: '350px',    // HUGE
-    lineHeight: 1.0,
+    fontSize: "20px",
+    fontWeight: 700,
+    letterSpacing: "0.02em"
+  }}
+>
+  Final Answer
+</h3>
+                  <div
+  className="massive-answer-container katex-display-final-container flex justify-center"
+  style={{
+    fontSize: '350px',
+    lineHeight: 0.9,
     textAlign: 'center',
-    height: 'auto',       // let math decide
-    maxHeight: '80vh',    // optional: fits viewport
+    padding: '0px',
+    margin: '0px'
   }}
 >
                     <ReactMarkdown

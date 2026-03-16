@@ -3711,6 +3711,18 @@ button.w-full.py-3\.5:active {
 
 
 
+.katex-display {
+  margin: 0 !important;
+}
+
+.katex-display > .katex {
+  margin: 0 !important;
+}
+
+
+
+
+
 
 
 
@@ -3777,6 +3789,11 @@ button.w-full.py-3\.5:active {
     padding: 4px 6px;
   }
 }
+
+
+
+
+
 
 
 
