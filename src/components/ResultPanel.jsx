@@ -164,21 +164,23 @@ export default function ResultPanel({ result, loading, onClose }) {
   rehypePlugins={[[rehypeKatex, { /* your options */ }]]}
   components={{
     // ─── Most important override ───
-    inlineMath: ({ value }) => {
-      const safeValue = value.trim();
-      if (!safeValue) return null;
+inlineMath: ({ value }) => {
+  const safe = value?.trim() || '';
+  if (!safe) return null;
 
-      let html;
-      try {
-        html = katex.renderToString(safeValue, {
-          throwOnError: false,
-          displayMode: false,
-          strict: "ignore",
-        });
-      } catch (err) {
-        console.warn("KaTeX inline failed:", safeValue, err);
-        html = `<span class="text-red-600 font-mono">${safeValue}</span>`;
-      }
+  let html;
+  try {
+    html = katex.renderToString(safe, {
+      throwOnError: false,
+      displayMode: false,
+      strict: 'ignore',
+      trust: true,
+    });
+  } catch (e) {
+    console.warn("KaTeX inline fail:", safe);
+    return <code className="text-red-600 font-mono">{safe}</code>;
+  }
+
 
       return (
         <span
@@ -282,26 +284,43 @@ function fallbackLastLines(rawText) {
 
 function fixCommonMathGlue(text) {
   if (!text) return text;
-
   let t = text;
 
-  // $something$$  →  $something$
-  t = t.replace(/(\$[^\s$]{1,80}?)\$\$/g, '$1$');
+  // ─── Very common in your example ───
+  //   }$:$ $   →   }$.  
+  t = t.replace(/\}\$:?\s*\$/g, '}$. ');
 
-  // $$something$  →  $something$
-  t = t.replace(/\$\$([^\s$]{1,80}?)\$/g, '$$$1$');
+  // glued inline + inline with no space: $...$$...$ → $...$ $...$
+  t = t.replace(/(\$[^\n$]{1,120})\$\$?([^\n$]{1,80}\$)/g, '$1$ $2');
 
-  // Remove empty $$ pairs that sometimes remain
-  t = t.replace(/\$\$\s*\$\$/g, '');
+  // repeated variable definition jammed together
+  t = t.replace(/([a-zA-Z0-9_]+)\s*=\s*([^$\n]{1,200}?)\s*(?=\1\s*=)/g, '$1 = $2  \n');
 
-  // Very common: inline math glued to display right after
-  t = t.replace(/(\$[^\n$]{1,100})\s*\n\s*\$\$/g, '$1$\n$$');
+  // remove empty or redundant $$ pairs
+  t = t.replace(/\$\$[\s\n]*\$\$/g, '$$');
 
-  // Protect against triple dollars (very common LLM mistake)
-  t = t.replace(/\$\$\$/g, '$$');
+  // trailing/leading junk around inline
+  t = t.replace(/\s*\$\s*([^\s$])/g, ' $1');
+  t = t.replace(/([^\s$])\s*\$/g, '$1 ');
 
   return t;
 }
+
+
+
+
+// Add this function and call it after fixCommonMathGlue
+function splitChainedEqualities(text) {
+  return text.replace(
+    /([a-zA-Z0-9_]{1,8})\s*=\s*([^=$\n]{10,180}?)(?=\s*\1\s*=)/g,
+    '$1 = $2  \n'
+  );
+}
+
+// Then in your code:
+const cleanedSteps = fixCommonMathGlue(prepareMathForKaTeX(fullText));
+const betterSteps   = splitChainedEqualities(cleanedSteps);
+
 
 
 

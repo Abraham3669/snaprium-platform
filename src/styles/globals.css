@@ -3813,3 +3813,24 @@ p > .inline-katex + .punct,
 .inline-katex + .punct {
   margin-left: -0.08em;
 }
+
+
+
+.inline-katex {
+  margin: 0 0.35em;           /* ← more breathing room than before */
+  vertical-align: -0.06em;    /* helps with descenders + fractions */
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+p > .inline-katex:first-child {
+  margin-left: 0.1em;
+}
+
+p > .inline-katex + .inline-katex {
+  margin-left: 0.5em;         /* extra space between consecutive math */
+}
+
+p {
+  line-height: 1.65 !important;   /* ← prevents crushing */
+}
