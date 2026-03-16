@@ -120,7 +120,11 @@ export default function ResultPanel({ result, loading, onClose }) {
                   </h3>
                   <div
                     className="massive-answer-container katex-display-final-container p-8 pb-10 flex justify-center items-center min-h-[220px]"
-                    style={{ fontSize: '64px', lineHeight: 1.2 }}
+                   style={{
+  fontSize: '80px',
+  lineHeight: 1.15,
+  fontWeight: 700
+}}
                   >
                     <ReactMarkdown
                       remarkPlugins={[remarkMath]}
@@ -133,7 +137,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                         ),
                       }}
                     >
-                      {finalAnswerContent || '\\text{-}'}
+                      {`$$\\mathbf{${finalAnswerRaw || '-' }}$$`}
                     </ReactMarkdown>
                   </div>
                 </div>
