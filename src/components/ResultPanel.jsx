@@ -159,10 +159,11 @@ export default function ResultPanel({ result, loading, onClose }) {
                   <div
   className="mb-6"
   style={{
-    fontSize: "42px",
+    fontSize: "clamp(22px, 4vw, 34px)",
     fontWeight: 900,
     color: "var(--text-primary)",
-    letterSpacing: "-0.02em"
+    letterSpacing: "-0.02em",
+    whiteSpace: "nowrap"
   }}
 >
   Step-by-Step Solution
