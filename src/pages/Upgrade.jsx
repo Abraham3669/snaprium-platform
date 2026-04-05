@@ -4,25 +4,33 @@ import { usePaddle } from '../context/PaddleContext';
 
 export default function Upgrade() {
   const { user } = useAuth();
-  const { openCheckout } = usePaddle();
+  const { openCheckout, loading, error } = usePaddle();
 
-  // ← TODO: Replace these with your actual Paddle Price IDs from the dashboard
-    // Using your Pro plan for testing
- const PRO_PRICE_ID = 'pri_01kne83es3jr15vm5hhv0v8rm3';     // ← Your Pro Monthly Price
-  const PREMIUM_PRICE_ID = 'pri_XXXXXXXXXXXXXXXXXXXXXXXX';   // ← Replace when you create Premium price
+  // TODO: Replace these with REAL Price IDs from your SANDBOX dashboard
+  const PRO_PRICE_ID = 'pri_01knfpxnmh74xf080p5z07x05j';     // ← Change to your sandbox Pro price ID
+  const PREMIUM_PRICE_ID = 'pri_01knfqbp8r1yqn4wrvq2xjh76p';   // ← Add your sandbox Premium price ID
 
-  
   const handleUpgrade = (plan) => {
     if (!user?.email || !user?.uid) {
       alert('Please sign in to upgrade your plan.');
       return;
     }
 
+    if (error) {
+      alert(`Payment system error: ${error}`);
+      return;
+    }
+
+    if (loading) {
+      alert('Payment system is still loading. Please wait.');
+      return;
+    }
+
     const priceId = plan === 'pro' ? PRO_PRICE_ID : PREMIUM_PRICE_ID;
 
     openCheckout(priceId, (data) => {
-      alert(`🎉 Thank you! Your ${plan.toUpperCase()} plan has been activated successfully.`);
-      // Optional: Redirect to dashboard after successful payment
+      alert(`🎉 Thank you! Your ${plan.toUpperCase()} plan has been activated (Sandbox test).`);
+      // In real app, you would verify the transaction on your backend here
       // window.location.href = '/dashboard';
     });
   };
@@ -35,6 +43,9 @@ export default function Upgrade() {
       <div className="upgrade-header">
         <h2>Choose Your Plan</h2>
         <p>Get more high-quality, exam-ready step-by-step solutions every month.</p>
+        <p style={{ color: '#e67e22', fontWeight: 'bold' }}>
+          🧪 Currently in SANDBOX TEST MODE — No real money will be charged
+        </p>
       </div>
 
       <div className="pricing-grid">
@@ -51,7 +62,7 @@ export default function Upgrade() {
           <button className="plan-cta disabled">Current Plan</button>
         </div>
 
-        {/* Pro – MOST POPULAR */}
+        {/* Pro */}
         <div className="pricing-card pro">
           <div className="popular-badge">MOST POPULAR</div>
           <h3>Pro</h3>
@@ -68,7 +79,7 @@ export default function Upgrade() {
             className="plan-cta primary"
             onClick={() => handleUpgrade('pro')}
           >
-            Get Pro Access
+            Get Pro Access (Test)
           </button>
         </div>
 
@@ -88,12 +99,11 @@ export default function Upgrade() {
             className="plan-cta primary"
             onClick={() => handleUpgrade('premium')}
           >
-            Unlock Maximum Access
+            Unlock Maximum Access (Test)
           </button>
         </div>
       </div>
 
-      {/* FAQ section */}
       <div className="upgrade-faq">
         <h3>Frequently Asked Questions</h3>
         <p>Have questions? <a href="mailto:support@snaprium.com">Contact support</a>.</p>

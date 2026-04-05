@@ -20,34 +20,41 @@ export const PaddleProvider = ({ children }) => {
     const token = import.meta.env.VITE_PADDLE_CLIENT_TOKEN;
 
     if (!token) {
-      console.warn("⚠️ Missing VITE_PADDLE_CLIENT_TOKEN in environment variables");
-      setError("Paddle token is missing");
+      console.error("❌ Missing VITE_PADDLE_CLIENT_TOKEN in .env");
+      setError("Paddle token is missing. Check your environment variables.");
       setLoading(false);
       return;
     }
 
-    const env = import.meta.env.PROD ? "production" : "sandbox";
+    // Force sandbox for testing
+    console.log("🔧 Setting Paddle to SANDBOX mode");
+    
+    // Important: Set environment BEFORE initializing
+    window.Paddle?.Environment?.set("sandbox");
 
     initializePaddle({
-      environment: env,           // Automatically uses production on Vercel
-      token: token,
+      environment: "sandbox",     // Force sandbox
+      token: token,               // Must be your SANDBOX token (starts with test_)
     })
       .then((paddleInstance) => {
+        console.log("✅ Paddle initialized successfully in sandbox");
         setPaddle(paddleInstance);
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Paddle initialization failed:", err);
-        setError("Failed to load payment system");
+        console.error("🚨 Paddle initialization failed:", err);
+        setError("Failed to load Paddle payment system. Check console for details.");
         setLoading(false);
       });
   }, []);
 
   const openCheckout = (priceId, onSuccess = null) => {
     if (!paddle) {
-      alert("Payment system is still loading. Please refresh and try again.");
+      alert("Payment system is still loading. Please wait a moment and try again.");
       return;
     }
+
+    console.log(`🚀 Opening sandbox checkout for price: ${priceId}`);
 
     paddle.Checkout.open({
       items: [{ priceId, quantity: 1 }],
@@ -56,12 +63,19 @@ export const PaddleProvider = ({ children }) => {
         locale: "en",
         displayMode: "overlay",
       },
+      customer: {
+        email: "test-customer@example.com",   // Optional: helps with testing
+      },
       eventCallback: (data) => {
         console.log("Paddle Event:", data);
 
         if (data.name === "checkout.completed") {
-          console.log("✅ Payment successful!");
+          console.log("✅ Sandbox payment completed successfully!");
           if (onSuccess) onSuccess(data);
+        }
+
+        if (data.name === "checkout.payment.failed") {
+          console.warn("❌ Sandbox payment failed:", data);
         }
       },
     });
