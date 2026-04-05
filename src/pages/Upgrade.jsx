@@ -8,9 +8,10 @@ export default function Upgrade() {
 
   // ← TODO: Replace these with your actual Paddle Price IDs from the dashboard
     // Using your Pro plan for testing
-  const PRO_PRICE_ID = 'pri_01kne774cvnxfztfrtrdxhd3kq';     // ← If this is actually a Price ID
-  const PREMIUM_PRICE_ID = 'pri_01kne774cvnxfztfrtrdxhd3kq'; // temporary - replace later
+ const PRO_PRICE_ID = 'pri_01kne83es3jr15vm5hhv0v8rm3';     // ← Your Pro Monthly Price
+  const PREMIUM_PRICE_ID = 'pri_XXXXXXXXXXXXXXXXXXXXXXXX';   // ← Replace when you create Premium price
 
+  
   const handleUpgrade = (plan) => {
     if (!user?.email || !user?.uid) {
       alert('Please sign in to upgrade your plan.');
