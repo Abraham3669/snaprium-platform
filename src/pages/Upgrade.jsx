@@ -7,8 +7,9 @@ export default function Upgrade() {
   const { openCheckout } = usePaddle();
 
   // ← TODO: Replace these with your actual Paddle Price IDs from the dashboard
-  const PRO_PRICE_ID = 'pri_XXXXXXXXXXXXXXXXXXXXXXXX';      // Your Pro monthly Price ID
-  const PREMIUM_PRICE_ID = 'pri_YYYYYYYYYYYYYYYYYYYYYYYY';  // Your Premium monthly Price ID
+    // Using your Pro plan for testing
+  const PRO_PRICE_ID = 'pri_01kne774cvnxfztfrtrdxhd3kq';     // ← If this is actually a Price ID
+  const PREMIUM_PRICE_ID = 'pri_01kne774cvnxfztfrtrdxhd3kq'; // temporary - replace later
 
   const handleUpgrade = (plan) => {
     if (!user?.email || !user?.uid) {
