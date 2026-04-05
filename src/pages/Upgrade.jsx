@@ -6,9 +6,9 @@ export default function Upgrade() {
   const { user } = useAuth();
   const { openCheckout, loading, error } = usePaddle();
 
-  // TODO: Replace these with REAL Price IDs from your SANDBOX dashboard
-  const PRO_PRICE_ID = 'pri_01knfpxnmh74xf080p5z07x05j';     // ← Change to your sandbox Pro price ID
-  const PREMIUM_PRICE_ID = 'pri_01knfqbp8r1yqn4wrvq2xjh76p';   // ← Add your sandbox Premium price ID
+  // ← Your actual SANDBOX Price IDs (update if needed)
+  const PRO_PRICE_ID = 'pri_01knfpxnmh74xf080p5z07x05j';
+  const PREMIUM_PRICE_ID = 'pri_01knfqbp8r1yqn4wrvq2xjh76p';
 
   const handleUpgrade = (plan) => {
     if (!user?.email || !user?.uid) {
@@ -28,9 +28,9 @@ export default function Upgrade() {
 
     const priceId = plan === 'pro' ? PRO_PRICE_ID : PREMIUM_PRICE_ID;
 
-    openCheckout(priceId, (data) => {
+    openCheckout(priceId, user, (data) => {
       alert(`🎉 Thank you! Your ${plan.toUpperCase()} plan has been activated (Sandbox test).`);
-      // In real app, you would verify the transaction on your backend here
+      // TODO: Optional - refresh user data or redirect to dashboard
       // window.location.href = '/dashboard';
     });
   };

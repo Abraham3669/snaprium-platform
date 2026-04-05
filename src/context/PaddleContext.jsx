@@ -26,51 +26,62 @@ export const PaddleProvider = ({ children }) => {
       return;
     }
 
-    // Force sandbox for testing
     console.log("🔧 Setting Paddle to SANDBOX mode");
-    
-    // Important: Set environment BEFORE initializing
-    window.Paddle?.Environment?.set("sandbox");
+
+    // Force sandbox environment
+    if (typeof window !== "undefined" && window.Paddle?.Environment) {
+      window.Paddle.Environment.set("sandbox");
+    }
 
     initializePaddle({
-      environment: "sandbox",     // Force sandbox
-      token: token,               // Must be your SANDBOX token (starts with test_)
+      environment: "sandbox",
+      token: token,
     })
       .then((paddleInstance) => {
-        console.log("✅ Paddle initialized successfully in sandbox");
+        console.log("✅ Paddle sandbox initialized successfully");
         setPaddle(paddleInstance);
         setLoading(false);
       })
       .catch((err) => {
         console.error("🚨 Paddle initialization failed:", err);
-        setError("Failed to load Paddle payment system. Check console for details.");
+        setError("Failed to load Paddle payment system. Check console.");
         setLoading(false);
       });
   }, []);
 
-  const openCheckout = (priceId, onSuccess = null) => {
+  // Updated to accept user object
+  const openCheckout = (priceId, user, onSuccess = null) => {
     if (!paddle) {
       alert("Payment system is still loading. Please wait a moment and try again.");
       return;
     }
 
-    console.log(`🚀 Opening sandbox checkout for price: ${priceId}`);
+    if (!user?.uid) {
+      alert("Please sign in to upgrade your plan.");
+      return;
+    }
+
+    console.log(`🚀 Opening sandbox checkout for price: ${priceId} | User: ${user.uid}`);
 
     paddle.Checkout.open({
       items: [{ priceId, quantity: 1 }],
+      customer: {
+        email: user.email || "test-customer@example.com",
+      },
+      customData: {
+        user_id: user.uid,        // ← Crucial for webhook to know which user to update
+        source: "web_upgrade",
+      },
       settings: {
         theme: "light",
         locale: "en",
         displayMode: "overlay",
       },
-      customer: {
-        email: "test-customer@example.com",   // Optional: helps with testing
-      },
       eventCallback: (data) => {
         console.log("Paddle Event:", data);
 
         if (data.name === "checkout.completed") {
-          console.log("✅ Sandbox payment completed successfully!");
+          console.log("✅ Sandbox checkout completed!");
           if (onSuccess) onSuccess(data);
         }
 
