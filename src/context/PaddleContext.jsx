@@ -28,7 +28,6 @@ export const PaddleProvider = ({ children }) => {
 
     console.log("🔧 Setting Paddle to SANDBOX mode");
 
-    // Force sandbox environment
     if (typeof window !== "undefined" && window.Paddle?.Environment) {
       window.Paddle.Environment.set("sandbox");
     }
@@ -49,7 +48,6 @@ export const PaddleProvider = ({ children }) => {
       });
   }, []);
 
-  // Updated to accept user object
   const openCheckout = (priceId, user, onSuccess = null) => {
     if (!paddle) {
       alert("Payment system is still loading. Please wait a moment and try again.");
@@ -66,10 +64,10 @@ export const PaddleProvider = ({ children }) => {
     paddle.Checkout.open({
       items: [{ priceId, quantity: 1 }],
       customer: {
-        email: user.email || "test-customer@example.com",
+        email: user.email || undefined,
       },
       customData: {
-        user_id: user.uid,        // ← Crucial for webhook to know which user to update
+        user_id: user.uid,           // Required for webhook
         source: "web_upgrade",
       },
       settings: {
@@ -78,11 +76,15 @@ export const PaddleProvider = ({ children }) => {
         displayMode: "overlay",
       },
       eventCallback: (data) => {
-        console.log("Paddle Event:", data);
+        console.log("Paddle Event:", data.name);
 
         if (data.name === "checkout.completed") {
-          console.log("✅ Sandbox checkout completed!");
-          if (onSuccess) onSuccess(data);
+          console.log("✅ Sandbox checkout completed successfully!");
+          
+          // Call the success handler passed from Upgrade page (confetti, alert, etc.)
+          if (onSuccess) {
+            onSuccess(data);
+          }
         }
 
         if (data.name === "checkout.payment.failed") {

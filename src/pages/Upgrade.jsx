@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { usePaddle } from '../context/PaddleContext';
 
@@ -6,7 +6,9 @@ export default function Upgrade() {
   const { user } = useAuth();
   const { openCheckout, loading, error } = usePaddle();
 
-  // ← Your actual SANDBOX Price IDs (update if needed)
+  const [upgradingPlan, setUpgradingPlan] = useState(null); // For loading state per button
+
+  // Your SANDBOX Price IDs
   const PRO_PRICE_ID = 'pri_01knfpxnmh74xf080p5z07x05j';
   const PREMIUM_PRICE_ID = 'pri_01knfqbp8r1yqn4wrvq2xjh76p';
 
@@ -28,10 +30,23 @@ export default function Upgrade() {
 
     const priceId = plan === 'pro' ? PRO_PRICE_ID : PREMIUM_PRICE_ID;
 
+    setUpgradingPlan(plan); // Show loading on the button
+
     openCheckout(priceId, user, (data) => {
-      alert(`🎉 Thank you! Your ${plan.toUpperCase()} plan has been activated (Sandbox test).`);
-      // TODO: Optional - refresh user data or redirect to dashboard
-      // window.location.href = '/dashboard';
+      setUpgradingPlan(null);
+
+      // Success message + confetti (you can expand this)
+      alert(`🎉 Congratulations! Your ${plan.toUpperCase()} plan has been activated successfully!`);
+
+      // Optional: Add confetti here if you have canvas-confetti installed
+      // Example:
+      // import confetti from 'canvas-confetti';
+      // confetti({ particleCount: 200, spread: 80, origin: { y: 0.6 } });
+
+      // Optional: Refresh the page so the plan badge updates immediately
+      setTimeout(() => {
+        window.location.reload();   // This makes Pro/Premium badge appear
+      }, 1500);
     });
   };
 
@@ -78,8 +93,9 @@ export default function Upgrade() {
           <button 
             className="plan-cta primary"
             onClick={() => handleUpgrade('pro')}
+            disabled={upgradingPlan === 'pro'}
           >
-            Get Pro Access (Test)
+            {upgradingPlan === 'pro' ? 'Processing...' : 'Get Pro Access (Test)'}
           </button>
         </div>
 
@@ -98,8 +114,9 @@ export default function Upgrade() {
           <button 
             className="plan-cta primary"
             onClick={() => handleUpgrade('premium')}
+            disabled={upgradingPlan === 'premium'}
           >
-            Unlock Maximum Access (Test)
+            {upgradingPlan === 'premium' ? 'Processing...' : 'Unlock Maximum Access (Test)'}
           </button>
         </div>
       </div>
