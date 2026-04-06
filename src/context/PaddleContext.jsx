@@ -67,7 +67,7 @@ export const PaddleProvider = ({ children }) => {
         email: user.email || undefined,
       },
       customData: {
-        user_id: user.uid,           // Required for webhook
+        user_id: user.uid,
         source: "web_upgrade",
       },
       settings: {
@@ -80,11 +80,7 @@ export const PaddleProvider = ({ children }) => {
 
         if (data.name === "checkout.completed") {
           console.log("✅ Sandbox checkout completed successfully!");
-          
-          // Call the success handler passed from Upgrade page (confetti, alert, etc.)
-          if (onSuccess) {
-            onSuccess(data);
-          }
+          if (onSuccess) onSuccess(data);
         }
 
         if (data.name === "checkout.payment.failed") {
