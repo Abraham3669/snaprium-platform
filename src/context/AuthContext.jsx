@@ -15,6 +15,7 @@ export function AuthProvider({ children }) {
     console.log("[Auth] Starting onAuthStateChanged listener...");
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+      // Clean up any existing snapshot listener before setting a new one
       if (unsubscribeSnapshotRef.current) {
         unsubscribeSnapshotRef.current();
         unsubscribeSnapshotRef.current = null;
@@ -43,7 +44,7 @@ export function AuthProvider({ children }) {
             });
           }
 
-          // Real-time listener with forceful update
+          // Real-time listener
           unsubscribeSnapshotRef.current = onSnapshot(userRef, (snapshot) => {
             if (snapshot.exists()) {
               const data = snapshot.data();
@@ -51,15 +52,17 @@ export function AuthProvider({ children }) {
               const updatedUser = {
                 ...baseData,
                 ...data,
-                // Force "plan" to be the source of truth
+                // Force "plan" to be the source of truth (keeps your existing logic)
                 plan: data.plan || data.subscription || "free",
-                subscriptionStatus: data.subscriptionStatus || data.subscription ? "active" : "inactive",
+                // Fixed subscriptionStatus logic - was broken with truthy strings like "inactive"
+                subscriptionStatus: (data.subscriptionStatus === "active" || !!data.subscription) ? "active" : "inactive",
               };
 
-              console.log("🔥 [Auth] Real-time update! Plan =", updatedUser.plan);
+              console.log("🔥 [Auth] Real-time update! Plan =", updatedUser.plan, "| Status =", updatedUser.subscriptionStatus);
 
-              // Force new object reference + small delay to help React re-render
-              setUser((prev) => ({ ...prev, ...updatedUser }));
+              // Direct set with a brand new object reference (this was the main cause of missed UI updates)
+              // No more functional update with stale prev + no artificial delay needed
+              setUser(updatedUser);
             }
           });
 
@@ -75,7 +78,9 @@ export function AuthProvider({ children }) {
 
     return () => {
       unsubscribeAuth();
-      if (unsubscribeSnapshotRef.current) unsubscribeSnapshotRef.current();
+      if (unsubscribeSnapshotRef.current) {
+        unsubscribeSnapshotRef.current();
+      }
     };
   }, []);
 

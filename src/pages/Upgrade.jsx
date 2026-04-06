@@ -24,10 +24,9 @@ export default function Upgrade() {
       setUpgrading(null);
       alert(`🎉 Your ${plan.toUpperCase()} plan has been activated!`);
 
-      // Force page reload after success so all components pick up the new plan
-      setTimeout(() => {
-        window.location.reload();
-      }, 800);
+      // REMOVED window.location.reload() - this was firing BEFORE Paddle's webhook updated Firestore
+      // Real-time onSnapshot in AuthContext now handles the update instantly when the subscription event hits
+      // Pro/Premium badges + confetti success page will now appear automatically
     });
   };
 
