@@ -1,8 +1,8 @@
-// src/pages/Upgrade.jsx
+// src/pages/Upgrade.jsx   (or wherever your Upgrade component lives)
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { usePaddle } from '../context/PaddleContext';
-import WelcomeModal from '../components/WelcomeModal';   // ← FIXED IMPORT PATH
+import WelcomeModal from '../components/WelcomeModal';   // Correct relative path
 
 export default function Upgrade() {
   const { user } = useAuth();
@@ -10,16 +10,18 @@ export default function Upgrade() {
 
   const [upgrading, setUpgrading] = useState(null);
   const [showWelcome, setShowWelcome] = useState(false);
-  const [upgradedPlan, setUpgradedPlan] = useState(null);
 
-  // Detect when plan actually changes to pro/premium after webhook
+  // Trigger modal only when plan actually becomes pro/premium
   useEffect(() => {
-    if (upgradedPlan && user?.plan === upgradedPlan && 
-        (user.plan === 'pro' || user.plan === 'premium')) {
-      setShowWelcome(true);
-      setUpgradedPlan(null);
+    const currentPlan = user?.plan;
+    if ((currentPlan === 'pro' || currentPlan === 'premium') && !showWelcome) {
+      // Small delay to let real-time update settle
+      const timeout = setTimeout(() => {
+        setShowWelcome(true);
+      }, 300);
+      return () => clearTimeout(timeout);
     }
-  }, [user?.plan, upgradedPlan]);
+  }, [user?.plan, showWelcome]);
 
   const PRO_PRICE_ID = 'pri_01knfpxnmh74xf080p5z07x05j';
   const PREMIUM_PRICE_ID = 'pri_01knfqbp8r1yqn4wrvq2xjh76p';
@@ -35,15 +37,11 @@ export default function Upgrade() {
 
     openCheckout(priceId, user, () => {
       setUpgrading(null);
-      setUpgradedPlan(plan);
-
-      console.log(`[Upgrade] Checkout completed for ${plan}. Waiting for Firestore real-time update...`);
+      console.log(`[Upgrade] Paddle checkout closed for ${plan}. Waiting for Firestore...`);
     });
   };
 
-  const closeWelcome = () => {
-    setShowWelcome(false);
-  };
+  const closeWelcome = () => setShowWelcome(false);
 
   const currentPlan = user?.plan || 'free';
   const isPro = currentPlan === 'pro';
@@ -90,12 +88,9 @@ export default function Upgrade() {
         </div>
       </div>
 
-      {/* Welcome Modal with Confetti - will appear automatically when plan updates */}
-      {showWelcome && user && (
-        <WelcomeModal 
-          plan={user.plan} 
-          onClose={closeWelcome} 
-        />
+      {/* Welcome Modal */}
+      {showWelcome && (
+        <WelcomeModal plan={currentPlan} onClose={closeWelcome} />
       )}
     </div>
   );

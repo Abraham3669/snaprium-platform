@@ -1,5 +1,5 @@
 // src/context/AuthContext.jsx
-import { createContext, useContext, useEffect, useState, useRef, useCallback } from "react";
+import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { auth, db } from "../lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, onSnapshot } from "firebase/firestore";
@@ -10,14 +10,6 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const unsubscribeSnapshotRef = useRef(null);
-
-  const updateUser = useCallback((newUserData) => {
-    setUser((prev) => {
-      const updated = { ...prev, ...newUserData };
-      console.log("🔥 [Auth] Setting new user state → Plan =", updated.plan, "| Status =", updated.subscriptionStatus);
-      return updated;
-    });
-  }, []);
 
   useEffect(() => {
     console.log("[Auth] Starting onAuthStateChanged listener...");
@@ -54,7 +46,7 @@ export function AuthProvider({ children }) {
             });
           }
 
-          // Real-time listener
+          // Real-time listener - FORCE new object every time
           unsubscribeSnapshotRef.current = onSnapshot(userRef, (snapshot) => {
             if (snapshot.exists()) {
               const data = snapshot.data();
@@ -66,7 +58,11 @@ export function AuthProvider({ children }) {
                 subscriptionStatus: data.subscriptionStatus === "active" ? "active" : "inactive",
               };
 
-              updateUser(updatedUser);
+              console.log("🔥 [Auth] Real-time update → Plan =", updatedUser.plan, 
+                         "| Status =", updatedUser.subscriptionStatus);
+
+              // CRITICAL: Always create a completely new object reference
+              setUser({ ...updatedUser });
             }
           });
 
@@ -84,7 +80,7 @@ export function AuthProvider({ children }) {
       unsubscribeAuth();
       if (unsubscribeSnapshotRef.current) unsubscribeSnapshotRef.current();
     };
-  }, [updateUser]);
+  }, []);
 
   const signOutUser = async () => {
     try {

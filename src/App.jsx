@@ -9,7 +9,7 @@ import CropperModal from "./components/CropperModal";
 import ResultPanel from "./components/ResultPanel";
 import Dashboard from "./components/Dashboard";
 import UpgradeModal from "./components/UpgradeModal";
-import WelcomeModal from "./components/WelcomeModal";  // ← NEW import (we'll create this next)
+import WelcomeModal from "./components/WelcomeModal";
 
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -39,21 +39,22 @@ function App() {
   const [isResultOpen, setIsResultOpen] = useState(false);
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [showWelcomeModal, setShowWelcomeModal] = useState(false);  // ← NEW state for welcome popup
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
-  // Check for welcome popup (once per subscription)
+  // Check for welcome popup (once per subscription) - FIXED to use user.plan
   useEffect(() => {
-    if (!user?.uid || !user?.subscription || user.subscription === 'free') return;
+    if (!user?.uid || !user?.plan || (user.plan !== 'pro' && user.plan !== 'premium')) return;
 
-    const welcomeKey = `welcome_shown_${user.uid}_${user.subscription}`;
+    const welcomeKey = `welcome_shown_${user.uid}_${user.plan}`;
     const hasSeen = localStorage.getItem(welcomeKey);
 
     if (!hasSeen) {
+      console.log(`[App] Showing welcome modal for ${user.plan} plan`);
       setShowWelcomeModal(true);
       localStorage.setItem(welcomeKey, 'true');
-      logEvent(analytics, "welcome_modal_shown", { plan: user.subscription });
+      logEvent(analytics, "welcome_modal_shown", { plan: user.plan });
     }
-  }, [user]);
+  }, [user?.uid, user?.plan]);
 
   useEffect(() => {
     if (user?.uid) {
@@ -175,7 +176,7 @@ function App() {
     if (!userSnap.exists()) return true;
 
     const data = userSnap.data();
-    const plan = data.subscription || 'free';
+    const plan = data.plan || 'free';           // ← FIXED: was data.subscription
     const solves = data.solves || 0;
 
     const limits = { free: 15, pro: 2000, premium: 3000 };
@@ -248,11 +249,11 @@ function App() {
             snaprium
           </div>
 
-          {/* Right side: Plan Badge (Pro/Premium only) + Menu button */}
+          {/* Right side: Plan Badge (Pro/Premium only) + Menu button - FIXED */}
           <div className="header-right">
-            {user && (user.subscription === 'pro' || user.subscription === 'premium') && (
-              <div className={`plan-badge ${user.subscription}`}>
-                {user.subscription === 'pro' ? 'Pro' : 'Premium'}
+            {user && (user.plan === 'pro' || user.plan === 'premium') && (
+              <div className={`plan-badge ${user.plan}`}>
+                {user.plan === 'pro' ? 'Pro' : 'Premium'}
               </div>
             )}
 
@@ -328,10 +329,10 @@ function App() {
 
       {showUpgradeModal && <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />}
 
-      {/* NEW: Welcome popup for new subscribers */}
-      {showWelcomeModal && (
+      {/* Welcome popup for new subscribers - FIXED */}
+      {showWelcomeModal && user && (
         <WelcomeModal
-          plan={user.subscription}
+          plan={user.plan}                    // ← FIXED
           onClose={() => setShowWelcomeModal(false)}
         />
       )}
