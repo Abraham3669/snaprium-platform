@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth, logEvent, analytics } from '../lib/firebase';  // ← Add logEvent & analytics
+import { auth, analytics, logEvent } from '../lib/firebase';
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -20,17 +20,26 @@ export default function Signup() {
       return;
     }
 
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
-      await updateProfile(userCredential.user, { displayName: name.trim() });
-
-      // Log successful signup (GA4 recommended event)
-      logEvent(analytics, 'sign_up', {
-        method: 'email',  // Change to 'google' if you add Google signup later
+      
+      // Update display name in Firebase Auth
+      await updateProfile(userCredential.user, { 
+        displayName: name.trim() 
       });
+
+      // Log event
+      logEvent(analytics, 'sign_up', { method: 'email' });
+
+      console.log("[Signup] Account created successfully. AuthContext will create Firestore doc.");
 
       navigate('/');
     } catch (err) {
@@ -84,7 +93,7 @@ export default function Signup() {
           disabled={loading}
           className="btn-primary"
         >
-          {loading ? 'Creating...' : 'Sign Up'}
+          {loading ? 'Creating Account...' : 'Sign Up'}
         </button>
       </form>
 

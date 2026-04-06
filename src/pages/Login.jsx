@@ -1,9 +1,9 @@
 // src/pages/Login.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import { signInWithPopup, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth, googleProvider } from '../lib/firebase';
+import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
   const { user } = useAuth();
@@ -78,14 +78,6 @@ export default function Login() {
         className="btn-google"
       >
         {loading ? 'Connecting...' : 'Continue with Google'}
-        {!loading && (
-          <img
-            src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-            alt="Google"
-            width="20"
-            height="20"
-          />
-        )}
       </button>
 
       <div className="divider">───────── or ─────────</div>

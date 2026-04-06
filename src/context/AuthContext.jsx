@@ -2,7 +2,7 @@
 import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { auth, db } from "../lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, setDoc, onSnapshot, serverTimestamp } from "firebase/firestore";
 
 const AuthContext = createContext();
 
@@ -15,6 +15,7 @@ export function AuthProvider({ children }) {
     console.log("[Auth] Starting onAuthStateChanged listener...");
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+      // Clean up previous listener
       if (unsubscribeSnapshotRef.current) {
         unsubscribeSnapshotRef.current();
         unsubscribeSnapshotRef.current = null;
@@ -33,20 +34,32 @@ export function AuthProvider({ children }) {
             photoURL: firebaseUser.photoURL || "",
           };
 
+          // CRITICAL FIX: Create user document if it doesn't exist
           if (!userSnap.exists()) {
-            console.log("[Auth] Creating new free user");
+            console.log("[Auth] Creating new user document in Firestore");
             await setDoc(userRef, {
               ...baseData,
               plan: "free",
               subscriptionStatus: "inactive",
               uploadCount: 0,
               solves: 0,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
             });
+          } else {
+            // Optional: Update displayName/photo if changed in Auth
+            const existingData = userSnap.data();
+            if (existingData.displayName !== baseData.displayName || 
+                existingData.photoURL !== baseData.photoURL) {
+              await setDoc(userRef, {
+                displayName: baseData.displayName,
+                photoURL: baseData.photoURL,
+                updatedAt: serverTimestamp(),
+              }, { merge: true });
+            }
           }
 
-          // Real-time listener - FORCE new object every time
+          // Real-time listener
           unsubscribeSnapshotRef.current = onSnapshot(userRef, (snapshot) => {
             if (snapshot.exists()) {
               const data = snapshot.data();
@@ -61,9 +74,10 @@ export function AuthProvider({ children }) {
               console.log("🔥 [Auth] Real-time update → Plan =", updatedUser.plan, 
                          "| Status =", updatedUser.subscriptionStatus);
 
-              // CRITICAL: Always create a completely new object reference
-              setUser({ ...updatedUser });
+              setUser({ ...updatedUser }); // Force new object reference
             }
+          }, (error) => {
+            console.error("[Auth] onSnapshot error:", error);
           });
 
         } catch (error) {
