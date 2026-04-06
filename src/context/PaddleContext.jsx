@@ -5,9 +5,7 @@ const PaddleContext = createContext(null);
 
 export const usePaddle = () => {
   const context = useContext(PaddleContext);
-  if (!context) {
-    throw new Error("usePaddle must be used within PaddleProvider");
-  }
+  if (!context) throw new Error("usePaddle must be used within PaddleProvider");
   return context;
 };
 
@@ -18,15 +16,12 @@ export const PaddleProvider = ({ children }) => {
 
   useEffect(() => {
     const token = import.meta.env.VITE_PADDLE_CLIENT_TOKEN;
-
     if (!token) {
-      console.error("❌ Missing VITE_PADDLE_CLIENT_TOKEN in .env");
-      setError("Paddle token is missing. Check your environment variables.");
+      console.error("❌ Missing VITE_PADDLE_CLIENT_TOKEN");
+      setError("Paddle token missing");
       setLoading(false);
       return;
     }
-
-    console.log("🔧 Setting Paddle to SANDBOX mode");
 
     if (typeof window !== "undefined" && window.Paddle?.Environment) {
       window.Paddle.Environment.set("sandbox");
@@ -34,57 +29,30 @@ export const PaddleProvider = ({ children }) => {
 
     initializePaddle({
       environment: "sandbox",
-      token: token,
-    })
-      .then((paddleInstance) => {
-        console.log("✅ Paddle sandbox initialized successfully");
-        setPaddle(paddleInstance);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("🚨 Paddle initialization failed:", err);
-        setError("Failed to load Paddle payment system. Check console.");
-        setLoading(false);
-      });
+      token,
+    }).then((instance) => {
+      console.log("✅ Paddle sandbox ready");
+      setPaddle(instance);
+      setLoading(false);
+    }).catch((err) => {
+      console.error("Paddle init failed:", err);
+      setError("Failed to init Paddle");
+      setLoading(false);
+    });
   }, []);
 
   const openCheckout = (priceId, user, onSuccess = null) => {
-    if (!paddle) {
-      alert("Payment system is still loading. Please wait a moment and try again.");
-      return;
-    }
-
-    if (!user?.uid) {
-      alert("Please sign in to upgrade your plan.");
-      return;
-    }
-
-    console.log(`🚀 Opening sandbox checkout for price: ${priceId} | User: ${user.uid}`);
+    if (!paddle || !user?.uid) return;
 
     paddle.Checkout.open({
       items: [{ priceId, quantity: 1 }],
-      customer: {
-        email: user.email || undefined,
-      },
-      customData: {
-        user_id: user.uid,
-        source: "web_upgrade",
-      },
-      settings: {
-        theme: "light",
-        locale: "en",
-        displayMode: "overlay",
-      },
+      customer: { email: user.email },
+      customData: { user_id: user.uid, source: "web_upgrade" },
+      settings: { theme: "light", locale: "en", displayMode: "overlay" },
       eventCallback: (data) => {
-        console.log("Paddle Event:", data.name);
-
         if (data.name === "checkout.completed") {
-          console.log("✅ Sandbox checkout completed successfully!");
+          console.log("✅ Checkout completed");
           if (onSuccess) onSuccess(data);
-        }
-
-        if (data.name === "checkout.payment.failed") {
-          console.warn("❌ Sandbox payment failed:", data);
         }
       },
     });

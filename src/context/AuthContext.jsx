@@ -2,7 +2,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "../lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
 
 const AuthContext = createContext();
 
@@ -11,15 +11,17 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log("[Auth] Starting listener...");
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    console.log("[Auth] Starting auth listener...");
+
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       console.log("[Auth] onAuthStateChanged triggered. User:", firebaseUser ? firebaseUser.uid : "null");
 
       if (firebaseUser) {
         try {
           const userRef = doc(db, "users", firebaseUser.uid);
-          console.log("[Auth] Checking Firestore doc for UID:", firebaseUser.uid);
+          console.log("[Auth] Fetching user doc for UID:", firebaseUser.uid);
 
+          // First, get initial data
           const userSnap = await getDoc(userRef);
 
           let userData = {
@@ -31,26 +33,53 @@ export function AuthProvider({ children }) {
           };
 
           if (!userSnap.exists()) {
-            console.log("[Auth] No doc exists → creating new user document...");
+            console.log("[Auth] No document found → Creating new user document");
             await setDoc(userRef, {
               ...userData,
-              uploadCount: 0,           // ← added here
-              lastUpload: null,         // ← optional, tracks last upload time
+              plan: "free",
+              subscriptionStatus: "inactive",
+              uploadCount: 0,
+              lastUpload: null,
+              solves: 0,
             });
-            console.log("[Auth] User document CREATED successfully in Firestore with uploadCount: 0");
+            console.log("[Auth] New user document created with plan: free");
           } else {
-            console.log("[Auth] Doc already exists → loading existing data");
+            console.log("[Auth] Document exists → Loading data");
             userData = { ...userData, ...userSnap.data() };
           }
 
+          // Set initial user
           setUser(userData);
-          console.log("[Auth] User state SET in context:", userData.uid);
+
+          // === REAL-TIME LISTENER (This fixes the main issue) ===
+          const unsubscribeSnapshot = onSnapshot(userRef, (snapshot) => {
+            if (snapshot.exists()) {
+              const freshData = snapshot.data();
+              const updatedUser = {
+                ...userData,
+                ...freshData,
+                // Standardize plan field (Paddle updates "plan")
+                plan: freshData.plan || freshData.subscription || "free",
+                subscriptionStatus: freshData.subscriptionStatus || "inactive",
+              };
+
+              setUser(updatedUser);
+              console.log("[Auth] 🔥 Real-time update from Firestore - New Plan:", updatedUser.plan);
+            }
+          });
+
+          // Cleanup function for snapshot listener
+          return () => {
+            console.log("[Auth] Cleaning up Firestore snapshot listener");
+            unsubscribeSnapshot();
+          };
+
         } catch (error) {
-          console.error("[Auth] Firestore error during user setup:", error.code, error.message);
+          console.error("[Auth] Firestore error:", error);
           setUser(null);
         }
       } else {
-        console.log("[Auth] User signed out");
+        console.log("[Auth] No user signed in");
         setUser(null);
       }
 
@@ -58,8 +87,8 @@ export function AuthProvider({ children }) {
     });
 
     return () => {
-      console.log("[Auth] Listener unsubscribed");
-      unsubscribe();
+      console.log("[Auth] Auth listener unsubscribed");
+      unsubscribeAuth();
     };
   }, []);
 
