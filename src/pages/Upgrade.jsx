@@ -1,7 +1,8 @@
+// src/pages/Upgrade.jsx
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { usePaddle } from '../context/PaddleContext';
-import WelcomeModal from './WelcomeModal';   // adjust path if needed
+import WelcomeModal from '../components/WelcomeModal';   // ← FIXED IMPORT PATH
 
 export default function Upgrade() {
   const { user } = useAuth();
@@ -11,11 +12,12 @@ export default function Upgrade() {
   const [showWelcome, setShowWelcome] = useState(false);
   const [upgradedPlan, setUpgradedPlan] = useState(null);
 
-  // Detect when plan actually changes to pro/premium
+  // Detect when plan actually changes to pro/premium after webhook
   useEffect(() => {
-    if (upgradedPlan && user?.plan === upgradedPlan) {
+    if (upgradedPlan && user?.plan === upgradedPlan && 
+        (user.plan === 'pro' || user.plan === 'premium')) {
       setShowWelcome(true);
-      setUpgradedPlan(null); // reset so it doesn't re-trigger
+      setUpgradedPlan(null);
     }
   }, [user?.plan, upgradedPlan]);
 
@@ -33,9 +35,9 @@ export default function Upgrade() {
 
     openCheckout(priceId, user, () => {
       setUpgrading(null);
-      setUpgradedPlan(plan);   // This will trigger WelcomeModal when real-time updates
+      setUpgradedPlan(plan);
 
-      console.log(`[Upgrade] Checkout done for ${plan}. Waiting for Firestore update...`);
+      console.log(`[Upgrade] Checkout completed for ${plan}. Waiting for Firestore real-time update...`);
     });
   };
 
@@ -88,7 +90,7 @@ export default function Upgrade() {
         </div>
       </div>
 
-      {/* Welcome Modal with Confetti */}
+      {/* Welcome Modal with Confetti - will appear automatically when plan updates */}
       {showWelcome && user && (
         <WelcomeModal 
           plan={user.plan} 
