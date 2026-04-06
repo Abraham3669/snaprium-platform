@@ -1,27 +1,13 @@
-// src/pages/Upgrade.jsx   (or wherever your Upgrade component lives)
-import React, { useState, useEffect } from 'react';
+// src/pages/Upgrade.jsx
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { usePaddle } from '../context/PaddleContext';
-import WelcomeModal from '../components/WelcomeModal';   // Correct relative path
 
 export default function Upgrade() {
   const { user } = useAuth();
   const { openCheckout } = usePaddle();
 
   const [upgrading, setUpgrading] = useState(null);
-  const [showWelcome, setShowWelcome] = useState(false);
-
-  // Trigger modal only when plan actually becomes pro/premium
-  useEffect(() => {
-    const currentPlan = user?.plan;
-    if ((currentPlan === 'pro' || currentPlan === 'premium') && !showWelcome) {
-      // Small delay to let real-time update settle
-      const timeout = setTimeout(() => {
-        setShowWelcome(true);
-      }, 300);
-      return () => clearTimeout(timeout);
-    }
-  }, [user?.plan, showWelcome]);
 
   const PRO_PRICE_ID = 'pri_01knfpxnmh74xf080p5z07x05j';
   const PREMIUM_PRICE_ID = 'pri_01knfqbp8r1yqn4wrvq2xjh76p';
@@ -37,11 +23,12 @@ export default function Upgrade() {
 
     openCheckout(priceId, user, () => {
       setUpgrading(null);
-      console.log(`[Upgrade] Paddle checkout closed for ${plan}. Waiting for Firestore...`);
+      console.log(`[Upgrade] Paddle checkout completed for ${plan}. Firestore real-time update will handle success UI.`);
+      
+      // No more local welcome modal here - App.jsx now handles it cleanly
+      // This prevents double modals and repeating confetti
     });
   };
-
-  const closeWelcome = () => setShowWelcome(false);
 
   const currentPlan = user?.plan || 'free';
   const isPro = currentPlan === 'pro';
@@ -87,11 +74,6 @@ export default function Upgrade() {
           </button>
         </div>
       </div>
-
-      {/* Welcome Modal */}
-      {showWelcome && (
-        <WelcomeModal plan={currentPlan} onClose={closeWelcome} />
-      )}
     </div>
   );
 }
