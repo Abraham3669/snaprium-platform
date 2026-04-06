@@ -4,7 +4,7 @@ import { usePaddle } from '../context/PaddleContext';
 
 export default function Upgrade() {
   const { user } = useAuth();
-  const { openCheckout, loading, error } = usePaddle();
+  const { openCheckout } = usePaddle();
 
   const [upgrading, setUpgrading] = useState(null);
 
@@ -13,7 +13,7 @@ export default function Upgrade() {
 
   const handleUpgrade = (plan) => {
     if (!user?.uid) {
-      alert("Please sign in to upgrade your plan.");
+      alert("Please sign in to upgrade.");
       return;
     }
 
@@ -22,12 +22,12 @@ export default function Upgrade() {
 
     openCheckout(priceId, user, () => {
       setUpgrading(null);
-      alert(`🎉 Congratulations! Your ${plan.toUpperCase()} plan is now active!`);
+      alert(`🎉 Your ${plan.toUpperCase()} plan has been activated!`);
 
-      // Force a small delay then reload to ensure UI updates
+      // Force page reload after success so all components pick up the new plan
       setTimeout(() => {
-        window.location.href = '/dashboard';
-      }, 1000);
+        window.location.reload();
+      }, 800);
     });
   };
 

@@ -15,9 +15,6 @@ export function AuthProvider({ children }) {
     console.log("[Auth] Starting onAuthStateChanged listener...");
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
-      console.log("[Auth] onAuthStateChanged →", firebaseUser ? firebaseUser.uid : "null");
-
-      // Clean up old listener
       if (unsubscribeSnapshotRef.current) {
         unsubscribeSnapshotRef.current();
         unsubscribeSnapshotRef.current = null;
@@ -27,8 +24,8 @@ export function AuthProvider({ children }) {
         const userRef = doc(db, "users", firebaseUser.uid);
 
         try {
-          // Initial data load
           const userSnap = await getDoc(userRef);
+
           let baseData = {
             uid: firebaseUser.uid,
             email: firebaseUser.email || "",
@@ -43,13 +40,10 @@ export function AuthProvider({ children }) {
               subscriptionStatus: "inactive",
               uploadCount: 0,
               solves: 0,
-              lastUpload: null,
             });
-            console.log("[Auth] Created new user document");
           }
 
-          // Real-time listener
-          console.log("[Auth] Setting up real-time onSnapshot...");
+          // Real-time listener with forceful update
           unsubscribeSnapshotRef.current = onSnapshot(userRef, (snapshot) => {
             if (snapshot.exists()) {
               const data = snapshot.data();
@@ -57,14 +51,15 @@ export function AuthProvider({ children }) {
               const updatedUser = {
                 ...baseData,
                 ...data,
-                plan: data.plan || data.subscription || "free",           // ← Force use "plan"
-                subscriptionStatus: data.subscriptionStatus || "inactive",
+                // Force "plan" to be the source of truth
+                plan: data.plan || data.subscription || "free",
+                subscriptionStatus: data.subscriptionStatus || data.subscription ? "active" : "inactive",
               };
 
               console.log("🔥 [Auth] Real-time update! Plan =", updatedUser.plan);
 
-              // Force new object reference so React re-renders
-              setUser({ ...updatedUser });
+              // Force new object reference + small delay to help React re-render
+              setUser((prev) => ({ ...prev, ...updatedUser }));
             }
           });
 
