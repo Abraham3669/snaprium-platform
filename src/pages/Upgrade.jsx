@@ -20,15 +20,14 @@ export default function Upgrade() {
     const priceId = plan === 'pro' ? PRO_PRICE_ID : PREMIUM_PRICE_ID;
     setUpgrading(plan);
 
-    openCheckout(priceId, user, (data) => {
+    openCheckout(priceId, user, () => {
       setUpgrading(null);
-      
-      alert(`🎉 Congratulations! Your ${plan.toUpperCase()} plan has been activated successfully!`);
+      alert(`🎉 Congratulations! Your ${plan.toUpperCase()} plan is now active!`);
 
-      // Auto redirect to dashboard after success
+      // Force a small delay then reload to ensure UI updates
       setTimeout(() => {
         window.location.href = '/dashboard';
-      }, 1500);
+      }, 1000);
     });
   };
 
@@ -38,45 +37,39 @@ export default function Upgrade() {
         <h2>Choose Your Plan</h2>
         <p>Get more high-quality, exam-ready step-by-step solutions every month.</p>
         <p style={{ color: '#e67e22', fontWeight: 'bold' }}>
-          🧪 Currently in SANDBOX TEST MODE — No real money will be charged
+          🧪 SANDBOX TEST MODE
         </p>
       </div>
 
       <div className="pricing-grid">
-        {/* Free */}
         <div className="pricing-card">
           <h3>Free</h3>
           <div className="plan-price">$0 <span>per month</span></div>
-          <p className="plan-desc">15 full step-by-step solutions monthly</p>
           <button className="plan-cta disabled">Current Plan</button>
         </div>
 
-        {/* Pro */}
         <div className="pricing-card pro">
           <div className="popular-badge">MOST POPULAR</div>
           <h3>Pro</h3>
           <div className="plan-price">$9.99 <span>per month</span></div>
-          <p className="plan-desc">80 full step-by-step solutions monthly</p>
           <button 
             className="plan-cta primary"
             onClick={() => handleUpgrade('pro')}
             disabled={upgrading === 'pro'}
           >
-            {upgrading === 'pro' ? 'Processing...' : 'Get Pro Access (Test)'}
+            {upgrading === 'pro' ? 'Processing...' : 'Get Pro Access'}
           </button>
         </div>
 
-        {/* Premium */}
         <div className="pricing-card premium">
           <h3>Premium</h3>
           <div className="plan-price">$14.99 <span>per month</span></div>
-          <p className="plan-desc">170 full step-by-step solutions monthly</p>
           <button 
             className="plan-cta primary"
             onClick={() => handleUpgrade('premium')}
             disabled={upgrading === 'premium'}
           >
-            {upgrading === 'premium' ? 'Processing...' : 'Unlock Maximum Access (Test)'}
+            {upgrading === 'premium' ? 'Processing...' : 'Unlock Premium'}
           </button>
         </div>
       </div>

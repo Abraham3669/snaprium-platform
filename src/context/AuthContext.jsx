@@ -9,82 +9,69 @@ const AuthContext = createContext();
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  // Ref to store the snapshot unsubscribe function
   const unsubscribeSnapshotRef = useRef(null);
 
-  // 1. Auth State Listener
   useEffect(() => {
     console.log("[Auth] Starting onAuthStateChanged listener...");
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
-      console.log("[Auth] onAuthStateChanged →", firebaseUser ? firebaseUser.uid : "No user");
+      console.log("[Auth] onAuthStateChanged →", firebaseUser ? firebaseUser.uid : "null");
 
-      // Clean up previous snapshot listener if exists
+      // Clean up old listener
       if (unsubscribeSnapshotRef.current) {
         unsubscribeSnapshotRef.current();
         unsubscribeSnapshotRef.current = null;
       }
 
       if (firebaseUser) {
-        try {
-          const userRef = doc(db, "users", firebaseUser.uid);
+        const userRef = doc(db, "users", firebaseUser.uid);
 
-          // Initial load
+        try {
+          // Initial data load
           const userSnap = await getDoc(userRef);
-          let userData = {
+          let baseData = {
             uid: firebaseUser.uid,
             email: firebaseUser.email || "",
             displayName: firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "User",
             photoURL: firebaseUser.photoURL || "",
-            createdAt: new Date().toISOString(),
           };
 
           if (!userSnap.exists()) {
             await setDoc(userRef, {
-              ...userData,
+              ...baseData,
               plan: "free",
               subscriptionStatus: "inactive",
               uploadCount: 0,
-              lastUpload: null,
               solves: 0,
+              lastUpload: null,
             });
-            console.log("[Auth] New user document created (plan: free)");
-          } else {
-            userData = { ...userData, ...userSnap.data() };
+            console.log("[Auth] Created new user document");
           }
 
-          // Set initial user
-          setUser({
-            ...userData,
-            plan: userData.plan || userData.subscription || "free",
-          });
-
-          console.log("[Auth] Initial user loaded → Plan:", userData.plan || "free");
-
-          // 2. Real-time Firestore Listener (this is the fix)
-          console.log("[Auth] Setting up real-time onSnapshot listener...");
+          // Real-time listener
+          console.log("[Auth] Setting up real-time onSnapshot...");
           unsubscribeSnapshotRef.current = onSnapshot(userRef, (snapshot) => {
             if (snapshot.exists()) {
-              const freshData = snapshot.data();
+              const data = snapshot.data();
+
               const updatedUser = {
-                ...userData,
-                ...freshData,
-                plan: freshData.plan || freshData.subscription || "free",
-                subscriptionStatus: freshData.subscriptionStatus || "inactive",
+                ...baseData,
+                ...data,
+                plan: data.plan || data.subscription || "free",           // ← Force use "plan"
+                subscriptionStatus: data.subscriptionStatus || "inactive",
               };
 
-              setUser(updatedUser);
-              console.log("🔥 [Auth] Real-time Firestore update! New plan =", updatedUser.plan);
+              console.log("🔥 [Auth] Real-time update! Plan =", updatedUser.plan);
+
+              // Force new object reference so React re-renders
+              setUser({ ...updatedUser });
             }
           });
 
         } catch (error) {
           console.error("[Auth] Firestore error:", error);
-          setUser(null);
         }
       } else {
-        // User signed out
         setUser(null);
       }
 
@@ -92,18 +79,14 @@ export function AuthProvider({ children }) {
     });
 
     return () => {
-      console.log("[Auth] Cleaning up auth listener");
       unsubscribeAuth();
-      if (unsubscribeSnapshotRef.current) {
-        unsubscribeSnapshotRef.current();
-      }
+      if (unsubscribeSnapshotRef.current) unsubscribeSnapshotRef.current();
     };
   }, []);
 
   const signOutUser = async () => {
     try {
       await auth.signOut();
-      console.log("[Auth] Sign out successful");
     } catch (error) {
       console.error("[Auth] Sign out failed:", error);
     }
