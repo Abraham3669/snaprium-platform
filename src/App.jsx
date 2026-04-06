@@ -41,18 +41,31 @@ function App() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
-  // Check for welcome popup (once per subscription) - FIXED to use user.plan
+  // FIXED Welcome Modal Logic - Shows ONLY ONCE per plan upgrade
   useEffect(() => {
-    if (!user?.uid || !user?.plan || (user.plan !== 'pro' && user.plan !== 'premium')) return;
+    // If user is not logged in or not on premium/pro plan, hide modal
+    if (!user?.uid || !user?.plan || (user.plan !== 'pro' && user.plan !== 'premium')) {
+      setShowWelcomeModal(false);
+      return;
+    }
 
     const welcomeKey = `welcome_shown_${user.uid}_${user.plan}`;
     const hasSeen = localStorage.getItem(welcomeKey);
 
     if (!hasSeen) {
-      console.log(`[App] Showing welcome modal for ${user.plan} plan`);
-      setShowWelcomeModal(true);
-      localStorage.setItem(welcomeKey, 'true');
-      logEvent(analytics, "welcome_modal_shown", { plan: user.plan });
+      console.log(`[App] Showing welcome modal for ${user.plan} plan (first time)`);
+      
+      // Small delay to let real-time update settle and avoid flickering
+      const timer = setTimeout(() => {
+        setShowWelcomeModal(true);
+        localStorage.setItem(welcomeKey, 'true');
+        logEvent(analytics, "welcome_modal_shown", { plan: user.plan });
+      }, 800);
+
+      return () => clearTimeout(timer);
+    } else {
+      console.log(`[App] Welcome modal already shown for ${user.plan} - skipping`);
+      setShowWelcomeModal(false);
     }
   }, [user?.uid, user?.plan]);
 
@@ -176,7 +189,7 @@ function App() {
     if (!userSnap.exists()) return true;
 
     const data = userSnap.data();
-    const plan = data.plan || 'free';           // ← FIXED: was data.subscription
+    const plan = data.plan || 'free';
     const solves = data.solves || 0;
 
     const limits = { free: 15, pro: 2000, premium: 3000 };
@@ -249,7 +262,7 @@ function App() {
             snaprium
           </div>
 
-          {/* Right side: Plan Badge (Pro/Premium only) + Menu button - FIXED */}
+          {/* Right side: Plan Badge */}
           <div className="header-right">
             {user && (user.plan === 'pro' || user.plan === 'premium') && (
               <div className={`plan-badge ${user.plan}`}>
@@ -329,10 +342,10 @@ function App() {
 
       {showUpgradeModal && <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />}
 
-      {/* Welcome popup for new subscribers - FIXED */}
+      {/* Welcome Modal */}
       {showWelcomeModal && user && (
         <WelcomeModal
-          plan={user.plan}                    // ← FIXED
+          plan={user.plan}
           onClose={() => setShowWelcomeModal(false)}
         />
       )}
