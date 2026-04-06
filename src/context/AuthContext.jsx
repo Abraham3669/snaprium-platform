@@ -2,7 +2,7 @@
 import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { auth, db } from "../lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
 
 const AuthContext = createContext();
 
@@ -15,7 +15,7 @@ export function AuthProvider({ children }) {
     console.log("[Auth] Starting onAuthStateChanged listener...");
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
-      // Clean up any existing snapshot listener before setting a new one
+      // Clean up previous listener
       if (unsubscribeSnapshotRef.current) {
         unsubscribeSnapshotRef.current();
         unsubscribeSnapshotRef.current = null;
@@ -25,9 +25,10 @@ export function AuthProvider({ children }) {
         const userRef = doc(db, "users", firebaseUser.uid);
 
         try {
+          // Only read once on auth change — do NOT write unless truly new user
           const userSnap = await getDoc(userRef);
 
-          let baseData = {
+          const baseData = {
             uid: firebaseUser.uid,
             email: firebaseUser.email || "",
             displayName: firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "User",
@@ -35,16 +36,21 @@ export function AuthProvider({ children }) {
           };
 
           if (!userSnap.exists()) {
+            // Only create default free user if it truly doesn't exist
+            console.log("[Auth] Creating new free user doc");
+            // We use setDoc with merge: false (default) only for new users
             await setDoc(userRef, {
               ...baseData,
               plan: "free",
               subscriptionStatus: "inactive",
               uploadCount: 0,
               solves: 0,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
             });
           }
 
-          // Real-time listener
+          // Real-time listener (this is the source of truth)
           unsubscribeSnapshotRef.current = onSnapshot(userRef, (snapshot) => {
             if (snapshot.exists()) {
               const data = snapshot.data();
@@ -52,18 +58,21 @@ export function AuthProvider({ children }) {
               const updatedUser = {
                 ...baseData,
                 ...data,
-                // Force "plan" to be the source of truth (keeps your existing logic)
-                plan: data.plan || data.subscription || "free",
-                // Fixed subscriptionStatus logic - was broken with truthy strings like "inactive"
-                subscriptionStatus: (data.subscriptionStatus === "active" || !!data.subscription) ? "active" : "inactive",
+                plan: data.plan || "free",                    // plan from Firestore is source of truth
+                subscriptionStatus: data.subscriptionStatus === "active" ? "active" : "inactive",
               };
 
-              console.log("🔥 [Auth] Real-time update! Plan =", updatedUser.plan, "| Status =", updatedUser.subscriptionStatus);
+              console.log("🔥 [Auth] Real-time update! Plan =", updatedUser.plan, 
+                         "| Status =", updatedUser.subscriptionStatus, 
+                         "| paddleSubscriptionId =", data.paddleSubscriptionId || "none");
 
-              // Direct set with a brand new object reference (this was the main cause of missed UI updates)
-              // No more functional update with stale prev + no artificial delay needed
-              setUser(updatedUser);
+              setUser(updatedUser);   // Always set fresh object
+            } else {
+              console.warn("[Auth] User doc disappeared!");
+              setUser(null);
             }
+          }, (error) => {
+            console.error("[Auth] onSnapshot error:", error);
           });
 
         } catch (error) {
@@ -78,9 +87,7 @@ export function AuthProvider({ children }) {
 
     return () => {
       unsubscribeAuth();
-      if (unsubscribeSnapshotRef.current) {
-        unsubscribeSnapshotRef.current();
-      }
+      if (unsubscribeSnapshotRef.current) unsubscribeSnapshotRef.current();
     };
   }, []);
 

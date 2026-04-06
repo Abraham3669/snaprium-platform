@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { usePaddle } from '../context/PaddleContext';
 
@@ -7,6 +7,17 @@ export default function Upgrade() {
   const { openCheckout } = usePaddle();
 
   const [upgrading, setUpgrading] = useState(null);
+  const [successPlan, setSuccessPlan] = useState(null); // For nice success UI
+
+  // Watch for plan change after checkout
+  useEffect(() => {
+    if (successPlan && user?.plan && (user.plan === 'pro' || user.plan === 'premium')) {
+      if (user.plan === successPlan) {
+        // Plan successfully updated via real-time listener
+        setSuccessPlan(null);
+      }
+    }
+  }, [user?.plan, successPlan]);
 
   const PRO_PRICE_ID = 'pri_01knfpxnmh74xf080p5z07x05j';
   const PREMIUM_PRICE_ID = 'pri_01knfqbp8r1yqn4wrvq2xjh76p';
@@ -19,16 +30,19 @@ export default function Upgrade() {
 
     const priceId = plan === 'pro' ? PRO_PRICE_ID : PREMIUM_PRICE_ID;
     setUpgrading(plan);
+    setSuccessPlan(null);
 
     openCheckout(priceId, user, () => {
+      // This callback fires when Paddle checkout UI closes successfully
       setUpgrading(null);
-      alert(`🎉 Your ${plan.toUpperCase()} plan has been activated!`);
+      setSuccessPlan(plan); // Show nice success message while waiting for webhook
 
-      // REMOVED window.location.reload() - this was firing BEFORE Paddle's webhook updated Firestore
-      // Real-time onSnapshot in AuthContext now handles the update instantly when the subscription event hits
-      // Pro/Premium badges + confetti success page will now appear automatically
+      console.log(`[Upgrade] Checkout completed for ${plan}. Waiting for webhook...`);
     });
   };
+
+  // Show success state if plan just upgraded
+  const isNowPremium = user?.plan === 'premium' || user?.plan === 'pro';
 
   return (
     <div className="upgrade-page">
@@ -44,7 +58,9 @@ export default function Upgrade() {
         <div className="pricing-card">
           <h3>Free</h3>
           <div className="plan-price">$0 <span>per month</span></div>
-          <button className="plan-cta disabled">Current Plan</button>
+          <button className="plan-cta disabled">
+            {isNowPremium ? 'Downgrade not available' : 'Current Plan'}
+          </button>
         </div>
 
         <div className="pricing-card pro">
@@ -54,9 +70,13 @@ export default function Upgrade() {
           <button 
             className="plan-cta primary"
             onClick={() => handleUpgrade('pro')}
-            disabled={upgrading === 'pro'}
+            disabled={upgrading === 'pro' || (user?.plan === 'pro')}
           >
-            {upgrading === 'pro' ? 'Processing...' : 'Get Pro Access'}
+            {upgrading === 'pro' 
+              ? 'Processing...' 
+              : user?.plan === 'pro' 
+                ? '✅ Active' 
+                : 'Get Pro Access'}
           </button>
         </div>
 
@@ -66,12 +86,31 @@ export default function Upgrade() {
           <button 
             className="plan-cta primary"
             onClick={() => handleUpgrade('premium')}
-            disabled={upgrading === 'premium'}
+            disabled={upgrading === 'premium' || (user?.plan === 'premium')}
           >
-            {upgrading === 'premium' ? 'Processing...' : 'Unlock Premium'}
+            {upgrading === 'premium' 
+              ? 'Processing...' 
+              : user?.plan === 'premium' 
+                ? '✅ Active' 
+                : 'Unlock Premium'}
           </button>
         </div>
       </div>
+
+      {/* Success overlay / message */}
+      {successPlan && (
+        <div className="success-overlay">
+          <div className="success-content">
+            <h3>🎉 Payment Successful!</h3>
+            <p>Activating your <strong>{successPlan.toUpperCase()}</strong> plan...</p>
+            <p>This usually takes a few seconds.</p>
+            <div className="spinner" />
+            <p style={{ fontSize: '0.9rem', marginTop: '20px' }}>
+              Check the console for real-time updates.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
