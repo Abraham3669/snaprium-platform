@@ -43,16 +43,32 @@ export default function Upgrade() {
       </div>
 
       <div className="pricing-grid">
+        {/* Free */}
         <div className="pricing-card">
           <h3>Free</h3>
           <div className="plan-price">$0 <span>per month</span></div>
+          <p className="plan-desc">
+            15 full step-by-step solutions monthly
+          </p>
+          <p className="plan-detail">
+            Perfect for light homework help and quick checks.
+          </p>
           <button className="plan-cta disabled">Current Plan</button>
         </div>
 
+        {/* Pro – MOST POPULAR */}
         <div className="pricing-card pro">
           <div className="popular-badge">MOST POPULAR</div>
           <h3>Pro</h3>
-          <div className="plan-price">$9.99 <span>per month</span></div>
+          <div className="plan-price">
+            $9.99 <span>per month</span>
+          </div>
+          <p className="plan-desc">
+            80 full step-by-step solutions monthly
+          </p>
+          <p className="plan-detail">
+            Ideal for consistent practice, assignments, and weekly exam prep.
+          </p>
           <button 
             className="plan-cta primary"
             onClick={() => handleUpgrade('pro')}
@@ -62,17 +78,32 @@ export default function Upgrade() {
           </button>
         </div>
 
+        {/* Premium */}
         <div className="pricing-card premium">
           <h3>Premium</h3>
-          <div className="plan-price">$14.99 <span>per month</span></div>
+          <div className="plan-price">
+            $14.99 <span>per month</span>
+          </div>
+          <p className="plan-desc">
+            170 full step-by-step solutions monthly
+          </p>
+          <p className="plan-detail">
+            Built for intensive revision, past questions, and heavy coursework.
+          </p>
           <button 
             className="plan-cta primary"
             onClick={() => handleUpgrade('premium')}
             disabled={upgrading === 'premium' || isPremium}
           >
-            {upgrading === 'premium' ? 'Processing...' : isPremium ? '✅ Active' : 'Unlock Premium'}
+            {upgrading === 'premium' ? 'Processing...' : isPremium ? '✅ Active' : 'Unlock Maximum Access'}
           </button>
         </div>
+      </div>
+
+      {/* FAQ section */}
+      <div className="upgrade-faq">
+        <h3>Frequently Asked Questions</h3>
+        <p>Have questions? <a href="mailto:support@snaprium.com">Contact support</a>.</p>
       </div>
     </div>
   );
