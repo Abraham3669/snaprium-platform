@@ -1,5 +1,5 @@
 // src/context/AuthContext.jsx
-import { createContext, useContext, useEffect, useState, useRef } from "react";
+import { createContext, useContext, useEffect, useState, useRef, useCallback } from "react";
 import { auth, db } from "../lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, onSnapshot } from "firebase/firestore";
@@ -11,11 +11,18 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const unsubscribeSnapshotRef = useRef(null);
 
+  const updateUser = useCallback((newUserData) => {
+    setUser((prev) => {
+      const updated = { ...prev, ...newUserData };
+      console.log("🔥 [Auth] Setting new user state → Plan =", updated.plan, "| Status =", updated.subscriptionStatus);
+      return updated;
+    });
+  }, []);
+
   useEffect(() => {
     console.log("[Auth] Starting onAuthStateChanged listener...");
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
-      // Clean up previous listener
       if (unsubscribeSnapshotRef.current) {
         unsubscribeSnapshotRef.current();
         unsubscribeSnapshotRef.current = null;
@@ -25,7 +32,6 @@ export function AuthProvider({ children }) {
         const userRef = doc(db, "users", firebaseUser.uid);
 
         try {
-          // Only read once on auth change — do NOT write unless truly new user
           const userSnap = await getDoc(userRef);
 
           const baseData = {
@@ -36,9 +42,7 @@ export function AuthProvider({ children }) {
           };
 
           if (!userSnap.exists()) {
-            // Only create default free user if it truly doesn't exist
-            console.log("[Auth] Creating new free user doc");
-            // We use setDoc with merge: false (default) only for new users
+            console.log("[Auth] Creating new free user");
             await setDoc(userRef, {
               ...baseData,
               plan: "free",
@@ -50,7 +54,7 @@ export function AuthProvider({ children }) {
             });
           }
 
-          // Real-time listener (this is the source of truth)
+          // Real-time listener
           unsubscribeSnapshotRef.current = onSnapshot(userRef, (snapshot) => {
             if (snapshot.exists()) {
               const data = snapshot.data();
@@ -58,21 +62,12 @@ export function AuthProvider({ children }) {
               const updatedUser = {
                 ...baseData,
                 ...data,
-                plan: data.plan || "free",                    // plan from Firestore is source of truth
+                plan: data.plan || "free",
                 subscriptionStatus: data.subscriptionStatus === "active" ? "active" : "inactive",
               };
 
-              console.log("🔥 [Auth] Real-time update! Plan =", updatedUser.plan, 
-                         "| Status =", updatedUser.subscriptionStatus, 
-                         "| paddleSubscriptionId =", data.paddleSubscriptionId || "none");
-
-              setUser(updatedUser);   // Always set fresh object
-            } else {
-              console.warn("[Auth] User doc disappeared!");
-              setUser(null);
+              updateUser(updatedUser);
             }
-          }, (error) => {
-            console.error("[Auth] onSnapshot error:", error);
           });
 
         } catch (error) {
@@ -89,7 +84,7 @@ export function AuthProvider({ children }) {
       unsubscribeAuth();
       if (unsubscribeSnapshotRef.current) unsubscribeSnapshotRef.current();
     };
-  }, []);
+  }, [updateUser]);
 
   const signOutUser = async () => {
     try {
