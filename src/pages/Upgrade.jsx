@@ -74,7 +74,7 @@ export default function Upgrade() {
             onClick={() => handleUpgrade('pro')}
             disabled={upgrading === 'pro' || isPro}
           >
-            {upgrading === 'pro' ? 'Processing...' : isPro ? '✅ Active' : 'Get Pro Access'}
+            {upgrading === 'pro' ? 'Processing...' : isPro ? 'Active' : 'Get Pro Access'}
           </button>
         </div>
 
@@ -95,7 +95,7 @@ export default function Upgrade() {
             onClick={() => handleUpgrade('premium')}
             disabled={upgrading === 'premium' || isPremium}
           >
-            {upgrading === 'premium' ? 'Processing...' : isPremium ? '✅ Active' : 'Unlock Maximum Access'}
+            {upgrading === 'premium' ? 'Processing...' : isPremium ? 'Active' : 'Unlock Maximum Access'}
           </button>
         </div>
       </div>

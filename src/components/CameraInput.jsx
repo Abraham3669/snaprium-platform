@@ -48,26 +48,12 @@ export default function CameraInput({ onFileSelect, onOpenDashboard }) {
     {/* Hero Section */}
     <section className="hero">
   <div className="container text-center">
-    <h1 className="hero-title">
-      Snap • Solve • Learn — Faster Than Ever
-    </h1>
+    <h1 className="hero-title">Snap • Solve • Master</h1>
     <p className="hero-subtitle">
       Get step‑by‑step math & physics solutions with explanations and visual steps.
     </p>
 
-    {/* Subject / Topic Badges */}
-<div className="subject-badges flex justify-center flex-wrap gap-3 mt-4">
-  <span className="badge">Math</span>
-  <span className="badge">Physics</span>
-  <span className="badge">Algebra</span>
-  <span className="badge">Mechanics</span>
-  <span className="badge">Calculus</span>
-  <span className="badge">Electricity</span>
-  <span className="badge badge-accent">+ More</span>
-</div>
-  </div>
-</section>
-
+  
 
     
 
@@ -114,6 +100,22 @@ export default function CameraInput({ onFileSelect, onOpenDashboard }) {
       ref={galleryInputRef}
       onChange={handleFileChange}
     />
+
+
+  {/* Subject / Topic Badges */}
+<div className="subject-badges flex justify-center flex-wrap gap-3 mt-4">
+  <span className="badge">Math</span>
+  <span className="badge">Physics</span>
+  <span className="badge">Algebra</span>
+  <span className="badge">Mechanics</span>
+  <span className="badge">Calculus</span>
+  <span className="badge">Electricity</span>
+  <span className="badge badge-accent">+ More</span>
+</div>
+  </div>
+</section>
+
+
 
 
 
