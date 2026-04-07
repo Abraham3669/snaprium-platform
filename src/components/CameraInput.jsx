@@ -48,9 +48,7 @@ export default function CameraInput({ onFileSelect, onOpenDashboard }) {
     {/* Hero Section */}
     <section className="hero">
   <div className="container text-center">
-    <h1 className="hero-title">
-   <span className="hero-accent">Snap • Solve •</span>  Master
-</h1>
+    <h1 className="hero-title">Snap • Solve • Master</h1>
     <p className="hero-subtitle">
       Get step‑by‑step math & physics solutions with explanations and visual steps.
     </p>
