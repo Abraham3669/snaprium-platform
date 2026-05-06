@@ -4,8 +4,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import katex from 'katex';                     // ← ADDED – this fixes the rendering
+import katex from 'katex';
 import 'katex/dist/katex.min.css';
+
+import GraphDisplay from './GraphDisplay';   // ← NEW IMPORT
 
 export default function ResultPanel({ result, loading, onClose }) {
   const [showSteps, setShowSteps] = useState(false);
@@ -57,7 +59,7 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   const fullText = result.text || '';
   const preparedSteps = prepareMathForKaTeX(fullText);
-  const cleanedSteps = fixCommonMathGlue(preparedSteps); // light fix for $...$$ glue
+  const cleanedSteps = fixCommonMathGlue(preparedSteps);
 
   const finalAnswerRaw = extractFinalAnswer(fullText);
 
@@ -101,11 +103,11 @@ export default function ResultPanel({ result, loading, onClose }) {
             <div className="loading-messages min-h-[220px] flex items-center justify-center py-12 px-6 text-center">
               {showAnalyzing ? (
                 <p
-  className="text-2xl text-left text-gray-900 dark:text-white animate-pulse"
-  style={{ fontWeight: 800 }}
->
-  Solving your question…
-</p>
+                  className="text-2xl text-left text-gray-900 dark:text-white animate-pulse"
+                  style={{ fontWeight: 800 }}
+                >
+                  Solving your question…
+                </p>
               ) : (
                 <div className="h-32" />
               )}
@@ -116,25 +118,25 @@ export default function ResultPanel({ result, loading, onClose }) {
               <>
                 <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden">
                   <h3
-  className="final-answer-header px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
-  style={{
-    fontSize: "20px",
-    fontWeight: 700,
-    letterSpacing: "0.02em"
-  }}
->
-  Final Answer
-</h3>
+                    className="final-answer-header px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
+                    style={{
+                      fontSize: "20px",
+                      fontWeight: 700,
+                      letterSpacing: "0.02em"
+                    }}
+                  >
+                    Final Answer
+                  </h3>
                   <div
-  className="massive-answer-container katex-display-final-container flex justify-center"
-  style={{
-    fontSize: '350px',
-    lineHeight: 0.9,
-    textAlign: 'center',
-    padding: '0px',
-    margin: '0px'
-  }}
->
+                    className="massive-answer-container katex-display-final-container flex justify-center"
+                    style={{
+                      fontSize: '350px',
+                      lineHeight: 0.9,
+                      textAlign: 'center',
+                      padding: '0px',
+                      margin: '0px'
+                    }}
+                  >
                     <ReactMarkdown
                       remarkPlugins={[remarkMath]}
                       rehypePlugins={[rehypeKatex]}
@@ -146,7 +148,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                         ),
                       }}
                     >
-                   {`$$\\displaystyle\\mathbf{${finalAnswerRaw || '-'}}$$`}
+                      {`$$\\displaystyle\\mathbf{${finalAnswerRaw || '-'}}$$`}
                     </ReactMarkdown>
                   </div>
                 </div>
@@ -170,17 +172,16 @@ export default function ResultPanel({ result, loading, onClose }) {
                   }}
                 >
                   <div
-  className="mb-6"
-  style={{
-    fontSize: "clamp(22px, 4vw, 34px)",
-    fontWeight: 900,
-    color: "var(--text-primary)",
-    letterSpacing: "-0.02em",
-    whiteSpace: "nowrap"
-  }}
->
-  Step-by-Step Solution
-
+                    className="mb-6"
+                    style={{
+                      fontSize: "clamp(22px, 4vw, 34px)",
+                      fontWeight: 900,
+                      color: "var(--text-primary)",
+                      letterSpacing: "-0.02em",
+                      whiteSpace: "nowrap"
+                    }}
+                  >
+                    Step-by-Step Solution
 
                     <div className="step-by-step-content prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)] leading-relaxed">
                       <ReactMarkdown
@@ -242,6 +243,15 @@ export default function ResultPanel({ result, loading, onClose }) {
                   </div>
                 </div>
 
+                {/* ==================== GRAPH DISPLAY ==================== */}
+                {result.graph && (
+                  <GraphDisplay 
+                    graphData={result.graph} 
+                    title="Graph of the Solution" 
+                  />
+                )}
+                {/* ====================================================== */}
+
                 <div className="feedback-bar mt-6 flex justify-center gap-4">
                   <button
                     className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'up' ? 'active' : ''}`}
@@ -272,7 +282,7 @@ export default function ResultPanel({ result, loading, onClose }) {
   );
 }
 
-// ── Helper functions ──
+// ── Helper functions (unchanged) ──
 function extractFinalAnswer(rawText) {
   if (!rawText) return '';
 
@@ -319,7 +329,6 @@ function fallbackLastLines(rawText) {
 
 function fixCommonMathGlue(text) {
   if (!text) return text;
-  // Fixes glued inline math like $v'$$ → $v'$
   return text.replace(/(\$[^\s$]{1,60}?)\$\$/g, '$1$');
 }
 
