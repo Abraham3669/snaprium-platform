@@ -7,7 +7,8 @@ import rehypeKatex from 'rehype-katex';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 
-import GraphDisplay from './GraphDisplay';   // ← NEW IMPORT
+import GraphDisplay from './GraphDisplay';
+import { autoGenerateGraph } from '../utils/graphGenerator';   // ← NEW IMPORT
 
 export default function ResultPanel({ result, loading, onClose }) {
   const [showSteps, setShowSteps] = useState(false);
@@ -20,7 +21,6 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   const handleFeedback = (type) => {
     setFeedback(type);
-    // Later: send to backend
   };
 
   // ─── Timing control ───────────────────────────────────────
@@ -63,6 +63,9 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   const finalAnswerRaw = extractFinalAnswer(fullText);
 
+  // Auto-generate graph if AI didn't provide one
+  const displayGraph = result.graph || autoGenerateGraph(fullText);
+
   let finalAnswerContent = finalAnswerRaw.trim();
   if (
     finalAnswerContent &&
@@ -102,10 +105,7 @@ export default function ResultPanel({ result, loading, onClose }) {
           {loading ? (
             <div className="loading-messages min-h-[220px] flex items-center justify-center py-12 px-6 text-center">
               {showAnalyzing ? (
-                <p
-                  className="text-2xl text-left text-gray-900 dark:text-white animate-pulse"
-                  style={{ fontWeight: 800 }}
-                >
+                <p className="text-2xl text-left text-gray-900 dark:text-white animate-pulse" style={{ fontWeight: 800 }}>
                   Solving your question…
                 </p>
               ) : (
@@ -117,26 +117,12 @@ export default function ResultPanel({ result, loading, onClose }) {
             revealReady && (
               <>
                 <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden">
-                  <h3
-                    className="final-answer-header px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
-                    style={{
-                      fontSize: "20px",
-                      fontWeight: 700,
-                      letterSpacing: "0.02em"
-                    }}
-                  >
+                  <h3 className="final-answer-header px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
+                      style={{ fontSize: "20px", fontWeight: 700, letterSpacing: "0.02em" }}>
                     Final Answer
                   </h3>
-                  <div
-                    className="massive-answer-container katex-display-final-container flex justify-center"
-                    style={{
-                      fontSize: '350px',
-                      lineHeight: 0.9,
-                      textAlign: 'center',
-                      padding: '0px',
-                      margin: '0px'
-                    }}
-                  >
+                  <div className="massive-answer-container katex-display-final-container flex justify-center"
+                       style={{ fontSize: '350px', lineHeight: 0.9, textAlign: 'center', padding: '0px', margin: '0px' }}>
                     <ReactMarkdown
                       remarkPlugins={[remarkMath]}
                       rehypePlugins={[rehypeKatex]}
@@ -171,68 +157,38 @@ export default function ResultPanel({ result, loading, onClose }) {
                     opacity: showSteps ? 1 : 0,
                   }}
                 >
-                  <div
-                    className="mb-6"
-                    style={{
-                      fontSize: "clamp(22px, 4vw, 34px)",
-                      fontWeight: 900,
-                      color: "var(--text-primary)",
-                      letterSpacing: "-0.02em",
-                      whiteSpace: "nowrap"
-                    }}
-                  >
+                  <div className="mb-6"
+                       style={{
+                         fontSize: "clamp(22px, 4vw, 34px)",
+                         fontWeight: 900,
+                         color: "var(--text-primary)",
+                         letterSpacing: "-0.02em",
+                         whiteSpace: "nowrap"
+                       }}>
                     Step-by-Step Solution
 
                     <div className="step-by-step-content prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)] leading-relaxed">
                       <ReactMarkdown
                         remarkPlugins={[remarkMath]}
-                        rehypePlugins={[
-                          [
-                            rehypeKatex,
-                            {
-                              output: 'html',
-                              throwOnError: false,
-                              strict: 'ignore',
-                              trust: true,
-                              fleqn: false,
-                              macros: {
-                                "\\coth": "\\operatorname{coth}",
-                                "\\csch": "\\operatorname{csch}",
-                                "\\sech": "\\operatorname{sech}",
-                              },
-                            },
-                          ],
-                        ]}
+                        rehypePlugins={[[rehypeKatex, { output: 'html', throwOnError: false, strict: 'ignore', trust: true }]]}
                         components={{
                           inlineMath: ({ value }) => (
                             <span className="inline-katex align-baseline mx-[0.08em] font-medium text-[1.05em]">
-                              <span
-                                dangerouslySetInnerHTML={{
-                                  __html: katex.renderToString(value.trim(), {
-                                    throwOnError: false,
-                                    displayMode: false,
-                                  }),
-                                }}
-                              />
+                              <span dangerouslySetInnerHTML={{
+                                __html: katex.renderToString(value.trim(), { throwOnError: false, displayMode: false })
+                              }} />
                             </span>
                           ),
-
                           paragraph: ({ children }) => (
                             <p className="my-4 leading-7 tracking-wide break-words [&>.inline-katex]:mx-[0.1em]">
                               {children}
                             </p>
                           ),
-
                           math: ({ value }) => (
                             <div className="my-6 overflow-x-auto">
-                              <div
-                                dangerouslySetInnerHTML={{
-                                  __html: katex.renderToString(value, {
-                                    throwOnError: false,
-                                    displayMode: true,
-                                  }),
-                                }}
-                              />
+                              <div dangerouslySetInnerHTML={{
+                                __html: katex.renderToString(value, { throwOnError: false, displayMode: true })
+                              }} />
                             </div>
                           ),
                         }}
@@ -244,29 +200,23 @@ export default function ResultPanel({ result, loading, onClose }) {
                 </div>
 
                 {/* ==================== GRAPH DISPLAY ==================== */}
-                {result.graph && (
+                {displayGraph && (
                   <GraphDisplay 
-                    graphData={result.graph} 
+                    graphData={displayGraph} 
                     title="Graph of the Solution" 
                   />
                 )}
                 {/* ====================================================== */}
 
                 <div className="feedback-bar mt-6 flex justify-center gap-4">
-                  <button
-                    className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'up' ? 'active' : ''}`}
-                    onClick={() => handleFeedback('up')}
-                  >
+                  <button className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'up' ? 'active' : ''}`} onClick={() => handleFeedback('up')}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                       <path d="M14 9V5a3 3 0 0 0-6 0v4H5v11h14V9h-5z" stroke="currentColor" strokeWidth="2" />
                     </svg>
                     Helpful
                   </button>
 
-                  <button
-                    className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'down' ? 'active' : ''}`}
-                    onClick={() => handleFeedback('down')}
-                  >
+                  <button className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'down' ? 'active' : ''}`} onClick={() => handleFeedback('down')}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                       <path d="M10 15v4a3 3 0 0 0 6 0v-4h3V4H5v11h5z" stroke="currentColor" strokeWidth="2" />
                     </svg>
