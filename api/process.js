@@ -12,19 +12,18 @@ export default async function handler(req, res) {
   }
 
   try {
-    console.log("[process.js] Image received, length:", imageBase64.length);
+    // Debug log to verify request
+    console.log("[process.js] Received image length:", imageBase64.length);
 
-    const result = await solveImage(imageBase64, process.env.OPENAI_API_KEY);
+    // Call AI service
+    const answer = await solveImage(imageBase64, process.env.OPENAI_API_KEY);
 
-    console.log("[process.js] Success - Has graph:", !!result.graph);
+    // Debug log AI response
+    console.log("[process.js] AI answer:", answer);
 
-    return res.status(200).json(result);   // ← Send full result
-
+    return res.status(200).json({ answer });
   } catch (err) {
-    console.error("[process.js] Process error:", err);
-    return res.status(500).json({ 
-      error: "Failed to process image",
-      details: err.message 
-    });
+    console.error("[process.js] API process error:", err);
+    return res.status(500).json({ error: "Failed to process image" });
   }
 }
