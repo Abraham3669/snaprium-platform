@@ -8,7 +8,7 @@ import katex from 'katex';
 import 'katex/dist/katex.min.css';
 
 import GraphDisplay from './GraphDisplay';
-import { autoGenerateGraph } from '../utils/graphGenerator';   // ← NEW IMPORT
+import { autoGenerateGraph } from '../utils/graphGenerator';
 
 export default function ResultPanel({ result, loading, onClose }) {
   const [showSteps, setShowSteps] = useState(false);
@@ -65,16 +65,12 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   // Auto-generate graph if AI didn't provide one
   const displayGraph = result.graph || autoGenerateGraph(fullText);
-const graphTitle = result.graph ? "AI Generated Graph" : "Solution Graph";
+  const graphTitle = result.graph ? "AI Generated Graph" : "Solution Graph";
 
-  let finalAnswerContent = finalAnswerRaw.trim();
-  if (
-    finalAnswerContent &&
-    !finalAnswerContent.match(/^\$\$[\s\S]*\$\$|\$[\s\S]*\$|\\\[[\s\S]*\\\]/) &&
-    (finalAnswerContent.includes('\\') || finalAnswerContent.match(/[=\-+*/^√π∫∑()[\]{}]/))
-  ) {
-    finalAnswerContent = `$$${finalAnswerContent}$$`;
-  }
+  // Cleaner Final Answer Display
+  const finalAnswerDisplay = finalAnswerRaw 
+    ? `$$\\displaystyle \\mathbf{${finalAnswerRaw}}$$`
+    : '$$\\mathbf{-}$$';
 
   return (
     <div className="result-panel">
@@ -114,16 +110,16 @@ const graphTitle = result.graph ? "AI Generated Graph" : "Solution Graph";
               )}
             </div>
           ) : (
-            result?.text &&
-            revealReady && (
+            result?.text && revealReady && (
               <>
+                {/* Final Answer Box - Cleaner */}
                 <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden">
                   <h3 className="final-answer-header px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
                       style={{ fontSize: "20px", fontWeight: 700, letterSpacing: "0.02em" }}>
                     Final Answer
                   </h3>
-                  <div className="massive-answer-container katex-display-final-container flex justify-center"
-                       style={{ fontSize: '350px', lineHeight: 0.9, textAlign: 'center', padding: '0px', margin: '0px' }}>
+                  <div className="massive-answer-container katex-display-final-container flex justify-center py-8"
+                       style={{ minHeight: '180px' }}>
                     <ReactMarkdown
                       remarkPlugins={[remarkMath]}
                       rehypePlugins={[rehypeKatex]}
@@ -135,7 +131,7 @@ const graphTitle = result.graph ? "AI Generated Graph" : "Solution Graph";
                         ),
                       }}
                     >
-                      {`$$\\displaystyle\\mathbf{${finalAnswerRaw || '-'}}$$`}
+                      {finalAnswerDisplay}
                     </ReactMarkdown>
                   </div>
                 </div>
@@ -171,7 +167,14 @@ const graphTitle = result.graph ? "AI Generated Graph" : "Solution Graph";
                     <div className="step-by-step-content prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)] leading-relaxed">
                       <ReactMarkdown
                         remarkPlugins={[remarkMath]}
-                        rehypePlugins={[[rehypeKatex, { output: 'html', throwOnError: false, strict: 'ignore', trust: true }]]}
+                        rehypePlugins={[
+                          [rehypeKatex, {
+                            output: 'html',
+                            throwOnError: false,
+                            strict: 'ignore',
+                            trust: true,
+                          }]
+                        ]}
                         components={{
                           inlineMath: ({ value }) => (
                             <span className="inline-katex align-baseline mx-[0.08em] font-medium text-[1.05em]">
@@ -200,24 +203,29 @@ const graphTitle = result.graph ? "AI Generated Graph" : "Solution Graph";
                   </div>
                 </div>
 
-                {/* ==================== GRAPH DISPLAY ==================== */}
+                {/* Graph Display */}
                 {displayGraph && (
-  <GraphDisplay 
-    graphData={displayGraph} 
-    title={graphTitle} 
-  />
-)}
-                {/* ====================================================== */}
+                  <GraphDisplay 
+                    graphData={displayGraph} 
+                    title={graphTitle} 
+                  />
+                )}
 
                 <div className="feedback-bar mt-6 flex justify-center gap-4">
-                  <button className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'up' ? 'active' : ''}`} onClick={() => handleFeedback('up')}>
+                  <button
+                    className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'up' ? 'active' : ''}`}
+                    onClick={() => handleFeedback('up')}
+                  >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                       <path d="M14 9V5a3 3 0 0 0-6 0v4H5v11h14V9h-5z" stroke="currentColor" strokeWidth="2" />
                     </svg>
                     Helpful
                   </button>
 
-                  <button className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'down' ? 'active' : ''}`} onClick={() => handleFeedback('down')}>
+                  <button
+                    className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'down' ? 'active' : ''}`}
+                    onClick={() => handleFeedback('down')}
+                  >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                       <path d="M10 15v4a3 3 0 0 0 6 0v-4h3V4H5v11h5z" stroke="currentColor" strokeWidth="2" />
                     </svg>
