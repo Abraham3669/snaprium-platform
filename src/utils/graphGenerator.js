@@ -3,14 +3,35 @@
 export function autoGenerateGraph(text) {
   if (!text) return null;
 
-  const lowerText = text.toLowerCase();
+  const lower = text.toLowerCase();
 
-  // Linear Equation Detection (y = mx + b)
-  const linearMatch = text.match(/y\s*=\s*([-\d.]+)?\s*\*?\s*x\s*([+-]?\s*[\d.]+)?/i);
-
-  if (linearMatch || lowerText.includes("slope") || lowerText.includes("y =") || lowerText.includes("straight line")) {
+  // Case 1: Linear function y = mx + b
+  if (lower.includes('y =') || lower.match(/y\s*=\s*.*x/)) {
     const x = Array.from({ length: 61 }, (_, i) => -15 + i * 0.5);
-    const y = x.map(val => 2 * val + 3); // Default to y=2x+3, can be improved later
+    const y = x.map(val => 2 * val + 3); // Default, can be smarter later
+
+    return {
+      data: [{ x, y, type: 'scatter', mode: 'lines', name: 'Line', line: { color: '#2563eb', width: 5 } }],
+      layout: { title: 'Graph of the Line', xaxis: { title: 'x' }, yaxis: { title: 'y' } }
+    };
+  }
+
+  // Case 2: Quadratic
+  if (lower.includes('x²') || lower.includes('x^2') || lower.includes('quadratic')) {
+    const x = Array.from({ length: 81 }, (_, i) => -5 + i * 0.125);
+    const y = x.map(val => val * val);
+    return {
+      data: [{ x, y, type: 'scatter', mode: 'lines', name: 'Quadratic', line: { color: '#2563eb', width: 5 } }],
+      layout: { title: 'Quadratic Function Graph', xaxis: { title: 'x' }, yaxis: { title: 'y' } }
+    };
+  }
+
+  // Case 3: Linear Equation (solve for x) → Vertical Line
+  const xSolution = text.match(/x\s*=\s*([-\d.]+)/i);
+  if (xSolution || lower.includes('vertical line') || lower.includes('x =')) {
+    const xValue = xSolution ? parseFloat(xSolution[1]) : 5;
+    const x = [xValue, xValue];
+    const y = [-20, 20];
 
     return {
       data: [{
@@ -18,37 +39,33 @@ export function autoGenerateGraph(text) {
         y,
         type: 'scatter',
         mode: 'lines',
-        name: 'y = 2x + 3',
-        line: { color: '#2563eb', width: 5, shape: 'linear' }
+        name: `x = ${xValue}`,
+        line: { color: '#ef4444', width: 6, dash: 'dashdot' }
       }],
       layout: {
-        title: 'Graph of y = 2x + 3',
-        xaxis: { title: 'x', range: [-15, 15] },
-        yaxis: { title: 'y', range: [-25, 35] },
-        hovermode: 'closest'
+        title: `Solution: x = ${xValue}`,
+        xaxis: { title: 'x', range: [xValue - 10, xValue + 10] },
+        yaxis: { title: 'y', range: [-20, 20] },
+        annotations: [{
+          x: xValue,
+          y: 10,
+          text: `x = ${xValue}`,
+          showarrow: true,
+          arrowhead: 2,
+          font: { color: '#ef4444' }
+        }]
       }
     };
   }
 
-  // Quadratic (y = x² style)
-  if (lowerText.includes("x²") || lowerText.includes("x^2") || lowerText.includes("quadratic")) {
-    const x = Array.from({ length: 81 }, (_, i) => -4 + i * 0.1);
-    const y = x.map(val => val * val);
+  // Case 4: General "graph" keyword
+  if (lower.includes('graph') || lower.includes('plot') || lower.includes('draw')) {
+    const x = Array.from({ length: 41 }, (_, i) => -10 + i * 0.5);
+    const y = x.map(val => val * 2 + 3);
 
     return {
-      data: [{
-        x,
-        y,
-        type: 'scatter',
-        mode: 'lines',
-        name: 'y = x²',
-        line: { color: '#2563eb', width: 5 }
-      }],
-      layout: {
-        title: 'Graph of Quadratic Function',
-        xaxis: { title: 'x' },
-        yaxis: { title: 'y' }
-      }
+      data: [{ x, y, type: 'scatter', mode: 'lines', line: { color: '#2563eb', width: 4 } }],
+      layout: { title: 'Solution Graph', xaxis: { title: 'x' }, yaxis: { title: 'y' } }
     };
   }
 

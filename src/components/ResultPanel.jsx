@@ -66,6 +66,10 @@ export default function ResultPanel({ result, loading, onClose }) {
   // Auto-generate graph if AI didn't provide one
   const displayGraph = result.graph || autoGenerateGraph(fullText);
 
+const graphTitle = result.graph 
+  ? "AI Generated Graph" 
+  : "Solution Graph";
+
   let finalAnswerContent = finalAnswerRaw.trim();
   if (
     finalAnswerContent &&
@@ -201,11 +205,11 @@ export default function ResultPanel({ result, loading, onClose }) {
 
                 {/* ==================== GRAPH DISPLAY ==================== */}
                 {displayGraph && (
-                  <GraphDisplay 
-                    graphData={displayGraph} 
-                    title="Graph of the Solution" 
-                  />
-                )}
+  <GraphDisplay 
+    graphData={displayGraph} 
+    title={graphTitle} 
+  />
+)}
                 {/* ====================================================== */}
 
                 <div className="feedback-bar mt-6 flex justify-center gap-4">
