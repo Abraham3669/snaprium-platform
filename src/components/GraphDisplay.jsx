@@ -6,75 +6,48 @@ const GraphDisplay = ({ graphData, title = "Solution Graph" }) => {
   if (!graphData?.data) return null;
 
   return (
-    <div className="my-8 bg-white dark:bg-gray-900 rounded-2xl shadow-md border border-gray-100 dark:border-gray-700 overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
-        <h3 className="text-xl font-semibold text-gray-800 dark:text-white">
-          {title}
-        </h3>
+    <div className="my-10 bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-5">
+        <h3 className="text-2xl font-bold text-white">{title}</h3>
+        <p className="text-blue-100 text-sm mt-1">Interactive • Zoom • Export</p>
       </div>
 
-      <div className="p-4">
+      <div className="p-6">
         <Plot
           data={graphData.data}
           layout={{
             autosize: true,
-            height: 460,
-            margin: { t: 40, r: 40, b: 70, l: 70 },
-            plot_bgcolor: "#ffffff",
+            height: 520,
+            margin: { t: 30, r: 30, b: 70, l: 80 },
+            plot_bgcolor: "#fafafa",
             paper_bgcolor: "#ffffff",
-            font: { family: "Inter, sans-serif", size: 13 },
-            title: {
-              text: graphData.layout?.title || "",
-              font: { size: 18 }
-            },
+            font: { family: "Inter, system-ui, sans-serif" },
+            title: { text: graphData.layout?.title || "", font: { size: 20 } },
             xaxis: {
               title: graphData.layout?.xaxis?.title || "x",
-              gridcolor: "#e5e7eb",
-              zerolinecolor: "#6b7280",
-              zerolinewidth: 2,
-              showline: true,
-              linewidth: 1,
-              linecolor: "#9ca3af",
+              gridcolor: "#e2e8f0",
+              zerolinecolor: "#64748b",
+              zerolinewidth: 2.5,
               ...graphData.layout?.xaxis
             },
             yaxis: {
               title: graphData.layout?.yaxis?.title || "y",
-              gridcolor: "#e5e7eb",
-              zerolinecolor: "#6b7280",
-              zerolinewidth: 2,
-              showline: true,
-              linewidth: 1,
-              linecolor: "#9ca3af",
+              gridcolor: "#e2e8f0",
+              zerolinecolor: "#64748b",
+              zerolinewidth: 2.5,
               ...graphData.layout?.yaxis
             },
             showlegend: true,
-            legend: {
-              orientation: "h",
-              yanchor: "bottom",
-              y: 1.02,
-              xanchor: "center",
-              x: 0.5
-            }
+            legend: { orientation: "h", y: 1.1 },
           }}
           config={{
             responsive: true,
             displayModeBar: true,
-            modeBarButtonsToRemove: ['lasso2d', 'select2d'],
-            toImageButtonOptions: {
-              format: 'png',
-              filename: 'snaprium-graph',
-              height: 600,
-              width: 800,
-              scale: 2
-            }
+            toImageButtonOptions: { format: 'png', filename: 'snaprium-graph', scale: 3 }
           }}
           style={{ width: "100%" }}
           useResizeHandler
         />
-      </div>
-
-      <div className="px-6 py-3 text-xs text-gray-500 border-t border-gray-100 dark:border-gray-700">
-        Interactive Graph • Zoom & Pan available
       </div>
     </div>
   );

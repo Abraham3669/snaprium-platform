@@ -65,10 +65,7 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   // Auto-generate graph if AI didn't provide one
   const displayGraph = result.graph || autoGenerateGraph(fullText);
-
-const graphTitle = result.graph 
-  ? "AI Generated Graph" 
-  : "Solution Graph";
+const graphTitle = result.graph ? "AI Generated Graph" : "Solution Graph";
 
   let finalAnswerContent = finalAnswerRaw.trim();
   if (
