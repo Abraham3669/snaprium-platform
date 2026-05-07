@@ -4,11 +4,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import katex from 'katex';
+import katex from 'katex';                     // ← ADDED – this fixes the rendering
 import 'katex/dist/katex.min.css';
-
-import GraphDisplay from './GraphDisplay';
-import { autoGenerateGraph } from '../utils/graphGenerator';
 
 export default function ResultPanel({ result, loading, onClose }) {
   const [showSteps, setShowSteps] = useState(false);
@@ -21,6 +18,7 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   const handleFeedback = (type) => {
     setFeedback(type);
+    // Later: send to backend
   };
 
   // ─── Timing control ───────────────────────────────────────
@@ -59,18 +57,18 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   const fullText = result.text || '';
   const preparedSteps = prepareMathForKaTeX(fullText);
-  const cleanedSteps = fixCommonMathGlue(preparedSteps);
+  const cleanedSteps = fixCommonMathGlue(preparedSteps); // light fix for $...$$ glue
 
   const finalAnswerRaw = extractFinalAnswer(fullText);
 
-  // Auto-generate graph if AI didn't provide one
-  const displayGraph = result.graph || autoGenerateGraph(fullText);
-  const graphTitle = result.graph ? "AI Generated Graph" : "Solution Graph";
-
-  // Cleaner Final Answer Display
-  const finalAnswerDisplay = finalAnswerRaw 
-    ? `$$\\displaystyle \\mathbf{${finalAnswerRaw}}$$`
-    : '$$\\mathbf{-}$$';
+  let finalAnswerContent = finalAnswerRaw.trim();
+  if (
+    finalAnswerContent &&
+    !finalAnswerContent.match(/^\$\$[\s\S]*\$\$|\$[\s\S]*\$|\\\[[\s\S]*\\\]/) &&
+    (finalAnswerContent.includes('\\') || finalAnswerContent.match(/[=\-+*/^√π∫∑()[\]{}]/))
+  ) {
+    finalAnswerContent = `$$${finalAnswerContent}$$`;
+  }
 
   return (
     <div className="result-panel">
@@ -102,24 +100,41 @@ export default function ResultPanel({ result, loading, onClose }) {
           {loading ? (
             <div className="loading-messages min-h-[220px] flex items-center justify-center py-12 px-6 text-center">
               {showAnalyzing ? (
-                <p className="text-2xl text-left text-gray-900 dark:text-white animate-pulse" style={{ fontWeight: 800 }}>
-                  Solving your question…
-                </p>
+                <p
+  className="text-2xl text-left text-gray-900 dark:text-white animate-pulse"
+  style={{ fontWeight: 800 }}
+>
+  Solving your question…
+</p>
               ) : (
                 <div className="h-32" />
               )}
             </div>
           ) : (
-            result?.text && revealReady && (
+            result?.text &&
+            revealReady && (
               <>
-                {/* Final Answer Box - Cleaner */}
                 <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden">
-                  <h3 className="final-answer-header px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
-                      style={{ fontSize: "20px", fontWeight: 700, letterSpacing: "0.02em" }}>
-                    Final Answer
-                  </h3>
-                  <div className="massive-answer-container katex-display-final-container flex justify-center py-8"
-                       style={{ minHeight: '180px' }}>
+                  <h3
+  className="final-answer-header px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
+  style={{
+    fontSize: "20px",
+    fontWeight: 700,
+    letterSpacing: "0.02em"
+  }}
+>
+  Final Answer
+</h3>
+                  <div
+  className="massive-answer-container katex-display-final-container flex justify-center"
+  style={{
+    fontSize: '350px',
+    lineHeight: 0.9,
+    textAlign: 'center',
+    padding: '0px',
+    margin: '0px'
+  }}
+>
                     <ReactMarkdown
                       remarkPlugins={[remarkMath]}
                       rehypePlugins={[rehypeKatex]}
@@ -131,7 +146,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                         ),
                       }}
                     >
-                      {finalAnswerDisplay}
+                   {`$$\\displaystyle\\mathbf{${finalAnswerRaw || '-'}}$$`}
                     </ReactMarkdown>
                   </div>
                 </div>
@@ -154,45 +169,69 @@ export default function ResultPanel({ result, loading, onClose }) {
                     opacity: showSteps ? 1 : 0,
                   }}
                 >
-                  <div className="mb-6"
-                       style={{
-                         fontSize: "clamp(22px, 4vw, 34px)",
-                         fontWeight: 900,
-                         color: "var(--text-primary)",
-                         letterSpacing: "-0.02em",
-                         whiteSpace: "nowrap"
-                       }}>
-                    Step-by-Step Solution
+                  <div
+  className="mb-6"
+  style={{
+    fontSize: "clamp(22px, 4vw, 34px)",
+    fontWeight: 900,
+    color: "var(--text-primary)",
+    letterSpacing: "-0.02em",
+    whiteSpace: "nowrap"
+  }}
+>
+  Step-by-Step Solution
+
 
                     <div className="step-by-step-content prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)] leading-relaxed">
                       <ReactMarkdown
                         remarkPlugins={[remarkMath]}
                         rehypePlugins={[
-                          [rehypeKatex, {
-                            output: 'html',
-                            throwOnError: false,
-                            strict: 'ignore',
-                            trust: true,
-                          }]
+                          [
+                            rehypeKatex,
+                            {
+                              output: 'html',
+                              throwOnError: false,
+                              strict: 'ignore',
+                              trust: true,
+                              fleqn: false,
+                              macros: {
+                                "\\coth": "\\operatorname{coth}",
+                                "\\csch": "\\operatorname{csch}",
+                                "\\sech": "\\operatorname{sech}",
+                              },
+                            },
+                          ],
                         ]}
                         components={{
                           inlineMath: ({ value }) => (
                             <span className="inline-katex align-baseline mx-[0.08em] font-medium text-[1.05em]">
-                              <span dangerouslySetInnerHTML={{
-                                __html: katex.renderToString(value.trim(), { throwOnError: false, displayMode: false })
-                              }} />
+                              <span
+                                dangerouslySetInnerHTML={{
+                                  __html: katex.renderToString(value.trim(), {
+                                    throwOnError: false,
+                                    displayMode: false,
+                                  }),
+                                }}
+                              />
                             </span>
                           ),
+
                           paragraph: ({ children }) => (
                             <p className="my-4 leading-7 tracking-wide break-words [&>.inline-katex]:mx-[0.1em]">
                               {children}
                             </p>
                           ),
+
                           math: ({ value }) => (
                             <div className="my-6 overflow-x-auto">
-                              <div dangerouslySetInnerHTML={{
-                                __html: katex.renderToString(value, { throwOnError: false, displayMode: true })
-                              }} />
+                              <div
+                                dangerouslySetInnerHTML={{
+                                  __html: katex.renderToString(value, {
+                                    throwOnError: false,
+                                    displayMode: true,
+                                  }),
+                                }}
+                              />
                             </div>
                           ),
                         }}
@@ -202,14 +241,6 @@ export default function ResultPanel({ result, loading, onClose }) {
                     </div>
                   </div>
                 </div>
-
-                {/* Graph Display */}
-                {displayGraph && (
-                  <GraphDisplay 
-                    graphData={displayGraph} 
-                    title={graphTitle} 
-                  />
-                )}
 
                 <div className="feedback-bar mt-6 flex justify-center gap-4">
                   <button
@@ -241,7 +272,7 @@ export default function ResultPanel({ result, loading, onClose }) {
   );
 }
 
-// ── Helper functions (unchanged) ──
+// ── Helper functions ──
 function extractFinalAnswer(rawText) {
   if (!rawText) return '';
 
@@ -288,6 +319,7 @@ function fallbackLastLines(rawText) {
 
 function fixCommonMathGlue(text) {
   if (!text) return text;
+  // Fixes glued inline math like $v'$$ → $v'$
   return text.replace(/(\$[^\s$]{1,60}?)\$\$/g, '$1$');
 }
 
