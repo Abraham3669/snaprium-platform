@@ -3920,19 +3920,38 @@ button.w-full.py-3\.5:active {
     0 2px 12px rgba(0, 0, 0, 0.04);
 }
 
+/* BANNER SECTION */
+.banner-section {
+  padding: 5rem 0 2.8rem; /* MORE SPACE ABOVE */
+}
+
+/* Banner Wrapper */
+.banner-wrapper {
+  width: 100%;
+  max-width: 780px; /* bigger than before */
+  margin: 0 auto;
+
+  border-radius: 28px;
+  overflow: hidden;
+
+  box-shadow:
+    0 12px 38px rgba(0, 0, 0, 0.08),
+    0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
 /* Banner Image */
 .banner-image {
   width: 100%;
   height: auto;
   display: block;
-  object-fit: contain; /* keeps image sharp */
+  object-fit: contain;
   border-radius: 28px;
 }
 
 /* TABLET */
 @media (max-width: 1024px) {
   .banner-wrapper {
-    max-width: 560px;
+    max-width: 720px; /* bigger on tablet */
   }
 }
 
@@ -3940,15 +3959,17 @@ button.w-full.py-3\.5:active {
 @media (max-width: 768px) {
 
   .banner-section {
-    padding: 2.2rem 0 1.8rem;
+    padding: 4rem 0 2rem; /* strong spacing on mobile */
   }
 
   .banner-wrapper {
-    max-width: 92%;
-    border-radius: 22px;
+    width: calc(100% - 10px); /* almost full screen */
+    max-width: none;
+
+    border-radius: 18px;
   }
 
   .banner-image {
-    border-radius: 22px;
+    border-radius: 18px;
   }
 }
