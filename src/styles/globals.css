@@ -1683,13 +1683,15 @@ header.header {
 }
 
 .hero-title {
-  font-weight: 900;
-  font-size: clamp(2.8rem, 6vw, 5rem);
+  font-weight: 800;
+  font-size: clamp(2rem, 4vw, 4.5rem);
   line-height: 1.05;
-  letter-spacing: -0.05em;
-  color: var(--text-primary); /* FULLY BLACK / primary text */
-  margin-bottom: 1.5rem;
+  letter-spacing: -0.045em;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
   text-align: center;
+  max-width: 900px;
+  margin-inline: auto;
 }
 
 /* REMOVE ACCENT COLOR: or force it black */
@@ -3739,8 +3741,9 @@ button.w-full.py-3\.5:active {
   margin-top: 60px;
   padding: 24px 16px;
   text-align: center;
-  border-top: 1px solid #eaeaea;
-  background: #fff;
+
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-secondary);
 }
 
 /* Links container */
@@ -3748,7 +3751,7 @@ button.w-full.py-3\.5:active {
   display: flex;
   justify-content: center;
   align-items: center;
-  flex-wrap: wrap; /* allows wrapping on small screens */
+  flex-wrap: wrap;
   gap: 10px;
   font-size: 14px;
   margin-bottom: 10px;
@@ -3757,24 +3760,24 @@ button.w-full.py-3\.5:active {
 /* Links */
 .footer-links a {
   text-decoration: none;
-  color: #555;
+  color: var(--text-secondary);
   font-weight: 500;
   transition: color 0.2s ease;
 }
 
 .footer-links a:hover {
-  color: #111;
+  color: var(--text-primary);
 }
 
 /* Separator */
 .footer-separator {
-  color: #aaa;
+  color: var(--text-muted);
 }
 
 /* Copyright text */
 .footer p {
   font-size: 13px;
-  color: #777;
+  color: var(--text-muted);
   margin: 0;
 }
 
@@ -3786,7 +3789,7 @@ button.w-full.py-3\.5:active {
   }
 
   .footer-separator {
-    display: none; /* removes dots on mobile */
+    display: none;
   }
 
   .footer-links a {
@@ -3813,3 +3816,123 @@ button.w-full.py-3\.5:active {
 
 
 
+/* CAMERA + GALLERY CONTAINER */
+.camera-container {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 1.25rem !important;
+}
+
+/* ACTION ITEM */
+.camera-container .action-item {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.7rem !important;
+}
+
+/* LABEL */
+.camera-container .action-label {
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  color: var(--text-secondary) !important;
+  letter-spacing: -0.01em !important;
+  text-align: center !important;
+  display: block !important;
+}
+
+/* DESKTOP */
+@media (min-width: 768px) {
+
+  /* Hide ONLY camera button */
+  .camera-container .mobile-camera {
+    display: none !important;
+  }
+
+  /* Ensure gallery action is visible */
+  .camera-container .gallery-btn {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    transform: scale(1.22) !important;
+  }
+
+  /* Bigger gallery icon */
+  .camera-container .gallery-icon {
+  width: 52px !important;
+  height: 52px !important;
+  display: block !important;
+}
+
+  /* Bigger desktop label */
+  .camera-container .action-label {
+    display: block !important;
+    font-size: 1.05rem !important;
+    font-weight: 700 !important;
+  }
+
+  /* Keep centered even with one button */
+  .camera-container {
+    justify-content: center !important;
+  }
+}
+
+
+
+
+/* BANNER SECTION */
+.banner-section {
+  padding: 3.2rem 0 2.4rem; /* more space above */
+}
+
+/* Banner Wrapper */
+.banner-wrapper {
+  width: 100%;
+  max-width: 620px; /* smaller on desktop to avoid blur */
+  margin: 0 auto;
+
+  border-radius: 28px;
+  overflow: hidden;
+
+  box-shadow:
+    0 12px 38px rgba(0, 0, 0, 0.08),
+    0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+/* Banner Image */
+.banner-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain; /* keeps image sharp */
+  border-radius: 28px;
+}
+
+/* TABLET */
+@media (max-width: 1024px) {
+  .banner-wrapper {
+    max-width: 560px;
+  }
+}
+
+/* MOBILE */
+@media (max-width: 768px) {
+
+  .banner-section {
+    padding: 2.2rem 0 1.8rem;
+  }
+
+  .banner-wrapper {
+    max-width: 92%;
+    border-radius: 22px;
+  }
+
+  .banner-image {
+    border-radius: 22px;
+  }
+}
