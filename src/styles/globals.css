@@ -1692,7 +1692,23 @@ header.header {
   text-align: center;
   max-width: 900px;
   margin-inline: auto;
+
+  /* smoother wrapping */
+  text-wrap: balance;
 }
+
+
+.no-break {
+  white-space: nowrap;
+}
+
+
+
+
+
+
+
+
 
 /* REMOVE ACCENT COLOR: or force it black */
 .hero-accent {

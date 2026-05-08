@@ -48,7 +48,9 @@ export default function CameraInput({ onFileSelect, onOpenDashboard }) {
     {/* Hero Section */}
     <section className="hero">
   <div className="container text-center">
-   <h1 className="hero-title">Solve Math & Physics Instantly</h1>
+   <h1 className="hero-title">
+  <span className="no-break">Solve Math & Physics</span> Instantly
+</h1>
    
 
   
