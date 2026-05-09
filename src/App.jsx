@@ -41,10 +41,16 @@ function App() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
-  // FIXED Welcome Modal Logic - Shows ONLY ONCE per plan upgrade
+  // FIXED Welcome Modal Logic - Updated for Unlimited plan
   useEffect(() => {
-    // If user is not logged in or not on premium/pro plan, hide modal
-    if (!user?.uid || !user?.plan || (user.plan !== 'pro' && user.plan !== 'premium')) {
+    if (!user?.uid || !user?.plan) {
+      setShowWelcomeModal(false);
+      return;
+    }
+
+    const isUnlimited = user.plan === 'unlimited' || user.plan === 'premium';
+
+    if (!isUnlimited) {
       setShowWelcomeModal(false);
       return;
     }
@@ -55,7 +61,6 @@ function App() {
     if (!hasSeen) {
       console.log(`[App] Showing welcome modal for ${user.plan} plan (first time)`);
       
-      // Small delay to let real-time update settle and avoid flickering
       const timer = setTimeout(() => {
         setShowWelcomeModal(true);
         localStorage.setItem(welcomeKey, 'true');
@@ -139,13 +144,12 @@ function App() {
     }
   };
 
+  // ==================== FIXED: Daily Limit Logic ====================
   const checkSolveLimit = async () => {
     if (!user) {
       let guestSolves = parseInt(localStorage.getItem('guestSolves') || '0', 10);
       if (guestSolves >= 2) {
-        logEvent(analytics, "guest_limit_hit", {
-          solves_attempted: guestSolves + 1,
-        });
+        logEvent(analytics, "guest_limit_hit", { solves_attempted: guestSolves + 1 });
 
         toast(
           <div style={{ textAlign: 'center' }}>
@@ -190,47 +194,52 @@ function App() {
 
     const data = userSnap.data();
     const plan = data.plan || 'free';
-    const solves = data.solves || 0;
 
-    const limits = { free: 15, pro: 2000, premium: 3000 };
-    const currentLimit = limits[plan] || Infinity;
+    // Unlimited users have no limit
+    if (plan === 'unlimited' || plan === 'premium') {
+      return true;
+    }
 
-    if (solves >= currentLimit) {
+    // Free users: 10 solves per day
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const lastSolveDate = data.lastSolveDate || '';
+    let dailySolves = data.dailySolves || 0;
+
+    // Reset counter if it's a new day
+    if (lastSolveDate !== today) {
+      dailySolves = 0;
+    }
+
+    if (dailySolves >= 10) {
       logEvent(analytics, "upgrade_modal_shown", {
-        plan,
-        solves_used: solves,
-        limit: currentLimit,
+        plan: 'free',
+        daily_solves: dailySolves,
         user_type: "registered",
       });
 
-      if (plan === 'free' || plan === 'pro') {
-        setShowUpgradeModal(true);
-      } else {
-        toast.info(
-          "You've reached the maximum solves available. Contact support@snaprium.com for more options.",
-          {
-            position: "bottom-center",
-            autoClose: 8000,
-          }
-        );
-      }
+      setShowUpgradeModal(true);
       return false;
     }
 
     return true;
   };
 
+  // ==================== FIXED: Daily Counter Increment ====================
   const incrementSolveCount = async () => {
     if (!user) {
       let guestSolves = parseInt(localStorage.getItem('guestSolves') || '0', 10);
       localStorage.setItem('guestSolves', guestSolves + 1);
-    } else {
-      const userRef = doc(db, "users", user.uid);
-      await updateDoc(userRef, {
-        solves: increment(1),
-        lastSolve: serverTimestamp(),
-      });
+      return;
     }
+
+    const today = new Date().toISOString().split('T')[0];
+    const userRef = doc(db, "users", user.uid);
+
+    await updateDoc(userRef, {
+      dailySolves: increment(1),
+      lastSolveDate: today,
+      lastSolve: serverTimestamp(),
+    });
   };
 
   return (
@@ -262,11 +271,11 @@ function App() {
             snaprium
           </div>
 
-          {/* Right side: Plan Badge */}
+          {/* Right side: Plan Badge - Updated for Unlimited */}
           <div className="header-right">
-            {user && (user.plan === 'pro' || user.plan === 'premium') && (
-              <div className={`plan-badge ${user.plan}`}>
-                {user.plan === 'pro' ? 'Pro' : 'Premium'}
+            {user && (user.plan === 'unlimited' || user.plan === 'premium') && (
+              <div className={`plan-badge unlimited`}>
+                Unlimited
               </div>
             )}
 

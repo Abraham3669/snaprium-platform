@@ -3832,3 +3832,235 @@ button.w-full.py-3\.5:active {
     border-radius: 16px;
   }
 }
+
+
+
+
+
+/* Welcome Modal Styles */
+.welcome-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(12px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.welcome-modal-content {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 2.5rem 2rem;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+}
+
+.welcome-icon {
+  font-size: 4.5rem;
+  margin-bottom: 1rem;
+}
+
+.welcome-modal-content h2 {
+  font-size: 2.1rem;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.welcome-text {
+  font-size: 1.25rem;
+  margin-bottom: 1.2rem;
+}
+
+.welcome-detail {
+  font-size: 1.05rem;
+  color: var(--text-primary);
+  margin-bottom: 1.8rem;
+  line-height: 1.5;
+}
+
+.welcome-benefits ul {
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0;
+  text-align: left;
+  display: inline-block;
+}
+
+.welcome-benefits li {
+  padding: 6px 0;
+  color: var(--text-primary);
+  position: relative;
+  padding-left: 1.6rem;
+}
+
+.welcome-benefits li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #22c55e;
+  font-weight: bold;
+}
+
+.welcome-cta {
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  border: none;
+  border-radius: 16px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin: 1rem 0;
+}
+
+.welcome-note {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-top: 1rem;
+}
+
+.welcome-close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+
+
+
+
+
+
+/* ================= DASHBOARD SIDEBAR - FINAL VERSION ================= */
+
+/* ================= DASHBOARD SIDEBAR - FIXED & FULL HEIGHT ================= */
+
+.dashboard-panel {
+  position: fixed;
+  top: 0;
+  left: auto;
+  right: -280px;               /* Default closed - from right */
+  width: 280px;
+  height: 100vh !important;    /* Force full height */
+  max-height: 100vh !important;
+  background: var(--surface);
+  z-index: 2000;
+  transition: right 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+  overflow-y: auto;
+  box-shadow: -4px 0 25px rgba(0, 0, 0, 0.25);
+}
+
+/* Open state - Mobile */
+.dashboard-panel.open {
+  right: 0;
+}
+
+/* ================= DESKTOP (PC) - Left Sidebar ================= */
+@media (min-width: 1024px) {
+  .dashboard-panel {
+    left: 0 !important;
+    right: auto !important;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+    border-right: 1px solid var(--border);
+  }
+
+  /* Hide mobile stuff on desktop */
+  .overlay,
+  .mobile-only,
+  .dashboard-close-btn,
+  .snaprium-menu-btn {
+    display: none !important;
+  }
+
+  /* Push content */
+  main.pt-16 {
+    margin-left: 280px !important;
+    width: calc(100% - 280px) !important;
+  }
+
+  .snaprium-header {
+    left: 280px !important;
+    width: calc(100% - 280px) !important;
+  }
+}
+
+/* ================= MOBILE ONLY ================= */
+@media (max-width: 1023px) {
+  .dashboard-panel {
+    right: -280px;
+    box-shadow: -4px 0 25px rgba(0, 0, 0, 0.3);
+    height: 100vh !important;
+  }
+
+  .dashboard-panel.open {
+    right: 0;
+  }
+
+  /* Make sure hamburger is visible */
+  .snaprium-menu-btn {
+    display: flex !important;
+  }
+
+  /* Reset main content */
+  main.pt-16 {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  .snaprium-header {
+    left: 0 !important;
+    width: 100% !important;
+  }
+}
+
+/* ================= COMMON STYLES ================= */
+
+.dashboard-header {
+  padding: 1.5rem 1.5rem 1rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  z-index: 1;
+}
+
+.dashboard-header h2 {
+  margin: 0;
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Make Close Button Visible on Mobile */
+.dashboard-close-btn,
+.mobile-only {
+  display: block !important;
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 4px;
+  line-height: 1;
+}
+
+/* Safety */
+.App {
+  overflow-x: hidden;
+}
