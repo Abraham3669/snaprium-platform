@@ -7,104 +7,117 @@ export default function Upgrade() {
   const { user } = useAuth();
   const { openCheckout } = usePaddle();
 
-  const [upgrading, setUpgrading] = useState(null);
+  const [upgrading, setUpgrading] = useState(false);
 
-  const PRO_PRICE_ID = 'pri_01knfpxnmh74xf080p5z07x05j';
-  const PREMIUM_PRICE_ID = 'pri_01knfqbp8r1yqn4wrvq2xjh76p';
+  // ←←← Replace with your actual $5.99 Paddle Price ID
+  const UNLIMITED_PRICE_ID = 'pri_xxxxxxxxxxxx';
 
-  const handleUpgrade = (plan) => {
+  const handleUpgrade = () => {
     if (!user?.uid) {
       alert("Please sign in to upgrade.");
       return;
     }
 
-    const priceId = plan === 'pro' ? PRO_PRICE_ID : PREMIUM_PRICE_ID;
-    setUpgrading(plan);
+    setUpgrading(true);
 
-    openCheckout(priceId, user, () => {
-      setUpgrading(null);
-      console.log(`[Upgrade] Paddle checkout completed for ${plan}. Firestore real-time update will handle success UI.`);
-      
-      // No more local welcome modal here - App.jsx now handles it cleanly
-      // This prevents double modals and repeating confetti
+    openCheckout(UNLIMITED_PRICE_ID, user, () => {
+      setUpgrading(false);
+      console.log("[Upgrade] Checkout completed for Unlimited plan");
     });
   };
 
-  const currentPlan = user?.plan || 'free';
-  const isPro = currentPlan === 'pro';
-  const isPremium = currentPlan === 'premium';
+  const isUnlimited = user?.plan === 'unlimited' || user?.plan === 'premium';
 
   return (
     <div className="upgrade-page">
       <div className="upgrade-header">
-        <h2>Choose Your Plan</h2>
-        <p>Get more high-quality, exam-ready step-by-step solutions every month.</p>
-        <p style={{ color: '#e67e22', fontWeight: 'bold' }}>🧪 SANDBOX TEST MODE</p>
+        <h2>Upgrade to Unlimited</h2>
+        <p>Solve Math and Physics problems without restrictions</p>
       </div>
 
-      <div className="pricing-grid">
-        {/* Free */}
+      <div className="pricing-grid" style={{ gridTemplateColumns: "1fr", maxWidth: "480px", margin: "0 auto" }}>
+
+        {/* Free Plan */}
         <div className="pricing-card">
           <h3>Free</h3>
           <div className="plan-price">$0 <span>per month</span></div>
           <p className="plan-desc">
-            15 full step-by-step solutions monthly
+            <strong>10 solves per day</strong>
           </p>
           <p className="plan-detail">
-            Perfect for light homework help and quick checks.
+            Great for occasional help and trying out the app
           </p>
           <button className="plan-cta disabled">Current Plan</button>
         </div>
 
-        {/* Pro – MOST POPULAR */}
-        <div className="pricing-card pro">
-          <div className="popular-badge">MOST POPULAR</div>
-          <h3>Pro</h3>
+        {/* Unlimited Plan */}
+        <div className="pricing-card premium" style={{ borderColor: '#2563eb', transform: 'scale(1.04)' }}>
+          <div className="popular-badge">RECOMMENDED</div>
+          
+          <h3>Unlimited</h3>
           <div className="plan-price">
-            $9.99 <span>per month</span>
+            $5.99 <span>per month</span>
           </div>
-          <p className="plan-desc">
-            80 full step-by-step solutions monthly
-          </p>
-          <p className="plan-detail">
-            Ideal for consistent practice, assignments, and weekly exam prep.
-          </p>
-          <button 
-            className="plan-cta primary"
-            onClick={() => handleUpgrade('pro')}
-            disabled={upgrading === 'pro' || isPro}
-          >
-            {upgrading === 'pro' ? 'Processing...' : isPro ? 'Active' : 'Get Pro Access'}
-          </button>
-        </div>
 
-        {/* Premium */}
-        <div className="pricing-card premium">
-          <h3>Premium</h3>
-          <div className="plan-price">
-            $14.99 <span>per month</span>
-          </div>
-          <p className="plan-desc">
-            170 full step-by-step solutions monthly
+          <p className="plan-desc" style={{ fontSize: '1.15rem', fontWeight: '600' }}>
+            Solve as many problems as you need
           </p>
-          <p className="plan-detail">
-            Built for intensive revision, past questions, and heavy coursework.
-          </p>
+
+          <ul className="plan-features">
+            <li>
+              <CheckIcon />
+              Solve anytime, anywhere — no daily limits
+            </li>
+            <li>
+              <CheckIcon />
+              Perfect for heavy study sessions and exam preparation
+            </li>
+            <li>
+              <CheckIcon />
+              Full step-by-step explanations for Math & Physics
+            </li>
+            <li>
+              <CheckIcon />
+              Continue learning without interruptions
+            </li>
+          </ul>
+
           <button 
             className="plan-cta primary"
-            onClick={() => handleUpgrade('premium')}
-            disabled={upgrading === 'premium' || isPremium}
+            onClick={handleUpgrade}
+            disabled={upgrading || isUnlimited}
           >
-            {upgrading === 'premium' ? 'Processing...' : isPremium ? 'Active' : 'Unlock Maximum Access'}
+            {upgrading 
+              ? 'Processing...' 
+              : isUnlimited 
+                ? '✅ Unlimited Active' 
+                : 'Upgrade to Unlimited — $5.99/month'}
           </button>
+
+          <p className="billed-text">Cancel anytime • Monthly subscription</p>
         </div>
       </div>
 
-      {/* FAQ section */}
-      <div className="upgrade-faq">
-        <h3>Frequently Asked Questions</h3>
-        <p>Have questions? <a href="mailto:support@snaprium.com">Contact support</a>.</p>
+      <div className="upgrade-footer">
+        <p>Most students upgrade when preparing for tests or during busy weeks</p>
       </div>
     </div>
   );
 }
+
+// Simple SVG Check Icon (Professional & clean)
+const CheckIcon = () => (
+  <svg 
+    width="20" 
+    height="20" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="#10b981" 
+    strokeWidth="3" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    style={{ marginRight: '10px', flexShrink: 0 }}
+  >
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
