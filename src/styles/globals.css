@@ -3943,11 +3943,12 @@ button.w-full.py-3\.5:active {
   }
 
   .banner-wrapper {
-    width: calc(100% - 8px);  /* nearly full width */
+    width: calc(100% - 1px); /* even bigger */
     max-width: 100%;
     margin: 0 auto;
 
     border-radius: 16px;
+    overflow: hidden;
   }
 
   .banner-image {
