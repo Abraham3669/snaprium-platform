@@ -3939,21 +3939,22 @@ button.w-full.py-3\.5:active {
 @media (max-width: 768px) {
 
   .banner-section {
-    padding: 5rem 0 2.5rem;
+    padding: 4rem 0 2rem;
   }
 
   .banner-wrapper {
-    width: 100vw;  
-    max-width: none;
-
-    margin-left: calc(-50vw + 50%);
+    width: calc(100% - 8px);  /* nearly full width */
+    max-width: 100%;
+    margin: 0 auto;
 
     border-radius: 16px;
-
-    transform: scale(1.05); /* makes it feel BIGGER */
   }
 
   .banner-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
     border-radius: 16px;
   }
 }
