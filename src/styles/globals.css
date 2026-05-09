@@ -3903,16 +3903,16 @@ button.w-full.py-3\.5:active {
 
 /* BANNER SECTION */
 .banner-section {
-  padding: 3.2rem 0 2.4rem; /* more space above */
+  padding: 5rem 0 2.5rem;
 }
 
-/* Banner Wrapper */
+/* DEFAULT (DESKTOP FIRST - SMALLER) */
 .banner-wrapper {
   width: 100%;
-  max-width: 620px; /* smaller on desktop to avoid blur */
+  max-width: 600px;   /* smaller on desktop */
   margin: 0 auto;
 
-  border-radius: 28px;
+  border-radius: 26px;
   overflow: hidden;
 
   box-shadow:
@@ -3920,56 +3920,40 @@ button.w-full.py-3\.5:active {
     0 2px 12px rgba(0, 0, 0, 0.04);
 }
 
-/* BANNER SECTION */
-.banner-section {
-  padding: 5rem 0 2.8rem; /* MORE SPACE ABOVE */
-}
-
-/* Banner Wrapper */
-.banner-wrapper {
-  width: 100%;
-  max-width: 780px; /* bigger than before */
-  margin: 0 auto;
-
-  border-radius: 28px;
-  overflow: hidden;
-
-  box-shadow:
-    0 12px 38px rgba(0, 0, 0, 0.08),
-    0 2px 12px rgba(0, 0, 0, 0.04);
-}
-
-/* Banner Image */
 .banner-image {
   width: 100%;
   height: auto;
   display: block;
-  object-fit: contain;
-  border-radius: 28px;
+  object-fit: cover;
+  border-radius: 26px;
 }
 
 /* TABLET */
 @media (max-width: 1024px) {
   .banner-wrapper {
-    max-width: 720px; /* bigger on tablet */
+    max-width: 680px;
   }
 }
 
-/* MOBILE */
+/* MOBILE (BIGGER + MORE IMPACT) */
 @media (max-width: 768px) {
 
   .banner-section {
-    padding: 4rem 0 2rem; /* strong spacing on mobile */
+    padding: 5rem 0 2.5rem;
   }
 
   .banner-wrapper {
-    width: calc(100% - 10px); /* almost full screen */
+    width: 100vw;  
     max-width: none;
 
-    border-radius: 18px;
+    margin-left: calc(-50vw + 50%);
+
+    border-radius: 16px;
+
+    transform: scale(1.05); /* makes it feel BIGGER */
   }
 
   .banner-image {
-    border-radius: 18px;
+    border-radius: 16px;
   }
 }
