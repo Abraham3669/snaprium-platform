@@ -4070,20 +4070,19 @@ body {
 
 
 
-/* ================= STRONG BALANCED CONTENT (Sidebar + Right Edge) ================= */
+/* ================= STRONG BALANCED CONTENT - DESKTOP ONLY ================= */
 
 @media (min-width: 1024px) {
   
   main.pt-16,
   main {
-    margin-left: 280px !important;
+    margin-left: 200px !important;
     width: calc(100% - 280px) !important;
-    padding-left: 40px !important;     /* Left breathing space */
-    padding-right: 40px !important;    /* Right breathing space */
+    padding-left: 40px !important;
+    padding-right: 40px !important;
     box-sizing: border-box !important;
   }
 
-  /* Header alignment */
   .snaprium-header {
     left: 280px !important;
     width: calc(100% - 280px) !important;
@@ -4092,19 +4091,54 @@ body {
     box-sizing: border-box !important;
   }
 
-  /* Optional: Limit max content width for very wide screens */
-  main.pt-16 > div {
+  /* Optional nice centering for large screens */
+  main.pt-16 > div,
+  .upgrade-page > div,
+  .result-panel > div {
     max-width: 1100px !important;
-    margin: 0 auto !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
   }
 }
 
-/* Override any previous conflicting rules */
-main.pt-16,
-main,
-.snaprium-header {
-  left: auto !important;
-  margin-left: 200px !important;
+
+
+
+/* ================= MOBILE VISIBILITY FIX ================= */
+
+@media (max-width: 1023px) {
+
+  /* Make sure sidebar works normally */
+  .dashboard-panel {
+    right: -280px;
+    left: auto;
+  }
+
+  .dashboard-panel.open {
+    right: 0;
+  }
+
+  /* Hamburger Button */
+  .snaprium-menu-btn {
+    display: flex !important;
+  }
+
+  /* Close Button - Make it visible on mobile */
+  .dashboard-close-btn.mobile-only,
+  .dashboard-close-btn {
+    display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  /* Reset content on mobile */
+  main,
+  main.pt-16,
+  .upgrade-page,
+  .result-panel {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
 }
 
 
@@ -4164,3 +4198,10 @@ main,
     display: none !important;
   }
 }
+
+
+
+
+
+
+
