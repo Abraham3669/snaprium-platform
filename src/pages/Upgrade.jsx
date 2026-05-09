@@ -42,8 +42,8 @@ export default function Upgrade() {
           <h3>Free</h3>
           <div className="plan-price">$0 <span>per month</span></div>
           <p className="plan-desc">
-            <strong>10 solves per day</strong>
-          </p>
+  <strong>10 solves per day</strong>
+</p>
           <p className="plan-detail">
             Great for occasional help and trying out the app
           </p>
@@ -59,9 +59,9 @@ export default function Upgrade() {
             $5.99 <span>per month</span>
           </div>
 
-          <p className="plan-desc" style={{ fontSize: '1.15rem', fontWeight: '600' }}>
-            Solve as many problems as you need
-          </p>
+          <p className="plan-desc">
+  Solve as many problems as you need
+</p>
 
           <ul className="plan-features">
             <li>
