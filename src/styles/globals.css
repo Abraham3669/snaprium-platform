@@ -3946,38 +3946,42 @@ button.w-full.py-3\.5:active {
 
 /* ================= DASHBOARD SIDEBAR - FINAL VERSION ================= */
 
-/* ================= DASHBOARD SIDEBAR - FIXED & FULL HEIGHT ================= */
+/* ================= DASHBOARD SIDEBAR - ULTIMATE VERCEL FIX ================= */
 
 .dashboard-panel {
-  position: fixed;
-  top: 0;
-  left: auto;
-  right: -280px;               /* Default closed - from right */
-  width: 280px;
-  height: 100vh !important;    /* Force full height */
+  position: fixed !important;
+  top: 0 !important;
+  width: 280px !important;
+  height: 100vh !important;
   max-height: 100vh !important;
-  background: var(--surface);
-  z-index: 2000;
-  transition: right 0.4s cubic-bezier(0.32, 0.72, 0, 1);
-  overflow-y: auto;
-  box-shadow: -4px 0 25px rgba(0, 0, 0, 0.25);
+  background: var(--surface) !important;
+  z-index: 9999 !important;
+  overflow-y: auto !important;
+  box-sizing: border-box !important;
 }
 
-/* Open state - Mobile */
+/* Mobile Default - Slide from Right */
+.dashboard-panel {
+  left: auto !important;
+  right: -280px !important;
+  box-shadow: -4px 0 25px rgba(0, 0, 0, 0.25) !important;
+}
+
 .dashboard-panel.open {
-  right: 0;
+  right: 0 !important;
 }
 
-/* ================= DESKTOP (PC) - Left Sidebar ================= */
+/* ================= DESKTOP - VERY STRONG LEFT SIDEBAR ================= */
 @media (min-width: 1024px) {
   .dashboard-panel {
     left: 0 !important;
     right: auto !important;
-    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
-    border-right: 1px solid var(--border);
+    transform: none !important;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15) !important;
+    border-right: 1px solid var(--border) !important;
   }
 
-  /* Hide mobile stuff on desktop */
+  /* Force hide mobile elements */
   .overlay,
   .mobile-only,
   .dashboard-close-btn,
@@ -3985,39 +3989,49 @@ button.w-full.py-3\.5:active {
     display: none !important;
   }
 
-  /* Push content */
-  main.pt-16 {
+  /* FORCE CONTENT SHIFT */
+  main.pt-16,
+  main {
     margin-left: 280px !important;
     width: calc(100% - 280px) !important;
+    padding-left: 0 !important;
+    left: 280px !important;
   }
 
   .snaprium-header {
     left: 280px !important;
     width: calc(100% - 280px) !important;
+    padding-left: 1.5rem !important;
+  }
+
+  /* Extra body/html safety */
+  html, body, .App {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
   }
 }
 
 /* ================= MOBILE ONLY ================= */
 @media (max-width: 1023px) {
   .dashboard-panel {
-    right: -280px;
-    box-shadow: -4px 0 25px rgba(0, 0, 0, 0.3);
-    height: 100vh !important;
+    right: -280px !important;
+    left: auto !important;
+    box-shadow: -4px 0 25px rgba(0, 0, 0, 0.3) !important;
   }
 
   .dashboard-panel.open {
-    right: 0;
+    right: 0 !important;
   }
 
-  /* Make sure hamburger is visible */
   .snaprium-menu-btn {
     display: flex !important;
   }
 
-  /* Reset main content */
-  main.pt-16 {
+  main.pt-16,
+  main {
     margin-left: 0 !important;
     width: 100% !important;
+    left: 0 !important;
   }
 
   .snaprium-header {
@@ -4026,41 +4040,127 @@ button.w-full.py-3\.5:active {
   }
 }
 
-/* ================= COMMON STYLES ================= */
+/* ================= COMMON ================= */
 
 .dashboard-header {
-  padding: 1.5rem 1.5rem 1rem;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: sticky;
-  top: 0;
-  background: var(--surface);
-  z-index: 1;
+  padding: 1.5rem 1.5rem 1rem !important;
+  border-bottom: 1px solid var(--border) !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  position: sticky !important;
+  top: 0 !important;
+  background: var(--surface) !important;
+  z-index: 1 !important;
 }
 
-.dashboard-header h2 {
-  margin: 0;
-  font-size: 1.45rem;
-  font-weight: 700;
-  color: var(--text-primary);
+/* Safety Reset */
+.App, 
+.App > div:first-child, 
+html, 
+body {
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden !important;
+  box-sizing: border-box !important;
 }
 
-/* Make Close Button Visible on Mobile */
-.dashboard-close-btn,
-.mobile-only {
-  display: block !important;
-  background: none;
-  border: none;
-  font-size: 1.8rem;
-  cursor: pointer;
-  color: var(--text-secondary);
-  padding: 4px;
-  line-height: 1;
+
+
+
+
+
+/* ================= STRONG BALANCED CONTENT (Sidebar + Right Edge) ================= */
+
+@media (min-width: 1024px) {
+  
+  main.pt-16,
+  main {
+    margin-left: 280px !important;
+    width: calc(100% - 280px) !important;
+    padding-left: 40px !important;     /* Left breathing space */
+    padding-right: 40px !important;    /* Right breathing space */
+    box-sizing: border-box !important;
+  }
+
+  /* Header alignment */
+  .snaprium-header {
+    left: 280px !important;
+    width: calc(100% - 280px) !important;
+    padding-left: 40px !important;
+    padding-right: 40px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Optional: Limit max content width for very wide screens */
+  main.pt-16 > div {
+    max-width: 1100px !important;
+    margin: 0 auto !important;
+  }
 }
 
-/* Safety */
-.App {
-  overflow-x: hidden;
+/* Override any previous conflicting rules */
+main.pt-16,
+main,
+.snaprium-header {
+  left: auto !important;
+  margin-left: 200px !important;
+}
+
+
+
+
+
+
+
+/* ================= CLOSE BUTTON - CLEAN & VISIBLE ================= */
+
+.dashboard-close-btn {
+  position: absolute !important;
+  top: 1.25rem !important;
+  right: 1.25rem !important;
+  width: 40px !important;
+  height: 40px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;        /* Removed white card */
+  border: none !important;
+  color: var(--text-primary) !important;     /* Works in both light & dark */
+  cursor: pointer !important;
+  z-index: 10 !important;
+  padding: 4px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transition: all 0.25s ease !important;
+}
+
+.dashboard-close-btn:hover {
+  color: var(--accent) !important;
+  transform: rotate(90deg) !important;
+}
+
+/* Make the X icon bold and clear */
+.dashboard-close-btn svg {
+  width: 32px !important;
+  height: 32px !important;
+  stroke: var(--text-primary) !important;
+  stroke-width: 3 !important;
+}
+
+/* Extra force for mobile */
+@media (max-width: 1023px) {
+  .dashboard-close-btn.mobile-only {
+    display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+}
+
+/* Hide completely on Desktop */
+@media (min-width: 1024px) {
+  .dashboard-close-btn,
+  .dashboard-close-btn.mobile-only {
+    display: none !important;
+  }
 }
