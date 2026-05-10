@@ -161,18 +161,7 @@ export default function CameraInput({ onFileSelect, onOpenDashboard }) {
 
 
 
-{/* Banner Section */}
-<section className="banner-section">
-  <div className="container">
-    <div className="banner-wrapper">
-      <img
-        src={bannerImage}
-        alt="Snaprium Banner"
-        className="banner-image"
-      />
-    </div>
-  </div>
-</section>
+
 
 
 
@@ -235,6 +224,20 @@ export default function CameraInput({ onFileSelect, onOpenDashboard }) {
 
   </div>
 </div>
+</section>
+
+
+{/* Banner Section */}
+<section className="banner-section">
+  <div className="container">
+    <div className="banner-wrapper">
+      <img
+        src={bannerImage}
+        alt="Snaprium Banner"
+        className="banner-image"
+      />
+    </div>
+  </div>
 </section>
 
 
