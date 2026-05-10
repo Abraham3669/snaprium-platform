@@ -4205,3 +4205,121 @@ body {
 
 
 
+
+
+
+
+/* ================= AUTH PAGES - WIDER ON DESKTOP ================= */
+
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background: var(--background, #f8f9fa);
+  width: 100%;
+}
+
+/* Main Card */
+.auth-container {
+  background: var(--surface);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border);
+  
+  /* Width Control */
+  max-width: 420px;           /* Mobile / Small screens */
+  width: 100%;
+  padding: 3rem 2.5rem;
+  margin: 2rem auto;
+}
+
+/* Make it wider on PC / Desktop */
+@media (min-width: 1024px) {
+  .auth-container {
+    max-width: 480px;        /* Wider on desktop */
+    padding: 3.5rem 3rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .auth-container {
+    max-width: 520px;        /* Even wider on large monitors */
+  }
+}
+
+/* Form Elements - Scale nicely */
+.input-field,
+.btn-google,
+.btn-primary {
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 1.02rem;
+}
+
+.password-wrapper .input-field {
+  padding-right: 75px;
+}
+
+/* Minor spacing improvements */
+.auth-container h1 {
+  font-size: 2.25rem;
+}
+
+@media (min-width: 1024px) {
+  .auth-container h1 {
+    font-size: 2.4rem;
+  }
+}
+
+
+
+
+
+
+.user-section {
+  padding: 1.5rem 1.5rem 1.2rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 1rem;
+}
+
+.user-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--border);
+}
+
+.user-avatar-placeholder {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.user-name {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+
+.user-email {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}

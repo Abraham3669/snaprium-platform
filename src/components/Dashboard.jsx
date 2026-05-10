@@ -29,57 +29,67 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
           <h2>Dashboard</h2>
 
           {/* Close button - Only visible on mobile */}
-         {/* Close button - Only visible on mobile */}
-<button 
-  className="dashboard-close-btn mobile-only" 
-  onClick={onClose} 
-  aria-label="Close Dashboard"
->
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-    <line x1="18" y1="6" x2="6" y2="18" />
-    <line x1="6" y1="6" x2="18" y2="18" />
-  </svg>
-</button>
+          <button 
+            className="dashboard-close-btn mobile-only" 
+            onClick={onClose} 
+            aria-label="Close Dashboard"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
         </div>
 
         <div className="dashboard-content">
-          {/* User Section */}
+          {/* User Section - Professional Layout */}
           {user ? (
             <div className="user-section">
-              {user.photoURL && (
-                <img
-                  src={user.photoURL}
-                  alt="Profile"
-                  className="user-avatar"
-                  width={48}
-                  height={48}
-                />
-              )}
+              <div className="user-profile">
+                {user.photoURL ? (
+                  <img
+                    src={user.photoURL}
+                    alt="Profile"
+                    className="user-avatar"
+                    width={64}
+                    height={64}
+                  />
+                ) : (
+                  <div className="user-avatar-placeholder">
+                    {user.displayName?.[0] || user.email?.[0]?.toUpperCase() || 'U'}
+                  </div>
+                )}
 
-              <div className="user-info">
-                <span className="user-name">
-                  {user.displayName || user.email?.split('@')[0]}
-                </span>
-
-                <button
-                  className="signout-btn dashboard-btn"
-                  onClick={async () => {
-                    try {
-                      await signOutUser();
-                      if (window.innerWidth < 1024) onClose();
-                    } catch (error) {
-                      console.error("Sign out failed:", error);
-                    }
-                  }}
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                    <polyline points="16 17 21 12 16 7" />
-                    <line x1="21" y1="12" x2="9" y2="12" />
-                  </svg>
-                  Sign Out
-                </button>
+                <div className="user-info">
+                  <span className="user-name">
+                    {user.displayName || user.email?.split('@')[0]}
+                  </span>
+                  {user.email && (
+                    <span className="user-email">
+                      {user.email}
+                    </span>
+                  )}
+                </div>
               </div>
+
+              <button
+                className="signout-btn dashboard-btn"
+                onClick={async () => {
+                  try {
+                    await signOutUser();
+                    if (window.innerWidth < 1024) onClose();
+                  } catch (error) {
+                    console.error("Sign out failed:", error);
+                  }
+                }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                Sign Out
+              </button>
             </div>
           ) : (
             <button
