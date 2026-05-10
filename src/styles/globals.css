@@ -3958,16 +3958,43 @@ button.w-full.py-3\.5:active {
 
 
 .shimmer-bar {
-  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%) !important;
-  background-size: 200% 100% !important;
-  animation: shimmer 1.5s infinite linear !important;
+  position: relative;
+  overflow: hidden;
+  background: #e5e7eb;
+  border-radius: 16px;
+}
+
+.shimmer-bar::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 150%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,0.9),
+    transparent
+  );
+  animation: snapriumShimmer 1.4s infinite;
 }
 
 .dark .shimmer-bar {
-  background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%) !important;
+  background: #374151;
 }
 
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+.dark .shimmer-bar::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,0.15),
+    transparent
+  );
+}
+
+@keyframes snapriumShimmer {
+  100% {
+    left: 150%;
+  }
 }
