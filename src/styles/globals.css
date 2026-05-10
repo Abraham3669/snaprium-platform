@@ -3957,16 +3957,16 @@ button.w-full.py-3\.5:active {
 
 
 
-/* Modern Shimmer Bars */
-.shimmer-box {
-  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite linear;
-  border-radius: 12px;
+/* ================= STRONG SHIMMER BARS ================= */
+.shimmer-bar {
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%) !important;
+  background-size: 200% 100% !important;
+  animation: shimmer 1.4s infinite linear !important;
+  border-radius: 9999px !important;
 }
 
-.dark .shimmer-box {
-  background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+.dark .shimmer-bar {
+  background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%) !important;
 }
 
 @keyframes shimmer {

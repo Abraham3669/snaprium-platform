@@ -86,17 +86,16 @@ export default function ResultPanel({ result, loading, onClose }) {
 
                <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
                    {loading ? (
-            /* Modern Multiple Shimmer Bars - No Text */
-            <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden min-h-[320px] p-8">
-              <div className="space-y-6">
-                {/* Multiple shimmer bars like modern apps */}
-                <div className="shimmer-box w-full h-6 rounded-xl"></div>
-                <div className="shimmer-box w-[85%] h-6 rounded-xl"></div>
-                <div className="shimmer-box w-[92%] h-6 rounded-xl"></div>
-                <div className="shimmer-box w-[70%] h-6 rounded-xl"></div>
+            /* Strong Modern Shimmer Bars */
+            <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden min-h-[340px] p-8 flex flex-col justify-center">
+              <div className="space-y-5">
+                <div className="shimmer-bar w-full h-7 rounded-2xl"></div>
+                <div className="shimmer-bar w-[88%] h-7 rounded-2xl"></div>
+                <div className="shimmer-bar w-[95%] h-7 rounded-2xl"></div>
+                <div className="shimmer-bar w-[72%] h-7 rounded-2xl"></div>
                 
-                <div className="pt-6">
-                  <div className="shimmer-box w-full h-10 rounded-2xl"></div>
+                <div className="pt-8">
+                  <div className="shimmer-bar w-full h-12 rounded-2xl"></div>
                 </div>
               </div>
             </div>
