@@ -86,15 +86,13 @@ export default function ResultPanel({ result, loading, onClose }) {
 
                  <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
                     {loading ? (
-            /* Inline Shimmer Bars - No Tailwind Dependency */
-            <div 
-              className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden min-h-[340px] p-8 flex flex-col justify-center"
-            >
+            /* Inline Shimmer - Adapts to Light & Dark Mode */
+            <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden min-h-[340px] p-8 flex flex-col justify-center">
               <div className="space-y-6">
                 <div style={{
                   height: '32px',
                   borderRadius: '9999px',
-                  background: 'linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%)',
+                  background: 'linear-gradient(90deg, var(--surface) 25%, #e2e8f0 50%, var(--surface) 75%)',
                   backgroundSize: '200% 100%',
                   animation: 'shimmer 1.5s infinite linear'
                 }}></div>
@@ -102,7 +100,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                   height: '32px',
                   width: '88%',
                   borderRadius: '9999px',
-                  background: 'linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%)',
+                  background: 'linear-gradient(90deg, var(--surface) 25%, #e2e8f0 50%, var(--surface) 75%)',
                   backgroundSize: '200% 100%',
                   animation: 'shimmer 1.5s infinite linear'
                 }}></div>
@@ -110,7 +108,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                   height: '32px',
                   width: '95%',
                   borderRadius: '9999px',
-                  background: 'linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%)',
+                  background: 'linear-gradient(90deg, var(--surface) 25%, #e2e8f0 50%, var(--surface) 75%)',
                   backgroundSize: '200% 100%',
                   animation: 'shimmer 1.5s infinite linear'
                 }}></div>
@@ -118,7 +116,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                   height: '32px',
                   width: '72%',
                   borderRadius: '9999px',
-                  background: 'linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%)',
+                  background: 'linear-gradient(90deg, var(--surface) 25%, #e2e8f0 50%, var(--surface) 75%)',
                   backgroundSize: '200% 100%',
                   animation: 'shimmer 1.5s infinite linear'
                 }}></div>
