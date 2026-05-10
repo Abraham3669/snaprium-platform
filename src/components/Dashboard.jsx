@@ -4,46 +4,39 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { useNavigate } from "react-router-dom";
 
 export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
-  const { user, signOutUser } = useAuth();
+  const { user, signOutUser } = useAuth();  // ← FIXED: added signOutUser here
   const navigate = useNavigate();
 
+  if (!isOpen) return null;
+
   const handleNavigate = (path) => {
+    onClose();
     navigate(path);
-    if (window.innerWidth < 1024) onClose(); // Only close on mobile
   };
 
-  const isSubscribed = user && (user.plan === 'unlimited' || user.plan === 'premium');
+  // Button text changes based on subscription
+  const isSubscribed = user && (user.subscription === 'pro' || user.subscription === 'premium');
   const buttonText = isSubscribed ? 'Manage Subscription' : 'Upgrade Plan';
 
   return (
     <>
-      {/* Overlay - Only shown on mobile */}
-      <div 
-        className="overlay" 
-        onClick={onClose}
-        style={{ display: window.innerWidth < 1024 && isOpen ? 'block' : 'none' }}
-      />
+      <div className="overlay active" onClick={onClose}></div>
 
-      <aside className={`dashboard-panel ${isOpen ? 'open' : ''}`}>
+      <aside className="dashboard-panel open" key={user ? user.uid : "guest"}>
         <div className="dashboard-header">
           <h2>Dashboard</h2>
 
-          {/* Close button - Only visible on mobile */}
-         {/* Close button - Only visible on mobile */}
-<button 
-  className="dashboard-close-btn mobile-only" 
-  onClick={onClose} 
-  aria-label="Close Dashboard"
->
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-    <line x1="18" y1="6" x2="6" y2="18" />
-    <line x1="6" y1="6" x2="18" y2="18" />
-  </svg>
-</button>
+          {/* Close Button */}
+          <button id="closeDashboard" onClick={onClose} aria-label="Close">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
         </div>
 
         <div className="dashboard-content">
-          {/* User Section */}
+          {/* 1. User Section or Sign In */}
           {user ? (
             <div className="user-section">
               {user.photoURL && (
@@ -58,15 +51,16 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
 
               <div className="user-info">
                 <span className="user-name">
-                  {user.displayName || user.email?.split('@')[0]}
+                  {user.displayName || user.email}
                 </span>
 
                 <button
                   className="signout-btn dashboard-btn"
                   onClick={async () => {
                     try {
-                      await signOutUser();
-                      if (window.innerWidth < 1024) onClose();
+                      await signOutUser();  // now available
+                      onClose();
+                      navigate('/login');   // redirect to login page after sign out
                     } catch (error) {
                       console.error("Sign out failed:", error);
                     }
@@ -95,7 +89,7 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
             </button>
           )}
 
-          {/* Upgrade Button */}
+          {/* Upgrade / Manage Subscription Button – only for logged-in users */}
           {user && (
             <button
               className="upgrade-btn dashboard-btn"
@@ -104,7 +98,7 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
               </svg>
-              {buttonText}
+              {isSubscribed ? 'Manage Subscription' : 'Upgrade Plan'}
             </button>
           )}
 
