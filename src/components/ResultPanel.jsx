@@ -89,6 +89,14 @@ export default function ResultPanel({ result, loading, onClose }) {
             /* Final Shimmer Version */
             <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden min-h-[340px] p-8 flex flex-col justify-center">
               <div className="space-y-6">
+  <div
+    style={{
+      width: "100%",
+      height: "40px",
+      background: "red",
+      borderRadius: "16px"
+    }}
+  ></div>
                 <div className="shimmer-bar w-full h-8 rounded-2xl"></div>
                 <div className="shimmer-bar w-[88%] h-8 rounded-2xl"></div>
                 <div className="shimmer-bar w-[95%] h-8 rounded-2xl"></div>
