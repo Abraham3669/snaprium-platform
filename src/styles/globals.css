@@ -3957,17 +3957,3 @@ button.w-full.py-3\.5:active {
 
 
 
-.shimmer-bar {
-  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%) !important;
-  background-size: 200% 100% !important;
-  animation: shimmer 1.5s infinite linear !important;
-}
-
-.dark .shimmer-bar {
-  background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%) !important;
-}
-
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}

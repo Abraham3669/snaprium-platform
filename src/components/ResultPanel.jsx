@@ -84,23 +84,21 @@ export default function ResultPanel({ result, loading, onClose }) {
 
         </div>
 
-                            <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
+               <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
           {loading ? (
-            /* Strong Shimmer Bars - Final Answer Area */
-            <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden min-h-[340px] p-8 flex flex-col justify-center">
-              <div className="space-y-6">
-                <div className="shimmer-bar w-full h-8 rounded-2xl"></div>
-                <div className="shimmer-bar w-[88%] h-8 rounded-2xl"></div>
-                <div className="shimmer-bar w-[95%] h-8 rounded-2xl"></div>
-                <div className="shimmer-bar w-[72%] h-8 rounded-2xl"></div>
-                
-                <div className="pt-8">
-                  <div className="shimmer-bar w-full h-12 rounded-2xl"></div>
-                </div>
+            /* Modern Shimmer Effect on Final Answer Box Area */
+            <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden min-h-[280px] flex items-center justify-center">
+              <div className="text-center px-8">
+                <div className="shimmer-box mx-auto w-56 h-16 rounded-2xl mb-6"></div>
+                <p className="text-xl font-medium text-gray-500 dark:text-gray-400">
+                  Solving your question...
+                </p>
               </div>
             </div>
           ) : (
-            result?.text && (
+            result?.text &&
+             
+            revealReady && (
               <>
                 <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden">
                   <h3
