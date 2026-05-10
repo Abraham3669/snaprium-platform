@@ -28,7 +28,6 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
         <div className="dashboard-header">
           <h2>Dashboard</h2>
 
-          {/* Close button - Only visible on mobile */}
           <button 
             className="dashboard-close-btn mobile-only" 
             onClick={onClose} 
@@ -42,33 +41,24 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
         </div>
 
         <div className="dashboard-content">
-          {/* User Section - Professional Layout */}
+          {/* User Section - Side by Side Layout */}
           {user ? (
             <div className="user-section">
               <div className="user-profile">
-                {user.photoURL ? (
+                {user.photoURL && (
                   <img
                     src={user.photoURL}
                     alt="Profile"
                     className="user-avatar"
-                    width={64}
-                    height={64}
+                    width={48}
+                    height={48}
                   />
-                ) : (
-                  <div className="user-avatar-placeholder">
-                    {user.displayName?.[0] || user.email?.[0]?.toUpperCase() || 'U'}
-                  </div>
                 )}
 
                 <div className="user-info">
                   <span className="user-name">
                     {user.displayName || user.email?.split('@')[0]}
                   </span>
-                  {user.email && (
-                    <span className="user-email">
-                      {user.email}
-                    </span>
-                  )}
                 </div>
               </div>
 
