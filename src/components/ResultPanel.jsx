@@ -85,14 +85,19 @@ export default function ResultPanel({ result, loading, onClose }) {
         </div>
 
                <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
-          {loading ? (
-            /* Modern Shimmer Effect on Final Answer Box Area */
-            <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden min-h-[280px] flex items-center justify-center">
-              <div className="text-center px-8">
-                <div className="shimmer-box mx-auto w-56 h-16 rounded-2xl mb-6"></div>
-                <p className="text-xl font-medium text-gray-500 dark:text-gray-400">
-                  Solving your question...
-                </p>
+                   {loading ? (
+            /* Modern Multiple Shimmer Bars - No Text */
+            <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden min-h-[320px] p-8">
+              <div className="space-y-6">
+                {/* Multiple shimmer bars like modern apps */}
+                <div className="shimmer-box w-full h-6 rounded-xl"></div>
+                <div className="shimmer-box w-[85%] h-6 rounded-xl"></div>
+                <div className="shimmer-box w-[92%] h-6 rounded-xl"></div>
+                <div className="shimmer-box w-[70%] h-6 rounded-xl"></div>
+                
+                <div className="pt-6">
+                  <div className="shimmer-box w-full h-10 rounded-2xl"></div>
+                </div>
               </div>
             </div>
           ) : (
