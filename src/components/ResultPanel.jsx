@@ -86,16 +86,16 @@ export default function ResultPanel({ result, loading, onClose }) {
 
                <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
                    {loading ? (
-            /* Strong Modern Shimmer Bars */
+            /* STRONG SHIMMER BARS - Final Answer Area */
             <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden min-h-[340px] p-8 flex flex-col justify-center">
-              <div className="space-y-5">
-                <div className="shimmer-bar w-full h-7 rounded-2xl"></div>
-                <div className="shimmer-bar w-[88%] h-7 rounded-2xl"></div>
-                <div className="shimmer-bar w-[95%] h-7 rounded-2xl"></div>
-                <div className="shimmer-bar w-[72%] h-7 rounded-2xl"></div>
+              <div className="space-y-6">
+                <div className="shimmer-bar w-full h-8 rounded-2xl"></div>
+                <div className="shimmer-bar w-[90%] h-8 rounded-2xl"></div>
+                <div className="shimmer-bar w-[82%] h-8 rounded-2xl"></div>
+                <div className="shimmer-bar w-[95%] h-8 rounded-2xl"></div>
                 
-                <div className="pt-8">
-                  <div className="shimmer-bar w-full h-12 rounded-2xl"></div>
+                <div className="pt-6">
+                  <div className="shimmer-bar w-full h-14 rounded-2xl"></div>
                 </div>
               </div>
             </div>
