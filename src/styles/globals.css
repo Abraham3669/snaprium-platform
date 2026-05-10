@@ -3998,3 +3998,11 @@ button.w-full.py-3\.5:active {
     left: 150%;
   }
 }
+
+
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
