@@ -53,7 +53,7 @@ export default function ResultPanel({ result, loading, onClose }) {
     }
   }, [loading, result?.text]);
 
-  if (!result?.image) return null;
+  if (!loading && !result?.image) return null;
 
   const fullText = result.text || '';
   const preparedSteps = prepareMathForKaTeX(fullText);
