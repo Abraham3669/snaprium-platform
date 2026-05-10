@@ -81,37 +81,27 @@ export default function ResultPanel({ result, loading, onClose }) {
         <div className="image-wrapper relative">
           <img className="result-image" src={result.image} alt="Cropped preview" />
 
-          {loading && !scanFinished && (
-            <div className="scan-overlay absolute inset-0 pointer-events-none">
-              <div className="scan-grid absolute inset-0"></div>
-              <div className="scan-line absolute"></div>
 
-              <div className="scan-corners absolute inset-0">
-                <span className="corner-tl"></span>
-                <span className="corner-tr"></span>
-                <span className="corner-bl"></span>
-                <span className="corner-br"></span>
-              </div>
-            </div>
-          )}
         </div>
 
-        <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
+                 <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
           {loading ? (
-            <div className="loading-messages min-h-[220px] flex items-center justify-center py-12 px-6 text-center">
-              {showAnalyzing ? (
-                <p
-  className="text-2xl text-left text-gray-900 dark:text-white animate-pulse"
-  style={{ fontWeight: 800 }}
->
-  Solving your question…
-</p>
-              ) : (
-                <div className="h-32" />
-              )}
+            /* Final Shimmer Version */
+            <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden min-h-[340px] p-8 flex flex-col justify-center">
+              <div className="space-y-6">
+                <div className="shimmer-bar w-full h-8 rounded-2xl"></div>
+                <div className="shimmer-bar w-[88%] h-8 rounded-2xl"></div>
+                <div className="shimmer-bar w-[95%] h-8 rounded-2xl"></div>
+                <div className="shimmer-bar w-[72%] h-8 rounded-2xl"></div>
+                
+                <div className="pt-8">
+                  <div className="shimmer-bar w-full h-12 rounded-2xl"></div>
+                </div>
+              </div>
             </div>
           ) : (
-            result?.text &&
+            result?.text && 
+             
             revealReady && (
               <>
                 <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden">
