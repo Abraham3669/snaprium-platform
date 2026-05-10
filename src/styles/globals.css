@@ -3957,19 +3957,21 @@ button.w-full.py-3\.5:active {
 
 
 
-/* ================= STRONG SHIMMER BARS - HIGH PRIORITY ================= */
 .shimmer-bar {
-  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%) !important;
-  background-size: 200% 100% !important;
-  animation: shimmer-animation 1.5s infinite linear !important;
-  border-radius: 9999px !important;
+  display: block !important;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: shimmer-animation 1.5s infinite linear;
 }
 
 .dark .shimmer-bar {
-  background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%) !important;
+  background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
 }
 
 @keyframes shimmer-animation {
-  0%   { background-position: 200% 0; }
+  0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
