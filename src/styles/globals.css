@@ -3957,18 +3957,3 @@ button.w-full.py-3\.5:active {
 
 
 
-/* ================= TEST SHIMMER - VERY STRONG ================= */
-.shimmer-test {
-  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%) !important;
-  background-size: 200% 100% !important;
-  animation: shimmer-test 1.4s infinite linear !important;
-}
-
-.dark .shimmer-test {
-  background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%) !important;
-}
-
-@keyframes shimmer-test {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
