@@ -210,14 +210,14 @@ function App() {
       dailySolves = 0;
     }
 
-    if (dailySolves >= 10) {
+        if (dailySolves >= 10) {
       logEvent(analytics, "upgrade_modal_shown", {
         plan: 'free',
         daily_solves: dailySolves,
         user_type: "registered",
       });
 
-      setShowUpgradeModal(true);
+      // No need to setShowUpgradeModal here anymore
       return false;
     }
 
@@ -349,7 +349,12 @@ function App() {
         </Routes>
       </main>
 
-      {showUpgradeModal && <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />}
+
+
+
+
+            {/* Global Upgrade Modal disabled - Now controlled by ResultPanel */}
+      {/* {showUpgradeModal && <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />} */}
 
       {/* Welcome Modal */}
       {showWelcomeModal && user && (
