@@ -108,17 +108,8 @@ function App() {
       image_size: dataUrl.length,
     });
 
-       try {
-      const canSolve = await checkSolveLimit();
-      
-      // Always open ResultPanel so we can show the upgrade modal if needed
-      setIsResultOpen(true);
-      setIsProcessing(!canSolve);     // Show loading only if we are processing
-
-      if (!canSolve) {
-        setResultText(""); 
-        return;
-      }
+    try {
+      if (!(await checkSolveLimit())) return;
 
       const res = await postAPI("/api/process", {
         imageBase64: dataUrl.split(",")[1],
@@ -219,14 +210,15 @@ function App() {
       dailySolves = 0;
     }
 
-           if (dailySolves >= 10) {
+    if (dailySolves >= 10) {
       logEvent(analytics, "upgrade_modal_shown", {
         plan: 'free',
         daily_solves: dailySolves,
         user_type: "registered",
       });
 
-      return false;   // Limit reached → ResultPanel will show UpgradeModal
+      setShowUpgradeModal(true);
+      return false;
     }
 
     return true;
@@ -357,12 +349,7 @@ function App() {
         </Routes>
       </main>
 
-
-
-
-
-            {/* Global Upgrade Modal disabled - Now controlled by ResultPanel */}
-      {/* {showUpgradeModal && <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />} */}
+      {showUpgradeModal && <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />}
 
       {/* Welcome Modal */}
       {showWelcomeModal && user && (
