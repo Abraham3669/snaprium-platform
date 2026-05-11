@@ -4,19 +4,18 @@ import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import katex from 'katex';                     // ← ADDED – this fixes the rendering
+import katex from 'katex';                     
 import 'katex/dist/katex.min.css';
 
 import UpgradeModal from './UpgradeModal';
 import { useAuth } from '../context/AuthContext';
 
 export default function ResultPanel({ result, loading, onClose }) {
-  const { user } = useAuth();                    // ← NEW
+  const { user } = useAuth();
 
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);  // ← NEW
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const [showSteps, setShowSteps] = useState(false);
-
   const [feedback, setFeedback] = useState(null);
   const [showAnalyzing, setShowAnalyzing] = useState(false);
   const [scanFinished, setScanFinished] = useState(false);
@@ -26,7 +25,6 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   const handleFeedback = (type) => {
     setFeedback(type);
-    // Later: send to backend
   };
 
   // ─── Timing control ───────────────────────────────────────
@@ -61,18 +59,19 @@ export default function ResultPanel({ result, loading, onClose }) {
     }
   }, [loading, result?.text]);
 
-  // Check daily limit and show upgrade modal
+  // === UPGRADE MODAL LOGIC (Fixed) ===
   useEffect(() => {
     if (!loading && result?.text) {
-      const dailySolves = user?.dailySolves || 0;
+      const dailySolves = user?.dailySolves ?? 0;
+      console.log("🔍 Daily solves count:", dailySolves);   // Debug
+
       if (dailySolves >= 10) {
         setShowUpgradeModal(true);
       }
     }
   }, [loading, result?.text, user?.dailySolves]);
 
-
-    // Show upgrade modal instead of result when limit is reached
+  // Show upgrade modal instead of result when limit is reached
   if (showUpgradeModal) {
     return <UpgradeModal isOpen={true} onClose={() => setShowUpgradeModal(false)} />;
   }
@@ -81,7 +80,7 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   const fullText = result.text || '';
   const preparedSteps = prepareMathForKaTeX(fullText);
-  const cleanedSteps = fixCommonMathGlue(preparedSteps); // light fix for $...$$ glue
+  const cleanedSteps = fixCommonMathGlue(preparedSteps);
 
   const finalAnswerRaw = extractFinalAnswer(fullText);
 
@@ -104,12 +103,10 @@ export default function ResultPanel({ result, loading, onClose }) {
       <div className="result-panel-content">
         <div className="image-wrapper relative">
           <img className="result-image" src={result.image} alt="Cropped preview" />
-
-
         </div>
 
-                 <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
-                    {loading ? (
+        <div className="solution-area prose prose-lg dark:prose-invert max-w-none">
+          {loading ? (
             /* Inline Shimmer - Adapts to Light & Dark Mode */
             <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden min-h-[340px] p-8 flex flex-col justify-center">
               <div className="space-y-6">
@@ -148,30 +145,19 @@ export default function ResultPanel({ result, loading, onClose }) {
             </div>
           ) : (
             result?.text && 
-             
             revealReady && (
               <>
                 <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden">
                   <h3
-  className="final-answer-header px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
-  style={{
-    fontSize: "20px",
-    fontWeight: 700,
-    letterSpacing: "0.02em"
-  }}
->
-  Final Answer
-</h3>
+                    className="final-answer-header px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
+                    style={{ fontSize: "20px", fontWeight: 700, letterSpacing: "0.02em" }}
+                  >
+                    Final Answer
+                  </h3>
                   <div
-  className="massive-answer-container katex-display-final-container flex justify-center"
-  style={{
-    fontSize: '350px',
-    lineHeight: 0.9,
-    textAlign: 'center',
-    padding: '0px',
-    margin: '0px'
-  }}
->
+                    className="massive-answer-container katex-display-final-container flex justify-center"
+                    style={{ fontSize: '350px', lineHeight: 0.9, textAlign: 'center', padding: '0px', margin: '0px' }}
+                  >
                     <ReactMarkdown
                       remarkPlugins={[remarkMath]}
                       rehypePlugins={[rehypeKatex]}
@@ -183,7 +169,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                         ),
                       }}
                     >
-                   {`$$\\displaystyle\\mathbf{${finalAnswerRaw || '-'}}$$`}
+                      {`$$\\displaystyle\\mathbf{${finalAnswerRaw || '-'}}$$`}
                     </ReactMarkdown>
                   </div>
                 </div>
@@ -206,18 +192,8 @@ export default function ResultPanel({ result, loading, onClose }) {
                     opacity: showSteps ? 1 : 0,
                   }}
                 >
-                  <div
-  className="mb-6"
-  style={{
-    fontSize: "clamp(22px, 4vw, 34px)",
-    fontWeight: 900,
-    color: "var(--text-primary)",
-    letterSpacing: "-0.02em",
-    whiteSpace: "nowrap"
-  }}
->
-  Step-by-Step Solution
-
+                  <div className="mb-6" style={{ fontSize: "clamp(22px, 4vw, 34px)", fontWeight: 900, color: "var(--text-primary)", letterSpacing: "-0.02em", whiteSpace: "nowrap" }}>
+                    Step-by-Step Solution
 
                     <div className="step-by-step-content prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)] leading-relaxed">
                       <ReactMarkdown
@@ -242,33 +218,17 @@ export default function ResultPanel({ result, loading, onClose }) {
                         components={{
                           inlineMath: ({ value }) => (
                             <span className="inline-katex align-baseline mx-[0.08em] font-medium text-[1.05em]">
-                              <span
-                                dangerouslySetInnerHTML={{
-                                  __html: katex.renderToString(value.trim(), {
-                                    throwOnError: false,
-                                    displayMode: false,
-                                  }),
-                                }}
-                              />
+                              <span dangerouslySetInnerHTML={{ __html: katex.renderToString(value.trim(), { throwOnError: false, displayMode: false }) }} />
                             </span>
                           ),
-
                           paragraph: ({ children }) => (
                             <p className="my-4 leading-7 tracking-wide break-words [&>.inline-katex]:mx-[0.1em]">
                               {children}
                             </p>
                           ),
-
                           math: ({ value }) => (
                             <div className="my-6 overflow-x-auto">
-                              <div
-                                dangerouslySetInnerHTML={{
-                                  __html: katex.renderToString(value, {
-                                    throwOnError: false,
-                                    displayMode: true,
-                                  }),
-                                }}
-                              />
+                              <div dangerouslySetInnerHTML={{ __html: katex.renderToString(value, { throwOnError: false, displayMode: true }) }} />
                             </div>
                           ),
                         }}
@@ -280,20 +240,14 @@ export default function ResultPanel({ result, loading, onClose }) {
                 </div>
 
                 <div className="feedback-bar mt-6 flex justify-center gap-4">
-                  <button
-                    className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'up' ? 'active' : ''}`}
-                    onClick={() => handleFeedback('up')}
-                  >
+                  <button className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'up' ? 'active' : ''}`} onClick={() => handleFeedback('up')}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                       <path d="M14 9V5a3 3 0 0 0-6 0v4H5v11h14V9h-5z" stroke="currentColor" strokeWidth="2" />
                     </svg>
                     Helpful
                   </button>
 
-                  <button
-                    className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'down' ? 'active' : ''}`}
-                    onClick={() => handleFeedback('down')}
-                  >
+                  <button className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'down' ? 'active' : ''}`} onClick={() => handleFeedback('down')}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                       <path d="M10 15v4a3 3 0 0 0 6 0v-4h3V4H5v11h5z" stroke="currentColor" strokeWidth="2" />
                     </svg>
@@ -309,7 +263,7 @@ export default function ResultPanel({ result, loading, onClose }) {
   );
 }
 
-// ── Helper functions ──
+// ── Helper functions ── (unchanged)
 function extractFinalAnswer(rawText) {
   if (!rawText) return '';
 
@@ -356,7 +310,6 @@ function fallbackLastLines(rawText) {
 
 function fixCommonMathGlue(text) {
   if (!text) return text;
-  // Fixes glued inline math like $v'$$ → $v'$
   return text.replace(/(\$[^\s$]{1,60}?)\$\$/g, '$1$');
 }
 
@@ -365,21 +318,9 @@ function prepareMathForKaTeX(rawText) {
 
   let text = rawText;
 
-  text = text.replace(
-    /(\b\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?\b)(?!\s*\/)/g,
-    '\\frac{$1}{$2}'
-  );
-
-  text = text.replace(
-    /(\d+)\s*\n\s*_{2,}\s*\n\s*(\d+)/g,
-    '\\frac{$1}{$2}'
-  );
-
-  text = text.replace(
-    /\$([^$]*?(?:derivative|rule|product rule|quotient|chain|integral|limit|sum|equals|therefore)[^$]*?)\$/gi,
-    '$$$$$1$$$$'
-  );
-
+  text = text.replace(/(\b\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?\b)(?!\s*\/)/g, '\\frac{$1}{$2}');
+  text = text.replace(/(\d+)\s*\n\s*_{2,}\s*\n\s*(\d+)/g, '\\frac{$1}{$2}');
+  text = text.replace(/\$([^$]*?(?:derivative|rule|product rule|quotient|chain|integral|limit|sum|equals|therefore)[^$]*?)\$/gi, '$$$$$1$$$$');
   text = text.replace(/\$\$[\s\n]+/g, '$$').replace(/[\s\n]+\$\$/g, '$$');
   text = text.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$');
 
