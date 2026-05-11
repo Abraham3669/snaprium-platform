@@ -47,11 +47,11 @@ export default function ResultPanel({ result, loading, onClose }) {
     }
   }, [loading]);
 
-  // Small delay before revealing final result
+   // Small delay before revealing final result
   const [revealReady, setRevealReady] = useState(false);
 
   useEffect(() => {
-    if (!loading && result?.text) {
+    if (!loading && result?.text && !showUpgradeModal) {
       const timer = setTimeout(() => {
         setRevealReady(true);
       }, 400);
@@ -59,17 +59,21 @@ export default function ResultPanel({ result, loading, onClose }) {
     } else {
       setRevealReady(false);
     }
-  }, [loading, result?.text]);
+  }, [loading, result?.text, showUpgradeModal]);
 
-  // Check daily limit and show upgrade modal
+  
+
+    // Check daily limit and show upgrade modal
   useEffect(() => {
-    if (!loading && result?.text) {
-      const dailySolves = user?.dailySolves || 0;
+    if (!loading) {
+      const dailySolves = user?.dailySolves ?? 0;
+      console.log("ResultPanel - Daily solves:", dailySolves);   // ← Debug
+
       if (dailySolves >= 10) {
         setShowUpgradeModal(true);
       }
     }
-  }, [loading, result?.text, user?.dailySolves]);
+  }, [loading, user?.dailySolves]);
 
 
     // Show upgrade modal instead of result when limit is reached
