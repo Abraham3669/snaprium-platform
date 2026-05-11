@@ -108,8 +108,17 @@ function App() {
       image_size: dataUrl.length,
     });
 
-    try {
-      if (!(await checkSolveLimit())) return;
+       try {
+      const canSolve = await checkSolveLimit();
+      
+      // Always open ResultPanel so we can show the upgrade modal if needed
+      setIsResultOpen(true);
+      setIsProcessing(!canSolve);     // Show loading only if we are processing
+
+      if (!canSolve) {
+        setResultText(""); 
+        return;
+      }
 
       const res = await postAPI("/api/process", {
         imageBase64: dataUrl.split(",")[1],
@@ -210,15 +219,14 @@ function App() {
       dailySolves = 0;
     }
 
-        if (dailySolves >= 10) {
+           if (dailySolves >= 10) {
       logEvent(analytics, "upgrade_modal_shown", {
         plan: 'free',
         daily_solves: dailySolves,
         user_type: "registered",
       });
 
-      // No need to setShowUpgradeModal here anymore
-      return false;
+      return false;   // Limit reached → ResultPanel will show UpgradeModal
     }
 
     return true;
