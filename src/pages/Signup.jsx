@@ -1,10 +1,12 @@
 // src/pages/Signup.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth, analytics, logEvent } from '../lib/firebase';
+import { useAuth } from '../context/AuthContext';
 
 export default function Signup() {
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
@@ -13,13 +15,23 @@ export default function Signup() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user && !authLoading) {
+      navigate('/', { replace: true });
+    }
+  }, [user, authLoading, navigate]);
+
+  if (authLoading) {
+    return <div className="auth-container"><p>Loading...</p></div>;
+  }
+
   const handleSignup = async (e) => {
     e.preventDefault();
     if (!email || !password || !name) {
       setError('Please fill all fields');
       return;
     }
-
     if (password.length < 6) {
       setError('Password must be at least 6 characters');
       return;
@@ -31,24 +43,21 @@ export default function Signup() {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
       
-      // Update display name in Firebase Auth
       await updateProfile(userCredential.user, { 
         displayName: name.trim() 
       });
 
-      // Log event
       logEvent(analytics, 'sign_up', { method: 'email' });
 
-      console.log("[Signup] Account created successfully. AuthContext will create Firestore doc.");
-
-      navigate('/');
+      console.log("[Signup] Account created successfully");
+      // Navigation handled by useEffect in AuthContext + redirect above
     } catch (err) {
       console.error('Signup error:', err.code, err.message);
       const msg = {
         'auth/email-already-in-use': 'Email already in use',
-        'auth/invalid-email': 'Invalid email',
-        'auth/weak-password': 'Password too weak (min 6 characters)',
-      }[err.code] || 'Failed to create account';
+        'auth/invalid-email': 'Invalid email address',
+        'auth/weak-password': 'Password is too weak (minimum 6 characters)',
+      }[err.code] || 'Failed to create account. Please try again.';
       setError(msg);
     } finally {
       setLoading(false);

@@ -1,12 +1,12 @@
 // src/pages/Login.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { signInWithPopup, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth, googleProvider } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
@@ -15,9 +15,16 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  if (user) {
-    navigate('/');
-    return null;
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user && !authLoading) {
+      navigate('/', { replace: true });
+    }
+  }, [user, authLoading, navigate]);
+
+  // Prevent rendering form while auth is loading
+  if (authLoading) {
+    return <div className="auth-container"><p>Loading...</p></div>;
   }
 
   const handleGoogleSignIn = async () => {
@@ -25,7 +32,7 @@ export default function Login() {
     setError('');
     try {
       await signInWithPopup(auth, googleProvider);
-      navigate('/');
+      // No need to navigate here — AuthContext + useEffect will handle it
     } catch (err) {
       console.error('Google sign-in error:', err.code, err.message);
       setError(getFriendlyErrorMessage(err.code));
@@ -46,7 +53,7 @@ export default function Login() {
 
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password);
-      navigate('/');
+      // Navigation handled by useEffect
     } catch (err) {
       console.error('Email sign-in error:', err.code, err.message);
       setError(getFriendlyErrorMessage(err.code));
@@ -60,11 +67,12 @@ export default function Login() {
       'auth/invalid-email': 'Invalid email format',
       'auth/user-not-found': 'No account found with this email',
       'auth/wrong-password': 'Incorrect password',
-      'auth/too-many-requests': 'Too many attempts — wait a bit or reset password',
-      'auth/user-disabled': 'Account disabled',
-      'auth/popup-closed-by-user': 'Google sign-in cancelled',
+      'auth/too-many-requests': 'Too many attempts. Try again later.',
+      'auth/user-disabled': 'Account has been disabled',
+      'auth/popup-closed-by-user': 'Google sign-in was cancelled',
+      'auth/cancelled-popup-request': 'Google sign-in was cancelled',
     };
-    return messages[code] || 'Unable to sign in. Please try again.';
+    return messages[code] || 'Sign in failed. Please try again.';
   };
 
   return (
