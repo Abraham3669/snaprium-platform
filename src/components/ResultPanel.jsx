@@ -7,13 +7,13 @@ import rehypeKatex from 'rehype-katex';
 import katex from 'katex';                     // ← ADDED – this fixes the rendering
 import 'katex/dist/katex.min.css';
 
-import UpgradeModal from './UpgradeModal';
+
 import { useAuth } from '../context/AuthContext';
 
 export default function ResultPanel({ result, loading, onClose }) {
   const { user } = useAuth();                    // ← NEW
 
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);  // ← NEW
+  
 
   const [showSteps, setShowSteps] = useState(false);
 
@@ -51,7 +51,7 @@ export default function ResultPanel({ result, loading, onClose }) {
   const [revealReady, setRevealReady] = useState(false);
 
   useEffect(() => {
-    if (!loading && result?.text && !showUpgradeModal) {
+    if (!loading && result?.text) {
       const timer = setTimeout(() => {
         setRevealReady(true);
       }, 400);
@@ -63,23 +63,8 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   
 
-    // Check daily limit and show upgrade modal
-  useEffect(() => {
-    if (!loading) {
-      const dailySolves = user?.dailySolves ?? 0;
-      console.log("ResultPanel - Daily solves:", dailySolves);   // ← Debug
-
-      if (dailySolves >= 10) {
-        setShowUpgradeModal(true);
-      }
-    }
-  }, [loading, user?.dailySolves]);
 
 
-    // Show upgrade modal instead of result when limit is reached
-  if (showUpgradeModal) {
-    return <UpgradeModal isOpen={true} onClose={() => setShowUpgradeModal(false)} />;
-  }
 
   if (!loading && !result?.image) return null;
 

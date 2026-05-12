@@ -96,27 +96,47 @@ function App() {
     document.documentElement.setAttribute("data-theme", nextTheme);
   };
 
+
+
+
+
+
   const handleCropComplete = async (dataUrl) => {
-    setCroppedImage(dataUrl);
-    setIsCropperOpen(false);
-    setIsResultOpen(true);
+  setCroppedImage(dataUrl);
+  setIsCropperOpen(false);
+
+  // Keep result panel open if already open
+  setIsResultOpen(true);
+
+  try {
+    // CHECK LIMIT FIRST
+    if (!(await checkSolveLimit())) {
+      return;
+    }
+
+    // ONLY start loading if allowed
     setIsProcessing(true);
     setResultText("");
+
+    const res = await postAPI("/api/process", {
+      imageBase64: dataUrl.split(",")[1],
+    });
+
+    setResultText(
+      res.answer || res.text || JSON.stringify(res) || "No answer received"
+    );
+
+    setIsProcessing(false);
+
+
+
+
+
 
     logEvent(analytics, "photo_processed", {
       user_type: user ? "registered" : "guest",
       image_size: dataUrl.length,
     });
-
-    try {
-      if (!(await checkSolveLimit())) return;
-
-      const res = await postAPI("/api/process", {
-        imageBase64: dataUrl.split(",")[1],
-      });
-      setResultText(res.answer || res.text || JSON.stringify(res) || "No answer received");
-
-      setIsProcessing(false);
 
       logEvent(analytics, "solution_generated", {
         success: true,
