@@ -293,11 +293,13 @@ function App() {
 
           {/* Right side: Plan Badge - Updated for Unlimited */}
           <div className="header-right">
-            {user && (user.plan === 'unlimited' || user.plan === 'premium') && (
-              <div className={`plan-badge unlimited`}>
-                Unlimited
-              </div>
-            )}
+            {/* Modern Subscriber Badge */}
+{user && (user.plan === 'unlimited' || user.plan === 'premium') && (
+  <div className="plan-badge unlimited" title="Unlimited Plan Active">
+    <span className="diamond-icon">◆</span>
+    Unlimited
+  </div>
+)}
 
             <button
               onClick={() => setIsDashboardOpen(true)}

@@ -12,10 +12,8 @@ export function AuthProvider({ children }) {
   const unsubscribeSnapshotRef = useRef(null);
 
   useEffect(() => {
-    console.log("[Auth] Starting onAuthStateChanged listener...");
-
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
-      // Clean up previous listener
+      // Clean up previous snapshot listener
       if (unsubscribeSnapshotRef.current) {
         unsubscribeSnapshotRef.current();
         unsubscribeSnapshotRef.current = null;
@@ -34,9 +32,8 @@ export function AuthProvider({ children }) {
             photoURL: firebaseUser.photoURL || "",
           };
 
-          // CRITICAL FIX: Create user document if it doesn't exist
+          // Create user document if it doesn't exist
           if (!userSnap.exists()) {
-            console.log("[Auth] Creating new user document in Firestore");
             await setDoc(userRef, {
               ...baseData,
               plan: "free",
@@ -47,10 +44,10 @@ export function AuthProvider({ children }) {
               updatedAt: serverTimestamp(),
             });
           } else {
-            // Optional: Update displayName/photo if changed in Auth
-            const existingData = userSnap.data();
-            if (existingData.displayName !== baseData.displayName || 
-                existingData.photoURL !== baseData.photoURL) {
+            // Sync auth data with Firestore if needed
+            const existing = userSnap.data();
+            if (existing.displayName !== baseData.displayName || 
+                existing.photoURL !== baseData.photoURL) {
               await setDoc(userRef, {
                 displayName: baseData.displayName,
                 photoURL: baseData.photoURL,
@@ -68,16 +65,14 @@ export function AuthProvider({ children }) {
                 ...baseData,
                 ...data,
                 plan: data.plan || "free",
-                subscriptionStatus: data.subscriptionStatus === "active" ? "active" : "inactive",
+                subscriptionStatus: data.subscriptionStatus || "inactive",
+                // Helper flags
+                isUnlimited: data.plan === "unlimited",
+                isPremium: data.plan === "premium" || data.plan === "unlimited",
               };
 
-              console.log("🔥 [Auth] Real-time update → Plan =", updatedUser.plan, 
-                         "| Status =", updatedUser.subscriptionStatus);
-
-              setUser({ ...updatedUser }); // Force new object reference
+              setUser(updatedUser);
             }
-          }, (error) => {
-            console.error("[Auth] onSnapshot error:", error);
           });
 
         } catch (error) {
@@ -104,7 +99,11 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const value = { user, loading, signOutUser };
+  const value = { 
+    user, 
+    loading, 
+    signOutUser 
+  };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

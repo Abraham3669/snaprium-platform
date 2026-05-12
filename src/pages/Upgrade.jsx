@@ -9,10 +9,9 @@ export default function Upgrade() {
 
   const [upgrading, setUpgrading] = useState(false);
 
-  // ←←← Replace with your actual $5.99 Paddle Price ID
-  const UNLIMITED_PRICE_ID = 'pri_xxxxxxxxxxxx';
+  const UNLIMITED_PRICE_ID = 'pri_xxxxxxxxxxxx'; // ← Replace with real Paddle Price ID
 
-  const handleUpgrade = () => {
+  const handleUpgrade = async () => {
     if (!user?.uid) {
       alert("Please sign in to upgrade.");
       return;
@@ -20,13 +19,21 @@ export default function Upgrade() {
 
     setUpgrading(true);
 
-    openCheckout(UNLIMITED_PRICE_ID, user, () => {
+    try {
+      await openCheckout({
+        priceId: UNLIMITED_PRICE_ID,
+        userId: user.uid,
+        email: user.email,
+      });
+    } catch (error) {
+      console.error("Checkout failed:", error);
+      alert("Something went wrong. Please try again.");
+    } finally {
       setUpgrading(false);
-      console.log("[Upgrade] Checkout completed for Unlimited plan");
-    });
+    }
   };
 
-  const isUnlimited = user?.plan === 'unlimited' || user?.plan === 'premium';
+  const isUnlimited = user?.plan === 'unlimited';
 
   return (
     <div className="upgrade-page">
@@ -35,15 +42,12 @@ export default function Upgrade() {
         <p>Solve Math and Physics problems without restrictions</p>
       </div>
 
-      <div className="pricing-grid" style={{ gridTemplateColumns: "1fr", maxWidth: "480px", margin: "0 auto" }}>
-
+      <div className="pricing-grid">
         {/* Free Plan */}
         <div className="pricing-card">
           <h3>Free</h3>
           <div className="plan-price">$0 <span>per month</span></div>
-          <p className="plan-desc">
-  <strong>10 solves per day</strong>
-</p>
+          <p className="plan-desc"><strong>10 solves per day</strong></p>
           <p className="plan-detail">
             Great for occasional help and trying out the app
           </p>
@@ -51,7 +55,7 @@ export default function Upgrade() {
         </div>
 
         {/* Unlimited Plan */}
-        <div className="pricing-card premium" style={{ borderColor: '#2563eb', transform: 'scale(1.04)' }}>
+        <div className="pricing-card premium">
           <div className="popular-badge">RECOMMENDED</div>
           
           <h3>Unlimited</h3>
@@ -59,27 +63,13 @@ export default function Upgrade() {
             $5.99 <span>per month</span>
           </div>
 
-          <p className="plan-desc">
-  Solve as many problems as you need
-</p>
+          <p className="plan-desc">Solve as many problems as you need</p>
 
           <ul className="plan-features">
-            <li>
-              <CheckIcon />
-              Solve anytime, anywhere — no daily limits
-            </li>
-            <li>
-              <CheckIcon />
-              Perfect for heavy study sessions and exam preparation
-            </li>
-            <li>
-              <CheckIcon />
-              Full step-by-step explanations for Math & Physics
-            </li>
-            <li>
-              <CheckIcon />
-              Continue learning without interruptions
-            </li>
+            <li><CheckIcon /> Solve anytime, anywhere — no daily limits</li>
+            <li><CheckIcon /> Perfect for heavy study sessions and exam preparation</li>
+            <li><CheckIcon /> Full step-by-step explanations for Math & Physics</li>
+            <li><CheckIcon /> Continue learning without interruptions</li>
           </ul>
 
           <button 
@@ -97,25 +87,14 @@ export default function Upgrade() {
           <p className="billed-text">Cancel anytime • Monthly subscription</p>
         </div>
       </div>
-
-     
     </div>
   );
 }
 
-// Simple SVG Check Icon (Professional & clean)
+// Simple SVG Check Icon
 const CheckIcon = () => (
-  <svg 
-    width="20" 
-    height="20" 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="#10b981" 
-    strokeWidth="3" 
-    strokeLinecap="round" 
-    strokeLinejoin="round"
-    style={{ marginRight: '10px', flexShrink: 0 }}
-  >
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" 
+       strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '10px', flexShrink: 0 }}>
     <polyline points="20 6 9 17 4 12" />
   </svg>
 );

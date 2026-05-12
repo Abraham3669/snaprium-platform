@@ -4148,3 +4148,36 @@ button.w-full.py-3\.5:active {
 
 
 
+/* Modern Plan Badge */
+.plan-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  transition: var(--transition);
+  user-select: none;
+  cursor: default;
+}
+
+.plan-badge.unlimited {
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  color: white;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.4),
+              0 2px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.plan-badge .diamond-icon {
+  font-size: 15px;
+  line-height: 1;
+  margin-top: -1px;
+}
+
+.plan-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 18px rgba(59, 130, 246, 0.55);
+}
