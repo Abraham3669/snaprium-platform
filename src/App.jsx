@@ -353,6 +353,9 @@ function App() {
                     onClose={() => setIsResultOpen(false)}
                   />
                 )}
+
+{showUpgradeModal && <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />}
+                
               </>
             }
           />
@@ -369,7 +372,7 @@ function App() {
         </Routes>
       </main>
 
-      {showUpgradeModal && <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />}
+      
 
       {/* Welcome Modal */}
       {showWelcomeModal && user && (
