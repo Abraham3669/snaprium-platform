@@ -13,7 +13,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
-      // Clean up previous snapshot listener
+      // Clean up previous listener
       if (unsubscribeSnapshotRef.current) {
         unsubscribeSnapshotRef.current();
         unsubscribeSnapshotRef.current = null;
@@ -34,17 +34,19 @@ export function AuthProvider({ children }) {
 
           // Create user document if it doesn't exist
           if (!userSnap.exists()) {
+            console.log(`[Auth] Creating new user document for ${firebaseUser.uid}`);
             await setDoc(userRef, {
               ...baseData,
               plan: "free",
               subscriptionStatus: "inactive",
               uploadCount: 0,
               solves: 0,
+              dailySolves: 0,
               createdAt: serverTimestamp(),
               updatedAt: serverTimestamp(),
             });
           } else {
-            // Sync auth data with Firestore if needed
+            // Sync auth → firestore if display name or photo changed
             const existing = userSnap.data();
             if (existing.displayName !== baseData.displayName || 
                 existing.photoURL !== baseData.photoURL) {
@@ -56,7 +58,7 @@ export function AuthProvider({ children }) {
             }
           }
 
-          // Real-time listener
+          // Real-time listener for subscription & user data
           unsubscribeSnapshotRef.current = onSnapshot(userRef, (snapshot) => {
             if (snapshot.exists()) {
               const data = snapshot.data();
@@ -66,17 +68,19 @@ export function AuthProvider({ children }) {
                 ...data,
                 plan: data.plan || "free",
                 subscriptionStatus: data.subscriptionStatus || "inactive",
-                // Helper flags
+                // Helper flags (very useful across the app)
                 isUnlimited: data.plan === "unlimited",
-                isPremium: data.plan === "premium" || data.plan === "unlimited",
+                isPremium: ["premium", "unlimited"].includes(data.plan),
               };
 
               setUser(updatedUser);
             }
+          }, (error) => {
+            console.error("[Auth] onSnapshot error:", error);
           });
 
         } catch (error) {
-          console.error("[Auth] Firestore error:", error);
+          console.error("[Auth] Firestore initialization error:", error);
         }
       } else {
         setUser(null);
@@ -87,7 +91,9 @@ export function AuthProvider({ children }) {
 
     return () => {
       unsubscribeAuth();
-      if (unsubscribeSnapshotRef.current) unsubscribeSnapshotRef.current();
+      if (unsubscribeSnapshotRef.current) {
+        unsubscribeSnapshotRef.current();
+      }
     };
   }, []);
 
