@@ -91,16 +91,14 @@ export default function Upgrade() {
               ? 'Processing...' 
               : isUnlimited 
                 ? '✅ Unlimited Active' 
-                : 'Upgrade to Unlimited — $5.99/month'}
+                : 'Upgrade to Unlimited'}
           </button>
 
           <p className="billed-text">Cancel anytime • Monthly subscription</p>
         </div>
       </div>
 
-      <div className="upgrade-footer">
-        <p>Most students upgrade when preparing for tests or during busy weeks</p>
-      </div>
+     
     </div>
   );
 }
