@@ -3774,65 +3774,120 @@ button.w-full.py-3\.5:active {
 
 
 
-/* BANNER SECTION */
+/* =========================================
+   BANNER SECTION
+   ========================================= */
+
 .banner-section {
   padding: 5rem 0 2.5rem;
 }
 
-/* DEFAULT (DESKTOP FIRST - SMALLER) */
+/* =========================================
+   DESKTOP — SLIGHTLY SMALLER WEBSITE LOOK
+   ========================================= */
+
 .banner-wrapper {
   width: 100%;
-  max-width: 600px;   /* smaller on desktop */
+  max-width: 540px; /* reduced a little */
   margin: 0 auto;
 
-  border-radius: 26px;
+  position: relative;
+
+  border-radius: 28px;
   overflow: hidden;
 
+  background: #fff;
+
   box-shadow:
-    0 12px 38px rgba(0, 0, 0, 0.08),
-    0 2px 12px rgba(0, 0, 0, 0.04);
+    0 18px 45px rgba(0, 0, 0, 0.10),
+    0 4px 16px rgba(0, 0, 0, 0.05);
+
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.35s ease;
+}
+
+/* Premium hover feel */
+.banner-wrapper:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 24px 55px rgba(0, 0, 0, 0.14),
+    0 8px 22px rgba(0, 0, 0, 0.08);
 }
 
 .banner-image {
   width: 100%;
   height: auto;
+
   display: block;
   object-fit: cover;
-  border-radius: 26px;
+
+  border-radius: inherit;
 }
 
-/* TABLET */
+/* =========================================
+   TABLET
+   ========================================= */
+
 @media (max-width: 1024px) {
+
   .banner-wrapper {
-    max-width: 680px;
+    max-width: 620px;
   }
 }
 
-/* MOBILE (BIGGER + MORE IMPACT) */
+/* =========================================
+   MOBILE — ALMOST FULL SCREEN EXPERIENCE
+   ========================================= */
+
 @media (max-width: 768px) {
 
   .banner-section {
-    padding: 4rem 0 2rem;
+    padding: 2.5rem 0 1.5rem;
   }
 
   .banner-wrapper {
-    width: calc(100% - 1px); /* even bigger */
-    max-width: 100%;
-    margin: 0 auto;
+    width: calc(100vw - 6px); /* almost edge-to-edge */
+    max-width: 100vw;
 
-    border-radius: 16px;
-    overflow: hidden;
+    border-radius: 24px;
+
+    /* Makes banner feel like phone-screen hero */
+    min-height: 82vh;
+
+    box-shadow:
+      0 24px 60px rgba(0, 0, 0, 0.16),
+      0 10px 24px rgba(0, 0, 0, 0.10);
   }
 
   .banner-image {
     width: 100%;
-    height: auto;
-    display: block;
+    height: 82vh; /* immersive mobile height */
+
     object-fit: cover;
-    border-radius: 16px;
+    border-radius: inherit;
   }
 }
 
+/* =========================================
+   SMALL MOBILE
+   ========================================= */
+
+@media (max-width: 480px) {
+
+  .banner-wrapper {
+    width: calc(100vw - 2px);
+
+    border-radius: 20px;
+
+    min-height: 88vh; /* almost full phone screen */
+  }
+
+  .banner-image {
+    height: 88vh;
+  }
+}
 
 
 
