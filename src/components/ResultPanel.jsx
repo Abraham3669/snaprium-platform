@@ -59,7 +59,7 @@ export default function ResultPanel({ result, loading, onClose }) {
     } else {
       setRevealReady(false);
     }
-  }, [loading, result?.text, showUpgradeModal]);
+ }, [loading, result?.text]);
 
   
 
