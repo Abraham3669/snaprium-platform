@@ -3976,8 +3976,6 @@ button.w-full.py-3\.5:active {
 .upgrade-overlay {
   position: fixed !important;
   inset: 0 !important;
-  top: 0 !important;
-  left: 0 !important;
 
   width: 100vw !important;
   height: 100vh !important;
@@ -3987,10 +3985,11 @@ button.w-full.py-3\.5:active {
   justify-content: center !important;
 
   background: rgba(0, 0, 0, 0.58) !important;
+
   backdrop-filter: blur(8px) !important;
   -webkit-backdrop-filter: blur(8px) !important;
 
-  z-index: 999999999 !important;
+  z-index: 999999 !important;
 
   padding: 20px !important;
   box-sizing: border-box !important;
@@ -3998,29 +3997,20 @@ button.w-full.py-3\.5:active {
 
 .upgrade-modal {
   position: relative !important;
-  z-index: 1000000000 !important;
 
   width: 100% !important;
   max-width: 460px !important;
 
   border-radius: 28px !important;
 
-  animation: upgradeModalPop 0.22s ease-out !important;
-
   overflow: hidden !important;
+
+  animation: upgradeModalPop 0.22s ease-out !important;
 }
 
-/* Make sure result panel stays BELOW modal */
+/* Result panel below modal */
 .result-panel {
   z-index: 1000 !important;
-}
-
-/* Prevent homepage flashing above overlay */
-main,
-.App,
-.result-panel,
-.result-panel-content {
-  isolation: isolate;
 }
 
 @keyframes upgradeModalPop {
