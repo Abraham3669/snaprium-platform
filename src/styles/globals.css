@@ -3774,215 +3774,81 @@ button.w-full.py-3\.5:active {
 
 
 
-/* =========================================
-   BANNER SECTION
-   ========================================= */
-
-.banner-section {
-  padding: 5rem 0 2.5rem;
-}
-
-/* =========================================
-   DESKTOP — CLEAN & PROFESSIONAL
-   ========================================= */
-
-.banner-wrapper {
-  width: 100%;
-  max-width: 540px;
-  margin: 0 auto;
-
-  position: relative;
-
-  border-radius: 26px;
-  overflow: hidden;
-
-  background: #fff;
-
-  box-shadow:
-    0 18px 45px rgba(0, 0, 0, 0.10),
-    0 4px 16px rgba(0, 0, 0, 0.05);
-
-  transition:
-    transform 0.35s ease,
-    box-shadow 0.35s ease;
-}
-
-.banner-wrapper:hover {
-  transform: translateY(-2px);
-
-  box-shadow:
-    0 24px 55px rgba(0, 0, 0, 0.14),
-    0 8px 22px rgba(0, 0, 0, 0.08);
-}
-
-.banner-image {
-  width: 100%;
-  height: auto;
-
-  display: block;
-  object-fit: cover;
-
-  border-radius: inherit;
-}
-
-/* =========================================
-   TABLET
-   ========================================= */
-
-@media (max-width: 1024px) {
-
-  .banner-wrapper {
-    max-width: 620px;
-  }
-}
-
-/* =========================================
-   MOBILE — SLIGHTLY LARGER & PREMIUM
-   ========================================= */
-
-@media (max-width: 768px) {
-
-  .banner-section {
-    padding: 3.5rem 0 2rem;
-  }
-
-  .banner-wrapper {
-    width: calc(100% - 10px); /* slightly bigger only */
-    max-width: 100%;
-
-    border-radius: 18px;
-
-    box-shadow:
-      0 20px 48px rgba(0, 0, 0, 0.12),
-      0 6px 18px rgba(0, 0, 0, 0.06);
-  }
-
-  .banner-image {
-    width: 100%;
-    height: auto;
-
-    display: block;
-    object-fit: cover;
-
-    border-radius: inherit;
-  }
-}
-
-/* =========================================
-   SMALL MOBILE
-   ========================================= */
-
-@media (max-width: 480px) {
-
-  .banner-wrapper {
-    width: calc(100% - 6px);
-    border-radius: 16px;
-  }
-}
-
-
-
-
-/* Welcome Modal Styles */
-.welcome-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(12px);
-  z-index: 10000;
+.dual-banner {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin: 2rem auto;
+  max-width: 1080px;
 }
 
-.welcome-modal-content {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  padding: 2.5rem 2rem;
-  max-width: 420px;
-  width: 100%;
-  text-align: center;
-  position: relative;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+.banner-card {
+  flex: 1 1 48%;
+  border-radius: var(--radius);
+  padding: 2rem;
+  box-shadow: var(--shadow-md);
+  color: #fff;
 }
 
-.welcome-icon {
-  font-size: 4.5rem;
-  margin-bottom: 1rem;
+.banner-card.primary {
+  background-color: var(--accent-dark); /* strong blue */
 }
 
-.welcome-modal-content h2 {
-  font-size: 2.1rem;
-  margin-bottom: 1rem;
-  color: var(--text-primary);
+.banner-card.secondary {
+  background-color: #64748b; /* neutral gray-blue */
 }
 
-.welcome-text {
-  font-size: 1.25rem;
-  margin-bottom: 1.2rem;
+/* Typography */
+.banner-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
 }
 
-.welcome-detail {
-  font-size: 1.05rem;
-  color: var(--text-primary);
-  margin-bottom: 1.8rem;
-  line-height: 1.5;
+.banner-subtext {
+  font-size: 1rem;
+  opacity: 0.9;
+  margin-bottom: 1.25rem;
 }
 
-.welcome-benefits ul {
+.banner-list {
   list-style: none;
   padding: 0;
-  margin: 1.5rem 0;
-  text-align: left;
-  display: inline-block;
+  margin: 0;
 }
 
-.welcome-benefits li {
-  padding: 6px 0;
-  color: var(--text-primary);
-  position: relative;
-  padding-left: 1.6rem;
+.banner-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
-.welcome-benefits li::before {
-  content: "✓";
-  position: absolute;
-  left: 0;
-  color: #22c55e;
-  font-weight: bold;
+.check-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
 }
 
-.welcome-cta {
-  width: 100%;
-  padding: 1rem;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  color: white;
-  border: none;
-  border-radius: 16px;
-  font-size: 1.1rem;
-  font-weight: 700;
-  cursor: pointer;
-  margin: 1rem 0;
+/* Responsive behavior */
+@media (max-width: 768px) {
+  .dual-banner {
+    flex-direction: column;
+  }
+  .banner-card {
+    flex: 1 1 100%;
+  }
 }
 
-.welcome-note {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  margin-top: 1rem;
+/* Dark mode support */
+[data-theme="dark"] .banner-card.primary {
+  background-color: #3b82f6; /* lighter blue for dark mode */
 }
 
-.welcome-close-btn {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: none;
-  border: none;
-  font-size: 1.8rem;
-  color: var(--text-secondary);
-  cursor: pointer;
+[data-theme="dark"] .banner-card.secondary {
+  background-color: #334155; /* darker neutral */
 }
+
 
 
 

@@ -229,15 +229,67 @@ export default function CameraInput({ onFileSelect, onOpenDashboard }) {
 
 {/* Banner Section */}
 <section className="banner-section">
-  <div className="container">
-    <div className="banner-wrapper">
-      <img
-        src={bannerImage}
-        alt="Snaprium Banner"
-        className="banner-image"
-      />
+   <div className="dual-banner">
+      {/* Primary Banner */}
+      <div className="banner-card primary">
+        <h1 className="banner-title">Solve Math & Physics Instantly.</h1>
+        <p className="banner-subtext">Built for learners everywhere.</p>
+        <ul className="banner-list">
+          <li>
+            <svg className="check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white">
+              <path d="M20.285 6.709a1 1 0 0 0-1.414-1.418l-9.192 9.192-4.243-4.243a1 1 0 0 0-1.414 1.414l5 5a1 1 0 0 0 1.414 0l9.849-9.849z" />
+            </svg>
+            <span>Take a photo to solve instantly</span>
+          </li>
+          <li>
+            <svg className="check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white">
+              <path d="M20.285 6.709a1 1 0 0 0-1.414-1.418l-9.192 9.192-4.243-4.243a1 1 0 0 0-1.414 1.414l5 5a1 1 0 0 0 1.414 0l9.849-9.849z" />
+            </svg>
+            <span>Step-by-step explanations</span>
+          </li>
+          <li>
+            <svg className="check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white">
+              <path d="M20.285 6.709a1 1 0 0 0-1.414-1.418l-9.192 9.192-4.243-4.243a1 1 0 0 0-1.414 1.414l5 5a1 1 0 0 0 1.414 0l9.849-9.849z" />
+            </svg>
+            <span>High school and university problems solved</span>
+          </li>
+        </ul>
+      </div>
+
+      {/* Secondary Banner */}
+      <div className="banner-card secondary">
+        <h1 className="banner-title">Learn Smarter, Perform Better.</h1>
+        <p className="banner-subtext">Confidence through clear solutions.</p>
+        <ul className="banner-list">
+          <li>
+            <svg className="check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white">
+              <path d="M20.285 6.709a1 1 0 0 0-1.414-1.418l-9.192 9.192-4.243-4.243a1 1 0 0 0-1.414 1.414l5 5a1 1 0 0 0 1.414 0l9.849-9.849z" />
+            </svg>
+            <span>Step-by-step exam prep</span>
+          </li>
+          <li>
+            <svg className="check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white">
+              <path d="M20.285 6.709a1 1 0 0 0-1.414-1.418l-9.192 9.192-4.243-4.243a1 1 0 0 0-1.414 1.414l5 5a1 1 0 0 0 1.414 0l9.849-9.849z" />
+            </svg>
+            <span>Personalized learning dashboard</span>
+          </li>
+          <li>
+            <svg className="check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white">
+              <path d="M20.285 6.709a1 1 0 0 0-1.414-1.418l-9.192 9.192-4.243-4.243a1 1 0 0 0-1.414 1.414l5 5a1 1 0 0 0 1.414 0l9.849-9.849z" />
+            </svg>
+            <span>Trusted by learners worldwide</span>
+          </li>
+        </ul>
+      </div>
     </div>
-  </div>
+</section>
+
+
+
+
+
+<section>
+  
 </section>
 
 
