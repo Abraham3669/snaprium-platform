@@ -4120,46 +4120,39 @@ button.w-full.py-3\.5:active {
 
 
 /* =========================
-   UPGRADE HEADER PERFECT MOBILE FIT
+   UPGRADE HEADER - MOBILE PERFECT FIT
    ========================= */
-
 @media (max-width: 768px) {
-
   .upgrade-header {
     width: 100%;
     max-width: 100%;
     padding: 0 16px;
     margin: 0 auto 24px;
     text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
   }
 
   .upgrade-header h2 {
-    font-size: clamp(2rem, 7vw, 2.6rem);
-    line-height: 1.05;
-    letter-spacing: -0.6px;
+    font-size: clamp(1.85rem, 6.5vw, 2.5rem);
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+    margin: 0 auto 12px;
     
+    /* Prevent wrapping + keep on one line */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-
-    width: 100%;
+    
+    /* Important for very long titles */
     max-width: 100%;
-    margin: 0 auto;
-
-    text-align: center;
+    width: 100%;
   }
 
   .upgrade-header p {
     width: 100%;
-    max-width: 340px;
-    margin: 12px auto 0;
-
-    font-size: 0.98rem;
-    line-height: 1.5;
+    max-width: 360px;
+    margin: 0 auto;
+    font-size: 0.97rem;
+    line-height: 1.55;
     text-align: center;
   }
 }
