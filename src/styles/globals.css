@@ -4120,45 +4120,45 @@ button.w-full.py-3\.5:active {
 
 
 /* =========================
-   UPGRADE HEADER - MOBILE PERFECT (Professional Style)
+   UPGRADE HEADER - STABLE MOBILE (No Shake, Perfect Center)
    ========================= */
 @media (max-width: 768px) {
   .upgrade-header {
     width: 100%;
+    max-width: 100%;
     padding: 0 20px;
-    margin: 0 auto 28px;
+    margin: 0 auto 32px auto;
     text-align: center;
-    box-sizing: border-box;           /* Very important */
+    box-sizing: border-box;
+    overflow: hidden;                    /* Prevents any overflow shake */
   }
 
   .upgrade-header h2 {
-    font-size: clamp(1.75rem, 5.8vw, 2.4rem);
-    line-height: 1.08;
-    letter-spacing: -0.5px;
-    margin: 0 auto 14px;
+    font-size: clamp(1.7rem, 5.8vw, 2.35rem);
+    line-height: 1.1;
+    letter-spacing: -0.6px;
+    margin: 0 auto 16px;
     color: inherit;
     
-    /* Core one-line prevention */
+    /* Strong stability fixes */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     
-    /* Critical fixes */
     max-width: 100%;
-    width: 100%;
+    width: fit-content;           /* Important for perfect centering */
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
     box-sizing: border-box;
-    display: block;                    /* Ensures block behavior */
   }
 
   .upgrade-header p {
+    width: 100%;
     max-width: 360px;
     margin: 0 auto;
-    font-size: 0.96rem;
-    line-height: 1.5;
+    font-size: 0.97rem;
+    line-height: 1.55;
     text-align: center;
   }
-}
-
-* {
-  box-sizing: border-box;
 }
