@@ -3851,6 +3851,25 @@ button.w-full.py-3\.5:active {
 
 
 
+.banner-list li:last-child {
+  display: flex;
+  align-items: flex-start;   /* icon stays at top */
+  gap: 0.5rem;               /* tighter spacing */
+}
+
+.banner-list li:last-child .check-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 0.25rem;       /* balances with first line */
+}
+
+.banner-list li:last-child span {
+  flex: 1;                   /* text wraps neatly */
+  line-height: 1.4;
+  font-size: 1rem;
+  text-align: left;          /* ensures wrap starts flush left */
+}
 
 
 
@@ -4092,4 +4111,34 @@ button.w-full.py-3\.5:active {
 .plan-badge:hover {
   transform: translateY(-1px);
   box-shadow: 0 0 18px rgba(59, 130, 246, 0.55);
+}
+
+
+
+
+
+
+
+/* =========================
+   UPGRADE HEADER MOBILE FIX
+   ========================= */
+
+.upgrade-header h2 {
+  font-size: clamp(1.7rem, 5vw, 2.4rem);
+  line-height: 1.1;
+  white-space: nowrap;          /* Prevent wrapping */
+  overflow: hidden;
+  text-overflow: ellipsis;      /* Prevent screen overflow */
+  max-width: 100%;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* Extra mobile refinement */
+@media (max-width: 480px) {
+  .upgrade-header h2 {
+    font-size: 1.55rem;
+    letter-spacing: -0.5px;
+    padding: 0 10px;
+  }
 }
