@@ -4120,45 +4120,55 @@ button.w-full.py-3\.5:active {
 
 
 /* =========================
-   UPGRADE HEADER - STABLE MOBILE (No Shake, Perfect Center)
+   UPGRADE HEADER - FIXED & PROFESSIONAL MOBILE
    ========================= */
 @media (max-width: 768px) {
   .upgrade-header {
     width: 100%;
     max-width: 100%;
-    padding: 0 20px;
+    padding: 0 16px;           /* Reduced padding */
     margin: 0 auto 32px auto;
     text-align: center;
     box-sizing: border-box;
-    overflow: hidden;                    /* Prevents any overflow shake */
+    overflow-x: hidden;        /* Stops horizontal shift */
   }
 
   .upgrade-header h2 {
-    font-size: clamp(1.7rem, 5.8vw, 2.35rem);
-    line-height: 1.1;
-    letter-spacing: -0.6px;
-    margin: 0 auto 16px;
-    color: inherit;
+    font-size: clamp(1.65rem, 5.5vw, 2.3rem);
+    line-height: 1.12;
+    letter-spacing: -0.5px;
+    margin: 0 auto 16px auto;
     
-    /* Strong stability fixes */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     
     max-width: 100%;
-    width: fit-content;           /* Important for perfect centering */
-    margin-left: auto;
-    margin-right: auto;
+    width: fit-content;
     display: block;
     box-sizing: border-box;
   }
 
   .upgrade-header p {
-    width: 100%;
-    max-width: 360px;
+    max-width: 340px;
     margin: 0 auto;
-    font-size: 0.97rem;
-    line-height: 1.55;
-    text-align: center;
+    font-size: 0.96rem;
+    line-height: 1.5;
   }
+}
+
+
+/* Global Mobile Reset */
+* {
+  box-sizing: border-box;
+}
+
+body, html {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;     /* Prevents whole page shift */
+}
+
+.upgrade-header * {
+  max-width: 100%;
 }
