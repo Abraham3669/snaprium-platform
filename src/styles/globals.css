@@ -4123,19 +4123,17 @@ button.w-full.py-3\.5:active {
    UPGRADE HEADER - MORE TO THE LEFT
    ========================= */
 /* =========================
-   STRONG OVERRIDE - UPGRADE HEADER MOBILE
+   UPGRADE HEADER - PERFECT CENTER + TOP SPACING
    ========================= */
 @media (max-width: 768px) {
   .upgrade-header {
     width: 100% !important;
     max-width: 100% !important;
-    padding: 0 16px !important;
-    margin: 0 auto 36px auto !important;
+    padding: 32px 16px 0 16px !important;   /* Top padding increased */
+    margin: 0 auto 40px auto !important;
     text-align: center !important;
     box-sizing: border-box !important;
     overflow: hidden !important;
-    position: relative !important;
-    left: 0 !important;
   }
 
   .upgrade-header h2 {
@@ -4163,8 +4161,5 @@ button.w-full.py-3\.5:active {
     margin: 0 auto !important;
     text-align: center !important;
     padding: 0 8px !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
   }
 }
-
