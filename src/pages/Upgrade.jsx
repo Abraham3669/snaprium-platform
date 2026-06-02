@@ -10,25 +10,30 @@ export default function Upgrade() {
   const [upgrading, setUpgrading] = useState(false);
   const [error, setError] = useState('');
 
-  const UNLIMITED_PRICE_ID = 'pri_01kne83es3jr15vm5hhv0v8rm3'; // Your real Price ID
+  const UNLIMITED_PRICE_ID = 'pri_01kne83es3jr15vm5hhv0v8rm3';
 
-  // Debug log
+  // Debug - Check what is happening
   useEffect(() => {
-    console.log("🔍 Upgrade Page - User State:", {
-      userExists: !!user,
+    console.log("🔍 [Upgrade Page] User State:", {
+      hasUser: !!user,
       uid: user?.uid,
+      email: user?.email,
       plan: user?.plan,
-      isLoading: authLoading
+      isUnlimited: user?.isUnlimited,
+      authLoading: authLoading
     });
   }, [user, authLoading]);
 
   const handleUpgrade = async () => {
+    console.log("🚀 Upgrade button clicked");
+
     if (authLoading) {
-      alert("Please wait, loading your account...");
+      alert("Still loading your account. Please wait a moment.");
       return;
     }
 
     if (!user?.uid) {
+      console.error("No user.uid found");
       alert("Please sign in to upgrade.");
       return;
     }
@@ -37,6 +42,8 @@ export default function Upgrade() {
     setUpgrading(true);
 
     try {
+      console.log("Opening Paddle checkout for user:", user.uid);
+      
       await openCheckout({
         priceId: UNLIMITED_PRICE_ID,
         userId: user.uid,
@@ -52,13 +59,12 @@ export default function Upgrade() {
 
   const isUnlimited = user?.isUnlimited || user?.plan === 'unlimited';
 
-  // Show loading state while auth is initializing
   if (authLoading) {
     return (
       <div className="upgrade-page">
         <div className="upgrade-header">
-          <h2>Loading...</h2>
-          <p>Please wait while we fetch your account details.</p>
+          <h2>Loading your account...</h2>
+          <p>Please wait</p>
         </div>
       </div>
     );
@@ -117,7 +123,7 @@ export default function Upgrade() {
         </div>
       </div>
 
-      {error && <p className="error-message" style={{ textAlign: 'center', marginTop: '20px' }}>{error}</p>}
+      {error && <p className="error-message" style={{ textAlign: 'center', marginTop: '20px', color: 'red' }}>{error}</p>}
     </div>
   );
 }
