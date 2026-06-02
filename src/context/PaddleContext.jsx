@@ -17,10 +17,10 @@ export const PaddleProvider = ({ children }) => {
 
   useEffect(() => {
     const token = import.meta.env.VITE_PADDLE_CLIENT_TOKEN;
-    const env = import.meta.env.VITE_PADDLE_ENV || "sandbox"; // "sandbox" or "production"
+    const env = import.meta.env.VITE_PADDLE_ENV || "production";
 
     if (!token) {
-      console.error("❌ Missing VITE_PADDLE_CLIENT_TOKEN in .env");
+      console.error("❌ Missing VITE_PADDLE_CLIENT_TOKEN");
       setError("Paddle token missing");
       setLoading(false);
       return;
@@ -31,7 +31,7 @@ export const PaddleProvider = ({ children }) => {
       token,
     })
       .then((instance) => {
-        console.log(`✅ Paddle initialized (${env})`);
+        console.log(`✅ Paddle initialized successfully (${env})`);
         setPaddle(instance);
         setLoading(false);
       })
@@ -42,40 +42,47 @@ export const PaddleProvider = ({ children }) => {
       });
   }, []);
 
-  const openCheckout = (priceId, user, onSuccess = null) => {
+  // FIXED: Accept object parameter
+  const openCheckout = async ({ priceId, userId, email }) => {
     if (!paddle) {
       console.error("Paddle not initialized yet");
-      return;
-    }
-    if (!user?.uid) {
-      alert("Please sign in to upgrade.");
-      return;
+      throw new Error("Paddle not ready");
     }
 
-    paddle.Checkout.open({
-      items: [{ priceId, quantity: 1 }],
-      customer: {
-        email: user.email || undefined,
-      },
-      customData: {
-        user_id: user.uid,
-        source: "web_upgrade",
-      },
-      settings: {
-        theme: "light",
-        locale: "en",
-        displayMode: "overlay",
-        variant: "multi-page",        // or "inline"
-      },
-      eventCallback: (data) => {
-        if (data.name === "checkout.completed") {
-          console.log("✅ Paddle Checkout Completed", data);
-          if (onSuccess) onSuccess(data);
-        }
-        if (data.name === "checkout.error") {
-          console.error("Paddle Checkout Error:", data);
-        }
-      },
+    if (!userId) {
+      console.error("No userId provided");
+      throw new Error("User ID is required");
+    }
+
+    console.log("Opening Paddle Checkout for user:", userId);
+
+    return new Promise((resolve, reject) => {
+      paddle.Checkout.open({
+        items: [{ priceId, quantity: 1 }],
+        customer: {
+          email: email || undefined,
+        },
+        customData: {
+          user_id: userId,
+          source: "web_upgrade",
+        },
+        settings: {
+          theme: "light",
+          locale: "en",
+          displayMode: "overlay",
+          variant: "multi-page",
+        },
+        eventCallback: (data) => {
+          if (data.name === "checkout.completed") {
+            console.log("✅ Checkout completed successfully");
+            resolve(data);
+          }
+          if (data.name === "checkout.error") {
+            console.error("Paddle Checkout Error:", data);
+            reject(data);
+          }
+        },
+      });
     });
   };
 
