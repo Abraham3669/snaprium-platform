@@ -9,7 +9,7 @@ export default function Upgrade() {
 
   const [upgrading, setUpgrading] = useState(false);
 
-  const UNLIMITED_PRICE_ID = 'pri_xxxxxxxxxxxx'; // ← Replace with real Paddle Price ID
+  const UNLIMITED_PRICE_ID = 'pri_01kne83es3jr15vm5hhv0v8rm3'; // ← Replace with real Paddle Price ID
 
   const handleUpgrade = async () => {
     if (!user?.uid) {
