@@ -1,22 +1,39 @@
 // src/pages/Upgrade.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { usePaddle } from '../context/PaddleContext';
 
 export default function Upgrade() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { openCheckout } = usePaddle();
 
   const [upgrading, setUpgrading] = useState(false);
+  const [error, setError] = useState('');
 
-  const UNLIMITED_PRICE_ID = 'pri_01kne83es3jr15vm5hhv0v8rm3'; // ← Replace with real Paddle Price ID
+  const UNLIMITED_PRICE_ID = 'pri_01kne83es3jr15vm5hhv0v8rm3'; // Your real Price ID
+
+  // Debug log
+  useEffect(() => {
+    console.log("🔍 Upgrade Page - User State:", {
+      userExists: !!user,
+      uid: user?.uid,
+      plan: user?.plan,
+      isLoading: authLoading
+    });
+  }, [user, authLoading]);
 
   const handleUpgrade = async () => {
+    if (authLoading) {
+      alert("Please wait, loading your account...");
+      return;
+    }
+
     if (!user?.uid) {
       alert("Please sign in to upgrade.");
       return;
     }
 
+    setError('');
     setUpgrading(true);
 
     try {
@@ -25,15 +42,27 @@ export default function Upgrade() {
         userId: user.uid,
         email: user.email,
       });
-    } catch (error) {
-      console.error("Checkout failed:", error);
-      alert("Something went wrong. Please try again.");
+    } catch (err) {
+      console.error("Checkout failed:", err);
+      setError("Failed to open checkout. Please try again.");
     } finally {
       setUpgrading(false);
     }
   };
 
-  const isUnlimited = user?.plan === 'unlimited';
+  const isUnlimited = user?.isUnlimited || user?.plan === 'unlimited';
+
+  // Show loading state while auth is initializing
+  if (authLoading) {
+    return (
+      <div className="upgrade-page">
+        <div className="upgrade-header">
+          <h2>Loading...</h2>
+          <p>Please wait while we fetch your account details.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="upgrade-page">
@@ -87,6 +116,8 @@ export default function Upgrade() {
           <p className="billed-text">Cancel anytime • Monthly subscription</p>
         </div>
       </div>
+
+      {error && <p className="error-message" style={{ textAlign: 'center', marginTop: '20px' }}>{error}</p>}
     </div>
   );
 }
