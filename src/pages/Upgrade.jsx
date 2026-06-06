@@ -10,7 +10,7 @@ export default function Upgrade() {
   const [upgrading, setUpgrading] = useState(false);
   const [error, setError] = useState('');
 
-  const UNLIMITED_PRICE_ID = 'pri_01kne83es3jr15vm5hhv0v8rm3'; // ← Your real Price ID
+  const UNLIMITED_PRICE_ID = 'pri_01ktdn3fppsgkgjhm8xm5ha015'; // ← Your real Price ID
 
   // Debug logs
   useEffect(() => {
