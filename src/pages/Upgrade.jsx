@@ -9,8 +9,9 @@ export default function Upgrade() {
 
   const [upgrading, setUpgrading] = useState(false);
   const [error, setError] = useState('');
+  const [checkoutOpen, setCheckoutOpen] = useState(false);   // ← New state
 
-  const UNLIMITED_PRICE_ID = 'pri_01ktdn3fppsgkgjhm8xm5ha015'; // ← Your real Price ID
+  const UNLIMITED_PRICE_ID = 'pri_01ktdn3fppsgkgjhm8xm5ha015';
 
   // Debug logs
   useEffect(() => {
@@ -52,6 +53,7 @@ export default function Upgrade() {
         email: user.email,
       });
 
+      setCheckoutOpen(true);                    // ← Show checkout container
       console.log("✅ Paddle Checkout opened successfully");
     } catch (err) {
       console.error("❌ Checkout Error:", err);
@@ -81,51 +83,73 @@ export default function Upgrade() {
         <p>Solve Math and Physics problems without restrictions</p>
       </div>
 
-      <div className="pricing-grid">
-        {/* Free Plan */}
-        <div className="pricing-card">
-          <h3>Free</h3>
-          <div className="plan-price">$0 <span>per month</span></div>
-          <p className="plan-desc"><strong>10 solves per day</strong></p>
-          <p className="plan-detail">
-            Great for occasional help and trying out the app
-          </p>
-          <button className="plan-cta disabled">Current Plan</button>
-        </div>
-
-        {/* Unlimited Plan */}
-        <div className="pricing-card premium">
-          <div className="popular-badge">RECOMMENDED</div>
-          
-          <h3>Unlimited</h3>
-          <div className="plan-price">
-            $5.99 <span>per month</span>
+      {/* Show pricing cards only if checkout is NOT open */}
+      {!checkoutOpen && (
+        <div className="pricing-grid">
+          {/* Free Plan */}
+          <div className="pricing-card">
+            <h3>Free</h3>
+            <div className="plan-price">$0 <span>per month</span></div>
+            <p className="plan-desc"><strong>10 solves per day</strong></p>
+            <p className="plan-detail">
+              Great for occasional help and trying out the app
+            </p>
+            <button className="plan-cta disabled">Current Plan</button>
           </div>
 
-          <p className="plan-desc">Solve as many problems as you need</p>
+          {/* Unlimited Plan */}
+          <div className="pricing-card premium">
+            <div className="popular-badge">RECOMMENDED</div>
+            
+            <h3>Unlimited</h3>
+            <div className="plan-price">
+              $5.99 <span>per month</span>
+            </div>
 
-          <ul className="plan-features">
-            <li><CheckIcon /> Solve anytime, anywhere — no daily limits</li>
-            <li><CheckIcon /> Perfect for heavy study sessions and exam preparation</li>
-            <li><CheckIcon /> Full step-by-step explanations for Math & Physics</li>
-            <li><CheckIcon /> Continue learning without interruptions</li>
-          </ul>
+            <p className="plan-desc">Solve as many problems as you need</p>
 
-          <button 
-            className="plan-cta primary"
-            onClick={handleUpgrade}
-            disabled={upgrading || isUnlimited}
-          >
-            {upgrading 
-              ? 'Opening Checkout...' 
-              : isUnlimited 
-                ? '✅ Unlimited Active' 
-                : 'Upgrade to Unlimited'}
-          </button>
+            <ul className="plan-features">
+              <li><CheckIcon /> Solve anytime, anywhere — no daily limits</li>
+              <li><CheckIcon /> Perfect for heavy study sessions and exam preparation</li>
+              <li><CheckIcon /> Full step-by-step explanations for Math & Physics</li>
+              <li><CheckIcon /> Continue learning without interruptions</li>
+            </ul>
 
-          <p className="billed-text">Cancel anytime • Monthly subscription</p>
+            <button 
+              className="plan-cta primary"
+              onClick={handleUpgrade}
+              disabled={upgrading || isUnlimited}
+            >
+              {upgrading 
+                ? 'Opening Checkout...' 
+                : isUnlimited 
+                  ? '✅ Unlimited Active' 
+                  : 'Upgrade to Unlimited'}
+            </button>
+
+            <p className="billed-text">Cancel anytime • Monthly subscription</p>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Paddle Inline Checkout Container */}
+      {checkoutOpen && (
+        <div className="paddle-checkout-wrapper">
+          <h3 className="checkout-title">Complete Your Upgrade</h3>
+          <div 
+            id="paddle-checkout-container" 
+            className="my-8"
+          />
+          
+          <button 
+            className="back-button"
+            onClick={() => setCheckoutOpen(false)}
+            style={{ marginTop: '20px' }}
+          >
+            ← Back to Plans
+          </button>
+        </div>
+      )}
 
       {error && <p className="error-message" style={{ textAlign: 'center', marginTop: '20px', color: 'red' }}>{error}</p>}
     </div>
