@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { useNavigate } from "react-router-dom";
 
 export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
-  const { user, signOutUser } = useAuth();  // ← FIXED: added signOutUser here
+  const { user, signOutUser } = useAuth();
   const navigate = useNavigate();
 
   if (!isOpen) return null;
@@ -15,7 +15,8 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
   };
 
   // Button text changes based on subscription
-  const isSubscribed = user && (user.subscription === 'pro' || user.subscription === 'premium');
+  const isSubscribed = user && (user.subscription === 'pro' || user.subscription === 'premium' || 
+                               user.plan === 'unlimited' || user.subscriptionStatus === 'active');
   const buttonText = isSubscribed ? 'Manage Subscription' : 'Upgrade Plan';
 
   return (
@@ -58,9 +59,9 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
                   className="signout-btn dashboard-btn"
                   onClick={async () => {
                     try {
-                      await signOutUser();  // now available
+                      await signOutUser();
                       onClose();
-                      navigate('/login');   // redirect to login page after sign out
+                      navigate('/login');
                     } catch (error) {
                       console.error("Sign out failed:", error);
                     }
@@ -89,16 +90,19 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
             </button>
           )}
 
-          {/* Upgrade / Manage Subscription Button – only for logged-in users */}
+          {/* === NEW: Manage Subscription Button (Added Only) === */}
           {user && (
             <button
-              className="upgrade-btn dashboard-btn"
+              className="manage-subscription-btn dashboard-btn"
               onClick={() => handleNavigate("/upgrade")}
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
               </svg>
-              {isSubscribed ? 'Manage Subscription' : 'Upgrade Plan'}
+              {buttonText}
             </button>
           )}
 

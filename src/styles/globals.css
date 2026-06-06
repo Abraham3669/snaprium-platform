@@ -4163,3 +4163,38 @@ button.w-full.py-3\.5:active {
     padding: 0 8px !important;
   }
 }
+
+
+
+
+
+
+
+
+
+/* Manage Subscription Button */
+.manage-subscription-btn {
+  background: linear-gradient(135deg, var(--accent), #60a5fa);
+  color: white;
+  font-weight: 600;
+  border: none;
+  padding: 14px 20px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: var(--transition);
+  margin: 8px 0;
+  box-shadow: var(--shadow-sm);
+}
+
+.manage-subscription-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  background: linear-gradient(135deg, var(--accent-dark), var(--accent));
+}
+
+.manage-subscription-btn svg {
+  width: 20px;
+  height: 20px;
+}
