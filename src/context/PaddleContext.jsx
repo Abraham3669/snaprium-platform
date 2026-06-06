@@ -42,7 +42,6 @@ export const PaddleProvider = ({ children }) => {
       });
   }, []);
 
-  // FIXED: Accept object parameter
   const openCheckout = async ({ priceId, userId, email }) => {
     if (!paddle) {
       console.error("Paddle not initialized yet");
@@ -54,24 +53,45 @@ export const PaddleProvider = ({ children }) => {
       throw new Error("User ID is required");
     }
 
-    console.log("Opening Paddle Checkout for user:", userId);
+    console.log("🚀 Opening branded Paddle Checkout for user:", userId);
 
     return new Promise((resolve, reject) => {
       paddle.Checkout.open({
         items: [{ priceId, quantity: 1 }],
+
         customer: {
           email: email || undefined,
         },
+
         customData: {
           user_id: userId,
           source: "web_upgrade",
         },
+
         settings: {
-          theme: "light",
+          theme: "light",                    // Change to "dark" if you prefer dark mode checkout
           locale: "en",
           displayMode: "overlay",
           variant: "multi-page",
+
+          // === Professional Brand Customization ===
+          brand: {
+            name: "Snaprium",
+            // icon: "https://snaprium.com/assets/logo.png",   // Optional: Add your logo URL
+          },
+
+          appearance: {
+            accentColor: "#2563eb",          // Matches your --accent color
+            borderRadius: 16,
+            overlayColor: "rgba(15, 23, 42, 0.85)",
+          },
+
+          // Trust & Professional Elements
+          showTrustBadges: true,
+          showTaxSummary: true,
+          showCurrencySelector: false,
         },
+
         eventCallback: (data) => {
           if (data.name === "checkout.completed") {
             console.log("✅ Checkout completed successfully");
