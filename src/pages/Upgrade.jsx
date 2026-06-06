@@ -9,7 +9,7 @@ export default function Upgrade() {
 
   const [upgrading, setUpgrading] = useState(false);
   const [error, setError] = useState('');
-  const [checkoutOpen, setCheckoutOpen] = useState(false);   // ← New state
+  const [showCheckout, setShowCheckout] = useState(false);   // ← Renamed for clarity
 
   const UNLIMITED_PRICE_ID = 'pri_01ktdn3fppsgkgjhm8xm5ha015';
 
@@ -21,9 +21,10 @@ export default function Upgrade() {
       plan: user?.plan,
       isUnlimited: user?.isUnlimited,
       authLoading,
-      paddleReady
+      paddleReady,
+      showCheckout
     });
-  }, [user, authLoading, paddleReady]);
+  }, [user, authLoading, paddleReady, showCheckout]);
 
   const handleUpgrade = async () => {
     if (authLoading) {
@@ -45,19 +46,26 @@ export default function Upgrade() {
     setUpgrading(true);
 
     try {
-      console.log("🚀 Opening Paddle Checkout for user:", user.uid);
+      console.log("🚀 Showing checkout container and opening Paddle...");
 
+      // Step 1: Show the container FIRST
+      setShowCheckout(true);
+
+      // Step 2: Small delay to let React render the div
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Step 3: Now open the checkout
       await openCheckout({
         priceId: UNLIMITED_PRICE_ID,
         userId: user.uid,
         email: user.email,
       });
 
-      setCheckoutOpen(true);                    // ← Show checkout container
       console.log("✅ Paddle Checkout opened successfully");
     } catch (err) {
       console.error("❌ Checkout Error:", err);
       setError("Failed to open checkout. Please try again.");
+      setShowCheckout(false); // Hide container on error
     } finally {
       setUpgrading(false);
     }
@@ -66,14 +74,7 @@ export default function Upgrade() {
   const isUnlimited = user?.isUnlimited || user?.plan === 'unlimited';
 
   if (authLoading) {
-    return (
-      <div className="upgrade-page">
-        <div className="upgrade-header">
-          <h2>Loading your account...</h2>
-          <p>Please wait a moment</p>
-        </div>
-      </div>
-    );
+    return <div className="upgrade-page">Loading your account...</div>;
   }
 
   return (
@@ -83,8 +84,8 @@ export default function Upgrade() {
         <p>Solve Math and Physics problems without restrictions</p>
       </div>
 
-      {/* Show pricing cards only if checkout is NOT open */}
-      {!checkoutOpen && (
+      {/* Pricing Cards - Hide when checkout is visible */}
+      {!showCheckout && (
         <div className="pricing-grid">
           {/* Free Plan */}
           <div className="pricing-card">
@@ -133,25 +134,30 @@ export default function Upgrade() {
       )}
 
       {/* Paddle Inline Checkout Container */}
-      {checkoutOpen && (
+      {showCheckout && (
         <div className="paddle-checkout-wrapper">
           <h3 className="checkout-title">Complete Your Upgrade</h3>
+          
           <div 
             id="paddle-checkout-container" 
-            className="my-8"
+            className="my-8 paddle-checkout-frame"
           />
           
           <button 
             className="back-button"
-            onClick={() => setCheckoutOpen(false)}
-            style={{ marginTop: '20px' }}
+            onClick={() => setShowCheckout(false)}
+            style={{ marginTop: '24px' }}
           >
             ← Back to Plans
           </button>
         </div>
       )}
 
-      {error && <p className="error-message" style={{ textAlign: 'center', marginTop: '20px', color: 'red' }}>{error}</p>}
+      {error && (
+        <p className="error-message" style={{ textAlign: 'center', marginTop: '20px', color: 'red' }}>
+          {error}
+        </p>
+      )}
     </div>
   );
 }
