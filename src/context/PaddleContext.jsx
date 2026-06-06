@@ -67,11 +67,11 @@ export const PaddleProvider = ({ children }) => {
           source: "web_upgrade",
         },
         settings: {
-  theme: "light",
-  locale: "en",
-  displayMode: "inline",
-  variant: "multi-page",
-},
+          theme: "light",
+          locale: "en",
+          displayMode: "overlay",
+          variant: "multi-page",
+        },
         eventCallback: (data) => {
           if (data.name === "checkout.completed") {
             console.log("✅ Checkout completed successfully");
