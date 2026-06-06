@@ -26,22 +26,9 @@ export const PaddleProvider = ({ children }) => {
       return;
     }
 
-    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
-
     initializePaddle({
       environment: env,
       token,
-      checkout: {                          // ← Added for Inline support
-        settings: {
-          displayMode: "inline",           // ← Changed from overlay
-          frameTarget: "paddle-checkout-container",
-          frameInitialHeight: "520",
-          frameStyle: "width: 100%; min-width: 312px; background-color: transparent; border: none;",
-          theme: isDark ? "dark" : "light",
-          variant: "multi-page",
-          locale: "en",
-        }
-      }
     })
       .then((instance) => {
         console.log(`✅ Paddle initialized successfully (${env})`);
@@ -80,8 +67,10 @@ export const PaddleProvider = ({ children }) => {
           source: "web_upgrade",
         },
         settings: {
-          theme: document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light",
-          // Inline settings are already configured at init, but we can override theme
+          theme: "light",
+          locale: "en",
+          displayMode: "overlay",
+          variant: "multi-page",
         },
         eventCallback: (data) => {
           if (data.name === "checkout.completed") {
