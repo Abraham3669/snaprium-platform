@@ -1,8 +1,7 @@
-// api/webhook.js
+// api/webhook.js - Improved for Production
 import crypto from 'crypto';
 import admin from 'firebase-admin';
 
-// Initialize Firebase Admin safely
 if (!admin.apps.length) {
   try {
     admin.initializeApp({
@@ -12,39 +11,35 @@ if (!admin.apps.length) {
         privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
       }),
     });
+    console.log('✅ Firebase Admin initialized');
   } catch (err) {
-    console.error('Firebase Admin init error:', err.message);
+    console.error('❌ Firebase Admin init failed:', err.message);
   }
 }
 
 const db = admin.firestore();
 
 export default async function handler(req, res) {
-  // Only allow POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   let rawBody = '';
-  try {
-    for await (const chunk of req) {
-      rawBody += chunk;
-    }
-  } catch (err) {
-    console.error('Error reading body:', err);
-    return res.status(400).json({ error: 'Bad request' });
+  for await (const chunk of req) {
+    rawBody += chunk;
   }
 
-  // Paddle Signature Verification
+  // Signature Verification
   const signature = req.headers['paddle-signature'];
   const secret = process.env.PADDLE_WEBHOOK_SECRET;
 
   if (!secret) {
-    console.error('Missing PADDLE_WEBHOOK_SECRET');
-    return res.status(500).json({ error: 'Server configuration error' });
+    console.error('❌ Missing PADDLE_WEBHOOK_SECRET');
+    return res.status(500).json({ error: 'Server config error' });
   }
 
   if (!signature) {
+    console.error('❌ Missing paddle-signature header');
     return res.status(401).json({ error: 'Missing signature' });
   }
 
@@ -52,7 +47,7 @@ export default async function handler(req, res) {
   const digest = hmac.update(rawBody).digest('hex');
 
   if (signature !== digest) {
-    console.error('Invalid Paddle signature');
+    console.error('❌ Invalid Paddle signature');
     return res.status(401).json({ error: 'Invalid signature' });
   }
 
@@ -61,44 +56,49 @@ export default async function handler(req, res) {
     const eventName = payload.event_type;
     const data = payload.data;
 
-    console.log(`📥 Paddle Webhook: ${eventName}`);
+    console.log(`📥 Paddle Webhook Received: ${eventName}`);
 
     const userId = data?.custom_data?.user_id;
+
     if (!userId) {
-      console.error('No user_id in webhook payload');
+      console.error('❌ No user_id found in custom_data');
       return res.status(400).json({ error: 'Missing user_id' });
     }
 
     let plan = 'free';
     let status = 'inactive';
 
-    const productName = (data.product?.name || '').toLowerCase();
+    const productName = (data.product?.name || data.product?.name || '').toLowerCase();
     if (productName.includes('unlimited') || productName.includes('premium')) {
       plan = 'unlimited';
     }
 
-    if (['subscription.activated', 'subscription.payment_succeeded'].includes(eventName)) {
+    // Better event handling
+    if (eventName === 'subscription.activated' || eventName === 'subscription.payment_succeeded') {
       status = 'active';
     } else if (eventName === 'subscription.canceled' || eventName === 'subscription.past_due') {
       status = 'canceled';
     }
 
-    // Update Firestore
-    await db.collection('users').doc(userId).update({
+    console.log(`🔄 Updating user ${userId} → Plan: ${plan}, Status: ${status}`);
+
+    // Use set with merge instead of update (more reliable)
+    await db.collection('users').doc(userId).set({
       plan,
       subscriptionStatus: status,
       subscriptionId: data.id,
       paddleCustomerId: data.customer_id,
       nextBillingDate: data.next_billed_at ? new Date(data.next_billed_at) : null,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
+    }, { merge: true });
 
-    console.log(`✅ Subscription updated → ${userId} | ${plan} | ${status}`);
+    console.log(`✅ SUCCESS: User ${userId} updated to ${plan} (${status})`);
 
-    return res.status(200).json({ received: true });
+    return res.status(200).json({ received: true, userId, plan, status });
 
   } catch (err) {
-    console.error('Webhook processing error:', err.message);
+    console.error('❌ Webhook processing error:', err.message);
+    console.error('Full error:', err);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
