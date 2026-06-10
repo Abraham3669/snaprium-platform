@@ -19,14 +19,10 @@ export default async function handler(req, res) {
   }
 
   const { userId } = req.body;
-
-  if (!userId) {
-    return res.status(400).json({ error: 'User ID is required' });
-  }
+  if (!userId) return res.status(400).json({ error: 'User ID is required' });
 
   try {
     const userDoc = await db.collection('users').doc(userId).get();
-
     if (!userDoc.exists) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -34,19 +30,14 @@ export default async function handler(req, res) {
     const userData = userDoc.data();
     const paddleCustomerId = userData?.paddleCustomerId;
 
-    console.log(`Customer Portal Request for user ${userId}:`, {
-      exists: userDoc.exists,
-      hasPaddleId: !!paddleCustomerId,
-      paddleCustomerId: paddleCustomerId
-    });
+    console.log(`[Customer Portal] User ${userId} | Has Paddle ID: ${!!paddleCustomerId}`);
 
     if (!paddleCustomerId) {
       return res.status(400).json({ 
-        error: 'No subscription linked. Please upgrade first or contact support.' 
+        error: 'No active subscription found. Please upgrade first.' 
       });
     }
 
-    // === Create authenticated Paddle Customer Portal Session ===
     const paddleResponse = await fetch(
       `https://api.paddle.com/customers/${paddleCustomerId}/portal-sessions`,
       {
@@ -54,29 +45,21 @@ export default async function handler(req, res) {
         headers: {
           'Authorization': `Bearer ${process.env.PADDLE_API_KEY}`,
           'Content-Type': 'application/json',
-        },
-        // Optional: Add subscription IDs if you want to deep-link to a specific subscription
-        // body: JSON.stringify({
-        //   subscription_ids: [userData.paddleSubscriptionId] // if you store it
-        // })
+        }
       }
     );
 
     if (!paddleResponse.ok) {
-      const errorText = await paddleResponse.text();
-      console.error('Paddle API error:', errorText);
-      return res.status(502).json({ 
-        error: 'Failed to create customer portal session. Please try again.' 
-      });
+      const err = await paddleResponse.text();
+      console.error('Paddle Error:', err);
+      return res.status(502).json({ error: 'Failed to open Paddle portal' });
     }
 
     const paddleData = await paddleResponse.json();
-    const portalUrl = paddleData?.data?.urls?.general?.overview || 
-                     paddleData?.data?.url; // fallback
+    const portalUrl = paddleData?.data?.urls?.general?.overview || paddleData?.data?.url;
 
     if (!portalUrl) {
-      console.error('No portal URL in Paddle response:', paddleData);
-      return res.status(502).json({ error: 'Invalid response from Paddle' });
+      return res.status(502).json({ error: 'Invalid Paddle response' });
     }
 
     res.status(200).json({ url: portalUrl });
