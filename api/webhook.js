@@ -1,4 +1,4 @@
-// api/webhook.js - FINAL DEBUG + FIXED VERSION
+// api/webhook.js - PERFECT MATCH FOR YOUR PADDLE PAYLOAD
 import { initializeApp, getApps, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import crypto from "crypto";
@@ -34,7 +34,6 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  // CRITICAL: Capture raw body exactly as Paddle sends it
   let rawBody = '';
   for await (const chunk of req) {
     rawBody += chunk;
@@ -43,26 +42,22 @@ export default async function handler(req, res) {
   const signature = req.headers["paddle-signature"];
 
   console.log("=== WEBHOOK DEBUG ===");
-  console.log("Event Type (from body):", req.body?.event_type);
-  console.log("Has Signature:", !!signature);
-  console.log("Has Webhook Secret:", !!WEBHOOK_SECRET);
+  console.log("Event Type:", req.body?.event_type);
+  console.log("Signature Present:", !!signature);
   console.log("Raw Body Length:", rawBody.length);
 
   if (!WEBHOOK_SECRET) {
-    console.error("❌ PADDLE_WEBHOOK_SECRET is missing in Vercel env vars");
+    console.error("❌ Missing PADDLE_WEBHOOK_SECRET");
     return res.status(500).json({ error: "Server config error" });
   }
-
   if (!signature) {
-    console.error("❌ No paddle-signature header received");
+    console.error("❌ Missing paddle-signature header");
     return res.status(401).json({ error: "Missing signature" });
   }
 
   const isValid = verifyPaddleSignature(rawBody, signature, WEBHOOK_SECRET);
-
   if (!isValid) {
     console.error("❌ Signature verification FAILED");
-    console.error("Signature received:", signature.substring(0, 100) + "...");
     return res.status(401).json({ error: "Invalid signature" });
   }
 
@@ -73,17 +68,15 @@ export default async function handler(req, res) {
     const eventType = payload.event_type;
     const data = payload.data;
 
-    console.log(`📥 Processing event: ${eventType}`);
+    console.log(`📥 Processing event: ${eventType} | Product: ${data?.product?.name}`);
 
     if (["subscription.activated", "subscription.created", "subscription.updated", "transaction.completed"].includes(eventType)) {
-      await handleSubscriptionEvent(data, eventType);
-    } else {
-      console.log(`ℹ️ Ignored event: ${eventType}`);
+      await handleSubscriptionEvent(data);
     }
 
     return res.status(200).json({ received: true });
   } catch (err) {
-    console.error("🚨 Error processing webhook:", err.message);
+    console.error("🚨 Webhook error:", err.message);
     return res.status(500).json({ error: "Internal error" });
   }
 }
@@ -95,10 +88,7 @@ function verifyPaddleSignature(rawBody, signatureHeader, secret) {
     const receivedSig = h1Part.replace("h1=", "");
 
     const signedPayload = `${timestamp}:${rawBody}`;
-    const computedSig = crypto
-      .createHmac("sha256", secret)
-      .update(signedPayload)
-      .digest("hex");
+    const computedSig = crypto.createHmac("sha256", secret).update(signedPayload).digest("hex");
 
     return computedSig === receivedSig;
   } catch (e) {
@@ -107,38 +97,41 @@ function verifyPaddleSignature(rawBody, signatureHeader, secret) {
   }
 }
 
-async function handleSubscriptionEvent(data, eventType) {
-  const userId = data?.custom_data?.user_id || data?.customer?.custom_data?.user_id;
+async function handleSubscriptionEvent(data) {
+  const userId = data?.custom_data?.user_id;
 
   if (!userId) {
-    console.error("❌ No user_id in custom_data! Check your Paddle Checkout code.");
-    console.log("Available data keys:", Object.keys(data || {}));
+    console.error("❌ No user_id in custom_data");
+    console.log("Available keys in data:", Object.keys(data || {}));
     return;
   }
 
-  const customerId = data?.customer_id || data?.customer?.id;
-  const subscriptionId = data?.id || data?.subscription_id;
+  const customerId = data?.customer_id;
+  const subscriptionId = data?.id;
 
+  // === EXACT MATCH FOR YOUR "Unlimited Plan" PAYLOAD ===
   let plan = "free";
-  const priceId = data?.items?.[0]?.price?.id || data?.price_id;
-  const productName = (data?.product?.name || data?.items?.[0]?.price?.product?.name || "").toLowerCase();
+  const productName = (data?.product?.name || "").toLowerCase();
+  const priceName = (data?.items?.[0]?.price?.name || "").toLowerCase();
 
-  if (priceId?.includes("unlimited") || productName.includes("unlimited") || productName.includes("diamond")) {
+  if (productName.includes("unlimited") || priceName.includes("unlimited") || productName.includes("diamond")) {
     plan = "unlimited";
-  } else if (priceId?.includes("premium") || productName.includes("premium")) {
+  } else if (productName.includes("premium")) {
     plan = "premium";
-  } else if (priceId?.includes("pro") || productName.includes("pro")) {
+  } else if (productName.includes("pro")) {
     plan = "pro";
   }
+
+  console.log(`🔄 Updating user ${userId} → Plan: ${plan}`);
 
   await db.collection("users").doc(userId).set({
     paddleCustomerId: customerId,
     paddleSubscriptionId: subscriptionId,
-    plan,
+    plan: plan,
     subscriptionStatus: data?.status || "active",
     nextBillingDate: data?.next_billed_at ? new Date(data.next_billed_at) : null,
     updatedAt: new Date(),
   }, { merge: true });
 
-  console.log(`🎉 SUCCESS: User ${userId} → Plan: ${plan}`);
+  console.log(`🎉 SUCCESS → User ${userId} updated to ${plan}`);
 }
