@@ -4171,8 +4171,7 @@ button.w-full.py-3\.5:active {
 
 
 
-
-/* Manage Subscription Button */
+/* Manage Subscription Button - Enhanced with Big Circular SVG */
 .manage-subscription-btn {
   background: linear-gradient(135deg, var(--accent), #60a5fa);
   color: white;
@@ -4182,10 +4181,12 @@ button.w-full.py-3\.5:active {
   border-radius: 12px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   transition: var(--transition);
   margin: 8px 0;
   box-shadow: var(--shadow-sm);
+  width: 100%;
+  justify-content: flex-start;
 }
 
 .manage-subscription-btn:hover {
@@ -4194,7 +4195,18 @@ button.w-full.py-3\.5:active {
   background: linear-gradient(135deg, var(--accent-dark), var(--accent));
 }
 
+/* Big Circular SVG Style (Same as your old upgrade button) */
 .manage-subscription-btn svg {
   width: 20px;
   height: 20px;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  padding: 8px;
+  box-sizing: content-box;
+  flex-shrink: 0;
+  transition: all 0.25s ease;
+}
+
+.manage-subscription-btn:hover svg {
+  background: rgba(255, 255, 255, 0.28);
 }
