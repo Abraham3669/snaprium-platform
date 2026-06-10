@@ -19,8 +19,14 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
 
   onClose(); // close dashboard first
 
-  // Open a new tab immediately to preserve user gesture (critical for mobile Safari)
-  const popup = window.open('', '_blank', 'noopener,noreferrer');
+  // Open blank tab immediately
+  let popup = window.open('', '_blank', 'noopener,noreferrer');
+
+  // Check if popup was blocked
+  if (!popup || popup.closed) {
+    alert("Please allow popups for this website to manage your subscription.");
+    return;
+  }
 
   setTimeout(async () => {
     try {
@@ -33,10 +39,12 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
       const data = await response.json();
 
       if (data.url) {
-        if (popup) {
-          popup.location.href = data.url;        // Update the pre-opened tab
-        } else {
-          window.open(data.url, '_blank', 'noopener,noreferrer');
+        // Try multiple ways to set the URL
+        try {
+          popup.location.href = data.url;
+        } catch (e) {
+          // Fallback if direct assignment fails
+          popup = window.open(data.url, '_blank', 'noopener,noreferrer');
         }
       } else {
         popup?.close();
@@ -47,11 +55,11 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
       popup?.close();
       alert("Something went wrong. Please try again later.");
     }
-  }, 150); // Reduced delay
+  }, 100); // Even smaller delay
 };
 
 
-
+  
   // Button text changes based on subscription
   const isSubscribed = user && (user.subscription === 'pro' || user.subscription === 'premium' || 
                                user.plan === 'unlimited' || user.subscriptionStatus === 'active');
