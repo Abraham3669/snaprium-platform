@@ -15,48 +15,33 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
   };
 
     const handleManageSubscription = async () => {
-  if (!user?.uid) return;
+    if (!user?.uid) return;
 
-  onClose(); // close dashboard first
+    onClose(); // close dashboard first
 
-  // Open blank tab immediately
-  let popup = window.open('', '_blank', 'noopener,noreferrer');
+    // Small delay helps mobile devices close the side panel properly
+    setTimeout(async () => {
+      try {
+        const response = await fetch('/api/customer-portal', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.uid }),
+        });
 
-  // Check if popup was blocked
-  if (!popup || popup.closed) {
-    alert("Please allow popups for this website to manage your subscription.");
-    return;
-  }
+        const data = await response.json();
 
-  setTimeout(async () => {
-    try {
-      const response = await fetch('/api/customer-portal', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.uid }),
-      });
-
-      const data = await response.json();
-
-      if (data.url) {
-        // Try multiple ways to set the URL
-        try {
-          popup.location.href = data.url;
-        } catch (e) {
-          // Fallback if direct assignment fails
-          popup = window.open(data.url, '_blank', 'noopener,noreferrer');
+        if (data.url) {
+          window.open(data.url, '_blank', 'noopener,noreferrer');
+        } else {
+          alert(data.error || "Unable to open management portal. Please try again.");
         }
-      } else {
-        popup?.close();
-        alert(data.error || "Unable to open management portal. Please try again.");
+      } catch (error) {
+        console.error("Error opening portal:", error);
+        alert("Something went wrong. Please try again later.");
       }
-    } catch (error) {
-      console.error("Error opening portal:", error);
-      popup?.close();
-      alert("Something went wrong. Please try again later.");
-    }
-  }, 100); // Even smaller delay
-};
+    }, 250); // 250ms delay - best balance for mobile
+  };
+
 
 
   
