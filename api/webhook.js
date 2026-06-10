@@ -1,4 +1,4 @@
-// api/webhook.js - FINAL VERSION (Clean + Reliable)
+// api/webhook.js - FINAL DEBUG + FIXED VERSION
 import { initializeApp, getApps, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import crypto from "crypto";
@@ -19,7 +19,7 @@ if (!getApps().length) {
         }),
       });
     }
-    console.log("✅ Firebase Admin initialized successfully");
+    console.log("✅ Firebase Admin initialized");
   } catch (e) {
     console.error("❌ Firebase Admin init failed:", e.message);
   }
@@ -34,7 +34,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  // Get raw body (required for Paddle signature verification)
+  // CRITICAL: Capture raw body exactly as Paddle sends it
   let rawBody = '';
   for await (const chunk of req) {
     rawBody += chunk;
@@ -42,21 +42,27 @@ export default async function handler(req, res) {
 
   const signature = req.headers["paddle-signature"];
 
-  console.log(`🔔 Paddle Webhook Received → Event: ${req.body?.event_type || 'unknown'}`);
+  console.log("=== WEBHOOK DEBUG ===");
+  console.log("Event Type (from body):", req.body?.event_type);
+  console.log("Has Signature:", !!signature);
+  console.log("Has Webhook Secret:", !!WEBHOOK_SECRET);
+  console.log("Raw Body Length:", rawBody.length);
 
   if (!WEBHOOK_SECRET) {
-    console.error("❌ Missing PADDLE_WEBHOOK_SECRET in environment variables");
-    return res.status(500).json({ error: "Server configuration error" });
+    console.error("❌ PADDLE_WEBHOOK_SECRET is missing in Vercel env vars");
+    return res.status(500).json({ error: "Server config error" });
   }
 
   if (!signature) {
-    console.error("❌ Missing paddle-signature header");
+    console.error("❌ No paddle-signature header received");
     return res.status(401).json({ error: "Missing signature" });
   }
 
   const isValid = verifyPaddleSignature(rawBody, signature, WEBHOOK_SECRET);
+
   if (!isValid) {
-    console.error("❌ Invalid Paddle signature");
+    console.error("❌ Signature verification FAILED");
+    console.error("Signature received:", signature.substring(0, 100) + "...");
     return res.status(401).json({ error: "Invalid signature" });
   }
 
@@ -67,20 +73,20 @@ export default async function handler(req, res) {
     const eventType = payload.event_type;
     const data = payload.data;
 
+    console.log(`📥 Processing event: ${eventType}`);
+
     if (["subscription.activated", "subscription.created", "subscription.updated", "transaction.completed"].includes(eventType)) {
       await handleSubscriptionEvent(data, eventType);
     } else {
-      console.log(`ℹ️ Ignored event type: ${eventType}`);
+      console.log(`ℹ️ Ignored event: ${eventType}`);
     }
 
     return res.status(200).json({ received: true });
   } catch (err) {
-    console.error("🚨 Webhook processing error:", err);
-    return res.status(500).json({ error: "Internal server error" });
+    console.error("🚨 Error processing webhook:", err.message);
+    return res.status(500).json({ error: "Internal error" });
   }
 }
-
-// ====================== HELPER FUNCTIONS ======================
 
 function verifyPaddleSignature(rawBody, signatureHeader, secret) {
   try {
@@ -96,7 +102,7 @@ function verifyPaddleSignature(rawBody, signatureHeader, secret) {
 
     return computedSig === receivedSig;
   } catch (e) {
-    console.error("Signature verification failed:", e);
+    console.error("Signature function error:", e);
     return false;
   }
 }
@@ -105,21 +111,17 @@ async function handleSubscriptionEvent(data, eventType) {
   const userId = data?.custom_data?.user_id || data?.customer?.custom_data?.user_id;
 
   if (!userId) {
-    console.warn("⚠️ No user_id found in custom_data");
+    console.error("❌ No user_id in custom_data! Check your Paddle Checkout code.");
+    console.log("Available data keys:", Object.keys(data || {}));
     return;
   }
 
   const customerId = data?.customer_id || data?.customer?.id;
   const subscriptionId = data?.id || data?.subscription_id;
 
-  // === Plan Detection (Diamond / Unlimited) ===
   let plan = "free";
   const priceId = data?.items?.[0]?.price?.id || data?.price_id;
-  const productName = (
-    data?.product?.name ||
-    data?.items?.[0]?.price?.product?.name ||
-    ""
-  ).toLowerCase();
+  const productName = (data?.product?.name || data?.items?.[0]?.price?.product?.name || "").toLowerCase();
 
   if (priceId?.includes("unlimited") || productName.includes("unlimited") || productName.includes("diamond")) {
     plan = "unlimited";
@@ -132,11 +134,11 @@ async function handleSubscriptionEvent(data, eventType) {
   await db.collection("users").doc(userId).set({
     paddleCustomerId: customerId,
     paddleSubscriptionId: subscriptionId,
-    plan: plan,
+    plan,
     subscriptionStatus: data?.status || "active",
     nextBillingDate: data?.next_billed_at ? new Date(data.next_billed_at) : null,
     updatedAt: new Date(),
   }, { merge: true });
 
-  console.log(`🎉 SUCCESS → User ${userId} updated to ${plan} (Diamond/Unlimited support enabled)`);
+  console.log(`🎉 SUCCESS: User ${userId} → Plan: ${plan}`);
 }
