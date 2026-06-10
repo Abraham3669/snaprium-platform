@@ -4197,11 +4197,11 @@ button.w-full.py-3\.5:active {
 
 /* Big Circular SVG Style (Same as your old upgrade button) */
 .manage-subscription-btn svg {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   background: rgba(255, 255, 255, 0.18);
   border-radius: 50%;
-  padding: 8px;
+  padding: 6px;
   box-sizing: content-box;
   flex-shrink: 0;
   transition: all 0.25s ease;

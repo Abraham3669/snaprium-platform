@@ -15,36 +15,43 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
   };
 
     const handleManageSubscription = async () => {
-    if (!user?.uid) return;
+  if (!user?.uid) return;
 
-    onClose(); // close dashboard first
+  onClose(); // close dashboard first
 
-    // Small delay helps mobile devices close the side panel properly
-    setTimeout(async () => {
-      try {
-        const response = await fetch('/api/customer-portal', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: user.uid }),
-        });
+  // Open a new tab immediately to preserve user gesture (critical for mobile Safari)
+  const popup = window.open('', '_blank', 'noopener,noreferrer');
 
-        const data = await response.json();
+  setTimeout(async () => {
+    try {
+      const response = await fetch('/api/customer-portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.uid }),
+      });
 
-        if (data.url) {
-          window.open(data.url, '_blank', 'noopener,noreferrer');
+      const data = await response.json();
+
+      if (data.url) {
+        if (popup) {
+          popup.location.href = data.url;        // Update the pre-opened tab
         } else {
-          alert(data.error || "Unable to open management portal. Please try again.");
+          window.open(data.url, '_blank', 'noopener,noreferrer');
         }
-      } catch (error) {
-        console.error("Error opening portal:", error);
-        alert("Something went wrong. Please try again later.");
+      } else {
+        popup?.close();
+        alert(data.error || "Unable to open management portal. Please try again.");
       }
-    }, 250); // 250ms delay - best balance for mobile
-  };
+    } catch (error) {
+      console.error("Error opening portal:", error);
+      popup?.close();
+      alert("Something went wrong. Please try again later.");
+    }
+  }, 150); // Reduced delay
+};
 
 
 
-  
   // Button text changes based on subscription
   const isSubscribed = user && (user.subscription === 'pro' || user.subscription === 'premium' || 
                                user.plan === 'unlimited' || user.subscriptionStatus === 'active');
