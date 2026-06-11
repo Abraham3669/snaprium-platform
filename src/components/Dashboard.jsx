@@ -17,18 +17,19 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
    const handleManageSubscription = async () => {
   if (!user?.uid) return;
 
-  onClose(); // close dashboard
+  // 1. Close the dashboard immediately
+  onClose();
 
-  // 1. Open blank tab IMMEDIATELY (this is the key fix)
+  // 2. Open a blank tab/window SYNCHRONOUSLY (This is the critical part for mobile Safari)
   const popup = window.open('', '_blank', 'noopener,noreferrer');
 
-  // 2. Optional: Check if popup was blocked
+  // 3. Check if popup was blocked
   if (!popup || popup.closed) {
-    alert("Please allow popups for this site to manage your subscription.");
+    alert("Popup blocked. Please allow popups for this site to manage your subscription.");
     return;
   }
 
-  // Small delay only for smooth UI (can reduce to 50-100ms)
+  // Small delay for smooth UI transition (100ms is usually enough)
   setTimeout(async () => {
     try {
       const response = await fetch('/api/customer-portal', {
@@ -40,11 +41,13 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
       const data = await response.json();
 
       if (data.url) {
-        // Try to update the pre-opened tab
+        console.log("✅ Opening Paddle Portal:", data.url); // Helpful for debugging
+
+        // Try to update the pre-opened popup
         try {
           popup.location.href = data.url;
         } catch (e) {
-          // Fallback
+          // Fallback for rare edge cases
           window.open(data.url, '_blank', 'noopener,noreferrer');
         }
       } else {
