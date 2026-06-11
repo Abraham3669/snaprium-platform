@@ -4210,3 +4210,16 @@ button.w-full.py-3\.5:active {
 .manage-subscription-btn:hover svg {
   background: rgba(255, 255, 255, 0.28);
 }
+
+
+
+
+.refund-email-link {
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.refund-email-link:hover {
+  opacity: 0.85;
+}

@@ -25,11 +25,16 @@ export default function Refund() {
 
         <section>
           <h2>How to Request a Refund</h2>
-          <p>
-            To request a refund, please contact us at
-            <strong> support@snaprium.com </strong>
-            with your account email and purchase details.
-          </p>
+         <p>
+  To request a refund, please contact us at{" "}
+  <a
+    href="mailto:support@snaprium.com?subject=Refund Request"
+    className="refund-email-link"
+  >
+    support@snaprium.com
+  </a>{" "}
+  with your account email and purchase details.
+</p>
         </section>
 
         <section>

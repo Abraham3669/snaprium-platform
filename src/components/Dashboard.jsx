@@ -137,11 +137,11 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
                 </button>
 
                 {/* Request Refund Button - Only shows for subscribed users */}
-               <button
+<button
   className="manage-subscription-btn dashboard-btn"
   onClick={() => {
-    onClose();                    // Close dashboard first
-    navigate("/refund");          // Direct navigation
+    onClose();
+    navigate("/refunds");
   }}
   type="button"
 >
