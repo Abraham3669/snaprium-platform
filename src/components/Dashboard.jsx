@@ -137,10 +137,8 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
     width="18" 
     height="18"
   >
-    <path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16m7-9h.01" />
-    <path d="M12 12h.01" />
-    <path d="M12 16h.01" />
-    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2z" />
+    <rect x="2" y="5" width="20" height="14" rx="2" ry="2"/>
+    <line x1="2" y1="10" x2="22" y2="10"/>
   </svg>
   Manage Subscription
 </button>
