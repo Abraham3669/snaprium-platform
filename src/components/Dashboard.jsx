@@ -17,49 +17,55 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
    const handleManageSubscription = async () => {
   if (!user?.uid) return;
 
-  // 1. Close the dashboard immediately
-  onClose();
+  onClose(); // close dashboard
 
-  // 2. Open a blank tab/window SYNCHRONOUSLY (This is the critical part for mobile Safari)
+  // Open blank popup immediately (must be sync)
   const popup = window.open('', '_blank', 'noopener,noreferrer');
 
-  // 3. Check if popup was blocked
   if (!popup || popup.closed) {
-    alert("Popup blocked. Please allow popups for this site to manage your subscription.");
+    alert("Please allow popups for this site to manage your subscription.");
     return;
   }
 
-  // Small delay for smooth UI transition (100ms is usually enough)
-  setTimeout(async () => {
-    try {
-      const response = await fetch('/api/customer-portal', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.uid }),
-      });
+  try {
+    const response = await fetch('/api/customer-portal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: user.uid }),
+    });
 
-      const data = await response.json();
+    const data = await response.json();
 
-      if (data.url) {
-        console.log("✅ Opening Paddle Portal:", data.url); // Helpful for debugging
+    if (data.url) {
+      console.log("✅ Paddle URL received:", data.url);
 
-        // Try to update the pre-opened popup
-        try {
-          popup.location.href = data.url;
-        } catch (e) {
-          // Fallback for rare edge cases
-          window.open(data.url, '_blank', 'noopener,noreferrer');
-        }
-      } else {
-        popup?.close();
-        alert(data.error || "Unable to open management portal. Please try again.");
+      // Main attempt
+      try {
+        popup.location.href = data.url;
+      } catch (e) {
+        console.warn("Direct assignment failed, using fallback");
+        // Strong fallback
+        window.open(data.url, '_blank', 'noopener,noreferrer');
       }
-    } catch (error) {
-      console.error("Error opening portal:", error);
+
+      // Extra safety: force navigation after a tiny delay if needed
+      setTimeout(() => {
+        if (popup && !popup.closed) {
+          try {
+            popup.location.replace(data.url); // .replace is sometimes more reliable
+          } catch (e) {}
+        }
+      }, 300);
+
+    } else {
       popup?.close();
-      alert("Something went wrong. Please try again later.");
+      alert(data.error || "Unable to open management portal.");
     }
-  }, 100);
+  } catch (error) {
+    console.error("Error opening portal:", error);
+    popup?.close();
+    alert("Something went wrong. Please try again later.");
+  }
 };
 
 
