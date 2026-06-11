@@ -14,57 +14,33 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
     navigate(path);
   };
 
-   const handleManageSubscription = async () => {
+    const handleManageSubscription = async () => {
   if (!user?.uid) return;
 
-  onClose(); // close dashboard
-
-  // Open blank popup immediately (must be sync)
-  const popup = window.open('', '_blank', 'noopener,noreferrer');
-
-  if (!popup || popup.closed) {
-    alert("Please allow popups for this site to manage your subscription.");
-    return;
-  }
+  onClose();
 
   try {
     const response = await fetch('/api/customer-portal', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({ userId: user.uid }),
     });
 
     const data = await response.json();
 
+    console.log('Portal response:', data);
+
     if (data.url) {
-      console.log("✅ Paddle URL received:", data.url);
-
-      // Main attempt
-      try {
-        popup.location.href = data.url;
-      } catch (e) {
-        console.warn("Direct assignment failed, using fallback");
-        // Strong fallback
-        window.open(data.url, '_blank', 'noopener,noreferrer');
-      }
-
-      // Extra safety: force navigation after a tiny delay if needed
-      setTimeout(() => {
-        if (popup && !popup.closed) {
-          try {
-            popup.location.replace(data.url); // .replace is sometimes more reliable
-          } catch (e) {}
-        }
-      }, 300);
-
+      // More reliable on mobile than window.open()
+      window.location.href = data.url;
     } else {
-      popup?.close();
-      alert(data.error || "Unable to open management portal.");
+      alert(data.error || 'Unable to open management portal. Please try again.');
     }
   } catch (error) {
-    console.error("Error opening portal:", error);
-    popup?.close();
-    alert("Something went wrong. Please try again later.");
+    console.error('Error opening portal:', error);
+    alert('Something went wrong. Please try again later.');
   }
 };
 
