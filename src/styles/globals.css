@@ -4195,16 +4195,15 @@ button.w-full.py-3\.5:active {
   background: linear-gradient(135deg, var(--accent-dark), var(--accent));
 }
 
-/* Big Circular SVG Style - Fixed for small size */
+/* Big Circular SVG Style (Same as your old upgrade button) */
 .manage-subscription-btn svg {
-  width: 20px;           /* Slightly increased container */
-  height: 20px;
+  width: 18px;
+  height: 18px;
   background: rgba(255, 255, 255, 0.18);
   border-radius: 50%;
-  padding: 3px;          /* Reduced padding to prevent clipping */
+  padding: 3px;
   box-sizing: content-box;
   flex-shrink: 0;
-  transition: all 0.25s ease;
 }
 
 .manage-subscription-btn:hover svg {
