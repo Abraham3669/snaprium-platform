@@ -24,7 +24,7 @@ export default function WelcomeModal({ plan, onClose }) {
 
   // Auto-close after 8 seconds
   useEffect(() => {
-    const timer = setTimeout(onClose, 8000);
+    const timer = setTimeout(onClose, 60000);
     return () => clearTimeout(timer);
   }, [onClose]);
 
@@ -45,27 +45,31 @@ export default function WelcomeModal({ plan, onClose }) {
       <div className="welcome-modal-content" onClick={(e) => e.stopPropagation()}>
         <button className="welcome-close-btn" onClick={onClose}>×</button>
 
-        {/* Rocket SVG */}
-        <div className="welcome-icon">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path 
-              d="M12 2L13.5 8.5L20 10L13.5 11.5L12 18L10.5 11.5L4 10L10.5 8.5L12 2Z" 
-              fill="url(#rocketGradient)" 
-            />
-            <path 
-              d="M12 19V22" 
-              stroke="#3b82f6" 
-              strokeWidth="2" 
-              strokeLinecap="round"
-            />
-            <defs>
-              <linearGradient id="rocketGradient" x1="4" y1="10" x2="20" y2="10" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stopColor="#3b82f6"/>
-                <stop offset="100%" stopColor="#60a5fa"/>
-              </linearGradient>
-            </defs>
-          </svg>
-        </div>
+       {/* Checkmark Circle SVG */}
+<div className="welcome-icon">
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle 
+      cx="12" 
+      cy="12" 
+      r="10" 
+      fill="url(#checkGradient)" 
+    />
+    <path 
+      d="M9 12.5l2 2 4-4" 
+      stroke="white" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+    />
+    <defs>
+      <linearGradient id="checkGradient" x1="2" y1="12" x2="22" y2="12" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#3b82f6"/>
+        <stop offset="100%" stopColor="#60a5fa"/>
+      </linearGradient>
+    </defs>
+  </svg>
+</div>
+
 
         <h2>Congratulations!</h2>
 
