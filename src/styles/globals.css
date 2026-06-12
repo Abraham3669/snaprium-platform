@@ -4462,3 +4462,32 @@ h2 {
 .btn-google svg {
   flex-shrink: 0;
 }
+
+
+
+
+
+
+
+
+
+
+/* Signup password toggle */
+.password-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.show-password {
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+  color: #555;
+  cursor: pointer;
+}
+
+.show-password input[type="checkbox"] {
+  margin-right: 0.4rem;
+  cursor: pointer;
+}

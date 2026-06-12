@@ -14,6 +14,7 @@ export default function Signup() {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -34,6 +35,13 @@ export default function Signup() {
     }
     if (password.length < 6) {
       setError('Password must be at least 6 characters');
+      return;
+    }
+
+    // Basic email format validation before hitting Firebase
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setError('Please enter a valid email address');
       return;
     }
 
@@ -88,14 +96,24 @@ export default function Signup() {
           className="input-field"
         />
 
-        <input
-          type="password"
-          placeholder="Password (min 6 characters)"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          className="input-field"
-        />
+        <div className="password-field">
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password (min 6 characters)"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="input-field"
+          />
+          <label className="show-password">
+            <input
+              type="checkbox"
+              checked={showPassword}
+              onChange={() => setShowPassword(!showPassword)}
+            />
+            Show Password
+          </label>
+        </div>
 
         <button
           type="submit"
