@@ -4402,6 +4402,56 @@ button.w-full.py-3\.5:active {
 
 
 
+
+
+
+
+.welcome-icon {
+  margin: 0 auto 1rem;
+  width: 64px;
+  height: 64px;
+}
+
+h2 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #111827; /* neutral dark */
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.welcome-text {
+  font-size: 1rem;
+  color: #374151; /* subtle gray */
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.welcome-cta {
+  display: block;
+  margin: 0 auto;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  color: #fff;
+  font-weight: 500;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.welcome-cta:hover {
+  background: linear-gradient(90deg, #2563eb, #3b82f6);
+}
+
+
+
+
+
+
+
+
+
 .btn-google {
   display: flex;
   align-items: center;
