@@ -245,7 +245,7 @@ export default function CameraInput({ onFileSelect, onOpenDashboard }) {
             <svg className="check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white">
               <path d="M20.285 6.709a1 1 0 0 0-1.414-1.418l-9.192 9.192-4.243-4.243a1 1 0 0 0-1.414 1.414l5 5a1 1 0 0 0 1.414 0l9.849-9.849z" />
             </svg>
-            <span>Step-by-step explanations</span>
+           <span>Step-by-step Math & Physics solutions</span>
           </li>
           <li>
             <svg className="check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white">
@@ -265,19 +265,19 @@ export default function CameraInput({ onFileSelect, onOpenDashboard }) {
             <svg className="check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white">
               <path d="M20.285 6.709a1 1 0 0 0-1.414-1.418l-9.192 9.192-4.243-4.243a1 1 0 0 0-1.414 1.414l5 5a1 1 0 0 0 1.414 0l9.849-9.849z" />
             </svg>
-            <span>Step-by-step exam prep</span>
+            <span>Clear explanations for every solution</span>
           </li>
           <li>
             <svg className="check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white">
               <path d="M20.285 6.709a1 1 0 0 0-1.414-1.418l-9.192 9.192-4.243-4.243a1 1 0 0 0-1.414 1.414l5 5a1 1 0 0 0 1.414 0l9.849-9.849z" />
             </svg>
-            <span>Personalized learning dashboard</span>
+            <span>Solve problems with confidence</span>
           </li>
           <li>
             <svg className="check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white">
               <path d="M20.285 6.709a1 1 0 0 0-1.414-1.418l-9.192 9.192-4.243-4.243a1 1 0 0 0-1.414 1.414l5 5a1 1 0 0 0 1.414 0l9.849-9.849z" />
             </svg>
-            <span>Trusted by learners worldwide</span>
+           <span>Designed for effective learning</span>
           </li>
         </ul>
       </div>
