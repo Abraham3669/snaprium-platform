@@ -4368,3 +4368,19 @@ button.w-full.py-3\.5:active {
     font-size: 26px;
   }
 }
+
+
+
+
+
+
+.btn-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.btn-google svg {
+  flex-shrink: 0;
+}
