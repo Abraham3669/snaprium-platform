@@ -70,35 +70,16 @@ export default function WelcomeModal({ plan, onClose }) {
   </svg>
 </div>
 
+<h2>Congratulations!</h2>
 
-        <h2>Congratulations!</h2>
+<p className="welcome-text">
+  You’re now an <strong>Unlimited</strong> member — enjoy solving math & physics problems anytime.
+</p>
 
-        <p className="welcome-text">
-          You are now an <strong>Unlimited</strong> member!
-        </p>
+<button className="welcome-cta" onClick={onClose}>
+  Start Solving Now
+</button>
 
-        <p className="welcome-detail">
-          You can now solve <strong>unlimited Math & Physics</strong> problems 
-          with step-by-step explanations — anytime, anywhere.
-        </p>
-
-        <div className="welcome-benefits">
-          <ul>
-            <li>No more daily limits</li>
-            <li>Perfect for heavy study sessions and exam prep</li>
-            <li>Priority processing speed</li>
-            <li>Full solution history</li>
-          </ul>
-        </div>
-
-        <button className="welcome-cta" onClick={onClose}>
-          Start Solving Now
-        </button>
-
-        <p className="welcome-note">
-          Thank you for supporting Snaprium.<br />
-          Happy studying!
-        </p>
       </div>
     </div>
   );
