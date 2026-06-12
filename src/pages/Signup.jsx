@@ -1,7 +1,12 @@
 // src/pages/Signup.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import {
+  createUserWithEmailAndPassword,
+  updateProfile,
+  sendEmailVerification,
+  signOut
+} from 'firebase/auth';
 import { auth, analytics, logEvent } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 
@@ -14,6 +19,7 @@ export default function Signup() {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -32,6 +38,14 @@ export default function Signup() {
       setError('Please fill all fields');
       return;
     }
+
+    // Basic email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
     if (password.length < 6) {
       setError('Password must be at least 6 characters');
       return;
@@ -41,15 +55,37 @@ export default function Signup() {
     setError('');
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
-      
-      await updateProfile(userCredential.user, { 
-        displayName: name.trim() 
-      });
+     const userCredential = await createUserWithEmailAndPassword(
+  auth,
+  email.trim(),
+  password
+);
 
-      logEvent(analytics, 'sign_up', { method: 'email' });
 
-      console.log("[Signup] Account created successfully");
+if (!userCredential.user.emailVerified) {
+  await signOut(auth);
+  setError('Please verify your email before signing in.');
+  return;
+}
+
+
+await updateProfile(userCredential.user, {
+  displayName: name.trim()
+});
+
+// Send verification email
+await sendEmailVerification(userCredential.user);
+
+// Sign them out until they verify
+await signOut(auth);
+
+logEvent(analytics, 'sign_up', { method: 'email' });
+
+alert(
+  'Account created! Please check your email and click the verification link before signing in.'
+);
+
+navigate('/login');
       // Navigation handled by useEffect in AuthContext + redirect above
     } catch (err) {
       console.error('Signup error:', err.code, err.message);
@@ -88,14 +124,24 @@ export default function Signup() {
           className="input-field"
         />
 
-        <input
-          type="password"
-          placeholder="Password (min 6 characters)"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          className="input-field"
-        />
+        <div className="password-wrapper">
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password (min 6 characters)"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="input-field"
+          />
+          <label className="show-password-toggle">
+            <input
+              type="checkbox"
+              checked={showPassword}
+              onChange={() => setShowPassword(!showPassword)}
+            />
+            Show Password
+          </label>
+        </div>
 
         <button
           type="submit"

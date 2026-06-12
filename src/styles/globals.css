@@ -4472,3 +4472,25 @@ h2 {
 
 
 
+/* Wrap around password input + toggle */
+.password-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+/* Checkbox + label styling */
+.show-password-toggle {
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+  color: #555;
+  margin-top: 0.4rem;
+  cursor: pointer;
+}
+
+.show-password-toggle input[type="checkbox"] {
+  margin-right: 0.5rem;
+  accent-color: #007bff; /* your accent blue */
+}
