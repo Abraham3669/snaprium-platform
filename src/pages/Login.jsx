@@ -14,13 +14,16 @@ export default function Login() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
+  // ==================== EMAIL/PASSWORD STATES (Disabled for now) ====================
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [verificationRequired, setVerificationRequired] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
+  // =================================================================================
+
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -47,6 +50,7 @@ export default function Login() {
     }
   };
 
+  // ==================== EMAIL LOGIN - Currently Disabled ====================
   const handleEmailSignIn = async (e) => {
     e.preventDefault();
     if (!email || !password) {
@@ -70,7 +74,6 @@ export default function Login() {
       if (!userCredential.user.emailVerified) {
         await signOut(auth);
         setVerificationRequired(true);
-        // Keep email & password for resend
         return;
       }
 
@@ -89,7 +92,6 @@ export default function Login() {
 
     setResendLoading(true);
     try {
-      // Temporarily sign in to resend verification
       const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
       
       const actionCodeSettings = {
@@ -108,6 +110,7 @@ export default function Login() {
       setResendLoading(false);
     }
   };
+  // ===========================================================================
 
   const getFriendlyErrorMessage = (code) => {
     const messages = {
@@ -122,7 +125,9 @@ export default function Login() {
     return messages[code] || 'Sign in failed. Please try again.';
   };
 
-  // Verification Required Screen
+  // Verification Required Screen - Currently Disabled
+  // if (verificationRequired) { ... full block commented below }
+  /*
   if (verificationRequired) {
     return (
       <div className="auth-container" style={{ textAlign: 'center', maxWidth: '420px' }}>
@@ -150,6 +155,7 @@ export default function Login() {
       </div>
     );
   }
+  */
 
   // Normal Login Form
   return (
@@ -175,6 +181,8 @@ export default function Login() {
         )}
       </button>
 
+      {/* ==================== EMAIL LOGIN SECTION - Currently Disabled ==================== */}
+      {/* 
       <div className="divider">───────── or ─────────</div>
 
       <form onSubmit={handleEmailSignIn}>
@@ -227,6 +235,8 @@ export default function Login() {
           {loading ? 'Signing in...' : 'Sign In with Email'}
         </button>
       </form>
+      */}
+      {/* ================================================================================ */}
 
       {error && <p className="error-message">{error}</p>}
 
@@ -234,9 +244,11 @@ export default function Login() {
         Don't have an account? <Link to="/signup">Sign up</Link>
       </p>
 
+      {/* 
       <p className="auth-link small">
         <Link to="/forgot-password">Forgot password?</Link>
-      </p>
+      </p> 
+      */}
     </div>
   );
 }
