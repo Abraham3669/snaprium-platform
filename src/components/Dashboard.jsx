@@ -43,7 +43,6 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
     }
   };
 
-  // Button text changes based on subscription
   const isSubscribed = user && (user.subscription === 'pro' || user.subscription === 'premium' || 
                                user.plan === 'unlimited' || user.subscriptionStatus === 'active');
 
@@ -118,80 +117,51 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
             </button>
           )}
 
-         {/* === Subscription Button (Manage / Upgrade) - Mobile Fixed === */}
-{user && (
-  isSubscribed ? (
-    <>
-      {/* Primary Action - Prominent */}
-      <button
-        className="manage-subscription-btn dashboard-btn primary"
-        onClick={handleManageSubscription}
-        type="button"
-      >
-        <svg 
-          viewBox="0 0 24 24" 
-          fill="none" 
-          stroke="currentColor" 
-          strokeWidth="2.5" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
-          width="18" 
-          height="18"
-        >
-          <rect x="2" y="5" width="20" height="14" rx="2" ry="2"/>
-          <line x1="2" y1="10" x2="22" y2="10"/>
-        </svg>
-        Manage Subscription
-      </button>
-
-      {/* Request Refund - Subtle & Less Prominent */}
-      <button
-        className="refund-btn"
-        onClick={() => {
-          onClose();
-          navigate("/refunds");
-        }}
-        type="button"
-      >
-        <svg 
-          viewBox="0 0 24 24" 
-          fill="none" 
-          stroke="currentColor" 
-          strokeWidth="2.5" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
-          width="18" 
-          height="18"
-        >
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="8" x2="12" y2="12"/>
-          <line x1="12" y1="16" x2="12.01" y2="16"/>
-        </svg>
-        Request Refund
-      </button>
-    </>
-  ) : (
-             <button
-  className="manage-subscription-btn dashboard-btn"
-  onClick={() => handleNavigate("/upgrade")}
-  type="button"
->
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    width="20" 
-    height="20" 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2.75" 
-    strokeLinecap="round" 
-    strokeLinejoin="round"
-  >
-    <path d="M12 19V5" />
-    <path d="M5 12L12 5L19 12" />
-  </svg>
-  Upgrade Plan
-</button>
+          {/* Subscription Section */}
+          {user && (
+            isSubscribed ? (
+              <button
+                className="manage-subscription-btn dashboard-btn primary"
+                onClick={handleManageSubscription}
+                type="button"
+              >
+                <svg 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2.5" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                  width="18" 
+                  height="18"
+                >
+                  <rect x="2" y="5" width="20" height="14" rx="2" ry="2"/>
+                  <line x1="2" y1="10" x2="22" y2="10"/>
+                </svg>
+                Manage Subscription
+              </button>
+            ) : (
+              <button
+                className="manage-subscription-btn dashboard-btn"
+                onClick={() => handleNavigate("/upgrade")}
+                type="button"
+              >
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  width="20" 
+                  height="20" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2.75" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 19V5" />
+                  <path d="M5 12L12 5L19 12" />
+                </svg>
+                Upgrade Plan
+              </button>
             )
           )}
 
@@ -225,6 +195,36 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
             </svg>
             {theme === "dark" ? "Light Mode" : "Dark Mode"}
           </button>
+
+          {/* ==================== REFUND BUTTON - AT THE VERY BOTTOM ==================== */}
+          {user && isSubscribed && (
+            <div className="dashboard-footer">
+              <button
+                className="refund-btn"
+                onClick={() => {
+                  onClose();
+                  navigate("/refunds");
+                }}
+                type="button"
+              >
+                <svg 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2.5" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                  width="18" 
+                  height="18"
+                >
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                Request Refund
+              </button>
+            </div>
+          )}
         </div>
       </aside>
     </>

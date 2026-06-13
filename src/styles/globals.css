@@ -4667,22 +4667,23 @@ h2 {
 
 
 
-/* Primary subscription button */
-.manage-subscription-btn.primary {
-  background: var(--accent);
-  color: white;
-  font-weight: 600;
-  margin-bottom: 8px;
+/* ==================== REFUND BUTTON STYLING ==================== */
+
+/* Push refund to bottom */
+.dashboard-footer {
+  margin-top: auto;
+  padding-top: 32px;
+  border-top: 1px solid var(--border);
 }
 
-/* Subtle Refund Button */
+/* Refund Button - Red & Subtle */
 .refund-btn {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 16px;
+  padding: 11px 16px;
   background: transparent;
-  color: #ef4444;
+  color: var(--danger, #ef4444);
   border: none;
   font-size: 0.95rem;
   font-weight: 500;
@@ -4694,11 +4695,25 @@ h2 {
 }
 
 .refund-btn:hover {
-  background: rgba(239, 68, 68, 0.08);
-  color: #dc2626;
+  background: var(--danger-bg, rgba(239, 68, 68, 0.1));
+  color: var(--danger-dark, #dc2626);
   opacity: 1;
 }
 
 .refund-btn svg {
   stroke: currentColor;
+}
+
+:root {
+  /* ... your existing variables ... */
+  --danger: #ef4444;
+  --danger-dark: #dc2626;
+  --danger-bg: rgba(239, 68, 68, 0.08);
+}
+
+[data-theme="dark"] {
+  /* ... your existing dark variables ... */
+  --danger: #f87171;
+  --danger-dark: #ef4444;
+  --danger-bg: rgba(248, 113, 113, 0.15);
 }
