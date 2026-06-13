@@ -15,6 +15,8 @@ export default function Signup() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);   // ← New state
+  const [resendLoading, setResendLoading] = useState(false);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -38,7 +40,6 @@ export default function Signup() {
       return;
     }
 
-    // Basic client-side email format validation (standard practice)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email.trim())) {
       setError('Please enter a valid email address');
@@ -51,20 +52,13 @@ export default function Signup() {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
       
-      await updateProfile(userCredential.user, { 
-        displayName: name.trim() 
-      });
+      await updateProfile(userCredential.user, { displayName: name.trim() });
 
-      // Send verification email - this is how professional SaaS (Stripe, Notion, etc.) prevent fake signups
       await sendEmailVerification(userCredential.user);
       
       logEvent(analytics, 'sign_up', { method: 'email' });
 
-      // Inform user to check email
-      alert('Account created! Please check your email to verify your address before logging in.');
-      
-      // Optionally redirect to login or a verification pending page
-      navigate('/login', { replace: true });
+      setVerificationSent(true);   // Show success screen
     } catch (err) {
       console.error('Signup error:', err.code, err.message);
       const msg = {
@@ -78,6 +72,51 @@ export default function Signup() {
     }
   };
 
+  const resendVerification = async () => {
+    if (!auth.currentUser) return;
+    
+    setResendLoading(true);
+    try {
+      await sendEmailVerification(auth.currentUser);
+      alert('Verification email resent! Please check your inbox.'); // Temporary, can improve later
+    } catch (err) {
+      console.error(err);
+      alert('Failed to resend email. Try again later.');
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
+  // Success Screen (Professional look)
+  if (verificationSent) {
+    return (
+      <div className="auth-container" style={{ textAlign: 'center', maxWidth: '420px' }}>
+        <h1>Check Your Email</h1>
+        <p style={{ fontSize: '1.1rem', margin: '20px 0' }}>
+          We've sent a verification link to <strong>{email}</strong>
+        </p>
+        <p style={{ color: '#666', marginBottom: '30px' }}>
+          Click the link in the email to verify your account.<br />
+          You can close this tab and come back after verifying.
+        </p>
+
+        <button 
+          onClick={resendVerification}
+          disabled={resendLoading}
+          className="btn-primary"
+          style={{ marginBottom: '20px', width: '100%' }}
+        >
+          {resendLoading ? 'Resending...' : 'Resend Verification Email'}
+        </button>
+
+        <p className="auth-link">
+          Already verified? <Link to="/login">Sign in</Link>
+        </p>
+      </div>
+    );
+  }
+
+  // Signup Form
   return (
     <div className="auth-container">
       <h1>Create Account</h1>
