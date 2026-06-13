@@ -4571,3 +4571,22 @@ h2 {
 .cta-heading {
   color: var(--text-primary);
 }
+
+
+
+
+
+
+
+
+.toast-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.25); /* dim */
+  backdrop-filter: blur(6px);   /* optional blur */
+  z-index: 998; /* sits behind toast */
+}
+.guest-limit-toast {
+  position: relative;
+  z-index: 999; /* toast stays above */
+}
