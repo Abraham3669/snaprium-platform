@@ -170,7 +170,9 @@ function App() {
       let guestSolves = parseInt(localStorage.getItem('guestSolves') || '0', 10);
       if (guestSolves >= 2) {
         logEvent(analytics, "guest_limit_hit", { solves_attempted: guestSolves + 1 });
-
+        
+    setResult(null);
+    
         toast(
           <div style={{ textAlign: 'center' }}>
             <p style={{ marginBottom: '12px', fontWeight: 500 }}>
