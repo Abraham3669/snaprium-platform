@@ -114,7 +114,7 @@ function App() {
 if (!(await checkSolveLimit())) {
   setResultText("");      // Clear old solution text
   setCroppedImage(null);  // Clear old image
-  setIsResultOpen(false); // Close ResultPanel completely
+ 
   return;
 }
 
