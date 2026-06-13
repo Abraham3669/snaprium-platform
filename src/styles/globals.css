@@ -4667,3 +4667,38 @@ h2 {
 
 
 
+/* Primary subscription button */
+.manage-subscription-btn.primary {
+  background: var(--accent);
+  color: white;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+/* Subtle Refund Button */
+.refund-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: transparent;
+  color: #ef4444;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  width: 100%;
+  justify-content: flex-start;
+  border-radius: var(--radius);
+  transition: var(--transition);
+  opacity: 0.9;
+}
+
+.refund-btn:hover {
+  background: rgba(239, 68, 68, 0.08);
+  color: #dc2626;
+  opacity: 1;
+}
+
+.refund-btn svg {
+  stroke: currentColor;
+}
