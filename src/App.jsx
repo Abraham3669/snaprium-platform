@@ -172,37 +172,36 @@ function App() {
         logEvent(analytics, "guest_limit_hit", { solves_attempted: guestSolves + 1 });
 
         toast(
-          <div style={{ textAlign: 'center' }}>
-            <p style={{ marginBottom: '12px', fontWeight: 500 }}>
-              Sign in to unlock more expert solutions and unlimited access.
-            </p>
-            <button
-              onClick={() => {
-                navigate('/login');
-                toast.dismiss();
-              }}
-              style={{
-                background: 'var(--accent)',
-                color: 'white',
-                border: 'none',
-                padding: '10px 24px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontWeight: 600,
-                fontSize: '0.95rem',
-              }}
-            >
-              Sign In Now
-            </button>
-          </div>,
-          {
-            position: "bottom-center",
-            autoClose: 10000,
-            closeOnClick: false,
-            pauseOnHover: true,
-            className: 'guest-limit-toast',
-          }
-        );
+  <div style={{ textAlign: 'center' }}>
+    <p style={{ marginBottom: '12px', fontWeight: 500 }}>
+      Sign in to unlock more expert solutions and unlimited access.
+    </p>
+    <button
+      onClick={() => {
+        navigate('/login');
+        toast.dismiss();
+      }}
+      style={{
+        background: 'var(--accent)',
+        color: 'white',
+        border: 'none',
+        padding: '12px 28px',
+        borderRadius: '8px',
+        cursor: 'pointer',
+        fontWeight: 600,
+      }}
+    >
+      Sign In Now
+    </button>
+  </div>,
+  {
+    position: "center",           // Best for important messages
+    autoClose: false,             // Don't auto close important toast
+    closeOnClick: false,
+    pauseOnHover: true,
+    className: 'guest-limit-toast',
+  }
+);
         return false;
       }
       return true;
