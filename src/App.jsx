@@ -196,7 +196,7 @@ function App() {
             </button>
           </div>,
           {
-            position: "bottom-center",
+            position: "top-center",
             autoClose: 10000,
             closeOnClick: false,
             pauseOnHover: true,
