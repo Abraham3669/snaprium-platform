@@ -4567,22 +4567,3 @@ h2 {
 
 
 
-/* Blur the entire page behind the toast */
-body.toast-blur::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-
-  background: rgba(0, 0, 0, 0.15); /* optional dim */
-  z-index: 9998;
-
-  pointer-events: none;
-}
-
-/* Keep toast above the blur */
-.Toastify__toast-container {
-  z-index: 9999 !important;
-}
