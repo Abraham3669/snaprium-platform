@@ -1,12 +1,7 @@
 // src/pages/Signup.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import {
-  createUserWithEmailAndPassword,
-  updateProfile,
-  sendEmailVerification,
-  signOut
-} from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from 'firebase/auth';
 import { auth, analytics, logEvent } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 
@@ -38,16 +33,15 @@ export default function Signup() {
       setError('Please fill all fields');
       return;
     }
-
-    // Basic email format validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) {
-      setError('Please enter a valid email address');
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+    // Basic client-side email format validation (standard practice)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setError('Please enter a valid email address');
       return;
     }
 
@@ -55,38 +49,22 @@ export default function Signup() {
     setError('');
 
     try {
-     const userCredential = await createUserWithEmailAndPassword(
-  auth,
-  email.trim(),
-  password
-);
+      const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      
+      await updateProfile(userCredential.user, { 
+        displayName: name.trim() 
+      });
 
+      // Send verification email - this is how professional SaaS (Stripe, Notion, etc.) prevent fake signups
+      await sendEmailVerification(userCredential.user);
+      
+      logEvent(analytics, 'sign_up', { method: 'email' });
 
-if (!userCredential.user.emailVerified) {
-  await signOut(auth);
-  setError('Please verify your email before signing in.');
-  return;
-}
-
-
-await updateProfile(userCredential.user, {
-  displayName: name.trim()
-});
-
-// Send verification email
-await sendEmailVerification(userCredential.user);
-
-// Sign them out until they verify
-await signOut(auth);
-
-logEvent(analytics, 'sign_up', { method: 'email' });
-
-alert(
-  'Account created! Please check your email and click the verification link before signing in.'
-);
-
-navigate('/login');
-      // Navigation handled by useEffect in AuthContext + redirect above
+      // Inform user to check email
+      alert('Account created! Please check your email to verify your address before logging in.');
+      
+      // Optionally redirect to login or a verification pending page
+      navigate('/login', { replace: true });
     } catch (err) {
       console.error('Signup error:', err.code, err.message);
       const msg = {
@@ -124,23 +102,34 @@ navigate('/login');
           className="input-field"
         />
 
-        <div className="password-wrapper">
+        <div className="password-container" style={{ position: 'relative' }}>
           <input
-            type={showPassword ? "text" : "password"}
+            type={showPassword ? 'text' : 'password'}
             placeholder="Password (min 6 characters)"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             className="input-field"
+            style={{ paddingRight: '50px' }}
           />
-          <label className="show-password-toggle">
-            <input
-              type="checkbox"
-              checked={showPassword}
-              onChange={() => setShowPassword(!showPassword)}
-            />
-            Show Password
-          </label>
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            style={{
+              position: 'absolute',
+              right: '12px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: '#666',
+              fontSize: '14px',
+              padding: '4px 8px'
+            }}
+          >
+            {showPassword ? 'Hide' : 'Show'}
+          </button>
         </div>
 
         <button
