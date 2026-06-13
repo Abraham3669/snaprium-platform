@@ -197,7 +197,7 @@ function App() {
           </div>,
           {
             position: "top-center",
-            autoClose: 10000,
+            autoClose: false,
             closeOnClick: false,
             pauseOnHover: true,
             className: 'guest-limit-toast',
