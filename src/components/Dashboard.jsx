@@ -177,8 +177,10 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
     strokeLinecap="round" 
     strokeLinejoin="round"
   >
-    <path d="M12 2L15 8H21L16 13L18 20L12 16L6 20L8 13L3 8H9L12 2Z" />
-    <path d="M12 6V16" />
+    <path d="M12 19V5" />
+    <path d="M5 12L12 5L19 12" />
+    <path d="M19 19L18 18" />
+    <path d="M5 19L6 18" />
   </svg>
   Upgrade Plan
 </button>
