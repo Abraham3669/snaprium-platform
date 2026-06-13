@@ -4590,3 +4590,38 @@ h2 {
   position: relative;
   z-index: 999; /* toast stays above */
 }
+
+
+
+
+
+
+
+
+
+.limit-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: var(--icon-bg);
+  border-radius: var(--radius-pill);
+  flex-shrink: 0;
+}
+
+.limit-icon svg {
+  width: 28px;
+  height: 28px;
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: var(--transition);
+}
+
+/* Optional: Slight hover effect */
+.limit-icon:hover svg {
+  stroke: var(--accent-dark);
+  transform: scale(1.08);
+}

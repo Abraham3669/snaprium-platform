@@ -23,13 +23,24 @@ export default function UpgradeModal({ isOpen, onClose }) {
           <X size={28} />
         </button>
 
-        <div className="upgrade-header">
-          <div className="limit-icon">⏰</div>
-          <h2 className="upgrade-title">Daily Limit Reached</h2>
-          <p className="upgrade-subtitle">
-            You've used your <strong>5 free solves</strong> for today.
-          </p>
-        </div>
+       <div className="upgrade-header">
+  <div className="limit-icon">
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      viewBox="0 0 24 24" 
+      fill="none"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
+  </div>
+
+  <h2 className="upgrade-title">Daily Limit Reached</h2>
+  <p className="upgrade-subtitle">
+    You've used your <strong>5 free solves</strong> for today.
+  </p>
+</div>
 
         <div className="upgrade-body">
           <p className="upgrade-main-text">
