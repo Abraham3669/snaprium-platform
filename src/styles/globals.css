@@ -4567,33 +4567,3 @@ h2 {
 
 
 
-/* Professional Blur for Guest Limit Toast */
-.guest-limit-toast {
-  background: rgba(255, 255, 255, 0.96) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  
-  border: 1px solid rgba(0, 0, 0, 0.08) !important;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15) !important;
-  border-radius: 14px !important;
-  padding: 24px 28px !important;
-  max-width: 380px !important;
-}
-
-/* Optional: Add subtle dark overlay behind the toast */
-.Toastify__toast-container {
-  background: rgba(0, 0, 0, 0.35) !important;
-}
-
-/* Extra polish */
-.guest-limit-toast .Toastify__toast-body {
-  padding: 0 !important;
-}
-
-/* Mobile friendly */
-@media (max-width: 480px) {
-  .guest-limit-toast {
-    padding: 20px 24px !important;
-    max-width: 340px !important;
-  }
-}
