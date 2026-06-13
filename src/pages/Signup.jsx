@@ -23,7 +23,6 @@ export default function Signup() {
   const [verificationSent, setVerificationSent] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
 
-  // Redirect if already logged in (only verified users should reach here)
   useEffect(() => {
     if (user && !authLoading) {
       navigate('/', { replace: true });
@@ -59,17 +58,15 @@ export default function Signup() {
       
       await updateProfile(userCredential.user, { displayName: name.trim() });
 
-      // Professional configuration for verification email
       const actionCodeSettings = {
-        url: window.location.origin + '/login', // Redirect back to login after verification
+        url: window.location.origin + '/login',
         handleCodeInApp: true,
       };
 
       await sendEmailVerification(userCredential.user, actionCodeSettings);
-
+      
       logEvent(analytics, 'sign_up', { method: 'email' });
 
-      // IMPORTANT: Sign out so user is NOT logged in until they verify
       await signOut(auth);
 
       setVerificationSent(true);
@@ -86,26 +83,33 @@ export default function Signup() {
     }
   };
 
+  // Reliable Resend Function
   const resendVerification = async () => {
-    if (!auth.currentUser) return;
+    if (!email || !password) return;
     
     setResendLoading(true);
     try {
+      // Temporarily sign in to send verification
+      const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      
       const actionCodeSettings = {
         url: window.location.origin + '/login',
         handleCodeInApp: true,
       };
-      await sendEmailVerification(auth.currentUser, actionCodeSettings);
+
+      await sendEmailVerification(userCredential.user, actionCodeSettings);
+      await signOut(auth);
+
       alert('✅ Verification email resent! Please check your inbox and spam folder.');
     } catch (err) {
-      console.error(err);
-      alert('Failed to resend email. Try again later.');
+      console.error('Resend error:', err);
+      alert('Failed to resend verification email. Please try again.');
     } finally {
       setResendLoading(false);
     }
   };
 
-  // Professional Success Screen
+  // Success Screen
   if (verificationSent) {
     return (
       <div className="auth-container" style={{ textAlign: 'center', maxWidth: '420px' }}>
@@ -114,8 +118,8 @@ export default function Signup() {
           We've sent a verification link to <strong>{email}</strong>
         </p>
         <p style={{ color: '#666', marginBottom: '30px' }}>
-          Please check your inbox (and spam/junk folder).<br />
-          Click the link to verify your account, then return here to sign in.
+          Please check your <strong>inbox</strong> and <strong>spam/junk folder</strong>.<br />
+          Click the big button/link in the email to verify your account.
         </p>
 
         <button 

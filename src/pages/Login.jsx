@@ -1,7 +1,12 @@
 // src/pages/Login.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { signInWithPopup, signInWithEmailAndPassword, signOut, sendEmailVerification } from 'firebase/auth';
+import { 
+  signInWithPopup, 
+  signInWithEmailAndPassword, 
+  signOut, 
+  sendEmailVerification 
+} from 'firebase/auth';
 import { auth, googleProvider } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 
@@ -14,7 +19,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [verificationRequired, setVerificationRequired] = useState(false); // ← New
+  const [verificationRequired, setVerificationRequired] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
 
   // Redirect if already logged in
@@ -33,6 +38,7 @@ export default function Login() {
     setError('');
     try {
       await signInWithPopup(auth, googleProvider);
+      // Navigation handled by useEffect
     } catch (err) {
       console.error('Google sign-in error:', err.code, err.message);
       setError(getFriendlyErrorMessage(err.code));
@@ -64,11 +70,11 @@ export default function Login() {
       if (!userCredential.user.emailVerified) {
         await signOut(auth);
         setVerificationRequired(true);
-        setEmail(email); // Save email for resend
+        // Keep email & password for resend
         return;
       }
 
-      // Navigation handled by useEffect
+      // Verified user → navigation handled by useEffect
     } catch (err) {
       console.error('Email sign-in error:', err.code, err.message);
       setError(getFriendlyErrorMessage(err.code));
@@ -77,16 +83,27 @@ export default function Login() {
     }
   };
 
+  // Reliable Resend Function
   const resendVerification = async () => {
-    if (!auth.currentUser) return;
+    if (!email || !password) return;
 
     setResendLoading(true);
     try {
-      await sendEmailVerification(auth.currentUser);
+      // Temporarily sign in to resend verification
+      const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
+      
+      const actionCodeSettings = {
+        url: window.location.origin + '/login',
+        handleCodeInApp: true,
+      };
+
+      await sendEmailVerification(userCredential.user, actionCodeSettings);
+      await signOut(auth);
+
       alert('✅ Verification email resent! Please check your inbox and spam folder.');
     } catch (err) {
-      console.error(err);
-      alert('Failed to resend verification email. Please try again later.');
+      console.error('Resend error:', err);
+      alert('Failed to resend verification email. Please try again.');
     } finally {
       setResendLoading(false);
     }
@@ -114,7 +131,8 @@ export default function Login() {
           We sent a verification link to <strong>{email}</strong>
         </p>
         <p style={{ color: '#666', marginBottom: '30px' }}>
-          Please check your inbox (and spam folder) and click the link to verify your account.
+          Please check your inbox and spam/junk folder.<br />
+          Click the link in the email to verify your account.
         </p>
 
         <button 
@@ -144,16 +162,9 @@ export default function Login() {
         disabled={loading}
         className="btn-google"
       >
-        {loading ? (
-          'Connecting...'
-        ) : (
+        {loading ? 'Connecting...' : (
           <>
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 48 48"
-              xmlns="http://www.w3.org/2000/svg"
-            >
+            <svg width="20" height="20" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
               <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303C33.654 32.657 29.239 36 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.277 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" />
               <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 16.108 18.961 13 24 13c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.277 4 24 4c-7.682 0-14.318 4.337-17.694 10.691z" />
               <path fill="#4CAF50" d="M24 44c5.177 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.143 35.091 26.715 36 24 36c-5.218 0-9.621-3.317-11.283-7.946l-6.522 5.025C9.532 39.556 16.227 44 24 44z" />
