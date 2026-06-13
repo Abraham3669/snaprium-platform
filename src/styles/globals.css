@@ -4567,3 +4567,7 @@ h2 {
 
 
 
+.section-heading,
+.cta-heading {
+  color: var(--text-primary);
+}
