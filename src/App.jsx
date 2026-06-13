@@ -110,13 +110,17 @@ function App() {
 
   try {
     // CHECK LIMIT FIRST
-    if (!(await checkSolveLimit())) {
-      return;
-    }
+    // CHECK LIMIT FIRST
+if (!(await checkSolveLimit())) {
+  setResultText("");      // Clear old solution text
+  setCroppedImage(null);  // Clear old image
+  setIsResultOpen(false); // Close ResultPanel completely
+  return;
+}
 
-    // ONLY start loading if allowed
-    setIsProcessing(true);
-    setResultText("");
+// ONLY start loading if allowed
+setIsProcessing(true);
+setResultText("");
 
     const res = await postAPI("/api/process", {
       imageBase64: dataUrl.split(",")[1],
@@ -171,8 +175,7 @@ function App() {
       if (guestSolves >= 2) {
         logEvent(analytics, "guest_limit_hit", { solves_attempted: guestSolves + 1 });
         
-    setResult(null);
-    
+
         toast(
           <div style={{ textAlign: 'center' }}>
             <p style={{ marginBottom: '12px', fontWeight: 500 }}>
