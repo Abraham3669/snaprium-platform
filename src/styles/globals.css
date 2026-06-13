@@ -4567,3 +4567,33 @@ h2 {
 
 
 
+/* Blur the background behind the toast */
+.Toastify__toast-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.45) !important;     /* Dark overlay */
+  backdrop-filter: blur(8px) !important;          /* Blur the page */
+  -webkit-backdrop-filter: blur(8px) !important;
+  z-index: 9998 !important;
+}
+
+/* Keep the toast itself clean and untouched */
+.guest-limit-toast {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2) !important;
+  border-radius: 12px !important;
+  padding: 24px 28px !important;
+  max-width: 380px !important;
+}
+
+/* Mobile adjustments */
+@media (max-width: 480px) {
+  .guest-limit-toast {
+    max-width: 340px !important;
+    padding: 20px 24px !important;
+  }
+}
