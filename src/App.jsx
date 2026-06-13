@@ -113,8 +113,7 @@ function App() {
     // CHECK LIMIT FIRST
 if (!(await checkSolveLimit())) {
   setResultText("");      // Clear old solution text
-  setCroppedImage(null);  // Clear old image
- 
+  
   return;
 }
 
