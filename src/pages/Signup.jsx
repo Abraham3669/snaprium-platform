@@ -1,7 +1,12 @@
 // src/pages/Signup.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from 'firebase/auth';
+import { 
+  createUserWithEmailAndPassword, 
+  updateProfile, 
+  sendEmailVerification,
+  signOut 
+} from 'firebase/auth';
 import { auth, analytics, logEvent } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 
@@ -15,10 +20,10 @@ export default function Signup() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [verificationSent, setVerificationSent] = useState(false);   // ← New state
+  const [verificationSent, setVerificationSent] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
 
-  // Redirect if already logged in
+  // Redirect if already logged in (only verified users should reach here)
   useEffect(() => {
     if (user && !authLoading) {
       navigate('/', { replace: true });
@@ -54,11 +59,20 @@ export default function Signup() {
       
       await updateProfile(userCredential.user, { displayName: name.trim() });
 
-      await sendEmailVerification(userCredential.user);
-      
+      // Professional configuration for verification email
+      const actionCodeSettings = {
+        url: window.location.origin + '/login', // Redirect back to login after verification
+        handleCodeInApp: true,
+      };
+
+      await sendEmailVerification(userCredential.user, actionCodeSettings);
+
       logEvent(analytics, 'sign_up', { method: 'email' });
 
-      setVerificationSent(true);   // Show success screen
+      // IMPORTANT: Sign out so user is NOT logged in until they verify
+      await signOut(auth);
+
+      setVerificationSent(true);
     } catch (err) {
       console.error('Signup error:', err.code, err.message);
       const msg = {
@@ -77,8 +91,12 @@ export default function Signup() {
     
     setResendLoading(true);
     try {
-      await sendEmailVerification(auth.currentUser);
-      alert('Verification email resent! Please check your inbox.'); // Temporary, can improve later
+      const actionCodeSettings = {
+        url: window.location.origin + '/login',
+        handleCodeInApp: true,
+      };
+      await sendEmailVerification(auth.currentUser, actionCodeSettings);
+      alert('✅ Verification email resent! Please check your inbox and spam folder.');
     } catch (err) {
       console.error(err);
       alert('Failed to resend email. Try again later.');
@@ -87,7 +105,7 @@ export default function Signup() {
     }
   };
 
-  // Success Screen (Professional look)
+  // Professional Success Screen
   if (verificationSent) {
     return (
       <div className="auth-container" style={{ textAlign: 'center', maxWidth: '420px' }}>
@@ -96,8 +114,8 @@ export default function Signup() {
           We've sent a verification link to <strong>{email}</strong>
         </p>
         <p style={{ color: '#666', marginBottom: '30px' }}>
-          Click the link in the email to verify your account.<br />
-          You can close this tab and come back after verifying.
+          Please check your inbox (and spam/junk folder).<br />
+          Click the link to verify your account, then return here to sign in.
         </p>
 
         <button 
