@@ -91,7 +91,7 @@ export default function Upgrade() {
           <div className="pricing-card">
             <h3>Free</h3>
             <div className="plan-price">$0 <span>per month</span></div>
-            <p className="plan-desc"><strong>10 solves per day</strong></p>
+            <p className="plan-desc"><strong>5 solves per day</strong></p>
             <p className="plan-detail">
               Great for occasional help and trying out the app
             </p>

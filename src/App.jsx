@@ -230,7 +230,7 @@ function App() {
       dailySolves = 0;
     }
 
-    if (dailySolves >= 10) {
+    if (dailySolves >= 5) {
       logEvent(analytics, "upgrade_modal_shown", {
         plan: 'free',
         daily_solves: dailySolves,

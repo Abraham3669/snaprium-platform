@@ -27,7 +27,7 @@ export default function UpgradeModal({ isOpen, onClose }) {
           <div className="limit-icon">⏰</div>
           <h2 className="upgrade-title">Daily Limit Reached</h2>
           <p className="upgrade-subtitle">
-            You've used your <strong>10 free solves</strong> for today.
+            You've used your <strong>5 free solves</strong> for today.
           </p>
         </div>
 
