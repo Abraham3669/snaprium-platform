@@ -178,7 +178,7 @@ setResultText("");
         toast(
           <div style={{ textAlign: 'center' }}>
             <p style={{ marginBottom: '12px', fontWeight: 500 }}>
-              Sign in to unlock more expert solutions and unlimited access.
+              Sign in to unlock more expert solutions and continue solving.
             </p>
             <button
               onClick={() => {
