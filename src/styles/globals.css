@@ -4456,10 +4456,18 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 14px;
+
+  min-height: 56px;
+  padding: 0 20px;
+
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .btn-google svg {
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
 }
 
