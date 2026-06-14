@@ -140,7 +140,7 @@ export default function ResultPanel({ result, loading, onClose }) {
              
             revealReady && (
               <>
-                               <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden">
+                                           <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden">
                   <h3
                     className="final-answer-header px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
                     style={{
@@ -157,8 +157,9 @@ export default function ResultPanel({ result, loading, onClose }) {
                       fontSize: '350px',
                       lineHeight: 0.9,
                       textAlign: 'center',
-                      padding: '40px 20px',
-                      minHeight: '280px'
+                      padding: '0px',
+                      margin: '0px',
+                      minHeight: '260px'
                     }}
                   >
                     {isGoodFinalAnswer(finalAnswerRaw) ? (
@@ -387,6 +388,22 @@ function improvedFallback(rawText) {
 function isGoodFinalAnswer(answer) {
   if (!answer || answer.length < 3) return false;
   if (answer.length > 180) return false;
+
+  const badPatterns = [
+    /\\end\{array\}/i,
+    /\\end\{align\}/i,
+    /\\end\{equation\}/i,
+    /\\begin\{/i,
+    /^\\displaystyle/i,
+    /\\mathbf\{\s*\}/,
+    /undefined/i,
+    /^\s*[-=]+\s*$/
+  ];
+
+  for (const pattern of badPatterns) {
+    if (pattern.test(answer)) return false;
+  }
+
   return true;
 }
 
