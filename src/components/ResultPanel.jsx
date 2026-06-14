@@ -159,7 +159,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                       textAlign: 'center',
                       padding: '0px',
                       margin: '0px',
-                      minHeight: '190px'
+                      minHeight: '100px'
                     }}
                   >
                     {isGoodFinalAnswer(finalAnswerRaw) ? (
@@ -178,7 +178,13 @@ export default function ResultPanel({ result, loading, onClose }) {
                       </ReactMarkdown>
                     ) : (
                                             <div className="text-center px-8 py-12">
-                        <p className="text-[28px] font-bold text-slate-700 dark:text-slate-100 tracking-[-0.02em] leading-none">
+                        <p 
+                          className="text-[28px] text-slate-700 dark:text-slate-100 tracking-[-0.02em] leading-none"
+                          style={{ 
+                            fontWeight: 750,           // Extra bold
+                            letterSpacing: '-0.03em'
+                          }}
+                        >
                           Check the step-by-step solution below
                         </p>
                       </div>
