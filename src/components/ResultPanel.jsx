@@ -178,10 +178,10 @@ export default function ResultPanel({ result, loading, onClose }) {
                       </ReactMarkdown>
                     ) : (
                                             <div className="text-center px-8 py-12">
-                        <p 
-                          className="text-[28px] text-slate-700 dark:text-slate-100 tracking-[-0.02em] leading-none"
-                          style={{ 
-                            fontWeight: 750,           // Extra bold
+                        <p
+                          className="text-[28px] text-slate-700 dark:text-slate-100 tracking-[-0.02em] leading-none whitespace-nowrap md:whitespace-normal"
+                          style={{
+                            fontWeight: 750,
                             letterSpacing: '-0.03em'
                           }}
                         >
