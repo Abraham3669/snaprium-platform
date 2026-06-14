@@ -179,8 +179,9 @@ export default function ResultPanel({ result, loading, onClose }) {
                     ) : (
                                                      <div className="text-center px-8 py-12">
                         <p
-                          className="text-[34px] text-slate-700 dark:text-slate-100 tracking-[-0.025em] leading-none whitespace-nowrap md:whitespace-normal"
+                          className="text-slate-700 dark:text-slate-100 tracking-[-0.025em] leading-none whitespace-nowrap md:whitespace-normal"
                           style={{
+                            fontSize: '36px',        // ← Bigger and guaranteed
                             fontWeight: 750,
                             letterSpacing: '-0.03em'
                           }}
