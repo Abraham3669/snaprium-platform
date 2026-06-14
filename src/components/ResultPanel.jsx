@@ -178,8 +178,8 @@ export default function ResultPanel({ result, loading, onClose }) {
                       </ReactMarkdown>
                     ) : (
                                             <div className="text-center px-8 py-12">
-                        <p className="text-3xl font-semibold text-slate-700 dark:text-slate-100 tracking-tighter leading-tight">
-                          Check the step-by-step<br />solution below
+                        <p className="text-[28px] font-bold text-slate-700 dark:text-slate-100 tracking-[-0.02em] leading-none">
+                          Check the step-by-step solution below
                         </p>
                       </div>
                     )}
