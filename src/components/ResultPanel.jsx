@@ -141,12 +141,12 @@ export default function ResultPanel({ result, loading, onClose }) {
             revealReady && (
               <>
                                            <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden">
-                  <h3
-                    className="final-answer-header px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
+                                    <h3
+                    className="final-answer-header px-6 py-4 bg-gradient-to-r from-slate-900 to-black dark:from-slate-100 dark:to-white text-white dark:text-slate-900 font-serif tracking-[-0.02em]"
                     style={{
-                      fontSize: "20px",
-                      fontWeight: 700,
-                      letterSpacing: "0.02em"
+                      fontSize: "21px",
+                      fontWeight: 800,
+                      letterSpacing: "-0.025em"
                     }}
                   >
                     Final Answer
@@ -177,9 +177,9 @@ export default function ResultPanel({ result, loading, onClose }) {
                         {`$$\\displaystyle\\mathbf{${finalAnswerRaw}}$$`}
                       </ReactMarkdown>
                     ) : (
-                                            <div className="text-center px-8 py-12">
+                                                     <div className="text-center px-8 py-12">
                         <p
-                          className="text-[28px] text-slate-700 dark:text-slate-100 tracking-[-0.02em] leading-none whitespace-nowrap md:whitespace-normal"
+                          className="text-[34px] text-slate-700 dark:text-slate-100 tracking-[-0.025em] leading-none whitespace-nowrap md:whitespace-normal"
                           style={{
                             fontWeight: 750,
                             letterSpacing: '-0.03em'
