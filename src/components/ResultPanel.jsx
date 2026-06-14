@@ -181,7 +181,7 @@ export default function ResultPanel({ result, loading, onClose }) {
                         <p
                           className="text-slate-700 dark:text-slate-100 tracking-[-0.025em] leading-none whitespace-nowrap md:whitespace-normal"
                           style={{
-                            fontSize: '20px',        // ← Bigger and guaranteed
+                            fontSize: '15px',        // ← Bigger and guaranteed
                             fontWeight: 750,
                             letterSpacing: '-0.03em'
                           }}
