@@ -140,40 +140,49 @@ export default function ResultPanel({ result, loading, onClose }) {
              
             revealReady && (
               <>
-                <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden">
+                               <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden">
                   <h3
-  className="final-answer-header px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
-  style={{
-    fontSize: "20px",
-    fontWeight: 700,
-    letterSpacing: "0.02em"
-  }}
->
-  Final Answer
-</h3>
+                    className="final-answer-header px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
+                    style={{
+                      fontSize: "20px",
+                      fontWeight: 700,
+                      letterSpacing: "0.02em"
+                    }}
+                  >
+                    Final Answer
+                  </h3>
                   <div
-  className="massive-answer-container katex-display-final-container flex justify-center"
-  style={{
-    fontSize: '350px',
-    lineHeight: 0.9,
-    textAlign: 'center',
-    padding: '0px',
-    margin: '0px'
-  }}
->
-                    <ReactMarkdown
-                      remarkPlugins={[remarkMath]}
-                      rehypePlugins={[rehypeKatex]}
-                      components={{
-                        p: ({ children }) => (
-                          <div className="inline-block text-center whitespace-nowrap min-w-fit">
-                            {children}
-                          </div>
-                        ),
-                      }}
-                    >
-                   {`$$\\displaystyle\\mathbf{${finalAnswerRaw || '-'}}$$`}
-                    </ReactMarkdown>
+                    className="massive-answer-container katex-display-final-container flex justify-center items-center"
+                    style={{
+                      fontSize: '350px',
+                      lineHeight: 0.9,
+                      textAlign: 'center',
+                      padding: '40px 20px',
+                      minHeight: '280px'
+                    }}
+                  >
+                    {isGoodFinalAnswer(finalAnswerRaw) ? (
+                      <ReactMarkdown
+                        remarkPlugins={[remarkMath]}
+                        rehypePlugins={[rehypeKatex]}
+                        components={{
+                          p: ({ children }) => (
+                            <div className="inline-block text-center whitespace-nowrap min-w-fit">
+                              {children}
+                            </div>
+                          ),
+                        }}
+                      >
+                        {`$$\\displaystyle\\mathbf{${finalAnswerRaw}}$$`}
+                      </ReactMarkdown>
+                    ) : (
+                      <div className="text-center px-8">
+                        <div className="text-3xl mb-3">📌</div>
+                        <p className="text-xl text-amber-600 dark:text-amber-400 font-medium leading-tight">
+                          Check the step-by-step<br />solution below
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -302,45 +311,83 @@ export default function ResultPanel({ result, loading, onClose }) {
 function extractFinalAnswer(rawText) {
   if (!rawText) return '';
 
+  // 1. Try \boxed{} first
   let lastStart = -1;
   let pos = 0;
-
   while ((pos = rawText.indexOf('\\boxed{', pos)) !== -1) {
     lastStart = pos;
     pos += 7;
   }
 
-  if (lastStart === -1) return fallbackLastLines(rawText);
-
-  const startIndex = lastStart + 7;
-  let braceCount = 1;
-  let i = startIndex;
-  let content = '';
-
-  while (i < rawText.length && braceCount > 0) {
-    const char = rawText[i];
-    content += char;
-    if (char === '{') braceCount++;
-    if (char === '}') braceCount--;
-    i++;
+  if (lastStart !== -1) {
+    const startIndex = lastStart + 7;
+    let braceCount = 1;
+    let i = startIndex;
+    let content = '';
+    while (i < rawText.length && braceCount > 0) {
+      const char = rawText[i];
+      content += char;
+      if (char === '{') braceCount++;
+      if (char === '}') braceCount--;
+      i++;
+    }
+    const boxed = content.slice(0, -1).trim();
+    if (boxed.length > 2) return boxed;
   }
 
-  return content.slice(0, -1).trim();
+  // 2. Look for explicit "Final Answer", "Therefore", etc.
+  const answerPhrases = [
+    /Final Answer[:\s]*([^\n]+)/i,
+    /Answer[:\s]*([^\n]+)/i,
+    /Result[:\s]*([^\n]+)/i,
+    /Therefore[:\s]*(.+?)(?=\n\n|\n\s*\n|$)/is,
+    /Hence[:\s]*(.+?)(?=\n\n|\n\s*\n|$)/is,
+    /Thus[:\s]*(.+?)(?=\n\n|\n\s*\n|$)/is,
+    /The answer is[:\s]*(.+?)(?=\n\n|\n\s*\n|$)/is
+  ];
+
+  for (const regex of answerPhrases) {
+    const match = rawText.match(regex);
+    if (match?.[1]) {
+      let answer = match[1].trim().replace(/^(is|equals|=|:)\s*/i, '').trim();
+      if (answer.length > 3) return answer;
+    }
+  }
+
+  // 3. Smart last lines fallback
+  return improvedFallback(rawText);
 }
 
-function fallbackLastLines(rawText) {
+function improvedFallback(rawText) {
   const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
-  if (lines.length < 1) return '';
+  if (lines.length === 0) return '';
 
-  let candidate = '';
-  for (let i = lines.length - 1; i >= Math.max(0, lines.length - 5); i--) {
-    let line = lines[i];
-    line = line.replace(/^(Final answer|Answer|Result|So|Therefore|Hence|Thus):?\s*/i, '').trim();
-    if (line) candidate = line + (candidate ? '\n' + candidate : '');
-    if (line.includes('=') || line.includes('\\frac') || /^\s*[-−]?\d+(\.\d+)?\s*$/.test(line)) break;
+  const lastLines = lines.slice(Math.max(0, lines.length - 8));
+
+  for (let i = lastLines.length - 1; i >= 0; i--) {
+    let line = lastLines[i];
+    line = line.replace(/^(Final answer|Answer|Result|So|Therefore|Hence|Thus|The answer is)[:\s=]*\s*/i, '').trim();
+    if (!line) continue;
+
+    if (
+      line.includes('\\boxed') ||
+      line.includes('=') ||
+      line.includes('\\frac') ||
+      line.includes('\\sqrt') ||
+      /^\s*[-−]?\d+(\.\d+)?\s*$/.test(line) ||
+      (line.length > 4 && line.length < 150)
+    ) {
+      return line;
+    }
   }
+  return lines[lines.length - 1];
+}
 
-  return candidate || lines[lines.length - 1];
+// NEW: Determines if answer is clean enough for big display
+function isGoodFinalAnswer(answer) {
+  if (!answer || answer.length < 3) return false;
+  if (answer.length > 180) return false;
+  return true;
 }
 
 function fixCommonMathGlue(text) {
