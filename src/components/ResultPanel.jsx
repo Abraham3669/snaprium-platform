@@ -140,58 +140,61 @@ export default function ResultPanel({ result, loading, onClose }) {
              
             revealReady && (
               <>
-                                           <div className="final-answer mb-8 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl overflow-hidden">
-                                    <h3
-                    className="final-answer-header px-6 py-4 bg-gradient-to-r from-slate-900 to-black dark:from-slate-100 dark:to-white text-white dark:text-slate-900 font-serif tracking-[-0.02em]"
-                    style={{
-                      fontSize: "21px",
-                      fontWeight: 800,
-                      letterSpacing: "-0.025em"
-                    }}
-                  >
-                    Final Answer
-                  </h3>
-                  <div
-                    className="massive-answer-container katex-display-final-container flex justify-center items-center"
-                    style={{
-                      fontSize: '350px',
-                      lineHeight: 0.9,
-                      textAlign: 'center',
-                      padding: '0px',
-                      margin: '0px',
-                      minHeight: '100px'
-                    }}
-                  >
-                    {isGoodFinalAnswer(finalAnswerRaw) ? (
-                      <ReactMarkdown
-                        remarkPlugins={[remarkMath]}
-                        rehypePlugins={[rehypeKatex]}
-                        components={{
-                          p: ({ children }) => (
-                            <div className="inline-block text-center whitespace-nowrap min-w-fit">
-                              {children}
-                            </div>
-                          ),
-                        }}
-                      >
-                        {`$$\\displaystyle\\mathbf{${finalAnswerRaw}}$$`}
-                      </ReactMarkdown>
-                    ) : (
-                                                     <div className="text-center px-8 py-12">
-                        <p
-                          className="text-slate-700 dark:text-slate-100 tracking-[-0.025em] leading-none whitespace-nowrap md:whitespace-normal"
-                          style={{
-                            fontSize: '15px',        // ← Bigger and guaranteed
-                            fontWeight: 750,
-                            letterSpacing: '-0.03em'
-                          }}
-                        >
-                          Check the step-by-step solution below
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                               {/* FINAL ANSWER CARD */}
+<div className="final-answer mb-8 rounded-2xl border border-slate-200 dark:border-slate-700 
+                bg-white dark:bg-slate-900 
+                hover:bg-white dark:hover:bg-slate-900 
+                shadow-xl overflow-hidden">
+
+  <h3
+    className="final-answer-header px-6 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 
+               font-serif tracking-[-0.02em]"
+    style={{
+      fontSize: "21px",
+      fontWeight: 800,
+      letterSpacing: "-0.025em"
+    }}
+  >
+    Final Answer
+  </h3>
+
+  <div
+    className="massive-answer-container katex-display-final-container flex justify-center items-center bg-white dark:bg-slate-900"
+    style={{
+      fontSize: '350px',
+      lineHeight: 0.9,
+      textAlign: 'center',
+      padding: '30px 20px',           // ← Increased padding
+      minHeight: '180px',
+      margin: '0px'
+    }}
+  >
+    {isGoodFinalAnswer(finalAnswerRaw) ? (
+      <ReactMarkdown
+        remarkPlugins={[remarkMath]}
+        rehypePlugins={[rehypeKatex]}
+        components={{
+          p: ({ children }) => (
+            <div className="inline-block text-center whitespace-nowrap min-w-fit">
+              {children}
+            </div>
+          ),
+        }}
+      >
+        {`$$\\displaystyle\\mathbf{${finalAnswerRaw}}$$`}
+      </ReactMarkdown>
+    ) : (
+      <div className="text-center px-8 py-12">
+        <p
+          className="text-slate-700 dark:text-slate-100 tracking-[-0.025em] leading-none"
+          style={{ fontSize: '18px', fontWeight: 700 }}
+        >
+          Check the step-by-step solution below
+        </p>
+      </div>
+    )}
+  </div>
+</div>
 
                 <button
                   onClick={() => setShowSteps(!showSteps)}
