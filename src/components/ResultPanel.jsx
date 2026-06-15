@@ -140,7 +140,7 @@ export default function ResultPanel({ result, loading, onClose }) {
              
             revealReady && (
               <>
-                                           <div className="final-answer mb-8 rounded-2xl border border-blue-200/30 dark:border-blue-800/30 bg-gradient-to-b from-blue-50/40 to-indigo-50/30 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-xl overflow-hidden">
+                                           <div className="final-answer mb-8 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl overflow-hidden">
                                     <h3
                     className="final-answer-header px-6 py-4 bg-gradient-to-r from-slate-900 to-black dark:from-slate-100 dark:to-white text-white dark:text-slate-900 font-serif tracking-[-0.02em]"
                     style={{
