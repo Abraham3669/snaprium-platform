@@ -1,7 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-import { getAnalytics, isSupported } from "firebase/analytics";
 import { Capacitor } from '@capacitor/core';
 
 const firebaseConfig = {
@@ -19,23 +18,17 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
-// Force account selection every time (better UX)
 googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
 
 export const db = getFirestore(app);
 
-// Analytics only in real browser (never in Capacitor)
-let analytics = null;
-if (!Capacitor.isNativePlatform()) {
-  isSupported().then((supported) => {
-    if (supported) {
-      analytics = getAnalytics(app);
-    }
-  });
-}
-export { analytics };
+// Completely disable Analytics for now (to stop the crash)
+export const analytics = null;
 
-export { logEvent, setUserId } from "firebase/analytics";
+// Dummy functions so the app doesn't crash if something still calls them
+export const logEvent = () => {};
+export const setUserId = () => {};
+
 export default app;
