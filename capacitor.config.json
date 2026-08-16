@@ -1,0 +1,11 @@
+{
+  "appId": "com.snaprium.app",
+  "appName": "Snaprium",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https",
+    "allowNavigation": [
+      "*"
+    ]
+  }
+}

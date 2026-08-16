@@ -1,10 +1,9 @@
-// src/lib/firebase.js
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-import { getAnalytics } from "firebase/analytics";
+import { getAnalytics, isSupported } from "firebase/analytics";
+import { Capacitor } from '@capacitor/core';
 
-// Initialize Firebase
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -19,10 +18,24 @@ const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+
+// Force account selection every time (better UX)
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
+
 export const db = getFirestore(app);
-export const analytics = getAnalytics(app);
 
-// Export Analytics helpers (This was missing - causing the build error)
+// Analytics only in real browser (never in Capacitor)
+let analytics = null;
+if (!Capacitor.isNativePlatform()) {
+  isSupported().then((supported) => {
+    if (supported) {
+      analytics = getAnalytics(app);
+    }
+  });
+}
+export { analytics };
+
 export { logEvent, setUserId } from "firebase/analytics";
-
 export default app;

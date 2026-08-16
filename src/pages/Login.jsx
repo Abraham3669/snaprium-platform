@@ -1,29 +1,42 @@
-// src/pages/Login.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
-  signInWithPopup, 
+  signInWithRedirect, 
+  getRedirectResult,
   signInWithEmailAndPassword, 
   signOut, 
   sendEmailVerification 
 } from 'firebase/auth';
 import { auth, googleProvider } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
+import { Capacitor } from '@capacitor/core';
 
 export default function Login() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
-  // ==================== EMAIL/PASSWORD STATES (Disabled for now) ====================
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [verificationRequired, setVerificationRequired] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
-  // =================================================================================
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Handle redirect result (important for Capacitor + mobile)
+  useEffect(() => {
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result?.user) {
+          console.log("Google redirect login success");
+        }
+      })
+      .catch((err) => {
+        console.error("Redirect error:", err);
+        setError(getFriendlyErrorMessage(err.code));
+      });
+  }, []);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -40,17 +53,16 @@ export default function Login() {
     setLoading(true);
     setError('');
     try {
-      await signInWithPopup(auth, googleProvider);
-      // Navigation handled by useEffect
+      // Always use redirect in Capacitor (popup is broken)
+      await signInWithRedirect(auth, googleProvider);
     } catch (err) {
       console.error('Google sign-in error:', err.code, err.message);
       setError(getFriendlyErrorMessage(err.code));
-    } finally {
       setLoading(false);
     }
   };
 
-  // ==================== EMAIL LOGIN - Currently Disabled ====================
+  // Email login (kept for later)
   const handleEmailSignIn = async (e) => {
     e.preventDefault();
     if (!email || !password) {
@@ -76,8 +88,6 @@ export default function Login() {
         setVerificationRequired(true);
         return;
       }
-
-      // Verified user → navigation handled by useEffect
     } catch (err) {
       console.error('Email sign-in error:', err.code, err.message);
       setError(getFriendlyErrorMessage(err.code));
@@ -86,7 +96,6 @@ export default function Login() {
     }
   };
 
-  // Reliable Resend Function
   const resendVerification = async () => {
     if (!email || !password) return;
 
@@ -102,15 +111,14 @@ export default function Login() {
       await sendEmailVerification(userCredential.user, actionCodeSettings);
       await signOut(auth);
 
-      alert('✅ Verification email resent! Please check your inbox and spam folder.');
+      alert('Verification email resent! Check inbox and spam.');
     } catch (err) {
       console.error('Resend error:', err);
-      alert('Failed to resend verification email. Please try again.');
+      alert('Failed to resend verification email.');
     } finally {
       setResendLoading(false);
     }
   };
-  // ===========================================================================
 
   const getFriendlyErrorMessage = (code) => {
     const messages = {
@@ -121,43 +129,11 @@ export default function Login() {
       'auth/user-disabled': 'Account has been disabled',
       'auth/popup-closed-by-user': 'Google sign-in was cancelled',
       'auth/cancelled-popup-request': 'Google sign-in was cancelled',
+      'auth/unauthorized-domain': 'This domain is not authorized for Google login',
     };
     return messages[code] || 'Sign in failed. Please try again.';
   };
 
-  // Verification Required Screen - Currently Disabled
-  // if (verificationRequired) { ... full block commented below }
-  /*
-  if (verificationRequired) {
-    return (
-      <div className="auth-container" style={{ textAlign: 'center', maxWidth: '420px' }}>
-        <h1>Verify Your Email</h1>
-        <p style={{ fontSize: '1.1rem', margin: '20px 0' }}>
-          We sent a verification link to <strong>{email}</strong>
-        </p>
-        <p style={{ color: '#666', marginBottom: '30px' }}>
-          Please check your inbox and spam/junk folder.<br />
-          Click the link in the email to verify your account.
-        </p>
-
-        <button 
-          onClick={resendVerification}
-          disabled={resendLoading}
-          className="btn-primary"
-          style={{ marginBottom: '20px', width: '100%' }}
-        >
-          {resendLoading ? 'Resending...' : 'Resend Verification Email'}
-        </button>
-
-        <p className="auth-link">
-          <Link to="/login">← Back to Login</Link>
-        </p>
-      </div>
-    );
-  }
-  */
-
-  // Normal Login Form
   return (
     <div className="auth-container">
       <h1>Welcome Back</h1>
@@ -181,74 +157,11 @@ export default function Login() {
         )}
       </button>
 
-      {/* ==================== EMAIL LOGIN SECTION - Currently Disabled ==================== */}
-      {/* 
-      <div className="divider">───────── or ─────────</div>
-
-      <form onSubmit={handleEmailSignIn}>
-        <input
-          type="email"
-          placeholder="Email address"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          disabled={loading}
-          required
-          className="input-field"
-        />
-
-        <div className="password-wrapper" style={{ position: 'relative' }}>
-          <input
-            type={showPassword ? 'text' : 'password'}
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={loading}
-            required
-            className="input-field"
-            style={{ paddingRight: '70px' }}
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="show-password-btn"
-            style={{
-              position: 'absolute',
-              right: '12px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: '#666',
-              fontSize: '14px'
-            }}
-          >
-            {showPassword ? 'Hide' : 'Show'}
-          </button>
-        </div>
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="btn-primary"
-        >
-          {loading ? 'Signing in...' : 'Sign In with Email'}
-        </button>
-      </form>
-      */}
-      {/* ================================================================================ */}
-
       {error && <p className="error-message">{error}</p>}
 
       <p className="auth-link">
         Don't have an account? <Link to="/signup">Sign up</Link>
       </p>
-
-      {/* 
-      <p className="auth-link small">
-        <Link to="/forgot-password">Forgot password?</Link>
-      </p> 
-      */}
     </div>
   );
 }
