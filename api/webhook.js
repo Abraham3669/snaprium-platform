@@ -2,6 +2,7 @@
 import { initializeApp, getApps, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import crypto from "crypto";
+import { applyCors } from "../lib/cors.js";
 
 let db;
 
@@ -30,6 +31,7 @@ db = getFirestore();
 const WEBHOOK_SECRET = process.env.PADDLE_WEBHOOK_SECRET;
 
 export default async function handler(req, res) {
+  import { applyCors } from "../lib/cors.js";
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }

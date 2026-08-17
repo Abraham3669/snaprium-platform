@@ -11,19 +11,29 @@ export async function postAPI(url, data) {
   
   console.log("[apiClient] Calling:", fullUrl);
 
-  const res = await fetch(fullUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
+  try {
+    const res = await fetch(fullUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
 
-  if (!res.ok) {
-    const errorText = await res.text();
-    console.error("[apiClient] Error:", res.status, errorText);
-    throw new Error(`API error: ${res.status} - ${errorText}`);
+    const text = await res.text();
+    
+    if (!res.ok) {
+      console.error("[apiClient] Error status:", res.status, text);
+      throw new Error(`API error ${res.status}: ${text.substring(0, 200)}`);
+    }
+
+    try {
+      return JSON.parse(text);
+    } catch {
+      throw new Error("Invalid JSON response from server");
+    }
+  } catch (err) {
+    console.error("[apiClient] Fetch failed:", err);
+    throw err;
   }
-
-  return await res.json();
 }

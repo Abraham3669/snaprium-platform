@@ -10,7 +10,7 @@ export default function Home() {
   const [file, setFile] = useState(null);
   const [showCropper, setShowCropper] = useState(false);
   const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false); // ✅ loading for API
+  const [loading, setLoading] = useState(false);
 
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
   const [isDashboardOpen, setDashboardOpen] = useState(false);
@@ -34,7 +34,6 @@ export default function Home() {
 
   const handleCloseResult = () => setResult(null);
 
-  // ✅ Must be inside component
   const handleCropComplete = async (croppedDataURL) => {
     setShowCropper(false);
     setResult({ image: croppedDataURL, text: "" });
@@ -48,8 +47,12 @@ export default function Home() {
       console.log("API response:", res);
       setResult({ image: croppedDataURL, text: res.answer });
     } catch (err) {
-      console.error(err);
-      setResult({ image: croppedDataURL, text: "Failed to process image" });
+      console.error("Full error:", err);
+      // Show the real error so we can see what is wrong
+      setResult({
+        image: croppedDataURL,
+        text: `Error: ${err.message || "Failed to process image"}`,
+      });
     } finally {
       setLoading(false);
     }

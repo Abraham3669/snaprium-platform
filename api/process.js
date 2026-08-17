@@ -1,6 +1,9 @@
 import { solveImage } from "../lib/aiService.js";
+import { applyCors } from "../lib/cors.js";
 
 export default async function handler(req, res) {
+  if (applyCors(req, res)) return; // handles preflight (OPTIONS) requests
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -12,13 +15,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Debug log to verify request
     console.log("[process.js] Received image length:", imageBase64.length);
 
-    // Call AI service
     const answer = await solveImage(imageBase64, process.env.OPENAI_API_KEY);
 
-    // Debug log AI response
     console.log("[process.js] AI answer:", answer);
 
     return res.status(200).json({ answer });

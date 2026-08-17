@@ -6,7 +6,7 @@ import {
   updateProfile, 
   sendEmailVerification,
   signOut,
-  signInWithPopup   // Added for Google
+  signInWithRedirect
 } from 'firebase/auth';
 import { auth, analytics, logEvent, googleProvider } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
@@ -39,19 +39,16 @@ export default function Signup() {
 
   // ==================== GOOGLE SIGN UP (Currently Active) ====================
   const handleGoogleSignUp = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      await signInWithPopup(auth, googleProvider);
-      logEvent(analytics, 'sign_up', { method: 'google' });
-      // Navigation handled by useEffect
-    } catch (err) {
-      console.error('Google sign-up error:', err.code, err.message);
-      setError('Failed to sign up with Google. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  setError('');
+  try {
+    await signInWithRedirect(auth, googleProvider);
+  } catch (err) {
+    console.error('Google sign-up error:', err.code, err.message);
+    setError('Failed to sign up with Google. Please try again.');
+    setLoading(false);
+  }
+};
   // =========================================================================
 
   // ==================== EMAIL SIGNUP (Commented Out - Will be used later) ====================
@@ -87,7 +84,7 @@ export default function Signup() {
 
       await sendEmailVerification(userCredential.user, actionCodeSettings);
       
-      logEvent(analytics, 'sign_up', { method: 'email' });
+      //logEvent(analytics, 'sign_up', { method: 'email' });
 
       await signOut(auth);
 
