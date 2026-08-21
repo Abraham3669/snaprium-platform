@@ -2,6 +2,7 @@
 import React from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useNavigate } from "react-router-dom";
+import { testConnectivity } from "../utils/apiClient";
 
 export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
   const { user, signOutUser } = useAuth();
@@ -195,6 +196,21 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
             </svg>
             {theme === "dark" ? "Light Mode" : "Dark Mode"}
           </button>
+          
+
+
+
+<button
+  className="theme-btn dashboard-btn"
+  onClick={testConnectivity}
+  type="button"
+>
+  Test API Connection
+</button>
+
+
+
+          
 
           {/* ==================== REFUND BUTTON - AT THE VERY BOTTOM ==================== */}
           {user && isSubscribed && (

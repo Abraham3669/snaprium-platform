@@ -24,6 +24,8 @@ import { doc, updateDoc, increment, serverTimestamp, getDoc } from "firebase/fir
 import { auth, db, analytics, logEvent, setUserId } from "./lib/firebase";
 import { useAuth } from "./context/AuthContext";
 import Refund from "./pages/Refund";
+import ErrorBanner from './components/ErrorBanner';
+import { showAppError } from './utils/errorReporter';
 
 function App() {
   const { user } = useAuth();
@@ -155,8 +157,8 @@ setResultText("");
           lastUpload: serverTimestamp(),
         });
       }
-    } catch (err) {
-      console.error("Process error:", err);
+        } catch (err) {
+      showAppError('Process Image', err);
       setResultText("Failed to get solution – please try again");
       setIsProcessing(false);
 
@@ -268,6 +270,7 @@ setResultText("");
 
   return (
     <div className="App min-h-screen">
+       <ErrorBanner />
       <ToastContainer
         position="bottom-center"
         autoClose={5000}

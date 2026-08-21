@@ -1,4 +1,5 @@
 import { Capacitor } from '@capacitor/core';
+import { showAppError } from './errorReporter';
 
 const PRODUCTION_API_URL = "https://snaprium.com";
 
@@ -8,7 +9,7 @@ const API_BASE = Capacitor.isNativePlatform()
 
 export async function postAPI(url, data) {
   const fullUrl = `${API_BASE}${url}`;
-  
+
   console.log("[apiClient] Calling:", fullUrl);
 
   try {
@@ -21,10 +22,9 @@ export async function postAPI(url, data) {
     });
 
     const text = await res.text();
-    
+
     if (!res.ok) {
-      console.error("[apiClient] Error status:", res.status, text);
-      throw new Error(`API error ${res.status}: ${text.substring(0, 200)}`);
+      throw new Error(`${res.status}: ${text.substring(0, 200)}`);
     }
 
     try {
@@ -33,7 +33,21 @@ export async function postAPI(url, data) {
       throw new Error("Invalid JSON response from server");
     }
   } catch (err) {
-    console.error("[apiClient] Fetch failed:", err);
+    const online = navigator.onLine ? "online" : "OFFLINE";
+    const platform = Capacitor.isNativePlatform() ? "native" : "web";
+    const diagnostic = `url=${fullUrl} | platform=${platform} | net=${online} | ${err.name}: ${err.message}`;
+    showAppError(`API ${url}`, new Error(diagnostic));
     throw err;
+  }
+}
+
+export async function testConnectivity() {
+  const testUrl = `${PRODUCTION_API_URL}/api/debug-origin`;
+  try {
+    const res = await fetch(testUrl);
+    const data = await res.json();
+    showAppError('Origin Debug', new Error(JSON.stringify(data)));
+  } catch (err) {
+    showAppError('Origin Debug', new Error(`${err.name}: ${err.message}`));
   }
 }

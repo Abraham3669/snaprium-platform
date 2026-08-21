@@ -10,6 +10,7 @@ import {
 import { auth, googleProvider } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import { Capacitor } from '@capacitor/core';
+import { showAppError } from '../utils/errorReporter';
 
 export default function Login() {
   const { user, loading: authLoading } = useAuth();
@@ -33,7 +34,7 @@ export default function Login() {
         }
       })
       .catch((err) => {
-        console.error("Redirect error:", err);
+        showAppError('Google Redirect', err);
         setError(getFriendlyErrorMessage(err.code));
       });
   }, []);
@@ -56,7 +57,7 @@ export default function Login() {
       // Always use redirect in Capacitor (popup is broken)
       await signInWithRedirect(auth, googleProvider);
     } catch (err) {
-      console.error('Google sign-in error:', err.code, err.message);
+      showAppError('Google Sign-In', err);
       setError(getFriendlyErrorMessage(err.code));
       setLoading(false);
     }
@@ -89,7 +90,7 @@ export default function Login() {
         return;
       }
     } catch (err) {
-      console.error('Email sign-in error:', err.code, err.message);
+      showAppError('Email Sign-In', err);
       setError(getFriendlyErrorMessage(err.code));
     } finally {
       setLoading(false);
@@ -113,7 +114,7 @@ export default function Login() {
 
       alert('Verification email resent! Check inbox and spam.');
     } catch (err) {
-      console.error('Resend error:', err);
+      showAppError('Resend Verification', err);
       alert('Failed to resend verification email.');
     } finally {
       setResendLoading(false);

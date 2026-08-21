@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { auth, db } from "../lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, setDoc, onSnapshot, serverTimestamp } from "firebase/firestore";
+import { showAppError } from "../utils/errorReporter";
 
 const AuthContext = createContext();
 
@@ -76,11 +77,11 @@ export function AuthProvider({ children }) {
               setUser(updatedUser);
             }
           }, (error) => {
-            console.error("[Auth] onSnapshot error:", error);
+            showAppError('Auth Snapshot Listener', error);
           });
 
         } catch (error) {
-          console.error("[Auth] Firestore initialization error:", error);
+          showAppError('Auth Firestore Init', error);
         }
       } else {
         setUser(null);
@@ -101,7 +102,7 @@ export function AuthProvider({ children }) {
     try {
       await auth.signOut();
     } catch (error) {
-      console.error("[Auth] Sign out failed:", error);
+      showAppError('Sign Out', error);
     }
   };
 
