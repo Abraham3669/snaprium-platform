@@ -5,7 +5,8 @@ import {
   getRedirectResult,
   signInWithEmailAndPassword, 
   signOut, 
-  sendEmailVerification 
+  sendEmailVerification,
+  GoogleAuthProvider
 } from 'firebase/auth';
 import { auth, googleProvider } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
@@ -27,16 +28,20 @@ export default function Login() {
 
   // Handle redirect result (important for Capacitor + mobile)
   useEffect(() => {
-    getRedirectResult(auth)
-      .then((result) => {
+    const checkRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth);
         if (result?.user) {
-          console.log("Google redirect login success");
+          console.log("Google redirect login success", result.user.email);
+          // AuthContext will pick it up via onAuthStateChanged
         }
-      })
-      .catch((err) => {
+      } catch (err) {
+        console.error("Redirect result error:", err);
         showAppError('Google Redirect', err);
-        setError(getFriendlyErrorMessage(err.code));
-      });
+        setError(getFriendlyErrorMessage(err.code || err.message));
+      }
+    };
+    checkRedirect();
   }, []);
 
   // Redirect if already logged in
@@ -54,16 +59,18 @@ export default function Login() {
     setLoading(true);
     setError('');
     try {
-      // Always use redirect in Capacitor (popup is broken)
+      // On native we still use redirect for now
+      // (later we can switch to a proper native plugin)
       await signInWithRedirect(auth, googleProvider);
     } catch (err) {
+      console.error("Google Sign-In error:", err);
       showAppError('Google Sign-In', err);
-      setError(getFriendlyErrorMessage(err.code));
+      setError(getFriendlyErrorMessage(err.code || err.message));
       setLoading(false);
     }
   };
 
-  // Email login (kept for later)
+  // Email login
   const handleEmailSignIn = async (e) => {
     e.preventDefault();
     if (!email || !password) {
@@ -126,13 +133,16 @@ export default function Login() {
       'auth/invalid-email': 'Invalid email format',
       'auth/user-not-found': 'No account found with this email',
       'auth/wrong-password': 'Incorrect password',
+      'auth/invalid-credential': 'Incorrect email or password',
       'auth/too-many-requests': 'Too many attempts. Try again later.',
       'auth/user-disabled': 'Account has been disabled',
       'auth/popup-closed-by-user': 'Google sign-in was cancelled',
       'auth/cancelled-popup-request': 'Google sign-in was cancelled',
-      'auth/unauthorized-domain': 'This domain is not authorized for Google login',
+      'auth/unauthorized-domain': 'This domain is not authorized for Google login. Add it in Firebase Console.',
+      'auth/operation-not-allowed': 'Google sign-in is not enabled in Firebase Console',
+      'auth/network-request-failed': 'Network error. Check your internet connection.',
     };
-    return messages[code] || 'Sign in failed. Please try again.';
+    return messages[code] || `Sign in failed: ${code || 'Unknown error'}`;
   };
 
   return (
