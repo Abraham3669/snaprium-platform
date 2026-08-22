@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { 
   signInWithRedirect, 
   getRedirectResult,
+  signInWithPopup,
   signInWithEmailAndPassword, 
   signOut, 
   sendEmailVerification,
@@ -56,20 +57,24 @@ export default function Login() {
   }
 
   const handleGoogleSignIn = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      // On native we still use redirect for now
-      // (later we can switch to a proper native plugin)
+  setLoading(true);
+  setError('');
+  try {
+    if (Capacitor.isNativePlatform()) {
+      // Keep redirect for native for now
       await signInWithRedirect(auth, googleProvider);
-    } catch (err) {
-      console.error("Google Sign-In error:", err);
-      showAppError('Google Sign-In', err);
-      setError(getFriendlyErrorMessage(err.code || err.message));
-      setLoading(false);
+    } else {
+      // Use popup on web – much more reliable
+      const result = await signInWithPopup(auth, googleProvider);
+      console.log("Popup login success", result.user.email);
     }
-  };
-
+  } catch (err) {
+    console.error("Full Google error:", err);
+    showAppError('Google Sign-In', err);
+    setError(getFriendlyErrorMessage(err.code || err.message));
+    setLoading(false);
+  }
+};
   // Email login
   const handleEmailSignIn = async (e) => {
     e.preventDefault();
