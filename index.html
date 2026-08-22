@@ -40,6 +40,27 @@
   </head>
   <body>
     <div id="root"></div>
+
+    <script>
+      window.addEventListener('error', function (e) {
+        document.body.innerHTML =
+          '<div style="padding:20px;font-family:monospace;font-size:13px;color:#d32f2f;background:#fff;">' +
+          '<h2 style="color:#d32f2f;">Script Error</h2>' +
+          '<p><strong>' + (e.message || 'Unknown error') + '</strong></p>' +
+          '<p>' + (e.filename || '') + ':' + (e.lineno || '') + ':' + (e.colno || '') + '</p>' +
+          '<pre style="white-space:pre-wrap;font-size:11px;">' + (e.error && e.error.stack ? e.error.stack : '') + '</pre>' +
+          '</div>';
+      });
+
+      window.addEventListener('unhandledrejection', function (e) {
+        document.body.innerHTML =
+          '<div style="padding:20px;font-family:monospace;font-size:13px;color:#d32f2f;background:#fff;">' +
+          '<h2 style="color:#d32f2f;">Unhandled Promise Rejection</h2>' +
+          '<pre style="white-space:pre-wrap;font-size:11px;">' + (e.reason && e.reason.stack ? e.reason.stack : e.reason) + '</pre>' +
+          '</div>';
+      });
+    </script>
+
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

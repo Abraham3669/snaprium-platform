@@ -12,15 +12,18 @@ import 'katex/dist/katex.min.css';
 // Context Providers
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { PaddleProvider } from "./context/PaddleContext.jsx";
+import ErrorBoundary from "./components/ErrorBoundary.jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <PaddleProvider>
-          <App />
-        </PaddleProvider>
-      </AuthProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AuthProvider>
+          <PaddleProvider>
+            <App />
+          </PaddleProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   </StrictMode>
 );
