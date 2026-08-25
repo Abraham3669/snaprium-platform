@@ -170,103 +170,146 @@ setResultText("");
   };
 
   // ==================== FIXED: Daily Limit Logic ====================
-  const checkSolveLimit = async () => {
-    if (!user) {
-      let guestSolves = parseInt(localStorage.getItem('guestSolves') || '0', 10);
-      if (guestSolves >= 2) {
-        logEvent(analytics, "guest_limit_hit", { solves_attempted: guestSolves + 1 });
-        
+const checkSolveLimit = async () => {
+  if (!user) {
+    let guestSolves = parseInt(localStorage.getItem("guestSolves") || "0", 10);
+    if (guestSolves >= 2) {
+      logEvent(analytics, "guest_limit_hit", { solves_attempted: guestSolves + 1 });
 
-        toast(
-          <div style={{ textAlign: 'center' }}>
-            <p style={{ marginBottom: '12px', fontWeight: 500 }}>
-              Sign in to unlock more expert solutions and continue solving.
-            </p>
-            <button
-              onClick={() => {
-                navigate('/login');
-                toast.dismiss();
-              }}
-              style={{
-                background: 'var(--accent)',
-                color: 'white',
-                border: 'none',
-                padding: '10px 24px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontWeight: 600,
-                fontSize: '0.95rem',
-              }}
-            >
-              Sign In Now
-            </button>
-          </div>,
-          {
-            position: "top-center",
-            autoClose: false,
-            closeOnClick: false,
-            pauseOnHover: true,
-            className: 'guest-limit-toast',
-          }
-        );
-        return false;
-      }
-      return true;
+      toast(
+        <div style={{ textAlign: "center" }}>
+          <p style={{ marginBottom: "12px", fontWeight: 500 }}>
+            Sign in to unlock more expert solutions and continue solving.
+          </p>
+          <button
+            onClick={() => {
+              navigate("/login");
+              toast.dismiss();
+            }}
+            style={{
+              background: "var(--accent)",
+              color: "white",
+              border: "none",
+              padding: "10px 24px",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontWeight: 600,
+              fontSize: "0.95rem",
+            }}
+          >
+            Sign In Now
+          </button>
+        </div>,
+        {
+          position: "top-center",
+          autoClose: false,
+          closeOnClick: false,
+          pauseOnHover: true,
+          className: "guest-limit-toast",
+        }
+      );
+      return false;
     }
+    return true;
+  }
 
+  // ---- Retry helper for offline errors ----
+  const getDocWithRetry = async (ref, maxRetries = 4) => {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await getDoc(ref);
+      } catch (err) {
+        const isOffline =
+          err?.message?.includes("offline") ||
+          err?.code === "unavailable" ||
+          err?.code === "failed-precondition";
+
+        if (isOffline && attempt < maxRetries) {
+          console.log(`[Limit] Firestore offline – retry ${attempt}/${maxRetries}`);
+          await new Promise((r) => setTimeout(r, 700 * attempt));
+          continue;
+        }
+        throw err;
+      }
+    }
+  };
+
+  try {
     const userRef = doc(db, "users", user.uid);
-    const userSnap = await getDoc(userRef);
+    const userSnap = await getDocWithRetry(userRef);
+
     if (!userSnap.exists()) return true;
 
     const data = userSnap.data();
-    const plan = data.plan || 'free';
+    const plan = data.plan || "free";
 
-    // Unlimited users have no limit
-    if (plan === 'unlimited' || plan === 'premium') {
+    // Unlimited / Premium → no limit
+    if (plan === "unlimited" || plan === "premium") {
       return true;
     }
 
-    // Free users: 10 solves per day
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    const lastSolveDate = data.lastSolveDate || '';
+    // Free users: daily limit
+    const today = new Date().toISOString().split("T")[0];
+    const lastSolveDate = data.lastSolveDate || "";
     let dailySolves = data.dailySolves || 0;
 
-    // Reset counter if it's a new day
     if (lastSolveDate !== today) {
       dailySolves = 0;
     }
 
     if (dailySolves >= 5) {
       logEvent(analytics, "upgrade_modal_shown", {
-        plan: 'free',
+        plan: "free",
         daily_solves: dailySolves,
         user_type: "registered",
       });
-
       setShowUpgradeModal(true);
       return false;
     }
 
     return true;
-  };
+  } catch (err) {
+    // If we still can't read Firestore after retries, allow the solve
+    // so the user is not blocked by a temporary offline state
+    console.warn("[Limit] Could not check limit (offline). Allowing solve.", err);
+    return true;
+  }
+};
 
-  // ==================== FIXED: Daily Counter Increment ====================
-  const incrementSolveCount = async () => {
-    if (!user) {
-      let guestSolves = parseInt(localStorage.getItem('guestSolves') || '0', 10);
-      localStorage.setItem('guestSolves', guestSolves + 1);
+// ==================== FIXED: Daily Counter Increment ====================
+const incrementSolveCount = async () => {
+  if (!user) {
+    let guestSolves = parseInt(localStorage.getItem("guestSolves") || "0", 10);
+    localStorage.setItem("guestSolves", guestSolves + 1);
+    return;
+  }
+
+  const today = new Date().toISOString().split("T")[0];
+  const userRef = doc(db, "users", user.uid);
+
+  // Also retry the write
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      await updateDoc(userRef, {
+        dailySolves: increment(1),
+        lastSolveDate: today,
+        lastSolve: serverTimestamp(),
+      });
       return;
+    } catch (err) {
+      if (
+        (err?.message?.includes("offline") || err?.code === "unavailable") &&
+        attempt < 3
+      ) {
+        console.log(`[Increment] offline, retry ${attempt}`);
+        await new Promise((r) => setTimeout(r, 600 * attempt));
+        continue;
+      }
+      console.warn("[Increment] failed after retries", err);
+      // Don't throw – the solution was already shown
     }
-
-    const today = new Date().toISOString().split('T')[0];
-    const userRef = doc(db, "users", user.uid);
-
-    await updateDoc(userRef, {
-      dailySolves: increment(1),
-      lastSolveDate: today,
-      lastSolve: serverTimestamp(),
-    });
-  };
+  }
+};
 
   return (
     <div className="App min-h-screen">
