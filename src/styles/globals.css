@@ -4787,3 +4787,29 @@ h2 {
     padding-bottom: 80px;
   }
 }
+
+
+
+
+
+
+/* Kill blue left border / card style ONLY on the top Final Answer box */
+.snaprium-final-answer,
+.snaprium-final-answer * {
+  border-left: none !important;
+  box-shadow: none !important;
+}
+
+.snaprium-final-answer {
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-sm) !important;
+  background: var(--surface) !important;
+}
+
+/* Optional: if KaTeX or markdown injects a blockquote look */
+.snaprium-final-answer blockquote {
+  border-left: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+}

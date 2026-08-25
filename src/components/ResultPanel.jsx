@@ -141,7 +141,9 @@ export default function ResultPanel({ result, loading, onClose }) {
             revealReady && (
               <>
                                         {/* ───── FINAL ANSWER BOX – clean professional ───── */}
+{/* ───── FINAL ANSWER BOX ───── */}
 <div
+  className="snaprium-final-answer"
   style={{
     marginBottom: "32px",
     borderRadius: "16px",
@@ -151,7 +153,6 @@ export default function ResultPanel({ result, loading, onClose }) {
     overflow: "hidden",
   }}
 >
-  {/* Simple header */}
   <div
     style={{
       padding: "16px 20px 8px",
@@ -165,7 +166,6 @@ export default function ResultPanel({ result, loading, onClose }) {
     Final Answer
   </div>
 
-  {/* Answer */}
   <div
     style={{
       padding: "12px 20px 40px",
@@ -179,11 +179,11 @@ export default function ResultPanel({ result, loading, onClose }) {
     {isGoodFinalAnswer(finalAnswerRaw) ? (
       <div
         style={{
-          transform: "scale(2.05)",          // ← a bit bigger than 1.8
+          transform: "scale(2.05)",
           transformOrigin: "center center",
           color: "var(--text-primary)",
           lineHeight: 1.3,
-          fontWeight: 700,                   // ← a bit bolder
+          fontWeight: 700,
         }}
         dangerouslySetInnerHTML={{
           __html: katex.renderToString(finalAnswerRaw, {

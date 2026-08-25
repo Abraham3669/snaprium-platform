@@ -1,14 +1,21 @@
 // src/components/BottomNav.jsx
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { Capacitor } from "@capacitor/core";
 
-export default function BottomNav({ toggleTheme, theme }) {
+export default function BottomNav({ toggleTheme, theme, isResultOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Only show on main app pages, not on login/signup etc.
-  const hideOn = ["/login", "/signup", "/forgot-password", "/terms", "/privacy", "/upgrade", "/refunds"];
-  if (hideOn.includes(location.pathname)) return null;
+  // 1. Only show inside the native app (APK / iOS), never in browser
+  if (!Capacitor.isNativePlatform()) {
+    return null;
+  }
+
+  // 2. Hide when Result Panel is open
+  if (isResultOpen) {
+    return null;
+  }
 
   const isHome = location.pathname === "/";
 
@@ -34,13 +41,11 @@ export default function BottomNav({ toggleTheme, theme }) {
         aria-label={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
       >
         {theme === "dark" ? (
-          // Sun icon
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="4" />
             <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
           </svg>
         ) : (
-          // Moon icon
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
           </svg>

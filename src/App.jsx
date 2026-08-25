@@ -430,7 +430,11 @@ const incrementSolveCount = async () => {
         />
       )}
       {/* Mobile bottom navigation */}
-<BottomNav toggleTheme={toggleTheme} theme={theme} />
+<BottomNav
+  toggleTheme={toggleTheme}
+  theme={theme}
+  isResultOpen={isResultOpen}
+/>
     </div>
   );
 }
