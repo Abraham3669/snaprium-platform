@@ -26,6 +26,7 @@ import { useAuth } from "./context/AuthContext";
 import Refund from "./pages/Refund";
 import ErrorBanner from './components/ErrorBanner';
 import { showAppError } from './utils/errorReporter';
+import BottomNav from "./components/BottomNav";
 
 function App() {
   const { user } = useAuth();
@@ -103,26 +104,25 @@ function App() {
 
 
 
-  const handleCropComplete = async (dataUrl) => {
+ const handleCropComplete = async (dataUrl) => {
+  // 1. Update image + open panel immediately
   setCroppedImage(dataUrl);
   setIsCropperOpen(false);
-
-  // Keep result panel open if already open
   setIsResultOpen(true);
 
+  // 2. Clear previous answer + start loading RIGHT AWAY
+  setResultText("");
+  setIsProcessing(true);
+
   try {
-    // CHECK LIMIT FIRST
-    // CHECK LIMIT FIRST
-if (!(await checkSolveLimit())) {
-  setResultText("");      // Clear old solution text
-  
-  return;
-}
+    // 3. Check limit (now happens while shimmer is already showing)
+    if (!(await checkSolveLimit())) {
+      setIsProcessing(false);
+      // resultText is already empty, so panel stays clean
+      return;
+    }
 
-// ONLY start loading if allowed
-setIsProcessing(true);
-setResultText("");
-
+    // 4. Call the API
     const res = await postAPI("/api/process", {
       imageBase64: dataUrl.split(",")[1],
     });
@@ -131,43 +131,39 @@ setResultText("");
       res.answer || res.text || JSON.stringify(res) || "No answer received"
     );
 
-    setIsProcessing(false);
-
-
-
-
-
-
     logEvent(analytics, "photo_processed", {
       user_type: user ? "registered" : "guest",
       image_size: dataUrl.length,
     });
 
-      logEvent(analytics, "solution_generated", {
-        success: true,
-        user_type: user ? "registered" : "guest",
-      });
+    logEvent(analytics, "solution_generated", {
+      success: true,
+      user_type: user ? "registered" : "guest",
+    });
 
-      await incrementSolveCount();
-      const currentUser = auth.currentUser;
-      if (currentUser) {
-        const userRef = doc(db, "users", currentUser.uid);
-        await updateDoc(userRef, {
-          uploadCount: increment(1),
-          lastUpload: serverTimestamp(),
-        });
-      }
-        } catch (err) {
-      showAppError('Process Image', err);
-      setResultText("Failed to get solution – please try again");
-      setIsProcessing(false);
+    await incrementSolveCount();
 
-      logEvent(analytics, "solution_generated", {
-        success: false,
-        error_message: err.message?.substring(0, 100) || "unknown_error",
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      const userRef = doc(db, "users", currentUser.uid);
+      await updateDoc(userRef, {
+        uploadCount: increment(1),
+        lastUpload: serverTimestamp(),
       });
     }
-  };
+  } catch (err) {
+    showAppError("Process Image", err);
+    setResultText("Failed to get solution – please try again");
+
+    logEvent(analytics, "solution_generated", {
+      success: false,
+      error_message: err.message?.substring(0, 100) || "unknown_error",
+    });
+  } finally {
+    // Always stop the loading state
+    setIsProcessing(false);
+  }
+};
 
   // ==================== FIXED: Daily Limit Logic ====================
 const checkSolveLimit = async () => {
@@ -433,6 +429,8 @@ const incrementSolveCount = async () => {
           onClose={() => setShowWelcomeModal(false)}
         />
       )}
+      {/* Mobile bottom navigation */}
+<BottomNav toggleTheme={toggleTheme} theme={theme} />
     </div>
   );
 }
