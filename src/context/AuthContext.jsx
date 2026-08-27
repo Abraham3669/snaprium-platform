@@ -36,6 +36,92 @@ function buildUser(firebaseUser, data = {}) {
   };
 }
 
+function baseProfile(firebaseUser) {
+  return {
+    uid: firebaseUser.uid,
+    email: firebaseUser.email || "",
+    displayName:
+      firebaseUser.displayName ||
+      firebaseUser.email?.split("@")[0] ||
+      "User",
+    photoURL: firebaseUser.photoURL || "",
+  };
+}
+
+/** Always ensure users/{uid} exists in Firestore (critical for APK) */
+async function ensureUserDocument(firebaseUser) {
+  const userRef = doc(db, "users", firebaseUser.uid);
+  const base = baseProfile(firebaseUser);
+
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    try {
+      try {
+        await enableNetwork(db);
+      } catch (_) {}
+
+      // Existence check — do NOT require server (offline-safe)
+      let snap = null;
+      try {
+        snap = await getDoc(userRef);
+      } catch (e) {
+        console.warn("[Auth] getDoc failed, will try setDoc merge:", e?.message);
+      }
+
+      if (snap && snap.exists()) {
+        const existing = snap.data();
+        // Sync name/photo if changed
+        if (
+          existing.displayName !== base.displayName ||
+          existing.photoURL !== base.photoURL ||
+          existing.email !== base.email
+        ) {
+          await setDoc(
+            userRef,
+            {
+              displayName: base.displayName,
+              photoURL: base.photoURL,
+              email: base.email,
+              updatedAt: serverTimestamp(),
+            },
+            { merge: true }
+          );
+        }
+        return snap;
+      }
+
+      // CREATE new user document (merge: true is safe if race)
+      console.log(`[Auth] Creating Firestore user doc (attempt ${attempt}):`, firebaseUser.uid);
+      await setDoc(
+        userRef,
+        {
+          ...base,
+          plan: "free",
+          subscriptionStatus: "inactive",
+          uploadCount: 0,
+          solves: 0,
+          dailySolves: 0,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      // Confirm
+      try {
+        return await getDocFromServer(userRef);
+      } catch {
+        return await getDoc(userRef);
+      }
+    } catch (err) {
+      console.warn(`[Auth] ensureUserDocument attempt ${attempt} failed:`, err?.message || err);
+      await new Promise((r) => setTimeout(r, 500 * attempt));
+    }
+  }
+
+  console.error("[Auth] Failed to create user document after retries");
+  return null;
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -52,7 +138,6 @@ export function AuthProvider({ children }) {
 
     const userRef = doc(db, "users", firebaseUser.uid);
 
-    // Try server first, then any source
     try {
       const snap = await getDocFromServer(userRef);
       if (snap.exists()) return buildUser(firebaseUser, snap.data());
@@ -68,6 +153,8 @@ export function AuthProvider({ children }) {
     if (!firebaseUser) return null;
 
     try {
+      // If doc missing, create it, then read
+      await ensureUserDocument(firebaseUser);
       const next = await fetchUserFromServer(firebaseUser);
       if (next) {
         setUser(next);
@@ -80,7 +167,6 @@ export function AuthProvider({ children }) {
     return null;
   }, [fetchUserFromServer]);
 
-  // After returning from browser, poll server for ~90s
   const startPlanPoll = useCallback(() => {
     if (!Capacitor.isNativePlatform()) return;
 
@@ -96,7 +182,6 @@ export function AuthProvider({ children }) {
       ticks += 1;
       const next = await refreshUser();
       if (next?.plan === "unlimited" || ticks >= 18) {
-        // stop after unlimited found or ~90s (18 * 5s)
         clearInterval(pollTimerRef.current);
         pollTimerRef.current = null;
       }
@@ -129,57 +214,31 @@ export function AuthProvider({ children }) {
           }
         }
 
-        let userSnap;
-        try {
-          userSnap = await getDocFromServer(userRef);
-        } catch {
-          userSnap = await getDoc(userRef);
-        }
+        // ALWAYS try to create the Firestore profile first (fixes APK)
+        const userSnap = await ensureUserDocument(firebaseUser);
 
-        const baseData = {
-          uid: firebaseUser.uid,
-          email: firebaseUser.email || "",
-          displayName:
-            firebaseUser.displayName ||
-            firebaseUser.email?.split("@")[0] ||
-            "User",
-          photoURL: firebaseUser.photoURL || "",
-        };
-
-        if (!userSnap.exists()) {
-          await setDoc(userRef, {
-            ...baseData,
-            plan: "free",
-            subscriptionStatus: "inactive",
-            uploadCount: 0,
-            solves: 0,
-            dailySolves: 0,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-          });
+        if (userSnap?.exists()) {
+          setUser(buildUser(firebaseUser, userSnap.data()));
         } else {
-          const existing = userSnap.data();
-          if (
-            existing.displayName !== baseData.displayName ||
-            existing.photoURL !== baseData.photoURL
-          ) {
-            await setDoc(
-              userRef,
-              {
-                displayName: baseData.displayName,
-                photoURL: baseData.photoURL,
-                updatedAt: serverTimestamp(),
-              },
-              { merge: true }
-            );
-          }
+          // Local fallback only if network still can't write
+          setUser(
+            buildUser(firebaseUser, {
+              plan: "free",
+              subscriptionStatus: "inactive",
+            })
+          );
         }
 
+        // Live updates
         unsubscribeSnapshotRef.current = onSnapshot(
           userRef,
           { includeMetadataChanges: true },
           (snapshot) => {
-            if (!snapshot.exists()) return;
+            if (!snapshot.exists()) {
+              // Doc missing → try create again
+              ensureUserDocument(firebaseUser);
+              return;
+            }
             const next = buildUser(firebaseUser, snapshot.data());
             setUser(next);
             if (!snapshot.metadata.fromCache) {
@@ -228,7 +287,7 @@ export function AuthProvider({ children }) {
     let handle;
     CapApp.addListener("appStateChange", ({ isActive }) => {
       if (isActive) {
-        console.log("[Auth] app resumed → poll plan");
+        console.log("[Auth] app resumed → ensure user + poll plan");
         startPlanPoll();
       }
     }).then((h) => {
