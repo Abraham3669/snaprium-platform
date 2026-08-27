@@ -3,7 +3,7 @@ import {
   getAuth,
   initializeAuth,
   indexedDBLocalPersistence,
-  browserLocalPersistence,
+  browserPopupRedirectResolver,
   GoogleAuthProvider,
 } from "firebase/auth";
 import { initializeFirestore, getFirestore } from "firebase/firestore";
@@ -20,19 +20,21 @@ const firebaseConfig = {
 };
 
 if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
-  console.error("[Firebase] Missing VITE_FIREBASE_* env. Rebuild web bundle before cap sync.");
+  console.error("[Firebase] Missing VITE_FIREBASE_* env vars");
 }
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
 let auth;
-try {
-  auth = initializeAuth(app, {
-    persistence: Capacitor.isNativePlatform()
-      ? indexedDBLocalPersistence
-      : browserLocalPersistence,
-  });
-} catch {
+if (Capacitor.isNativePlatform()) {
+  try {
+    auth = initializeAuth(app, {
+      persistence: indexedDBLocalPersistence,
+    });
+  } catch {
+    auth = getAuth(app);
+  }
+} else {
   auth = getAuth(app);
 }
 

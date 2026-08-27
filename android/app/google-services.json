@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "16016330247",
+    "project_id": "snaprium",
+    "storage_bucket": "snaprium.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:16016330247:android:ad4525e74e9fbdc48aa4a2",
+        "android_client_info": {
+          "package_name": "com.snaprium.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "16016330247-ptmeqiftaeiqf8cqdukjjtcd8q1hb33s.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.snaprium.app",
+            "certificate_hash": "44e025e759e2840bbf150a6828a7d450544a49e0"
+          }
+        },
+        {
+          "client_id": "16016330247-0pehuf4ugm4ibp229hkc94lpj0t27bf3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAjxnUchGObCAhkvBMk6U7MQYc0qjo7sNY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "16016330247-0pehuf4ugm4ibp229hkc94lpj0t27bf3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
