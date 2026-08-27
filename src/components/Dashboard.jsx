@@ -2,11 +2,12 @@
 import React from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useNavigate } from "react-router-dom";
-import { testConnectivity } from "../utils/apiClient";
+import { Capacitor } from "@capacitor/core";
 
 export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
   const { user, signOutUser } = useAuth();
   const navigate = useNavigate();
+  const isApp = Capacitor.isNativePlatform();
 
   if (!isOpen) return null;
 
@@ -21,31 +22,33 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
     onClose();
 
     try {
-      const response = await fetch('/api/customer-portal', {
-        method: 'POST',
+      const response = await fetch("/api/customer-portal", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ userId: user.uid }),
       });
 
       const data = await response.json();
 
-      console.log('Portal response:', data);
-
       if (data.url) {
         window.location.href = data.url;
       } else {
-        alert(data.error || 'Unable to open management portal. Please try again.');
+        alert(data.error || "Unable to open management portal. Please try again.");
       }
     } catch (error) {
-      console.error('Error opening portal:', error);
-      alert('Something went wrong. Please try again later.');
+      console.error("Error opening portal:", error);
+      alert("Something went wrong. Please try again later.");
     }
   };
 
-  const isSubscribed = user && (user.subscription === 'pro' || user.subscription === 'premium' || 
-                               user.plan === 'unlimited' || user.subscriptionStatus === 'active');
+  const isSubscribed =
+    user &&
+    (user.subscription === "pro" ||
+      user.subscription === "premium" ||
+      user.plan === "unlimited" ||
+      user.subscriptionStatus === "active");
 
   return (
     <>
@@ -55,7 +58,6 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
         <div className="dashboard-header">
           <h2>Dashboard</h2>
 
-          {/* Close Button */}
           <button id="closeDashboard" onClick={onClose} aria-label="Close">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="18" y1="6" x2="6" y2="18" />
@@ -65,7 +67,6 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
         </div>
 
         <div className="dashboard-content">
-          {/* 1. User Section or Sign In */}
           {user ? (
             <div className="user-section">
               {user.photoURL && (
@@ -79,9 +80,7 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
               )}
 
               <div className="user-info">
-                <span className="user-name">
-                  {user.displayName || user.email}
-                </span>
+                <span className="user-name">{user.displayName || user.email}</span>
 
                 <button
                   className="signout-btn dashboard-btn"
@@ -89,7 +88,7 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
                     try {
                       await signOutUser();
                       onClose();
-                      navigate('/login');
+                      navigate("/login");
                     } catch (error) {
                       console.error("Sign out failed:", error);
                     }
@@ -118,26 +117,25 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
             </button>
           )}
 
-          {/* Subscription Section */}
-          {user && (
-            isSubscribed ? (
+          {user &&
+            (isSubscribed ? (
               <button
                 className="manage-subscription-btn dashboard-btn primary"
                 onClick={handleManageSubscription}
                 type="button"
               >
-                <svg 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="2.5" 
-                  strokeLinecap="round" 
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
-                  width="18" 
+                  width="18"
                   height="18"
                 >
-                  <rect x="2" y="5" width="20" height="14" rx="2" ry="2"/>
-                  <line x1="2" y1="10" x2="22" y2="10"/>
+                  <rect x="2" y="5" width="20" height="14" rx="2" ry="2" />
+                  <line x1="2" y1="10" x2="22" y2="10" />
                 </svg>
                 Manage Subscription
               </button>
@@ -147,15 +145,15 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
                 onClick={() => handleNavigate("/upgrade")}
                 type="button"
               >
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  width="20" 
-                  height="20" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="2.75" 
-                  strokeLinecap="round" 
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.75"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
                 >
                   <path d="M12 19V5" />
@@ -163,56 +161,43 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
                 </svg>
                 Upgrade Plan
               </button>
-            )
+            ))}
+
+          {!isApp && (
+            <>
+              <button
+                className="home-btn dashboard-btn"
+                onClick={() => handleNavigate("/")}
+                style={{ display: "flex" }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                  <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+                Home
+              </button>
+
+              <button
+                className="theme-btn dashboard-btn"
+                onClick={toggleTheme}
+                style={{ display: "flex" }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="5" />
+                  <line x1="12" y1="1" x2="12" y2="3" />
+                  <line x1="12" y1="21" x2="12" y2="23" />
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                  <line x1="1" y1="12" x2="3" y2="12" />
+                  <line x1="21" y1="12" x2="23" y2="12" />
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                </svg>
+                {theme === "dark" ? "Light Mode" : "Dark Mode"}
+              </button>
+            </>
           )}
 
-          {/* Home */}
-          <button
-            className="home-btn dashboard-btn"
-            onClick={() => handleNavigate("/")}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-              <polyline points="9 22 9 12 15 12 15 22" />
-            </svg>
-            Home
-          </button>
-
-          {/* Theme Toggle */}
-          <button
-            className="theme-btn dashboard-btn"
-            onClick={toggleTheme}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="5" />
-              <line x1="12" y1="1" x2="12" y2="3" />
-              <line x1="12" y1="21" x2="12" y2="23" />
-              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-              <line x1="1" y1="12" x2="3" y2="12" />
-              <line x1="21" y1="12" x2="23" y2="12" />
-              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-            </svg>
-            {theme === "dark" ? "Light Mode" : "Dark Mode"}
-          </button>
-          
-
-
-
-<button
-  className="theme-btn dashboard-btn"
-  onClick={testConnectivity}
-  type="button"
->
-  Test API Connection
-</button>
-
-
-
-          
-
-          {/* ==================== REFUND BUTTON - AT THE VERY BOTTOM ==================== */}
           {user && isSubscribed && (
             <div className="dashboard-footer">
               <button
@@ -223,19 +208,19 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
                 }}
                 type="button"
               >
-                <svg 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="2.5" 
-                  strokeLinecap="round" 
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
-                  width="18" 
+                  width="18"
                   height="18"
                 >
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="12" y1="8" x2="12" y2="12"/>
-                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
                 </svg>
                 Request Refund
               </button>

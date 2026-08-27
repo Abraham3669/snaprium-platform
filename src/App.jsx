@@ -1,8 +1,8 @@
 // src/App.jsx
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css';
+import "react-toastify/dist/ReactToastify.css";
 
 import CameraInput from "./components/CameraInput";
 import CropperModal from "./components/CropperModal";
@@ -17,19 +17,28 @@ import ForgotPassword from "./pages/ForgotPassword";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Upgrade from "./pages/Upgrade";
-
-import { postAPI } from "./utils/apiClient";
-
-import { doc, updateDoc, increment, serverTimestamp, getDoc } from "firebase/firestore";
-import { auth, db, analytics, logEvent, setUserId } from "./lib/firebase";
-import { useAuth } from "./context/AuthContext";
 import Refund from "./pages/Refund";
-import ErrorBanner from './components/ErrorBanner';
-import { showAppError } from './utils/errorReporter';
-import BottomNav from "./components/BottomNav";
 import Checkout from "./pages/Checkout";
 import CheckoutReturn from "./pages/CheckoutReturn";
-import { Capacitor } from "@capacitor/core";
+
+import { postAPI } from "./utils/apiClient";
+import {
+  doc,
+  updateDoc,
+  setDoc,
+  increment,
+  serverTimestamp,
+  getDoc,
+} from "firebase/firestore";
+import { db, analytics, logEvent, setUserId } from "./lib/firebase";
+import { useAuth } from "./context/AuthContext";
+import ErrorBanner from "./components/ErrorBanner";
+import { showAppError } from "./utils/errorReporter";
+import BottomNav from "./components/BottomNav";
+
+const GUEST_SOLVE_LIMIT = 3;
+const FREE_DAILY_LIMIT = 5;
+const getToday = () => new Date().toISOString().split("T")[0];
 
 function App() {
   const { user } = useAuth();
@@ -47,15 +56,13 @@ function App() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
-  // FIXED Welcome Modal Logic - Updated for Unlimited plan
   useEffect(() => {
     if (!user?.uid || !user?.plan) {
       setShowWelcomeModal(false);
       return;
     }
 
-    const isUnlimited = user.plan === 'unlimited' || user.plan === 'premium';
-
+    const isUnlimited = user.plan === "unlimited" || user.plan === "premium";
     if (!isUnlimited) {
       setShowWelcomeModal(false);
       return;
@@ -65,25 +72,23 @@ function App() {
     const hasSeen = localStorage.getItem(welcomeKey);
 
     if (!hasSeen) {
-      console.log(`[App] Showing welcome modal for ${user.plan} plan (first time)`);
-      
       const timer = setTimeout(() => {
         setShowWelcomeModal(true);
-        localStorage.setItem(welcomeKey, 'true');
+        localStorage.setItem(welcomeKey, "true");
         logEvent(analytics, "welcome_modal_shown", { plan: user.plan });
       }, 800);
-
       return () => clearTimeout(timer);
-    } else {
-      console.log(`[App] Welcome modal already shown for ${user.plan} - skipping`);
-      setShowWelcomeModal(false);
     }
+
+    setShowWelcomeModal(false);
   }, [user?.uid, user?.plan]);
 
   useEffect(() => {
     if (user?.uid) {
       setUserId(analytics, user.uid);
-      logEvent(analytics, "login", { method: user.providerData?.[0]?.providerId || "unknown" });
+      logEvent(analytics, "login", {
+        method: user.providerData?.[0]?.providerId || "unknown",
+      });
     }
   }, [user]);
 
@@ -95,15 +100,6 @@ function App() {
     });
   }, [location]);
 
-  
-
-
-
-
-
-
-  
-
   const toggleTheme = () => {
     const nextTheme = theme === "dark" ? "light" : "dark";
     setTheme(nextTheme);
@@ -111,164 +107,71 @@ function App() {
     document.documentElement.setAttribute("data-theme", nextTheme);
   };
 
-
-
-
-
-
- const handleCropComplete = async (dataUrl) => {
-  setCroppedImage(dataUrl);
-  setIsCropperOpen(false);
-  setIsResultOpen(true);
-
-  setResultText("");
-  setIsProcessing(true);
-
-  try {
-    if (!(await checkSolveLimit())) {
-      return;
-    }
-
-    const res = await postAPI("/api/process", {
-      imageBase64: dataUrl.split(",")[1],
-    });
-
-    // Show answer IMMEDIATELY
-    setResultText(
-      res.answer || res.text || JSON.stringify(res) || "No answer received"
-    );
-
-    // Stop shimmer IMMEDIATELY (don't wait for Firestore)
-    setIsProcessing(false);
-
-    logEvent(analytics, "photo_processed", {
-      user_type: user ? "registered" : "guest",
-      image_size: dataUrl.length,
-    });
-
-    logEvent(analytics, "solution_generated", {
-      success: true,
-      user_type: user ? "registered" : "guest",
-    });
-
-    // Firestore updates in the background — never block the UI
-    Promise.resolve().then(async () => {
-      try {
-        await incrementSolveCount();
-        const currentUser = auth.currentUser;
-        if (currentUser) {
-          const userRef = doc(db, "users", currentUser.uid);
-          await updateDoc(userRef, {
-            uploadCount: increment(1),
-            lastUpload: serverTimestamp(),
-          });
-        }
-      } catch (e) {
-        console.warn("[post-solve] background update failed:", e);
+  const checkSolveLimit = async () => {
+    if (!user) {
+      const guestSolves = parseInt(localStorage.getItem("guestSolves") || "0", 10);
+      if (guestSolves >= GUEST_SOLVE_LIMIT) {
+        logEvent(analytics, "guest_limit_hit", {
+          solves_attempted: guestSolves + 1,
+        });
+        toast(
+          <div style={{ textAlign: "center" }}>
+            <p style={{ marginBottom: "12px", fontWeight: 500 }}>
+              Sign in to unlock more expert solutions and continue solving.
+            </p>
+            <button
+              onClick={() => {
+                navigate("/login");
+                toast.dismiss();
+              }}
+              style={{
+                background: "var(--accent)",
+                color: "white",
+                border: "none",
+                padding: "10px 24px",
+                borderRadius: "8px",
+                cursor: "pointer",
+                fontWeight: 600,
+                fontSize: "0.95rem",
+              }}
+            >
+              Sign In Now
+            </button>
+          </div>,
+          {
+            position: "top-center",
+            autoClose: false,
+            closeOnClick: false,
+            pauseOnHover: true,
+            className: "guest-limit-toast",
+          }
+        );
+        return false;
       }
-    });
-  } catch (err) {
-    showAppError("Process Image", err);
-    setResultText("Failed to get solution – please try again");
-
-    logEvent(analytics, "solution_generated", {
-      success: false,
-      error_message: err.message?.substring(0, 100) || "unknown_error",
-    });
-  } finally {
-    setIsProcessing(false);
-  }
-};
-
-  // ==================== FIXED: Daily Limit Logic ====================
-const checkSolveLimit = async () => {
-  if (!user) {
-    let guestSolves = parseInt(localStorage.getItem("guestSolves") || "0", 10);
-    if (guestSolves >= 2) {
-      logEvent(analytics, "guest_limit_hit", { solves_attempted: guestSolves + 1 });
-
-      toast(
-        <div style={{ textAlign: "center" }}>
-          <p style={{ marginBottom: "12px", fontWeight: 500 }}>
-            Sign in to unlock more expert solutions and continue solving.
-          </p>
-          <button
-            onClick={() => {
-              navigate("/login");
-              toast.dismiss();
-            }}
-            style={{
-              background: "var(--accent)",
-              color: "white",
-              border: "none",
-              padding: "10px 24px",
-              borderRadius: "8px",
-              cursor: "pointer",
-              fontWeight: 600,
-              fontSize: "0.95rem",
-            }}
-          >
-            Sign In Now
-          </button>
-        </div>,
-        {
-          position: "top-center",
-          autoClose: false,
-          closeOnClick: false,
-          pauseOnHover: true,
-          className: "guest-limit-toast",
-        }
-      );
-      return false;
-    }
-    return true;
-  }
-
-  // ---- Retry helper for offline errors ----
-  const getDocWithRetry = async (ref, maxRetries = 4) => {
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        return await getDoc(ref);
-      } catch (err) {
-        const isOffline =
-          err?.message?.includes("offline") ||
-          err?.code === "unavailable" ||
-          err?.code === "failed-precondition";
-
-        if (isOffline && attempt < maxRetries) {
-          console.log(`[Limit] Firestore offline – retry ${attempt}/${maxRetries}`);
-          await new Promise((r) => setTimeout(r, 700 * attempt));
-          continue;
-        }
-        throw err;
-      }
-    }
-  };
-
-  try {
-    const userRef = doc(db, "users", user.uid);
-    const userSnap = await getDocWithRetry(userRef);
-
-    if (!userSnap.exists()) return true;
-
-    const data = userSnap.data();
-    const plan = data.plan || "free";
-
-    // Unlimited / Premium → no limit
-    if (plan === "unlimited" || plan === "premium") {
       return true;
     }
 
-    // Free users: daily limit
-    const today = new Date().toISOString().split("T")[0];
-    const lastSolveDate = data.lastSolveDate || "";
-    let dailySolves = data.dailySolves || 0;
+    const plan = user.plan || "free";
+    if (plan === "unlimited" || plan === "premium") return true;
 
-    if (lastSolveDate !== today) {
-      dailySolves = 0;
+    const today = getToday();
+    let dailySolves = user.dailySolves || 0;
+    let lastSolveDate = user.lastSolveDate || "";
+
+    try {
+      const userSnap = await getDoc(doc(db, "users", user.uid));
+      if (userSnap.exists()) {
+        const data = userSnap.data();
+        dailySolves = data.dailySolves || 0;
+        lastSolveDate = data.lastSolveDate || "";
+      }
+    } catch (err) {
+      console.warn("[Limit] using cached user data", err?.message);
     }
 
-    if (dailySolves >= 5) {
+    if (lastSolveDate !== today) dailySolves = 0;
+
+    if (dailySolves >= FREE_DAILY_LIMIT) {
       logEvent(analytics, "upgrade_modal_shown", {
         plan: "free",
         daily_solves: dailySolves,
@@ -279,52 +182,113 @@ const checkSolveLimit = async () => {
     }
 
     return true;
-  } catch (err) {
-    // If we still can't read Firestore after retries, allow the solve
-    // so the user is not blocked by a temporary offline state
-    console.warn("[Limit] Could not check limit (offline). Allowing solve.", err);
-    return true;
-  }
-};
+  };
 
-// ==================== FIXED: Daily Counter Increment ====================
-const incrementSolveCount = async () => {
-  if (!user) {
-    let guestSolves = parseInt(localStorage.getItem("guestSolves") || "0", 10);
-    localStorage.setItem("guestSolves", guestSolves + 1);
-    return;
-  }
-
-  const today = new Date().toISOString().split("T")[0];
-  const userRef = doc(db, "users", user.uid);
-
-  // Also retry the write
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      await updateDoc(userRef, {
-        dailySolves: increment(1),
-        lastSolveDate: today,
-        lastSolve: serverTimestamp(),
-      });
+  const incrementSolveCount = async () => {
+    if (!user) {
+      const guestSolves = parseInt(localStorage.getItem("guestSolves") || "0", 10);
+      localStorage.setItem("guestSolves", String(guestSolves + 1));
       return;
-    } catch (err) {
-      if (
-        (err?.message?.includes("offline") || err?.code === "unavailable") &&
-        attempt < 3
-      ) {
-        console.log(`[Increment] offline, retry ${attempt}`);
-        await new Promise((r) => setTimeout(r, 600 * attempt));
-        continue;
-      }
-      console.warn("[Increment] failed after retries", err);
-      // Don't throw – the solution was already shown
     }
-  }
-};
+
+    const today = getToday();
+    const userRef = doc(db, "users", user.uid);
+
+    let dailySolves = user.dailySolves || 0;
+    let lastSolveDate = user.lastSolveDate || "";
+
+    try {
+      const snap = await getDoc(userRef);
+      if (snap.exists()) {
+        dailySolves = snap.data().dailySolves || 0;
+        lastSolveDate = snap.data().lastSolveDate || "";
+      }
+    } catch (_) {}
+
+    const nextCount = lastSolveDate === today ? dailySolves + 1 : 1;
+
+    const payload = {
+      dailySolves: nextCount,
+      lastSolveDate: today,
+      lastSolve: serverTimestamp(),
+      uploadCount: increment(1),
+      lastUpload: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+
+    try {
+      await updateDoc(userRef, payload);
+    } catch (err) {
+      await setDoc(
+        userRef,
+        {
+          uid: user.uid,
+          email: user.email || "",
+          plan: user.plan || "free",
+          dailySolves: nextCount,
+          lastSolveDate: today,
+          lastSolve: serverTimestamp(),
+          uploadCount: 1,
+          lastUpload: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+      console.warn("[Increment] used setDoc fallback", err?.message);
+    }
+  };
+
+  const handleCropComplete = async (dataUrl) => {
+    setCroppedImage(dataUrl);
+    setIsCropperOpen(false);
+    setIsResultOpen(true);
+    setResultText("");
+    setIsProcessing(true);
+
+    try {
+      if (!(await checkSolveLimit())) {
+        setIsResultOpen(false);
+        setIsProcessing(false);
+        return;
+      }
+
+      const res = await postAPI("/api/process", {
+        imageBase64: dataUrl.split(",")[1],
+      });
+
+      setResultText(
+        res.answer || res.text || JSON.stringify(res) || "No answer received"
+      );
+      setIsProcessing(false);
+
+      logEvent(analytics, "photo_processed", {
+        user_type: user ? "registered" : "guest",
+        image_size: dataUrl.length,
+      });
+
+      logEvent(analytics, "solution_generated", {
+        success: true,
+        user_type: user ? "registered" : "guest",
+      });
+
+      incrementSolveCount().catch((e) => {
+        console.warn("[post-solve] background update failed:", e);
+      });
+    } catch (err) {
+      showAppError("Process Image", err);
+      setResultText("Failed to get solution – please try again");
+      logEvent(analytics, "solution_generated", {
+        success: false,
+        error_message: err.message?.substring(0, 100) || "unknown_error",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <div className="App min-h-screen">
-       <ErrorBanner />
+      <ErrorBanner />
       <ToastContainer
         position="bottom-center"
         autoClose={5000}
@@ -340,10 +304,9 @@ const incrementSolveCount = async () => {
 
       <header className="snaprium-header">
         <div className="snaprium-header-inner">
-          {/* Left: Logo + Brand */}
           <div className="snaprium-brand">
-            <img 
-              src={new URL('./assets/logo.png', import.meta.url).href}
+            <img
+              src={new URL("./assets/logo.png", import.meta.url).href}
               alt="Snaprium Logo"
               className="snaprium-logo"
               width="32"
@@ -352,15 +315,13 @@ const incrementSolveCount = async () => {
             snaprium
           </div>
 
-          {/* Right side: Plan Badge - Updated for Unlimited */}
           <div className="header-right">
-            {/* Modern Subscriber Badge */}
-{user && (user.plan === 'unlimited' || user.plan === 'premium') && (
-  <div className="plan-badge unlimited" title="Unlimited Plan Active">
-    <span className="diamond-icon">◆</span>
-    Unlimited
-  </div>
-)}
+            {user && (user.plan === "unlimited" || user.plan === "premium") && (
+              <div className="plan-badge unlimited" title="Unlimited Plan Active">
+                <span className="diamond-icon">◆</span>
+                Unlimited
+              </div>
+            )}
 
             <button
               onClick={() => setIsDashboardOpen(true)}
@@ -394,7 +355,9 @@ const incrementSolveCount = async () => {
                   onFileSelect={(selectedFile) => {
                     setFile(selectedFile);
                     setIsCropperOpen(true);
-                    logEvent(analytics, "camera_input_started", { user_type: user ? "registered" : "guest" });
+                    logEvent(analytics, "camera_input_started", {
+                      user_type: user ? "registered" : "guest",
+                    });
                   }}
                   onOpenDashboard={() => setIsDashboardOpen(true)}
                 />
@@ -417,8 +380,12 @@ const incrementSolveCount = async () => {
                   />
                 )}
 
-{showUpgradeModal && <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />}
-                
+                {showUpgradeModal && (
+                  <UpgradeModal
+                    isOpen={showUpgradeModal}
+                    onClose={() => setShowUpgradeModal(false)}
+                  />
+                )}
               </>
             }
           />
@@ -431,27 +398,23 @@ const incrementSolveCount = async () => {
           <Route path="/upgrade" element={<Upgrade />} />
           <Route path="/refunds" element={<Refund />} />
           <Route path="/checkout" element={<Checkout />} />
-<Route path="/checkout-return" element={<CheckoutReturn />} />
-
+          <Route path="/checkout-return" element={<CheckoutReturn />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
 
-      
-
-      {/* Welcome Modal */}
       {showWelcomeModal && user && (
         <WelcomeModal
           plan={user.plan}
           onClose={() => setShowWelcomeModal(false)}
         />
       )}
-      {/* Mobile bottom navigation */}
-<BottomNav
-  toggleTheme={toggleTheme}
-  theme={theme}
-  isResultOpen={isResultOpen}
-/>
+
+      <BottomNav
+        toggleTheme={toggleTheme}
+        theme={theme}
+        isResultOpen={isResultOpen}
+      />
     </div>
   );
 }

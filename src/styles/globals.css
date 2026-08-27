@@ -4813,3 +4813,23 @@ h2 {
   padding: 0 !important;
   background: transparent !important;
 }
+
+
+
+.btn-google {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+
+
+
+.home-btn.dashboard-btn,
+.theme-btn.dashboard-btn {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}

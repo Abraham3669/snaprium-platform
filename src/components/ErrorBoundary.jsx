@@ -3,11 +3,11 @@ import React from "react";
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
+  static getDerivedStateFromError() {
+    return { hasError: true };
   }
 
   componentDidCatch(error, info) {
@@ -17,18 +17,39 @@ export default class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{
-          padding: 20, background: '#fff', minHeight: '100vh',
-          fontFamily: 'monospace', fontSize: 13, color: '#d32f2f',
-        }}>
-          <h2 style={{ color: '#d32f2f' }}>App Crashed</h2>
-          <p><strong>{this.state.error?.name}:</strong> {this.state.error?.message}</p>
-          <pre style={{ whiteSpace: 'pre-wrap', fontSize: 11, marginTop: 10 }}>
-            {this.state.error?.stack}
-          </pre>
+        <div
+          style={{
+            minHeight: "100vh",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 24,
+            textAlign: "center",
+          }}
+        >
+          <div>
+            <h2 style={{ marginBottom: 8 }}>Something went wrong</h2>
+            <p style={{ marginBottom: 16, opacity: 0.75 }}>
+              Please reload the app and try again.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              style={{
+                padding: "10px 18px",
+                borderRadius: 8,
+                border: "none",
+                background: "#111",
+                color: "white",
+                fontWeight: 600,
+              }}
+            >
+              Reload
+            </button>
+          </div>
         </div>
       );
     }
+
     return this.props.children;
   }
 }

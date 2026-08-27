@@ -118,7 +118,7 @@ export default function Upgrade() {
             <ul className="plan-features">
               <li><CheckIcon /> Solve anytime, anywhere — no daily limits</li>
               <li><CheckIcon /> Perfect for heavy study sessions and exam preparation</li>
-              <li><CheckIcon /> Full step-by-step explanations for Math & Physics</li>
+              
               <li><CheckIcon /> Continue learning without interruptions</li>
             </ul>
             <button

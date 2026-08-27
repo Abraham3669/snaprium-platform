@@ -1,36 +1,70 @@
-// src/components/ErrorBanner.jsx
-import { useEffect, useState } from 'react';
-import { onAppError } from '../utils/errorReporter';
+import { useEffect, useState } from "react";
+import { onAppError } from "../utils/errorReporter";
 
 export default function ErrorBanner() {
-  const [errors, setErrors] = useState([]);
+  const [message, setMessage] = useState("");
+  const [offline, setOffline] = useState(!navigator.onLine);
 
   useEffect(() => {
-    return onAppError((message) => {
-      const id = Date.now() + Math.random();
-      setErrors((prev) => [...prev, { id, message }]);
+    const goOffline = () => {
+      setOffline(true);
+      setMessage("You’re offline. Check your internet connection.");
+    };
+    const goOnline = () => {
+      setOffline(false);
+      setMessage("Back online.");
+      setTimeout(() => setMessage(""), 2500);
+    };
+
+    window.addEventListener("offline", goOffline);
+    window.addEventListener("online", goOnline);
+    return () => {
+      window.removeEventListener("offline", goOffline);
+      window.removeEventListener("online", goOnline);
+    };
+  }, []);
+
+  useEffect(() => {
+    return onAppError((text) => {
+      setMessage(text);
       setTimeout(() => {
-        setErrors((prev) => prev.filter((e) => e.id !== id));
-      }, 8000);
+        setMessage((current) => (current === text ? "" : current));
+      }, 4000);
     });
   }, []);
 
-  if (errors.length === 0) return null;
+  if (!message && !offline) return null;
+
+  const text = offline ? "You’re offline. Check your internet connection." : message;
+  const isOffline = offline || text.toLowerCase().includes("offline");
 
   return (
-    <div style={{
-      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 99999,
-      display: 'flex', flexDirection: 'column', gap: 4, padding: 8,
-    }}>
-      {errors.map((e) => (
-        <div key={e.id} style={{
-          background: '#d32f2f', color: 'white', padding: '10px 14px',
-          borderRadius: 6, fontSize: 13, fontFamily: 'monospace',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.3)', wordBreak: 'break-word',
-        }}>
-          {e.message}
-        </div>
-      ))}
+    <div
+      style={{
+        position: "fixed",
+        top: 12,
+        left: 12,
+        right: 12,
+        zIndex: 99999,
+        display: "flex",
+        justifyContent: "center",
+      }}
+    >
+      <div
+        style={{
+          background: isOffline ? "#333" : "#c62828",
+          color: "white",
+          padding: "12px 16px",
+          borderRadius: 10,
+          fontSize: 14,
+          fontWeight: 500,
+          textAlign: "center",
+          maxWidth: 420,
+          boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+        }}
+      >
+        {text}
+      </div>
     </div>
   );
 }
