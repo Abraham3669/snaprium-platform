@@ -9,8 +9,10 @@ const API_BASE = Capacitor.isNativePlatform()
 
 export async function postAPI(url, data) {
   const fullUrl = `${API_BASE}${url}`;
-
   console.log("[apiClient] Calling:", fullUrl);
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 90000); // 90s max
 
   try {
     const res = await fetch(fullUrl, {
@@ -19,8 +21,10 @@ export async function postAPI(url, data) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(data),
+      signal: controller.signal,
     });
 
+    clearTimeout(timeoutId);
     const text = await res.text();
 
     if (!res.ok) {
@@ -33,11 +37,16 @@ export async function postAPI(url, data) {
       throw new Error("Invalid JSON response from server");
     }
   } catch (err) {
+    clearTimeout(timeoutId);
     const online = navigator.onLine ? "online" : "OFFLINE";
     const platform = Capacitor.isNativePlatform() ? "native" : "web";
-    const diagnostic = `url=${fullUrl} | platform=${platform} | net=${online} | ${err.name}: ${err.message}`;
+    const message =
+      err.name === "AbortError"
+        ? "Request timed out (90s)"
+        : err.message;
+    const diagnostic = `url=${fullUrl} | platform=${platform} | net=${online} | ${err.name}: ${message}`;
     showAppError(`API ${url}`, new Error(diagnostic));
-    throw err;
+    throw new Error(message);
   }
 }
 

@@ -27,6 +27,8 @@ import Refund from "./pages/Refund";
 import ErrorBanner from './components/ErrorBanner';
 import { showAppError } from './utils/errorReporter';
 import BottomNav from "./components/BottomNav";
+import Checkout from "./pages/Checkout";
+import CheckoutReturn from "./pages/CheckoutReturn";
 
 function App() {
   const { user } = useAuth();
@@ -105,31 +107,29 @@ function App() {
 
 
  const handleCropComplete = async (dataUrl) => {
-  // 1. Update image + open panel immediately
   setCroppedImage(dataUrl);
   setIsCropperOpen(false);
   setIsResultOpen(true);
 
-  // 2. Clear previous answer + start loading RIGHT AWAY
   setResultText("");
   setIsProcessing(true);
 
   try {
-    // 3. Check limit (now happens while shimmer is already showing)
     if (!(await checkSolveLimit())) {
-      setIsProcessing(false);
-      // resultText is already empty, so panel stays clean
       return;
     }
 
-    // 4. Call the API
     const res = await postAPI("/api/process", {
       imageBase64: dataUrl.split(",")[1],
     });
 
+    // Show answer IMMEDIATELY
     setResultText(
       res.answer || res.text || JSON.stringify(res) || "No answer received"
     );
+
+    // Stop shimmer IMMEDIATELY (don't wait for Firestore)
+    setIsProcessing(false);
 
     logEvent(analytics, "photo_processed", {
       user_type: user ? "registered" : "guest",
@@ -141,16 +141,22 @@ function App() {
       user_type: user ? "registered" : "guest",
     });
 
-    await incrementSolveCount();
-
-    const currentUser = auth.currentUser;
-    if (currentUser) {
-      const userRef = doc(db, "users", currentUser.uid);
-      await updateDoc(userRef, {
-        uploadCount: increment(1),
-        lastUpload: serverTimestamp(),
-      });
-    }
+    // Firestore updates in the background — never block the UI
+    Promise.resolve().then(async () => {
+      try {
+        await incrementSolveCount();
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          const userRef = doc(db, "users", currentUser.uid);
+          await updateDoc(userRef, {
+            uploadCount: increment(1),
+            lastUpload: serverTimestamp(),
+          });
+        }
+      } catch (e) {
+        console.warn("[post-solve] background update failed:", e);
+      }
+    });
   } catch (err) {
     showAppError("Process Image", err);
     setResultText("Failed to get solution – please try again");
@@ -160,7 +166,6 @@ function App() {
       error_message: err.message?.substring(0, 100) || "unknown_error",
     });
   } finally {
-    // Always stop the loading state
     setIsProcessing(false);
   }
 };
@@ -415,6 +420,8 @@ const incrementSolveCount = async () => {
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/upgrade" element={<Upgrade />} />
           <Route path="/refunds" element={<Refund />} />
+          <Route path="/checkout" element={<Checkout />} />
+<Route path="/checkout-return" element={<CheckoutReturn />} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

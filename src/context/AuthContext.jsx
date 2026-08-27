@@ -1,10 +1,11 @@
 // src/context/AuthContext.jsx
-import { createContext, useContext, useEffect, useState, useRef } from "react";
+import { createContext, useContext, useEffect, useState, useRef, useCallback } from "react";
 import { auth, db } from "../lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import {
   doc,
   getDoc,
+  getDocFromServer,
   setDoc,
   onSnapshot,
   serverTimestamp,
@@ -12,46 +13,97 @@ import {
 } from "firebase/firestore";
 import { showAppError } from "../utils/errorReporter";
 import { Capacitor } from "@capacitor/core";
+import { App as CapApp } from "@capacitor/app";
 
 const AuthContext = createContext();
+
+function buildUser(firebaseUser, data = {}) {
+  const plan = data.plan || "free";
+  return {
+    uid: firebaseUser.uid,
+    email: firebaseUser.email || data.email || "",
+    displayName:
+      data.displayName ||
+      firebaseUser.displayName ||
+      firebaseUser.email?.split("@")[0] ||
+      "User",
+    photoURL: data.photoURL || firebaseUser.photoURL || "",
+    ...data,
+    plan,
+    subscriptionStatus: data.subscriptionStatus || "inactive",
+    isUnlimited: plan === "unlimited",
+    isPremium: ["premium", "unlimited"].includes(plan),
+  };
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const unsubscribeSnapshotRef = useRef(null);
+  const firebaseUserRef = useRef(null);
 
-  // Helper that retries when Firestore says "offline"
   const getDocWithRetry = async (ref, maxRetries = 4) => {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        return await getDoc(ref);
+        // Prefer server so APK doesn't stick to old cache
+        return await getDocFromServer(ref);
       } catch (err) {
-        const isOffline =
-          err?.message?.includes("offline") ||
-          err?.code === "unavailable" ||
-          err?.code === "failed-precondition";
+        try {
+          return await getDoc(ref);
+        } catch (err2) {
+          const isOffline =
+            err2?.message?.includes("offline") ||
+            err2?.code === "unavailable" ||
+            err?.message?.includes("offline") ||
+            err?.code === "unavailable";
 
-        if (isOffline && attempt < maxRetries) {
-          console.log(`[Auth] Firestore offline – retry ${attempt}/${maxRetries}`);
-          // Force network back on
-          try {
-            await enableNetwork(db);
-          } catch (_) {}
-          await new Promise((r) => setTimeout(r, 600 * attempt));
-          continue;
+          if (isOffline && attempt < maxRetries) {
+            console.log(`[Auth] offline retry ${attempt}/${maxRetries}`);
+            try {
+              await enableNetwork(db);
+            } catch (_) {}
+            await new Promise((r) => setTimeout(r, 600 * attempt));
+            continue;
+          }
+          throw err2;
         }
-        throw err;
       }
     }
   };
 
+  // Force refresh from server (call after payment / app resume)
+  const refreshUser = useCallback(async () => {
+    const firebaseUser = firebaseUserRef.current || auth.currentUser;
+    if (!firebaseUser) return null;
+
+    try {
+      try {
+        await enableNetwork(db);
+      } catch (_) {}
+
+      const userRef = doc(db, "users", firebaseUser.uid);
+      const snap = await getDocWithRetry(userRef);
+
+      if (snap?.exists()) {
+        const next = buildUser(firebaseUser, snap.data());
+        setUser(next);
+        console.log("[Auth] refreshed plan:", next.plan);
+        return next;
+      }
+    } catch (e) {
+      console.warn("[Auth] refreshUser failed:", e);
+    }
+    return null;
+  }, []);
+
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
-      // Clean previous listener
       if (unsubscribeSnapshotRef.current) {
         unsubscribeSnapshotRef.current();
         unsubscribeSnapshotRef.current = null;
       }
+
+      firebaseUserRef.current = firebaseUser;
 
       if (!firebaseUser) {
         setUser(null);
@@ -62,7 +114,6 @@ export function AuthProvider({ children }) {
       const userRef = doc(db, "users", firebaseUser.uid);
 
       try {
-        // On native always try to turn network on
         if (Capacitor.isNativePlatform()) {
           try {
             await enableNetwork(db);
@@ -113,24 +164,23 @@ export function AuthProvider({ children }) {
           }
         }
 
-        // Real-time listener
+        // Live updates
         unsubscribeSnapshotRef.current = onSnapshot(
           userRef,
+          { includeMetadataChanges: true },
           (snapshot) => {
-            if (snapshot.exists()) {
-              const data = snapshot.data();
-              setUser({
-                ...baseData,
-                ...data,
-                plan: data.plan || "free",
-                subscriptionStatus: data.subscriptionStatus || "inactive",
-                isUnlimited: data.plan === "unlimited",
-                isPremium: ["premium", "unlimited"].includes(data.plan),
-              });
+            if (!snapshot.exists()) return;
+
+            // Skip pure cache echoes if you want only server — but still apply data
+            const data = snapshot.data();
+            const next = buildUser(firebaseUser, data);
+            setUser(next);
+
+            if (!snapshot.metadata.fromCache) {
+              console.log("[Auth] server update plan:", next.plan);
             }
           },
           (error) => {
-            // Ignore temporary offline errors completely
             if (
               error?.message?.includes("offline") ||
               error?.code === "unavailable"
@@ -144,7 +194,6 @@ export function AuthProvider({ children }) {
       } catch (error) {
         console.error("[Auth] Firestore init error:", error);
 
-        // Only show the error if it is NOT an offline problem
         if (
           !error?.message?.includes("offline") &&
           error?.code !== "unavailable"
@@ -152,17 +201,12 @@ export function AuthProvider({ children }) {
           showAppError("Auth Firestore Init", error);
         }
 
-        // Never leave the user as null – give a basic object so the app works
-        setUser({
-          uid: firebaseUser.uid,
-          email: firebaseUser.email || "",
-          displayName: firebaseUser.displayName || "User",
-          photoURL: firebaseUser.photoURL || "",
-          plan: "free",
-          subscriptionStatus: "inactive",
-          isUnlimited: false,
-          isPremium: false,
-        });
+        setUser(
+          buildUser(firebaseUser, {
+            plan: "free",
+            subscriptionStatus: "inactive",
+          })
+        );
       }
 
       setLoading(false);
@@ -176,6 +220,25 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
+  // When APK returns from browser (after Paddle), pull latest plan from server
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    let handle;
+    CapApp.addListener("appStateChange", ({ isActive }) => {
+      if (isActive) {
+        console.log("[Auth] app resumed → refresh user");
+        refreshUser();
+      }
+    }).then((h) => {
+      handle = h;
+    });
+
+    return () => {
+      if (handle?.remove) handle.remove();
+    };
+  }, [refreshUser]);
+
   const signOutUser = async () => {
     try {
       await auth.signOut();
@@ -185,7 +248,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signOutUser }}>
+    <AuthContext.Provider value={{ user, loading, signOutUser, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

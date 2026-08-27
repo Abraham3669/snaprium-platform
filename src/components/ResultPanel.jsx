@@ -153,14 +153,15 @@ export default function ResultPanel({ result, loading, onClose }) {
     overflow: "hidden",
   }}
 >
+  {/* Title – bigger + bolder + black */}
   <div
     style={{
       padding: "16px 20px 8px",
-      fontSize: "15px",
-      fontWeight: 600,
-      color: "var(--text-secondary)",
-      letterSpacing: "0.02em",
-      textTransform: "uppercase",
+      fontSize: "20px",
+      fontWeight: 800,
+      color: "var(--text-primary)",
+      letterSpacing: "-0.01em",
+      textTransform: "none",
     }}
   >
     Final Answer
@@ -168,8 +169,8 @@ export default function ResultPanel({ result, loading, onClose }) {
 
   <div
     style={{
-      padding: "12px 20px 40px",
-      minHeight: "160px",
+      padding: "12px 20px 36px",
+      minHeight: "140px",
       display: "flex",
       justifyContent: "center",
       alignItems: "center",
@@ -179,7 +180,7 @@ export default function ResultPanel({ result, loading, onClose }) {
     {isGoodFinalAnswer(finalAnswerRaw) ? (
       <div
         style={{
-          transform: "scale(2.05)",
+          transform: "scale(1.75)",
           transformOrigin: "center center",
           color: "var(--text-primary)",
           lineHeight: 1.3,

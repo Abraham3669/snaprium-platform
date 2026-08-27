@@ -42,8 +42,12 @@ export const PaddleProvider = ({ children }) => {
       });
   }, []);
 
-  // FIXED: Accept object parameter
-  const openCheckout = async ({ priceId, userId, email }) => {
+  const openCheckout = async ({
+    priceId,
+    userId,
+    email,
+    successUrl = "https://snaprium.com/checkout-return",
+  }) => {
     if (!paddle) {
       console.error("Paddle not initialized yet");
       throw new Error("Paddle not ready");
@@ -54,48 +58,67 @@ export const PaddleProvider = ({ children }) => {
       throw new Error("User ID is required");
     }
 
+    if (!priceId) {
+      throw new Error("Price ID is required");
+    }
+
     console.log("Opening Paddle Checkout for user:", userId);
 
     return new Promise((resolve, reject) => {
-      paddle.Checkout.open({
-        items: [{ priceId, quantity: 1 }],
-        customer: {
-          email: email || undefined,
-        },
-        customData: {
-          user_id: userId,
-          source: "web_upgrade",
-        },
-        settings: {
-          theme: "light",
-          locale: "en",
-          displayMode: "overlay",
-          variant: "multi-page",
-        },
-        eventCallback: (data) => {
-          if (data.name === "checkout.completed") {
-            console.log("✅ Checkout completed successfully");
-            resolve(data);
-          }
-          if (data.name === "checkout.error") {
-            console.error("Paddle Checkout Error:", data);
-            reject(data);
-          }
-        },
-      });
+      try {
+        paddle.Checkout.open({
+          items: [{ priceId, quantity: 1 }],
+          customer: {
+            email: email || undefined,
+          },
+          customData: {
+            user_id: userId,
+            source: "app_or_web_upgrade",
+          },
+          settings: {
+            theme: "light",
+            locale: "en",
+            displayMode: "overlay",
+            variant: "multi-page",
+            successUrl,
+            // Optional: where "close" goes
+            // closeUrl: successUrl,
+          },
+          eventCallback: (data) => {
+            console.log("Paddle event:", data?.name);
+
+            if (data.name === "checkout.completed") {
+              console.log("✅ Checkout completed successfully");
+              resolve(data);
+            }
+
+            if (data.name === "checkout.closed") {
+              // User closed without finishing — not a hard error
+              console.log("Checkout closed");
+              resolve(data);
+            }
+
+            if (data.name === "checkout.error") {
+              console.error("Paddle Checkout Error:", data);
+              reject(data);
+            }
+          },
+        });
+      } catch (err) {
+        console.error("Failed to open Paddle checkout:", err);
+        reject(err);
+      }
     });
   };
 
-  const value = { 
-    openCheckout, 
-    loading, 
+  const value = {
+    openCheckout,
+    loading,
     error,
-    isReady: !!paddle 
+    isReady: !!paddle,
   };
 
   return (
-    <PaddleContext.Provider value={value}>
-      {children}
-    </PaddleContext.Provider>
+    <PaddleContext.Provider value={value}>{children}</PaddleContext.Provider>
   );
 };

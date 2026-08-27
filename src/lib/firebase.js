@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { Capacitor } from '@capacitor/core';
+import { initializeFirestore } from "firebase/firestore";
+import { Capacitor } from "@capacitor/core";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -17,22 +17,24 @@ let app;
 try {
   app = initializeApp(firebaseConfig);
 } catch (error) {
-  console.error('[Firebase Init] Failed to initialize:', error);
+  console.error("[Firebase Init] Failed to initialize:", error);
 }
 
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
 googleProvider.setCustomParameters({
-  prompt: 'select_account'
+  prompt: "select_account",
 });
 
-export const db = getFirestore(app);
+// CRITICAL for Capacitor / Android WebView:
+// normal Firestore streaming often breaks; long-polling fixes live updates
+export const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true,
+  experimentalAutoDetectLongPolling: true,
+});
 
-// Completely disable Analytics for now (to stop the crash)
 export const analytics = null;
-
-// Dummy functions so the app doesn't crash if something still calls them
 export const logEvent = () => {};
 export const setUserId = () => {};
 
