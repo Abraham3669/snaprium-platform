@@ -1,14 +1,15 @@
-import {
-  doc,
-  getDoc,
-  getDocFromServer,
-  setDoc,
-  serverTimestamp,
-} from "firebase/firestore";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "./firebase";
 
-function newUserPayload(firebaseUser) {
-  return {
+export async function ensureUserDocument(firebaseUser) {
+  if (!firebaseUser?.uid) {
+    console.error("[userProfile] no uid");
+    return null;
+  }
+
+  const userRef = doc(db, "users", firebaseUser.uid);
+
+  const payload = {
     uid: firebaseUser.uid,
     email: firebaseUser.email || "",
     displayName:
@@ -24,34 +25,9 @@ function newUserPayload(firebaseUser) {
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   };
-}
 
-export async function ensureUserDocument(firebaseUser) {
-  if (!firebaseUser?.uid) {
-    console.error("[userProfile] no uid");
-    return null;
-  }
-
-  const userRef = doc(db, "users", firebaseUser.uid);
-
-  try {
-    const existing = await getDoc(userRef);
-    if (existing.exists()) {
-      console.log("[userProfile] exists", firebaseUser.uid);
-      return existing;
-    }
-  } catch (e) {
-    console.warn("[userProfile] getDoc failed", e.code, e.message);
-  }
-
-  try {
-    console.log("[userProfile] creating", firebaseUser.uid);
-    await setDoc(userRef, newUserPayload(firebaseUser), { merge: true });
-    const snap = await getDocFromServer(userRef).catch(() => getDoc(userRef));
-    console.log("[userProfile] created", firebaseUser.uid, snap?.exists());
-    return snap;
-  } catch (e) {
-    console.error("[userProfile] setDoc FAILED", e.code, e.message, e);
-    throw e;
-  }
+  console.log("[userProfile] writing", firebaseUser.uid, payload.email);
+  await setDoc(userRef, payload, { merge: true });
+  console.log("[userProfile] write ok", firebaseUser.uid);
+  return true;
 }

@@ -18,12 +18,10 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (user && !authLoading) navigate("/", { replace: true });
-  }, [user, authLoading, navigate]);
-
-  const finishLogin = async (firebaseUser) => {
-    await ensureUserDocument(firebaseUser);
-  };
+    if (user && !authLoading && !loading) {
+      navigate("/", { replace: true });
+    }
+  }, [user, authLoading, loading, navigate]);
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
@@ -46,7 +44,7 @@ export default function Login() {
         firebaseUser = result.user;
       }
 
-      await finishLogin(firebaseUser);
+      await ensureUserDocument(firebaseUser);
     } catch (err) {
       console.error("Google sign-in", err.code, err.message, err);
       showAppError("Google Sign-In", err);
