@@ -31,7 +31,6 @@ googleProvider.setCustomParameters({
 // normal Firestore streaming often breaks; long-polling fixes live updates
 export const db = initializeFirestore(app, {
   experimentalForceLongPolling: true,
-  experimentalAutoDetectLongPolling: true,
 });
 
 export const analytics = null;
