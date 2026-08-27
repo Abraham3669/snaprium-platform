@@ -29,6 +29,7 @@ import { showAppError } from './utils/errorReporter';
 import BottomNav from "./components/BottomNav";
 import Checkout from "./pages/Checkout";
 import CheckoutReturn from "./pages/CheckoutReturn";
+import { Capacitor } from "@capacitor/core";
 
 function App() {
   const { user } = useAuth();
@@ -93,6 +94,15 @@ function App() {
       page_location: window.location.href,
     });
   }, [location]);
+
+  
+
+
+
+
+
+
+  
 
   const toggleTheme = () => {
     const nextTheme = theme === "dark" ? "light" : "dark";

@@ -41,60 +41,67 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const unsubscribeSnapshotRef = useRef(null);
   const firebaseUserRef = useRef(null);
+  const pollTimerRef = useRef(null);
 
-  const getDocWithRetry = async (ref, maxRetries = 4) => {
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        // Prefer server so APK doesn't stick to old cache
-        return await getDocFromServer(ref);
-      } catch (err) {
-        try {
-          return await getDoc(ref);
-        } catch (err2) {
-          const isOffline =
-            err2?.message?.includes("offline") ||
-            err2?.code === "unavailable" ||
-            err?.message?.includes("offline") ||
-            err?.code === "unavailable";
+  const fetchUserFromServer = useCallback(async (firebaseUser) => {
+    if (!firebaseUser) return null;
 
-          if (isOffline && attempt < maxRetries) {
-            console.log(`[Auth] offline retry ${attempt}/${maxRetries}`);
-            try {
-              await enableNetwork(db);
-            } catch (_) {}
-            await new Promise((r) => setTimeout(r, 600 * attempt));
-            continue;
-          }
-          throw err2;
-        }
-      }
+    try {
+      await enableNetwork(db);
+    } catch (_) {}
+
+    const userRef = doc(db, "users", firebaseUser.uid);
+
+    // Try server first, then any source
+    try {
+      const snap = await getDocFromServer(userRef);
+      if (snap.exists()) return buildUser(firebaseUser, snap.data());
+    } catch (_) {
+      const snap = await getDoc(userRef);
+      if (snap.exists()) return buildUser(firebaseUser, snap.data());
     }
-  };
+    return null;
+  }, []);
 
-  // Force refresh from server (call after payment / app resume)
   const refreshUser = useCallback(async () => {
     const firebaseUser = firebaseUserRef.current || auth.currentUser;
     if (!firebaseUser) return null;
 
     try {
-      try {
-        await enableNetwork(db);
-      } catch (_) {}
-
-      const userRef = doc(db, "users", firebaseUser.uid);
-      const snap = await getDocWithRetry(userRef);
-
-      if (snap?.exists()) {
-        const next = buildUser(firebaseUser, snap.data());
+      const next = await fetchUserFromServer(firebaseUser);
+      if (next) {
         setUser(next);
-        console.log("[Auth] refreshed plan:", next.plan);
+        console.log("[Auth] refreshUser plan:", next.plan, "uid:", next.uid);
         return next;
       }
     } catch (e) {
       console.warn("[Auth] refreshUser failed:", e);
     }
     return null;
-  }, []);
+  }, [fetchUserFromServer]);
+
+  // After returning from browser, poll server for ~90s
+  const startPlanPoll = useCallback(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    if (pollTimerRef.current) {
+      clearInterval(pollTimerRef.current);
+      pollTimerRef.current = null;
+    }
+
+    let ticks = 0;
+    refreshUser();
+
+    pollTimerRef.current = setInterval(async () => {
+      ticks += 1;
+      const next = await refreshUser();
+      if (next?.plan === "unlimited" || ticks >= 18) {
+        // stop after unlimited found or ~90s (18 * 5s)
+        clearInterval(pollTimerRef.current);
+        pollTimerRef.current = null;
+      }
+    }, 5000);
+  }, [refreshUser]);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -122,7 +129,12 @@ export function AuthProvider({ children }) {
           }
         }
 
-        const userSnap = await getDocWithRetry(userRef);
+        let userSnap;
+        try {
+          userSnap = await getDocFromServer(userRef);
+        } catch {
+          userSnap = await getDoc(userRef);
+        }
 
         const baseData = {
           uid: firebaseUser.uid,
@@ -135,7 +147,6 @@ export function AuthProvider({ children }) {
         };
 
         if (!userSnap.exists()) {
-          console.log(`[Auth] Creating user document ${firebaseUser.uid}`);
           await setDoc(userRef, {
             ...baseData,
             plan: "free",
@@ -164,20 +175,15 @@ export function AuthProvider({ children }) {
           }
         }
 
-        // Live updates
         unsubscribeSnapshotRef.current = onSnapshot(
           userRef,
           { includeMetadataChanges: true },
           (snapshot) => {
             if (!snapshot.exists()) return;
-
-            // Skip pure cache echoes if you want only server — but still apply data
-            const data = snapshot.data();
-            const next = buildUser(firebaseUser, data);
+            const next = buildUser(firebaseUser, snapshot.data());
             setUser(next);
-
             if (!snapshot.metadata.fromCache) {
-              console.log("[Auth] server update plan:", next.plan);
+              console.log("[Auth] server snapshot plan:", next.plan);
             }
           },
           (error) => {
@@ -185,7 +191,6 @@ export function AuthProvider({ children }) {
               error?.message?.includes("offline") ||
               error?.code === "unavailable"
             ) {
-              console.warn("[Auth] Snapshot temporary offline – ignored");
               return;
             }
             showAppError("Auth Snapshot Listener", error);
@@ -193,14 +198,12 @@ export function AuthProvider({ children }) {
         );
       } catch (error) {
         console.error("[Auth] Firestore init error:", error);
-
         if (
           !error?.message?.includes("offline") &&
           error?.code !== "unavailable"
         ) {
           showAppError("Auth Firestore Init", error);
         }
-
         setUser(
           buildUser(firebaseUser, {
             plan: "free",
@@ -214,21 +217,19 @@ export function AuthProvider({ children }) {
 
     return () => {
       unsubscribeAuth();
-      if (unsubscribeSnapshotRef.current) {
-        unsubscribeSnapshotRef.current();
-      }
+      if (unsubscribeSnapshotRef.current) unsubscribeSnapshotRef.current();
+      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
     };
   }, []);
 
-  // When APK returns from browser (after Paddle), pull latest plan from server
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
     let handle;
     CapApp.addListener("appStateChange", ({ isActive }) => {
       if (isActive) {
-        console.log("[Auth] app resumed → refresh user");
-        refreshUser();
+        console.log("[Auth] app resumed → poll plan");
+        startPlanPoll();
       }
     }).then((h) => {
       handle = h;
@@ -237,7 +238,7 @@ export function AuthProvider({ children }) {
     return () => {
       if (handle?.remove) handle.remove();
     };
-  }, [refreshUser]);
+  }, [startPlanPoll]);
 
   const signOutUser = async () => {
     try {
@@ -248,7 +249,9 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signOutUser, refreshUser }}>
+    <AuthContext.Provider
+      value={{ user, loading, signOutUser, refreshUser, startPlanPoll }}
+    >
       {children}
     </AuthContext.Provider>
   );
