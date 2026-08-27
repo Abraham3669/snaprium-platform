@@ -1,6 +1,12 @@
-import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { initializeFirestore } from "firebase/firestore";
+import { initializeApp, getApps, getApp } from "firebase/app";
+import {
+  getAuth,
+  initializeAuth,
+  indexedDBLocalPersistence,
+  browserLocalPersistence,
+  GoogleAuthProvider,
+} from "firebase/auth";
+import { initializeFirestore, getFirestore } from "firebase/firestore";
 import { Capacitor } from "@capacitor/core";
 
 const firebaseConfig = {
@@ -13,28 +19,42 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-let app;
-try {
-  app = initializeApp(firebaseConfig);
-} catch (error) {
-  console.error("[Firebase Init] Failed to initialize:", error);
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+  console.error("[Firebase] Missing VITE_FIREBASE_* env. Rebuild web bundle before cap sync.");
 }
 
-export const auth = getAuth(app);
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+
+let auth;
+try {
+  auth = initializeAuth(app, {
+    persistence: Capacitor.isNativePlatform()
+      ? indexedDBLocalPersistence
+      : browserLocalPersistence,
+  });
+} catch {
+  auth = getAuth(app);
+}
+
+export { auth };
+
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: "select_account" });
+googleProvider.addScope("email");
+googleProvider.addScope("profile");
 
-googleProvider.setCustomParameters({
-  prompt: "select_account",
-});
+let db;
+try {
+  db = initializeFirestore(app, {
+    experimentalForceLongPolling: true,
+  });
+} catch {
+  db = getFirestore(app);
+}
 
-// CRITICAL for Capacitor / Android WebView:
-// normal Firestore streaming often breaks; long-polling fixes live updates
-export const db = initializeFirestore(app, {
-  experimentalForceLongPolling: true,
-});
+export { db };
 
 export const analytics = null;
 export const logEvent = () => {};
 export const setUserId = () => {};
-
 export default app;

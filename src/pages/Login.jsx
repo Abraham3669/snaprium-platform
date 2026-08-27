@@ -1,176 +1,76 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { 
-  signInWithRedirect, 
-  getRedirectResult,
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import {
   signInWithPopup,
-  signInWithEmailAndPassword, 
-  signOut, 
-  sendEmailVerification,
-  GoogleAuthProvider
-} from 'firebase/auth';
-import { auth, googleProvider } from '../lib/firebase';
-import { useAuth } from '../context/AuthContext';
-import { Capacitor } from '@capacitor/core';
-import { showAppError } from '../utils/errorReporter';
+  signInWithCredential,
+  GoogleAuthProvider,
+} from "firebase/auth";
+import { auth, googleProvider } from "../lib/firebase";
+import { Capacitor } from "@capacitor/core";
+import { showAppError } from "../utils/errorReporter";
+import { useAuth } from "../context/AuthContext";
+import { ensureUserDocument } from "../lib/userProfile";
 
 export default function Login() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [verificationRequired, setVerificationRequired] = useState(false);
-  const [resendLoading, setResendLoading] = useState(false);
-
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Handle redirect result (important for Capacitor + mobile)
   useEffect(() => {
-    const checkRedirect = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        if (result?.user) {
-          console.log("Google redirect login success", result.user.email);
-          // AuthContext will pick it up via onAuthStateChanged
-        }
-      } catch (err) {
-        console.error("Redirect result error:", err);
-        showAppError('Google Redirect', err);
-        setError(getFriendlyErrorMessage(err.code || err.message));
-      }
-    };
-    checkRedirect();
-  }, []);
-
-  // Redirect if already logged in
-  useEffect(() => {
-    if (user && !authLoading) {
-      navigate('/', { replace: true });
-    }
+    if (user && !authLoading) navigate("/", { replace: true });
   }, [user, authLoading, navigate]);
 
-  if (authLoading) {
-    return <div className="auth-container"><p>Loading...</p></div>;
-  }
+  const finishLogin = async (firebaseUser) => {
+    await ensureUserDocument(firebaseUser);
+  };
 
   const handleGoogleSignIn = async () => {
-  setLoading(true);
-  setError('');
-  try {
-    if (Capacitor.isNativePlatform()) {
-      // Keep redirect for native for now
-      await signInWithRedirect(auth, googleProvider);
-    } else {
-      // Use popup on web – much more reliable
-      const result = await signInWithPopup(auth, googleProvider);
-      console.log("Popup login success", result.user.email);
-    }
-  } catch (err) {
-    console.error("Full Google error:", err);
-    showAppError('Google Sign-In', err);
-    setError(getFriendlyErrorMessage(err.code || err.message));
-    setLoading(false);
-  }
-};
-  // Email login
-  const handleEmailSignIn = async (e) => {
-    e.preventDefault();
-    if (!email || !password) {
-      setError('Please enter email and password');
-      return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) {
-      setError('Please enter a valid email address');
-      return;
-    }
-
     setLoading(true);
-    setError('');
-    setVerificationRequired(false);
-
+    setError("");
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
+      let firebaseUser;
 
-      if (!userCredential.user.emailVerified) {
-        await signOut(auth);
-        setVerificationRequired(true);
-        return;
+      if (Capacitor.isNativePlatform()) {
+        const { FirebaseAuthentication } = await import(
+          "@capacitor-firebase/authentication"
+        );
+        const nativeResult = await FirebaseAuthentication.signInWithGoogle();
+        const idToken = nativeResult?.credential?.idToken;
+        if (!idToken) throw new Error("No Google idToken from native sign-in");
+        const credential = GoogleAuthProvider.credential(idToken);
+        const result = await signInWithCredential(auth, credential);
+        firebaseUser = result.user;
+      } else {
+        const result = await signInWithPopup(auth, googleProvider);
+        firebaseUser = result.user;
       }
+
+      await finishLogin(firebaseUser);
     } catch (err) {
-      showAppError('Email Sign-In', err);
-      setError(getFriendlyErrorMessage(err.code));
+      console.error("Google sign-in", err.code, err.message, err);
+      showAppError("Google Sign-In", err);
+      setError(err.message || "Google sign-in failed");
     } finally {
       setLoading(false);
     }
   };
 
-  const resendVerification = async () => {
-    if (!email || !password) return;
-
-    setResendLoading(true);
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
-      
-      const actionCodeSettings = {
-        url: window.location.origin + '/login',
-        handleCodeInApp: true,
-      };
-
-      await sendEmailVerification(userCredential.user, actionCodeSettings);
-      await signOut(auth);
-
-      alert('Verification email resent! Check inbox and spam.');
-    } catch (err) {
-      showAppError('Resend Verification', err);
-      alert('Failed to resend verification email.');
-    } finally {
-      setResendLoading(false);
-    }
-  };
-
-  const getFriendlyErrorMessage = (code) => {
-    const messages = {
-      'auth/invalid-email': 'Invalid email format',
-      'auth/user-not-found': 'No account found with this email',
-      'auth/wrong-password': 'Incorrect password',
-      'auth/invalid-credential': 'Incorrect email or password',
-      'auth/too-many-requests': 'Too many attempts. Try again later.',
-      'auth/user-disabled': 'Account has been disabled',
-      'auth/popup-closed-by-user': 'Google sign-in was cancelled',
-      'auth/cancelled-popup-request': 'Google sign-in was cancelled',
-      'auth/unauthorized-domain': 'This domain is not authorized for Google login. Add it in Firebase Console.',
-      'auth/operation-not-allowed': 'Google sign-in is not enabled in Firebase Console',
-      'auth/network-request-failed': 'Network error. Check your internet connection.',
-    };
-    return messages[code] || `Sign in failed: ${code || 'Unknown error'}`;
-  };
+  if (authLoading) {
+    return (
+      <div className="auth-container">
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-container">
       <h1>Welcome Back</h1>
       <p>Sign in to continue to Snaprium</p>
 
-      <button
-        onClick={handleGoogleSignIn}
-        disabled={loading}
-        className="btn-google"
-      >
-        {loading ? 'Connecting...' : (
-          <>
-            <svg width="20" height="20" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-              <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303C33.654 32.657 29.239 36 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.277 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" />
-              <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 16.108 18.961 13 24 13c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.277 4 24 4c-7.682 0-14.318 4.337-17.694 10.691z" />
-              <path fill="#4CAF50" d="M24 44c5.177 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.143 35.091 26.715 36 24 36c-5.218 0-9.621-3.317-11.283-7.946l-6.522 5.025C9.532 39.556 16.227 44 24 44z" />
-              <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.793 2.239-2.231 4.166-4.084 5.57l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z" />
-            </svg>
-            <span>Continue with Google</span>
-          </>
-        )}
+      <button onClick={handleGoogleSignIn} disabled={loading} className="btn-google">
+        {loading ? "Connecting..." : "Continue with Google"}
       </button>
 
       {error && <p className="error-message">{error}</p>}
