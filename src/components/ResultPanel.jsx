@@ -351,39 +351,129 @@ const [practiceLoading, setPracticeLoading] = useState(false);
                     Not Helpful
                   </button>
                                                </div>
+<button
+  type="button"
+  onClick={handlePractice}
+  disabled={practiceLoading}
+  className="practice-btn"
+  style={{
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    width: "100%",
+    marginTop: 16,
+    padding: "13px 18px",
+    borderRadius: "var(--radius)",
+    border: "1px solid var(--border)",
+    background: "var(--surface)",
+    color: "var(--text-primary)",
+    fontSize: "0.98rem",
+    fontWeight: 700,
+    letterSpacing: "0.01em",
+    cursor: practiceLoading ? "wait" : "pointer",
+    opacity: practiceLoading ? 0.7 : 1,
+    boxShadow: "var(--shadow-sm)",
+    transition: "var(--transition)",
+  }}
+>
+  {practiceLoading ? (
+    "Preparing your practice question…"
+  ) : (
+    <>
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="var(--accent)"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M12 20h9" />
+        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+      </svg>
+      <span>Practice a similar question</span>
+    </>
+  )}
+</button>
+{practice && (
+  <div
+    className="practice-card"
+    style={{
+      marginTop: 14,
+      padding: "16px 16px 14px",
+      borderRadius: 14,
+      border: "1px solid var(--border, rgba(15, 23, 42, 0.10))",
+      background: "var(--muted-bg, #f8fafc)",
+    }}
+  >
+    <style>{`
+      .practice-card-body .katex {
+        font-size: 1.22em !important;
+        font-weight: 700 !important;
+      }
+      .practice-card-body .katex-display {
+        margin: 0.7em 0;
+        font-size: 1.32em !important;
+        font-weight: 700 !important;
+        overflow-x: auto;
+      }
+      [data-theme="dark"] .practice-btn {
+        background: rgba(255,255,255,0.04);
+        border-color: rgba(255,255,255,0.18);
+        color: #f8fafc;
+      }
+      [data-theme="dark"] .practice-card {
+        background: rgba(255,255,255,0.04);
+        border-color: rgba(255,255,255,0.12);
+      }
+    `}</style>
 
-                <button
-                  type="button"
-                  onClick={handlePractice}
-                  disabled={practiceLoading}
-                  className="practice-btn"
-                >
-                  {practiceLoading ? "Making a similar question…" : "Practice this"}
-                </button>
+    <div
+      className="practice-card-label"
+      style={{
+        marginBottom: 10,
+        fontSize: "1.2rem",
+        fontWeight: 800,
+        letterSpacing: "-0.02em",
+        lineHeight: 1.2,
+        color: "var(--text, #0f172a)",
+      }}
+    >
+      Try this one
+    </div>
 
-                {practice && (
-                  <div className="practice-card">
-                    <div className="practice-card-label">Try this one</div>
-                    <div className="practice-card-body">
-                      <ReactMarkdown
-                        remarkPlugins={[remarkMath]}
-                        rehypePlugins={[
-                          [
-                            rehypeKatex,
-                            {
-                              output: "html",
-                              throwOnError: false,
-                              strict: "ignore",
-                              trust: true,
-                            },
-                          ],
-                        ]}
-                      >
-                        {fixCommonMathGlue(prepareMathForKaTeX(practice))}
-                      </ReactMarkdown>
-                    </div>
-                  </div>
-                )}
+    <div
+      className="practice-card-body"
+      style={{
+        fontSize: "1rem",
+        fontWeight: 450,
+        lineHeight: 1.65,
+        color: "var(--text-muted, #334155)",
+      }}
+    >
+      <ReactMarkdown
+        remarkPlugins={[remarkMath]}
+        rehypePlugins={[
+          [
+            rehypeKatex,
+            {
+              output: "html",
+              throwOnError: false,
+              strict: "ignore",
+              trust: true,
+            },
+          ],
+        ]}
+      >
+        {fixCommonMathGlue(prepareMathForKaTeX(practice))}
+      </ReactMarkdown>
+    </div>
+  </div>
+)}
               </>
 
 

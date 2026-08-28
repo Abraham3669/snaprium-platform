@@ -4838,66 +4838,107 @@ h2 {
 
 
 
+/* ===== Practice button ===== */
 .practice-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
-  margin: 28px 0 14px;
-  padding: 15px 20px;
-  border: none;
+  margin-top: 16px;
+  padding: 12px 18px;
   border-radius: 12px;
-  background: #8b1e1e;
-  color: #fff;
-  font-size: 15px;
-  font-weight: 700;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 0.95rem;
+  font-weight: 600;
   letter-spacing: 0.01em;
-  box-shadow: 0 8px 20px rgba(139, 30, 30, 0.22);
-  position: relative;
-  z-index: 6;
   cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+}
+
+.practice-btn:hover:not(:disabled) {
+  border-color: rgba(15, 23, 42, 0.28);
+  background: #f8fafc;
+}
+
+.practice-btn:active:not(:disabled) {
+  transform: scale(0.99);
 }
 
 .practice-btn:disabled {
-  opacity: 0.7;
+  opacity: 0.65;
   cursor: wait;
 }
 
+[data-theme="dark"] .practice-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .practice-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.32);
+}
+
+/* ===== Practice card ===== */
 .practice-card {
-  margin: 0 0 24px;
-  padding: 20px 18px 14px;
-  border-radius: 16px;
-  border: 1px solid var(--border);
-  background: var(--surface);
+  margin-top: 14px;
+  padding: 16px 16px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  background: #f8fafc;
 }
 
+[data-theme="dark"] .practice-card {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* "Try this one" — bigger + bolder than the question */
 .practice-card-label {
-  font-size: 18px;
+  margin-bottom: 10px;
+  font-size: 1.2rem;
   font-weight: 800;
-  color: var(--text-primary);
-  margin-bottom: 14px;
   letter-spacing: -0.02em;
-  text-transform: none;
+  line-height: 1.2;
+  color: #0f172a;
 }
 
+[data-theme="dark"] .practice-card-label {
+  color: #f8fafc;
+}
+
+/* English body */
 .practice-card-body {
-  font-size: 16px;
-  line-height: 1.75;
-  color: var(--text-secondary);
-  font-weight: 400;
+  font-size: 1rem;
+  font-weight: 450;
+  line-height: 1.65;
+  color: #334155;
+}
+
+[data-theme="dark"] .practice-card-body {
+  color: #cbd5e1;
 }
 
 .practice-card-body p {
-  margin: 0 0 14px;
+  margin: 0 0 0.7em;
 }
 
+.practice-card-body p:last-child {
+  margin-bottom: 0;
+}
+
+/* Math bigger + a little bolder than English */
 .practice-card-body .katex {
-  color: var(--text-primary);
-  font-size: 1.28em;
-  font-weight: 700;
+  font-size: 1.22em !important;
+  font-weight: 700 !important;
 }
 
 .practice-card-body .katex-display {
-  margin: 16px 0;
-  padding: 14px 10px;
+  margin: 0.7em 0;
+  font-size: 1.32em !important;
+  font-weight: 700 !important;
   overflow-x: auto;
-  background: rgba(139, 30, 30, 0.06);
-  border-radius: 12px;
 }
