@@ -271,7 +271,24 @@ const [practiceLoading, setPracticeLoading] = useState(false);
     }}
   >
     <div style={{ fontWeight: 800, marginBottom: "8px" }}>Try this one</div>
-    <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{practice}</p>
+    <div className="step-by-step-content prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] leading-relaxed">
+      <ReactMarkdown
+        remarkPlugins={[remarkMath]}
+        rehypePlugins={[
+          [
+            rehypeKatex,
+            {
+              output: "html",
+              throwOnError: false,
+              strict: "ignore",
+              trust: true,
+            },
+          ],
+        ]}
+      >
+        {fixCommonMathGlue(prepareMathForKaTeX(practice))}
+      </ReactMarkdown>
+    </div>
   </div>
 )}
                 <div

@@ -34,6 +34,11 @@ export default async function handler(req, res) {
         temperature: 0.7,
         messages: [
           {
+            role: "system",
+            content:
+              "You write practice questions for Snaprium. Output must render in KaTeX/markdown.",
+          },
+          {
             role: "user",
             content: `Write ONE similar practice question for a student.
 
@@ -43,17 +48,30 @@ ${originalText.slice(0, 4000)}
 """
 
 Rules:
-- Same subject and difficulty (math or physics)
+- Same subject and difficulty (math or physics only)
 - New numbers and wording
-- Return ONLY the question
-- No answer, no steps, no title`,
+- Return ONLY the question text
+- No answer, no steps, no title, no "Question:" label
+- Write every formula in LaTeX
+- Inline math: $v = u + at$
+- Display math: $$\\frac{1}{2}mv^2$$
+- Do not use \\boxed
+- Do not use \\begin{align} unless needed
+- Use plain sentences around the math
+- Do not escape dollars as \\$`,
           },
         ],
       }),
     });
 
     const data = await r.json();
-    const question = data?.choices?.[0]?.message?.content?.trim();
+    let question = data?.choices?.[0]?.message?.content?.trim() || "";
+
+    question = question
+      .replace(/^#+\s*/gm, "")
+      .replace(/^\**Question:\**\s*/i, "")
+      .replace(/\\boxed\{([\s\S]*?)\}/g, "$1")
+      .trim();
 
     if (!question) {
       console.error("[practice.js] empty model response", data);
