@@ -236,7 +236,7 @@ const [practiceLoading, setPracticeLoading] = useState(false);
   </div>
 </div>
 
-                <button
+              <button
   onClick={() => setShowSteps(!showSteps)}
   className="w-full py-3.5 px-5 mb-3 bg-[var(--accent)] hover:bg-[var(--accent-dark)] text-white font-medium rounded-lg shadow-md transition-all flex items-center justify-center gap-2"
 >
@@ -246,29 +246,40 @@ const [practiceLoading, setPracticeLoading] = useState(false);
   </span>
 </button>
 
+<button
+  type="button"
+  onClick={handlePractice}
+  disabled={practiceLoading}
+  className="practice-btn"
+>
+  {practiceLoading ? "Making a similar question…" : "Practice this"}
+</button>
 
-                <div
-                  ref={stepsRef}
-                  className="overflow-hidden transition-all duration-500 ease-in-out"
-                  style={{
-                    maxHeight: showSteps ? `${stepsRef.current?.scrollHeight || 2000}px` : '0px',
-                    opacity: showSteps ? 1 : 0,
-                  }}
-                >
-                  <div
-  className="mb-6"
+<div
+  ref={stepsRef}
+  className="overflow-hidden transition-all duration-500 ease-in-out"
   style={{
-    fontSize: "clamp(22px, 4vw, 34px)",
-    fontWeight: 900,
-    color: "var(--text-primary)",
-    letterSpacing: "-0.02em",
-    whiteSpace: "nowrap"
+    maxHeight: showSteps ? `${stepsRef.current?.scrollHeight || 2000}px` : "0px",
+    opacity: showSteps ? 1 : 0,
+    pointerEvents: showSteps ? "auto" : "none",
   }}
 >
-  Step-by-Step Solution
+  <div className="mb-6">
+    <div
+      style={{
+        fontSize: "clamp(22px, 4vw, 34px)",
+        fontWeight: 900,
+        color: "var(--text-primary)",
+        letterSpacing: "-0.02em",
+        marginBottom: "12px",
+      }}
+    >
+      Step-by-Step Solution
+    </div>
+
+    <div className="step-by-step-content prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)] leading-relaxed">
 
 
-                    <div className="step-by-step-content prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] prose-li:text-[var(--text-secondary)] leading-relaxed">
                       <ReactMarkdown
                         remarkPlugins={[remarkMath]}
                         rehypePlugins={[
@@ -348,16 +359,7 @@ const [practiceLoading, setPracticeLoading] = useState(false);
                     </svg>
                     Not Helpful
                   </button>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handlePractice}
-                  disabled={practiceLoading}
-                  className="practice-btn"
-                >
-                  {practiceLoading ? "Making a similar question…" : "Practice this"}
-                </button>
+                                </div>
 
                 {practice && (
                   <div className="practice-card">

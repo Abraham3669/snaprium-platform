@@ -4840,39 +4840,74 @@ h2 {
 
 .practice-btn {
   width: 100%;
-  margin-top: 24px;
-  margin-bottom: 12px;
+  margin: 0 0 20px;
   padding: 14px 20px;
   border-radius: 12px;
-  border: 1px solid var(--border);
-  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
   color: var(--text-primary);
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 15px;
+  position: relative;
+  z-index: 5;
+  cursor: pointer;
+}
+
+.practice-btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
 }
 
 .practice-card {
-  margin-bottom: 20px;
-  padding: 18px 18px 8px;
+  margin: 20px 0;
+  padding: 20px 18px 12px;
   border-radius: 16px;
   border: 1px solid var(--border);
   background: var(--surface);
 }
 
 .practice-card-label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--text-secondary);
-  margin-bottom: 10px;
+  color: var(--accent);
+  margin-bottom: 14px;
 }
 
 .practice-card-body {
-  font-size: 17px;
-  line-height: 1.7;
-  color: var(--text-primary);
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--text-secondary);
+  font-weight: 400;
 }
 
 .practice-card-body p {
-  margin: 0 0 12px;
+  margin: 0 0 14px;
+}
+
+.practice-card-body .katex {
+  color: var(--text-primary);
+  font-size: 1.2em;
+  font-weight: 600;
+}
+
+.practice-card-body .katex-display {
+  margin: 16px 0;
+  padding: 12px 8px;
+  overflow-x: auto;
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+  border-radius: 12px;
+}
+
+.step-by-step-content .katex {
+  color: var(--text-primary);
+  font-size: 1.15em;
+  font-weight: 600;
+}
+
+.step-by-step-content .katex-display {
+  margin: 18px 0;
+  padding: 12px 8px;
+  overflow-x: auto;
 }
