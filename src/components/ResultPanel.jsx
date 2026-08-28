@@ -246,51 +246,7 @@ const [practiceLoading, setPracticeLoading] = useState(false);
   </span>
 </button>
 
-<button
-  type="button"
-  onClick={handlePractice}
-  disabled={practiceLoading}
-  className="w-full py-3.5 px-5 mb-5 font-medium rounded-lg shadow-md transition-all flex items-center justify-center gap-2"
-  style={{
-    background: "transparent",
-    border: "1px solid var(--border)",
-    color: "var(--text-primary)",
-  }}
->
-  {practiceLoading ? "Making a similar question…" : "Practice this"}
-</button>
 
-{practice && (
-  <div
-    className="mb-5"
-    style={{
-      border: "1px solid var(--border)",
-      borderRadius: "12px",
-      padding: "16px",
-      background: "var(--surface)",
-    }}
-  >
-    <div style={{ fontWeight: 800, marginBottom: "8px" }}>Try this one</div>
-    <div className="step-by-step-content prose-headings:text-[var(--text-primary)] prose-p:text-[var(--text-secondary)] leading-relaxed">
-      <ReactMarkdown
-        remarkPlugins={[remarkMath]}
-        rehypePlugins={[
-          [
-            rehypeKatex,
-            {
-              output: "html",
-              throwOnError: false,
-              strict: "ignore",
-              trust: true,
-            },
-          ],
-        ]}
-      >
-        {fixCommonMathGlue(prepareMathForKaTeX(practice))}
-      </ReactMarkdown>
-    </div>
-  </div>
-)}
                 <div
                   ref={stepsRef}
                   className="overflow-hidden transition-all duration-500 ease-in-out"
@@ -372,7 +328,7 @@ const [practiceLoading, setPracticeLoading] = useState(false);
                   </div>
                 </div>
 
-                <div className="feedback-bar mt-6 flex justify-center gap-4">
+                                <div className="feedback-bar mt-6 flex justify-center gap-4">
                   <button
                     className={`feedback-btn flex items-center gap-2 px-5 py-2.5 ${feedback === 'up' ? 'active' : ''}`}
                     onClick={() => handleFeedback('up')}
@@ -393,7 +349,44 @@ const [practiceLoading, setPracticeLoading] = useState(false);
                     Not Helpful
                   </button>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={handlePractice}
+                  disabled={practiceLoading}
+                  className="practice-btn"
+                >
+                  {practiceLoading ? "Making a similar question…" : "Practice this"}
+                </button>
+
+                {practice && (
+                  <div className="practice-card">
+                    <div className="practice-card-label">Try this one</div>
+                    <div className="practice-card-body">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkMath]}
+                        rehypePlugins={[
+                          [
+                            rehypeKatex,
+                            {
+                              output: "html",
+                              throwOnError: false,
+                              strict: "ignore",
+                              trust: true,
+                            },
+                          ],
+                        ]}
+                      >
+                        {fixCommonMathGlue(prepareMathForKaTeX(practice))}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                )}
               </>
+
+
+
+
             )
           )}
         </div>

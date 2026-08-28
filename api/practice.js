@@ -1,5 +1,27 @@
 import { applyCors } from "../lib/cors.js";
 
+function stripSolution(text) {
+  if (!text) return "";
+
+  let out = text.trim();
+
+  out = out.replace(/```[\s\S]*?```/g, "");
+  out = out.replace(/\\boxed\{[\s\S]*?\}/g, "");
+
+  const cut = out.search(
+    /(\n\s*)?(step\s*\d+|solution|final answer|therefore|hence|thus|answer\s*:|worked solution)/i
+  );
+  if (cut > 40) out = out.slice(0, cut);
+
+  out = out
+    .replace(/^#+\s*/gm, "")
+    .replace(/^\**question:\**\s*/i, "")
+    .replace(/\*\*/g, "")
+    .trim();
+
+  return out;
+}
+
 export default async function handler(req, res) {
   if (applyCors(req, res)) return;
 
@@ -23,6 +45,8 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "Server configuration error" });
     }
 
+    const source = originalText.slice(0, 2500);
+
     const r = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -31,47 +55,43 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
-        temperature: 0.7,
+        temperature: 0.9,
+        max_tokens: 250,
         messages: [
           {
             role: "system",
-            content:
-              "You write practice questions for Snaprium. Output must render in KaTeX/markdown.",
+            content: `You create a short practice question only.
+
+Never solve.
+Never give an answer.
+Never write steps.
+Never repeat the original problem.
+If you include an equals result or "therefore", you failed.`,
           },
           {
             role: "user",
-            content: `Write ONE similar practice question for a student.
+            content: `This is a solved problem. Ignore every answer and every step. Use only the topic.
 
-From this solved problem:
 """
-${originalText.slice(0, 4000)}
+${source}
 """
 
-Rules:
-- Same subject and difficulty (math or physics only)
-- New numbers and wording
-- Return ONLY the question text
-- No answer, no steps, no title, no "Question:" label
-- Write every formula in LaTeX
-- Inline math: $v = u + at$
-- Display math: $$\\frac{1}{2}mv^2$$
-- Do not use \\boxed
-- Do not use \\begin{align} unless needed
-- Use plain sentences around the math
-- Do not escape dollars as \\$`,
+Write one NEW question on the same topic.
+Change every number and the story/wording.
+
+Output format:
+- 2 to 5 short sentences, or one short problem statement
+- Math in KaTeX: $inline$ and $$display$$
+- No title
+- No "Question:"
+- No solution`,
           },
         ],
       }),
     });
 
     const data = await r.json();
-    let question = data?.choices?.[0]?.message?.content?.trim() || "";
-
-    question = question
-      .replace(/^#+\s*/gm, "")
-      .replace(/^\**Question:\**\s*/i, "")
-      .replace(/\\boxed\{([\s\S]*?)\}/g, "$1")
-      .trim();
+    let question = stripSolution(data?.choices?.[0]?.message?.content || "");
 
     if (!question) {
       console.error("[practice.js] empty model response", data);
