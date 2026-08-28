@@ -205,7 +205,7 @@ const [practiceLoading, setPracticeLoading] = useState(false);
     {isGoodFinalAnswer(finalAnswerRaw) ? (
       <div
         style={{
-          transform: "scale(1.75)",
+          transform: "scale(1.45)",
           transformOrigin: "center center",
           color: "var(--text-primary)",
           lineHeight: 1.3,
