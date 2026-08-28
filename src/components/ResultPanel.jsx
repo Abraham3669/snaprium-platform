@@ -246,15 +246,6 @@ const [practiceLoading, setPracticeLoading] = useState(false);
   </span>
 </button>
 
-<button
-  type="button"
-  onClick={handlePractice}
-  disabled={practiceLoading}
-  className="practice-btn"
->
-  {practiceLoading ? "Making a similar question…" : "Practice this"}
-</button>
-
 <div
   ref={stepsRef}
   className="overflow-hidden transition-all duration-500 ease-in-out"
@@ -359,7 +350,16 @@ const [practiceLoading, setPracticeLoading] = useState(false);
                     </svg>
                     Not Helpful
                   </button>
-                                </div>
+                                               </div>
+
+                <button
+                  type="button"
+                  onClick={handlePractice}
+                  disabled={practiceLoading}
+                  className="practice-btn"
+                >
+                  {practiceLoading ? "Making a similar question…" : "Practice this"}
+                </button>
 
                 {practice && (
                   <div className="practice-card">
