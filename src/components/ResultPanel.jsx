@@ -9,25 +9,50 @@ import 'katex/dist/katex.min.css';
 
 
 import { useAuth } from '../context/AuthContext';
+import { postAPI } from '../utils/apiClient';
 
 export default function ResultPanel({ result, loading, onClose }) {
   const { user } = useAuth();                    // ← NEW
 
   
 
-  const [showSteps, setShowSteps] = useState(false);
+const [showSteps, setShowSteps] = useState(false);
+const [feedback, setFeedback] = useState(null);
+const [practice, setPractice] = useState("");
+const [practiceLoading, setPracticeLoading] = useState(false);
 
-  const [feedback, setFeedback] = useState(null);
+
+
   const [showAnalyzing, setShowAnalyzing] = useState(false);
   const [scanFinished, setScanFinished] = useState(false);
 
   const stepsRef = useRef(null);
   const timeoutRef = useRef(null);
 
-  const handleFeedback = (type) => {
+    const handleFeedback = (type) => {
     setFeedback(type);
     // Later: send to backend
   };
+
+  const handlePractice = async () => {
+    const text = result?.text;
+    if (!text || practiceLoading) return;
+    setPracticeLoading(true);
+    setPractice("");
+    try {
+      const res = await postAPI("/api/practice", { originalText: text });
+      setPractice(res.question || "Couldn’t make a practice question.");
+    } catch (e) {
+      setPractice("Couldn’t make a practice question. Try again.");
+    } finally {
+      setPracticeLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    setPractice("");
+    setPracticeLoading(false);
+  }, [result?.text]);
 
   // ─── Timing control ───────────────────────────────────────
   useEffect(() => {
@@ -212,15 +237,43 @@ export default function ResultPanel({ result, loading, onClose }) {
 </div>
 
                 <button
-                  onClick={() => setShowSteps(!showSteps)}
-                  className="w-full py-3.5 px-5 mb-5 bg-[var(--accent)] hover:bg-[var(--accent-dark)] text-white font-medium rounded-lg shadow-md transition-all flex items-center justify-center gap-2"
-                >
-                  {showSteps ? 'Hide Step-by-Step' : 'Show Step-by-Step'}
-                  <span className="text-xl transition-transform duration-300">
-                    {showSteps ? '▲' : '▼'}
-                  </span>
-                </button>
+  onClick={() => setShowSteps(!showSteps)}
+  className="w-full py-3.5 px-5 mb-3 bg-[var(--accent)] hover:bg-[var(--accent-dark)] text-white font-medium rounded-lg shadow-md transition-all flex items-center justify-center gap-2"
+>
+  {showSteps ? "Hide Step-by-Step" : "Show Step-by-Step"}
+  <span className="text-xl transition-transform duration-300">
+    {showSteps ? "▲" : "▼"}
+  </span>
+</button>
 
+<button
+  type="button"
+  onClick={handlePractice}
+  disabled={practiceLoading}
+  className="w-full py-3.5 px-5 mb-5 font-medium rounded-lg shadow-md transition-all flex items-center justify-center gap-2"
+  style={{
+    background: "transparent",
+    border: "1px solid var(--border)",
+    color: "var(--text-primary)",
+  }}
+>
+  {practiceLoading ? "Making a similar question…" : "Practice this"}
+</button>
+
+{practice && (
+  <div
+    className="mb-5"
+    style={{
+      border: "1px solid var(--border)",
+      borderRadius: "12px",
+      padding: "16px",
+      background: "var(--surface)",
+    }}
+  >
+    <div style={{ fontWeight: 800, marginBottom: "8px" }}>Try this one</div>
+    <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{practice}</p>
+  </div>
+)}
                 <div
                   ref={stepsRef}
                   className="overflow-hidden transition-all duration-500 ease-in-out"
