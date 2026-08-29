@@ -4986,9 +4986,17 @@ body {
 }
 
 @media (max-width: 768px) {
-  .hero-title .no-break {
-    white-space: normal;
+  .hero-title {
+    font-size: 1.45rem;
+    line-height: 1.25;
+    padding: 0 16px;
   }
+
+  .hero-title .no-break {
+    display: block;
+    white-space: nowrap;
+  }
+
 
   .subject-badges,
   .camera-container,
