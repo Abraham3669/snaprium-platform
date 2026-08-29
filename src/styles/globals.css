@@ -4967,3 +4967,39 @@ h2 {
     padding: 0 12px;
   }
 }
+
+
+
+
+
+
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  .hero-title .no-break {
+    white-space: normal;
+  }
+
+  .subject-badges,
+  .camera-container,
+  .hero,
+  .container {
+    max-width: 100%;
+  }
+}
+
+input,
+textarea,
+select {
+  font-size: 16px;
+}
