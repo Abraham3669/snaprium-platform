@@ -91,38 +91,68 @@ export default function CameraInput({ onFileSelect }) {
             onChange={handleFileChange}
           />
 
-          <div className="subject-badges flex justify-center flex-wrap gap-3 mt-4">
-  <span className="badge" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
+          {/* Desktop */}
+<div className="subject-badges subject-badges-desktop">
+  <span className="badge" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
     <span style={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1, color: "var(--accent)" }}>π</span>
     Math
   </span>
-
-  <span className="badge" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
+  <span className="badge" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
     <span style={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1, color: "var(--accent)" }}>Δ</span>
     Physics
   </span>
-
-  <span className="badge" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
+  <span className="badge" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
     <span style={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1, color: "var(--accent)" }}>√</span>
     Algebra
   </span>
-
-  <span className="badge" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
+  <span className="badge" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
     <span style={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1, color: "var(--accent)" }}>τ</span>
     Mechanics
   </span>
-
-  <span className="badge" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
+  <span className="badge" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
     <span style={{ fontSize: "1.85rem", fontWeight: 700, lineHeight: 1, color: "var(--accent)" }}>∫</span>
     Calculus
   </span>
-
-  <span className="badge" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
+  <span className="badge" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
     <span style={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1, color: "var(--accent)" }}>Ω</span>
     Electricity
   </span>
+  <span className="badge badge-accent" style={{ display: "inline-flex", alignItems: "center", fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
+    + More
+  </span>
+</div>
 
-  <span className="badge badge-accent" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
+{/* Phone + phone browser */}
+<div className="subject-badges subject-badges-mobile">
+  {[
+    ["π", "Math"],
+    ["Δ", "Physics"],
+    ["√", "Algebra"],
+    ["τ", "Mechanics"],
+    ["∫", "Calculus"],
+    ["Ω", "Electricity"],
+  ].map(([symbol, label]) => (
+    <span
+      key={label}
+      className="badge"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        fontSize: "0.8rem",
+        fontWeight: 600,
+        padding: "6px 10px",
+        lineHeight: 1,
+        whiteSpace: "nowrap",
+      }}
+    >
+      <span style={{ fontSize: "1.15rem", fontWeight: 700, color: "var(--accent)", lineHeight: 1 }}>
+        {symbol}
+      </span>
+      {label}
+    </span>
+  ))}
+  <span className="badge badge-accent" style={{ display: "inline-flex", alignItems: "center", fontSize: "0.8rem", fontWeight: 600, padding: "6px 10px", whiteSpace: "nowrap" }}>
     + More
   </span>
 </div>
