@@ -20,7 +20,9 @@ const [showSteps, setShowSteps] = useState(false);
 const [feedback, setFeedback] = useState(null);
 const [practice, setPractice] = useState("");
 const [practiceLoading, setPracticeLoading] = useState(false);
-
+const [followUp, setFollowUp] = useState("");
+const [followUps, setFollowUps] = useState([]);
+const [followUpLoading, setFollowUpLoading] = useState(false);
 
 
   const [showAnalyzing, setShowAnalyzing] = useState(false);
@@ -49,9 +51,50 @@ const [practiceLoading, setPracticeLoading] = useState(false);
     }
   };
 
-  useEffect(() => {
+
+
+
+
+  const handleFollowUp = async () => {
+    const question = followUp.trim();
+    const text = result?.text;
+    if (!question || !text || followUpLoading) return;
+    if (question.length > 300) return;
+
+    setFollowUpLoading(true);
+    setFollowUps((prev) => [...prev, { role: "student", text: question }]);
+    setFollowUp("");
+
+    try {
+      const res = await postAPI("/api/followup", {
+        originalText: text,
+        question,
+        history: followUps,
+      });
+      setFollowUps((prev) => [
+        ...prev,
+        { role: "tutor", text: res.answer || "I couldn’t explain that. Try again." },
+      ]);
+    } catch (e) {
+      setFollowUps((prev) => [
+        ...prev,
+        { role: "tutor", text: "Couldn’t explain that part. Try again." },
+      ]);
+    } finally {
+      setFollowUpLoading(false);
+    }
+  };
+
+
+
+
+
+    useEffect(() => {
     setPractice("");
     setPracticeLoading(false);
+    setFollowUp("");
+    setFollowUps([]);
+    setFollowUpLoading(false);
   }, [result?.text]);
 
   // ─── Timing control ───────────────────────────────────────
@@ -351,6 +394,129 @@ const [practiceLoading, setPracticeLoading] = useState(false);
                     Not Helpful
                   </button>
                                                </div>
+
+
+
+<div
+  style={{
+    marginTop: 18,
+    padding: 16,
+    borderRadius: 14,
+    border: "1px solid var(--border)",
+    background: "var(--surface)",
+    boxShadow: "var(--shadow-sm)",
+  }}
+>
+  <div
+    style={{
+      marginBottom: 10,
+      fontSize: "1.15rem",
+      fontWeight: 800,
+      color: "var(--text-primary)",
+      letterSpacing: "-0.02em",
+    }}
+  >
+    Didn’t get a part?
+  </div>
+  <p
+    style={{
+      margin: "0 0 12px",
+      fontSize: "0.92rem",
+      color: "var(--text-secondary)",
+      lineHeight: 1.5,
+    }}
+  >
+    Ask about this solution only. Example: “Explain step 3.”
+  </p>
+
+  {followUps.map((item, i) => (
+    <div
+      key={i}
+      style={{
+        marginBottom: 10,
+        padding: "10px 12px",
+        borderRadius: 12,
+        background:
+          item.role === "student" ? "var(--icon-bg)" : "var(--bg)",
+        border: "1px solid var(--border)",
+      }}
+    >
+      <div
+        style={{
+          fontSize: 12,
+          fontWeight: 700,
+          marginBottom: 6,
+          color: "var(--accent)",
+        }}
+      >
+        {item.role === "student" ? "You" : "Snaprium"}
+      </div>
+      {item.role === "tutor" ? (
+        <div className="followup-body" style={{ color: "var(--text-primary)" }}>
+          <style>{`
+            .followup-body .katex { font-size: 1.16em !important; font-weight: 700 !important; }
+          `}</style>
+          <ReactMarkdown
+            remarkPlugins={[remarkMath]}
+            rehypePlugins={[
+              [rehypeKatex, { output: "html", throwOnError: false, strict: "ignore", trust: true }],
+            ]}
+          >
+            {fixCommonMathGlue(prepareMathForKaTeX(item.text))}
+          </ReactMarkdown>
+        </div>
+      ) : (
+        <div style={{ color: "var(--text-primary)", fontSize: "0.95rem" }}>
+          {item.text}
+        </div>
+      )}
+    </div>
+  ))}
+
+  <div style={{ display: "flex", gap: 8 }}>
+    <input
+      value={followUp}
+      onChange={(e) => setFollowUp(e.target.value.slice(0, 300))}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") handleFollowUp();
+      }}
+      placeholder="Which part should I explain?"
+      disabled={followUpLoading || followUps.filter((x) => x.role === "student").length >= 2}
+      style={{
+        flex: 1,
+        padding: "12px 14px",
+        borderRadius: 12,
+        border: "1px solid var(--border)",
+        background: "var(--bg)",
+        color: "var(--text-primary)",
+        outline: "none",
+      }}
+    />
+    <button
+      type="button"
+      onClick={handleFollowUp}
+      disabled={
+        followUpLoading ||
+        !followUp.trim() ||
+        followUps.filter((x) => x.role === "student").length >= 2
+      }
+      style={{
+        padding: "12px 14px",
+        borderRadius: 12,
+        border: "1px solid var(--border)",
+        background: "var(--accent)",
+        color: "#fff",
+        fontWeight: 700,
+        cursor: "pointer",
+        opacity: followUpLoading ? 0.7 : 1,
+      }}
+    >
+      {followUpLoading ? "…" : "Ask"}
+    </button>
+  </div>
+</div>
+                                                     
+                                               
 <button
   type="button"
   onClick={handlePractice}
