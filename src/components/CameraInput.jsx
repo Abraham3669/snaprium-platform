@@ -39,7 +39,7 @@ export default function CameraInput({ onFileSelect }) {
       <section className="hero">
         <div className="container text-center">
           <h1 className="hero-title">
-            <span className="no-break">Understand Math & Physics, </span> step by step
+            <span className="no-break">Understand Math & Physics </span> step by step
           </h1>
 
           <div className="camera-container container">
@@ -92,14 +92,40 @@ export default function CameraInput({ onFileSelect }) {
           />
 
           <div className="subject-badges flex justify-center flex-wrap gap-3 mt-4">
-            <span className="badge">Math</span>
-            <span className="badge">Physics</span>
-            <span className="badge">Algebra</span>
-            <span className="badge">Mechanics</span>
-            <span className="badge">Calculus</span>
-            <span className="badge">Electricity</span>
-            <span className="badge badge-accent">+ More</span>
-          </div>
+  <span className="badge" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
+    <span style={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1, color: "var(--accent)" }}>π</span>
+    Math
+  </span>
+
+  <span className="badge" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
+    <span style={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1, color: "var(--accent)" }}>Δ</span>
+    Physics
+  </span>
+
+  <span className="badge" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
+    <span style={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1, color: "var(--accent)" }}>√</span>
+    Algebra
+  </span>
+
+  <span className="badge" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
+    <span style={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1, color: "var(--accent)" }}>τ</span>
+    Mechanics
+  </span>
+
+  <span className="badge" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
+    <span style={{ fontSize: "1.85rem", fontWeight: 700, lineHeight: 1, color: "var(--accent)" }}>∫</span>
+    Calculus
+  </span>
+
+  <span className="badge" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
+    <span style={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1, color: "var(--accent)" }}>Ω</span>
+    Electricity
+  </span>
+
+  <span className="badge badge-accent" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
+    + More
+  </span>
+</div>
         </div>
       </section>
 
