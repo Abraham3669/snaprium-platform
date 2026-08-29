@@ -39,7 +39,7 @@ export default function CameraInput({ onFileSelect }) {
       <section className="hero">
         <div className="container text-center">
           <h1 className="hero-title">
-            <span className="no-break">Solve Math & Physics</span> Instantly
+            <span className="no-break">Understand Math & Physics, </span> step by step
           </h1>
 
           <div className="camera-container container">
