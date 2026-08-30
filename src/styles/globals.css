@@ -5012,3 +5012,46 @@ textarea,
 select {
   font-size: 16px;
 }
+
+
+
+
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  margin: 0;
+}
+
+.App,
+.camera-main,
+.hero,
+.container,
+.result-panel,
+.result-panel-content {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: clamp(1.7rem, 6.2vw, 2.15rem);
+    line-height: 1.2;
+    padding: 0 16px;
+    max-width: 100%;
+  }
+
+  .hero-title .no-break {
+    display: block;
+    white-space: normal;
+    max-width: 100%;
+  }
+}
