@@ -5017,113 +5017,47 @@ select {
 
 
 
-/* =========================================================
-   MOBILE HORIZONTAL OVERFLOW FIX
-   ========================================================= */
-
 html,
 body {
-  width: 100%;
-  max-width: 100%;
   margin: 0;
-  padding: 0;
-  overflow-x: hidden !important;
+  overflow-x: hidden;
 }
 
-#root {
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden !important;
-}
-
-/* Prevent flex/grid children from forcing the page wider */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+#root,
+.App,
+.camera-main {
+  overflow-x: hidden;
   max-width: 100%;
 }
 
-div,
-section,
-main,
-header,
-footer,
-nav,
-article {
-  min-width: 0;
-}
-
-/* Images/videos/canvases must never exceed the screen */
 img,
 video,
-canvas,
-svg {
+canvas {
   max-width: 100%;
-}
-
-/* Prevent long text, URLs and equations from creating overflow */
-p,
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-span,
-a,
-pre,
-code {
-  max-width: 100%;
-  overflow-wrap: anywhere;
-}
-
-/* Tables and code blocks can scroll internally instead of
-   pushing the entire page sideways */
-pre,
-table {
-  max-width: 100%;
-}
-
-pre {
-  overflow-x: auto;
+  height: auto;
 }
 
 @media (max-width: 768px) {
-  html,
-  body,
-  #root {
-    width: 100vw;
-    max-width: 100vw;
-    overflow-x: hidden !important;
+  .hero-title {
+    font-size: clamp(1.7rem, 6.2vw, 2.15rem);
+    line-height: 1.2;
+    padding: 0 16px;
   }
 
-  main,
-  section,
-  .container {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
+  .hero-title .no-break {
+    display: block;
+    white-space: normal;
   }
 
-  /* Flex containers */
-  .flex {
-    min-width: 0;
-  }
-
-  /* Your subject badges should wrap instead of
-     making the page wider */
   .subject-badges {
-    width: 100%;
+    flex-wrap: wrap;
     max-width: 100%;
-    flex-wrap: wrap !important;
-    overflow: hidden;
+    padding: 0 12px;
   }
 
-  .badge {
+  .result-panel,
+  .practice-card,
+  .snaprium-final-answer {
     max-width: 100%;
   }
 }
