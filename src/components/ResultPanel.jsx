@@ -567,6 +567,7 @@ const followUpMaxed = followUpCount >= FOLLOWUP_LIMIT;
     </>
   )}
 </button>
+
 {practice && (
   <div
     className="practice-card"
@@ -574,8 +575,8 @@ const followUpMaxed = followUpCount >= FOLLOWUP_LIMIT;
       marginTop: 14,
       padding: "16px 16px 14px",
       borderRadius: 14,
-      border: "1px solid var(--border, rgba(15, 23, 42, 0.10))",
-      background: "var(--muted-bg, #f8fafc)",
+      border: "1px solid var(--border)",
+      background: "var(--bg)",
     }}
   >
     <style>{`
@@ -589,15 +590,6 @@ const followUpMaxed = followUpCount >= FOLLOWUP_LIMIT;
         font-weight: 700 !important;
         overflow-x: auto;
       }
-      [data-theme="dark"] .practice-btn {
-        background: rgba(255,255,255,0.04);
-        border-color: rgba(255,255,255,0.18);
-        color: #f8fafc;
-      }
-      [data-theme="dark"] .practice-card {
-        background: rgba(255,255,255,0.04);
-        border-color: rgba(255,255,255,0.12);
-      }
     `}</style>
 
     <div
@@ -608,7 +600,7 @@ const followUpMaxed = followUpCount >= FOLLOWUP_LIMIT;
         fontWeight: 800,
         letterSpacing: "-0.02em",
         lineHeight: 1.2,
-        color: "var(--text, #0f172a)",
+        color: "var(--text-primary)",
       }}
     >
       Try this one
@@ -620,7 +612,7 @@ const followUpMaxed = followUpCount >= FOLLOWUP_LIMIT;
         fontSize: "1rem",
         fontWeight: 450,
         lineHeight: 1.65,
-        color: "var(--text-muted, #334155)",
+        color: "var(--text-secondary)",
       }}
     >
       <ReactMarkdown

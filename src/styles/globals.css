@@ -4987,8 +4987,8 @@ body {
 
 @media (max-width: 768px) {
   .hero-title {
-    font-size: 1.45rem;
-    line-height: 1.25;
+    font-size: clamp(1.7rem, 6.2vw, 2.15rem);
+    line-height: 1.2;
     padding: 0 16px;
   }
 
@@ -4996,6 +4996,7 @@ body {
     display: block;
     white-space: nowrap;
   }
+
 
 
   .subject-badges,
