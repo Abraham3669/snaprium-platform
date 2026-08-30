@@ -5017,19 +5017,45 @@ select {
 
 
 
+@media (max-width: 768px) {
+  .hero {
+    padding-top: 32px !important;
+  }
+}
+
+
+
+
+
+/* =========================================================
+   SAFE MOBILE HORIZONTAL OVERFLOW FIX
+   ========================================================= */
+
 html,
 body {
   margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: 100%;
   overflow-x: hidden;
 }
 
-#root,
-.App,
-.camera-main {
+#root {
+  width: 100%;
+  max-width: 100%;
   overflow-x: hidden;
+}
+
+/* Prevent flex/grid children from creating page overflow */
+main,
+section,
+header,
+footer,
+nav {
   max-width: 100%;
 }
 
+/* Images/media should stay inside their containers */
 img,
 video,
 canvas {
@@ -5037,27 +5063,38 @@ canvas {
   height: auto;
 }
 
+/* Don't let long text push the page sideways */
+p,
+a,
+span {
+  overflow-wrap: break-word;
+}
+
+/* Math/code can scroll inside themselves rather than
+   pushing the whole page sideways */
+pre {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
 @media (max-width: 768px) {
-  .hero-title {
-    font-size: clamp(1.7rem, 6.2vw, 2.15rem);
-    line-height: 1.2;
-    padding: 0 16px;
+  body {
+    overflow-x: hidden;
   }
 
-  .hero-title .no-break {
-    display: block;
-    white-space: normal;
+  #root {
+    overflow-x: hidden;
   }
 
+  /* Keep your page content from touching the edges */
+  main {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Allow your badges to wrap naturally */
   .subject-badges {
+    max-width: 100%;
     flex-wrap: wrap;
-    max-width: 100%;
-    padding: 0 12px;
-  }
-
-  .result-panel,
-  .practice-card,
-  .snaprium-final-answer {
-    max-width: 100%;
   }
 }
