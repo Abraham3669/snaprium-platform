@@ -4974,3 +4974,77 @@ h2 {
 
 
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: clamp(1.7rem, 6.2vw, 2.15rem);
+    line-height: 1.2;
+    padding: 0 16px;
+  }
+
+  .hero-title .no-break {
+    display: block;
+    white-space: nowrap;
+  }
+
+
+
+  .subject-badges,
+  .camera-container,
+  .hero,
+  .container {
+    max-width: 100%;
+  }
+}
+
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
+
+
+
+
+/* =========================================================
+   MOBILE OVERFLOW — SAFE
+   ========================================================= */
+
+html,
+body {
+  overflow-x: hidden !important;
+}
+
+#root {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Only prevent media from overflowing */
+img,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (max-width: 768px) {
+  body {
+    overflow-x: hidden !important;
+  }
+
+  #root {
+    overflow-x: hidden !important;
+  }
+}
