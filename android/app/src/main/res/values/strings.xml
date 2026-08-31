@@ -4,4 +4,6 @@
     <string name="title_activity_main">Snaprium</string>
     <string name="package_name">com.snaprium.app</string>
     <string name="custom_url_scheme">com.snaprium.app</string>
-</resources>
+    <string name="default_web_client_id">16016330247-0pehuf4ugm4ibp229hkc94lpj0t27bf3.apps.googleusercontent.com</string>
+    <string name="server_client_id">16016330247-0pehuf4ugm4ibp229hkc94lpj0t27bf3.apps.googleusercontent.com</string>
+</resources> 
