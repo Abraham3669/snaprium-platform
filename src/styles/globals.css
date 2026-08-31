@@ -5048,3 +5048,96 @@ canvas {
     overflow-x: hidden !important;
   }
 }
+
+
+
+
+.banner-card .banner-list {
+  display: block !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding-left: 20px !important;
+  text-align: left !important;
+}
+
+.banner-card .banner-list li {
+  display: list-item !important;
+  width: 100% !important;
+  margin: 0 0 8px 0 !important;
+  padding: 0 !important;
+  text-align: left !important;
+  justify-content: flex-start !important;
+  align-items: flex-start !important;
+}
+
+.banner-card .banner-list li span {
+  display: inline !important;
+  width: auto !important;
+  margin: 0 !important;
+  text-align: left !important;
+}
+
+
+
+
+.hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-symbols {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.hero .container {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-symbols span {
+  position: absolute;
+  color: var(--accent);
+  opacity: 0.14;
+  font-weight: 700;
+  line-height: 1;
+  user-select: none;
+  animation: floatSymbol 18s ease-in-out infinite;
+}
+
+[data-theme="dark"] .hero-symbols span {
+  opacity: 0.2;
+}
+
+.hero-symbols span:nth-child(1) { left: 8%;  top: 18%; font-size: 2.4rem; animation-delay: 0s; }
+.hero-symbols span:nth-child(2) { left: 78%; top: 14%; font-size: 2.8rem; animation-delay: -3s; }
+.hero-symbols span:nth-child(3) { left: 14%; top: 68%; font-size: 2.1rem; animation-delay: -6s; }
+.hero-symbols span:nth-child(4) { left: 86%; top: 62%; font-size: 2.3rem; animation-delay: -2s; }
+.hero-symbols span:nth-child(5) { left: 46%; top: 8%;  font-size: 1.8rem; animation-delay: -8s; }
+.hero-symbols span:nth-child(6) { left: 62%; top: 76%; font-size: 2rem;   animation-delay: -5s; }
+.hero-symbols span:nth-child(7) { left: 28%; top: 42%; font-size: 1.7rem; animation-delay: -9s; }
+.hero-symbols span:nth-child(8) { left: 72%; top: 38%; font-size: 1.9rem; animation-delay: -4s; }
+
+@keyframes floatSymbol {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-18px) rotate(8deg); }
+}
+
+@media (max-width: 768px) {
+  .hero-symbols span:nth-child(n+6) {
+    display: none;
+  }
+  .hero-symbols span {
+    font-size: 1.5rem;
+    opacity: 0.1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-symbols span {
+    animation: none;
+  }
+}

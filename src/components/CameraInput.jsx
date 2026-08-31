@@ -36,7 +36,20 @@ export default function CameraInput({ onFileSelect }) {
   return (
     <main className="camera-main">
       {/* ─── Always visible (app + browser) ─── */}
-      <section className="hero">
+            <section className="hero">
+        {/*
+<div className="hero-symbols" aria-hidden="true">
+  <span>π</span>
+  <span>∫</span>
+  <span>Δ</span>
+  <span>√</span>
+  <span>τ</span>
+  <span>Ω</span>
+  <span>Σ</span>
+  <span>λ</span>
+</div>
+*/}
+
         <div className="container text-center">
           <h1 className="hero-title">
             <span className="no-break">Understand Math & Physics </span> step by step

@@ -91,7 +91,7 @@ export default function Upgrade() {
     <div className="upgrade-page">
       <div className="upgrade-header">
         <h2>Upgrade to Unlimited</h2>
-        <p>Solve Math and Physics problems without restrictions</p>
+        <p>Study Math and Physics without limits</p>
       </div>
 
       {!showCheckout && (
@@ -116,7 +116,8 @@ export default function Upgrade() {
             </div>
             <p className="plan-desc">Solve as many problems as you need</p>
             <ul className="plan-features">
-              <li><CheckIcon /> Solve anytime, anywhere — no daily limits</li>
+              <li><CheckIcon /> Ask more follow-up questions to fully understand every solution</li>
+              <li><CheckIcon /> Study whenever you need — no daily limits</li>
               <li><CheckIcon /> Perfect for heavy study sessions and exam preparation</li>
               
               <li><CheckIcon /> Continue learning without interruptions</li>
