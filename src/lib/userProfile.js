@@ -1,5 +1,5 @@
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "./firebase";
+import { db, auth } from "./firebase";
 
 function withTimeout(promise, ms) {
   return Promise.race([
@@ -16,7 +16,16 @@ export async function ensureUserDocument(firebaseUser) {
     return null;
   }
 
-  const userRef = doc(db, "users", firebaseUser.uid);
+  try {
+    if (auth.authStateReady) {
+      await withTimeout(auth.authStateReady(), 8000);
+    }
+  } catch (e) {
+    console.warn("[userProfile] auth not ready", e.message || e);
+  }
+
+  const uid = auth.currentUser?.uid || firebaseUser.uid;
+  const userRef = doc(db, "users", uid);
 
   try {
     const existing = await withTimeout(getDoc(userRef), 5000);
@@ -37,7 +46,7 @@ export async function ensureUserDocument(firebaseUser) {
         ),
         5000
       );
-      console.log("[userProfile] exists, not resetting limits", firebaseUser.uid);
+      console.log("[userProfile] exists, not resetting limits", uid);
       return existing;
     }
   } catch (e) {
@@ -49,8 +58,8 @@ export async function ensureUserDocument(firebaseUser) {
       setDoc(
         userRef,
         {
-          uid: firebaseUser.uid,
-          email: firebaseUser.email || "",
+          uid,
+          email: firebaseUser.email || auth.currentUser?.email || "",
           displayName:
             firebaseUser.displayName ||
             firebaseUser.email?.split("@")[0] ||
@@ -66,9 +75,9 @@ export async function ensureUserDocument(firebaseUser) {
         },
         { merge: true }
       ),
-      8000
+      10000
     );
-    console.log("[userProfile] created", firebaseUser.uid);
+    console.log("[userProfile] created", uid);
     return true;
   } catch (e) {
     console.error("[userProfile] setDoc failed", e.code || "", e.message || e);
