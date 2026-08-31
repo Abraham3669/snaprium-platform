@@ -8,11 +8,12 @@
   },
   "plugins": {
     "CapacitorHttp": {
-      "enabled": false
+      "enabled": true
     },
     "FirebaseAuthentication": {
       "skipNativeAuth": true,
-      "providers": ["google.com"]
+      "providers": ["google.com"],
+      "serverClientId": "16016330247-0pehuf4ugm4ibp229hkc94lpj0t27bf3.apps.googleusercontent.com"
     }
   }
 }
