@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "16016330247-m5qjfhbnao66t53g38grrdgds0j6iskc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.snaprium.app",
+            "certificate_hash": "06dbdb4d44bdddeb0b5ba03d8228b0fe8f55e0e3"
+          }
+        },
+        {
           "client_id": "16016330247-ptmeqiftaeiqf8cqdukjjtcd8q1hb33s.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
