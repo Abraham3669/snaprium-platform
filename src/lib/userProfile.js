@@ -20,8 +20,11 @@ export async function ensureUserDocument(firebaseUser) {
     if (auth.authStateReady) {
       await withTimeout(auth.authStateReady(), 8000);
     }
+    if (auth.currentUser) {
+      await withTimeout(auth.currentUser.getIdToken(true), 8000);
+    }
   } catch (e) {
-    console.warn("[userProfile] auth not ready", e.message || e);
+    console.warn("[userProfile] auth/token", e.message || e);
   }
 
   const uid = auth.currentUser?.uid || firebaseUser.uid;
