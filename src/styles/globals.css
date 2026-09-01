@@ -5158,9 +5158,10 @@ canvas {
 }
 
 @media (max-width: 768px) {
-  .hero-title {
+  .hero-title-web {
     padding-left: 16px;
     padding-right: 16px;
     line-height: 1.25;
+    font-size: clamp(1.18rem, 5.4vw, 1.45rem) !important;
   }
 }

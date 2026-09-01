@@ -52,7 +52,7 @@ export default function CameraInput({ onFileSelect }) {
 
         <div className="container text-center">
           <h1
-  className="hero-title"
+  className={`hero-title${!isNative ? " hero-title-web" : ""}`}
   style={
     !isNative
       ? {
@@ -62,8 +62,6 @@ export default function CameraInput({ onFileSelect }) {
           textAlign: "center",
           paddingLeft: 16,
           paddingRight: 16,
-          fontSize: "clamp(1.18rem, 5.4vw, 1.45rem)",
-          lineHeight: 1.25,
         }
       : undefined
   }
