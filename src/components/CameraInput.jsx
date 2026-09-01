@@ -53,25 +53,22 @@ export default function CameraInput({ onFileSelect }) {
         <div className="container text-center">
           <h1
   className="hero-title"
-  style={{
-    width: "100%",
-    maxWidth: "100%",
-    boxSizing: "border-box",
-    paddingLeft: 16,
-    paddingRight: 16,
-    textAlign: "center",
-    marginLeft: 0,
-    marginRight: 0,
-  }}
+  style={
+    !isNative
+      ? {
+          width: "100%",
+          maxWidth: "100%",
+          boxSizing: "border-box",
+          textAlign: "center",
+          paddingLeft: 16,
+          paddingRight: 16,
+          fontSize: "clamp(1.18rem, 5.4vw, 1.45rem)",
+          lineHeight: 1.25,
+        }
+      : undefined
+  }
 >
-  <span
-    className="no-break"
-    style={{
-      display: "inline",
-    }}
-  >
-    Understand Math & Physics{" "}
-  </span>
+  <span className="no-break">Understand Math & Physics </span>
   step by step
 </h1>
 

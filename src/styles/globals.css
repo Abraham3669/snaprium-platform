@@ -5146,21 +5146,21 @@ canvas {
 
 
 
-/* Phone browser only — not the native app */
-@media (max-width: 768px) {
-  .hero-title .no-break {
-    white-space: normal !important;
-  }
+.no-break {
+  white-space: nowrap;
+}
 
+.hero-title {
+  text-align: center;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
   .hero-title {
-    text-align: center !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    padding-left: 16px !important;
-    padding-right: 16px !important;
-    font-size: clamp(1.55rem, 7.2vw, 2.15rem) !important;
-    line-height: 1.2 !important;
-    overflow-wrap: break-word;
-    word-break: normal;
+    padding-left: 16px;
+    padding-right: 16px;
+    line-height: 1.25;
   }
 }
