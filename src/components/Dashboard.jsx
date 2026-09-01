@@ -3,6 +3,7 @@ import React from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useNavigate } from "react-router-dom";
 import { Capacitor } from "@capacitor/core";
+import { Browser } from "@capacitor/browser";
 
 export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
   const { user, signOutUser } = useAuth();
@@ -16,13 +17,17 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
     navigate(path);
   };
 
-  const handleManageSubscription = async () => {
+    const handleManageSubscription = async () => {
     if (!user?.uid) return;
 
     onClose();
 
     try {
-      const response = await fetch("/api/customer-portal", {
+      const apiBase = (
+        import.meta.env.VITE_API_URL || "https://snaprium.com"
+      ).replace(/\/$/, "");
+
+      const response = await fetch(`${apiBase}/api/customer-portal`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -32,10 +37,15 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
 
       const data = await response.json();
 
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
+      if (!data.url) {
         alert(data.error || "Unable to open management portal. Please try again.");
+        return;
+      }
+
+      if (Capacitor.isNativePlatform()) {
+        await Browser.open({ url: data.url });
+      } else {
+        window.location.href = data.url;
       }
     } catch (error) {
       console.error("Error opening portal:", error);
