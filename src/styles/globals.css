@@ -5435,3 +5435,107 @@ canvas {
     font-size: 1.45rem !important;
   }
 }
+
+
+
+
+/* ─────────────────────────────────────────────
+   Modern Gallery Card (Mobile only)
+───────────────────────────────────────────── */
+.gallery-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  max-width: 280px;
+  margin: 0 auto;                 /* centers the card */
+  padding: 14px 18px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: var(--transition);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gallery-card:active {
+  transform: scale(0.97);
+  box-shadow: var(--shadow-sm);
+}
+
+.gallery-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--icon-bg);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.gallery-card-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.gallery-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+
+.gallery-card-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.gallery-card-sub {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.2;
+}
+
+/* Hide the old circular button style completely on mobile */
+.mobile-gallery .gallery-btn,
+.mobile-gallery .action-label {
+  display: none !important;
+}
+
+/* Make sure the card is centered nicely */
+.mobile-gallery {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: 0 16px;               /* equal side padding */
+  box-sizing: border-box;
+}
+
+
+
+
+/* Force the list items to align with the title & subtext above */
+.banner-card {
+  text-align: left !important;
+}
+
+.banner-card .banner-title,
+.banner-card .banner-subtext,
+.banner-card .banner-list,
+.banner-card .banner-list li,
+.banner-card .banner-list li span {
+  text-align: left !important;
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+}
+
+.banner-card .banner-list {
+  list-style-position: inside;
+  padding-inline-start: 0 !important;
+}
