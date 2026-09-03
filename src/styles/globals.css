@@ -5165,3 +5165,273 @@ canvas {
     font-size: clamp(1.18rem, 5.4vw, 1.45rem) !important;
   }
 }
+
+
+
+
+/* ===== Desktop Drop Zone ===== */
+.desktop-dropzone {
+  display: none; /* hidden by default (mobile) */
+}
+
+@media (min-width: 768px) {
+  /* Hide mobile camera + gallery on desktop */
+  .mobile-camera,
+  .mobile-gallery {
+    display: none !important;
+  }
+
+  /* Show the drop zone */
+  .desktop-dropzone {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 520px;
+    margin: 0 auto;
+    height: 88px;
+    border: 2px dashed var(--border-color, #cbd5e1);
+    border-radius: 16px;
+    background: var(--surface, #f8fafc);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+  }
+
+  .desktop-dropzone:hover {
+    border-color: var(--accent, #6366f1);
+    background: color-mix(in srgb, var(--accent, #6366f1) 8%, transparent);
+  }
+
+  .desktop-dropzone.dragging {
+    border-color: var(--accent, #6366f1);
+    background: color-mix(in srgb, var(--accent, #6366f1) 15%, transparent);
+    transform: scale(1.02);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent, #6366f1) 20%, transparent);
+  }
+
+  .dropzone-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    pointer-events: none; /* so clicks go to the parent */
+  }
+
+  .dropzone-icon {
+    width: 32px;
+    height: 32px;
+    color: var(--accent, #6366f1);
+    flex-shrink: 0;
+  }
+
+  .dropzone-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .dropzone-main {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-primary, #0f172a);
+  }
+
+  .dropzone-sub {
+    font-size: 0.875rem;
+    color: var(--text-secondary, #64748b);
+  }
+}
+
+
+
+
+/* Force hide original gallery button on desktop */
+@media (min-width: 768px) {
+  .camera-container .mobile-gallery,
+  .camera-container .action-item.mobile-gallery,
+  .mobile-gallery {
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+  }
+}
+
+
+
+
+
+/* ─────────────────────────────────────────────
+   Modern Gallery Card (Mobile only)
+───────────────────────────────────────────── */
+.gallery-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  max-width: 280px;
+  padding: 14px 18px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: var(--transition);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gallery-card:active {
+  transform: scale(0.97);
+  box-shadow: var(--shadow-sm);
+}
+
+.gallery-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--icon-bg);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.gallery-card-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.gallery-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+
+.gallery-card-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.gallery-card-sub {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.2;
+}
+
+/* Hide the old circular button style completely on mobile */
+.mobile-gallery .gallery-btn,
+.mobile-gallery .action-label {
+  display: none !important;
+}
+
+/* Make sure the card is centered nicely inside the action-item */
+.mobile-gallery {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+
+
+/* ─────────────────────────────────────────────
+   Subject Badges – Equal Width Horizontal Cards
+───────────────────────────────────────────── */
+
+.subject-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 24px;
+  padding: 0 12px;
+  width: 100%;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Mobile – force 2 per row */
+.subject-badges .badge {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  width: calc(50% - 6px);
+  max-width: 160px;
+  height: 40px;
+  padding: 0 10px !important;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  color: var(--text-primary);
+  white-space: nowrap;
+  box-sizing: border-box;
+  transition: var(--transition);
+}
+
+/* Icon / symbol */
+.subject-badges .badge > span:first-child {
+  font-size: 1.2rem !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  color: var(--accent) !important;
+  flex-shrink: 0;
+}
+
+/* + More special style */
+.subject-badges .badge-accent {
+  background: var(--icon-bg);
+  border-color: transparent;
+  color: var(--accent);
+  justify-content: center;
+}
+
+/* ── Hide / Show correct set ── */
+.subject-badges-desktop {
+  display: none;
+}
+
+.subject-badges-mobile {
+  display: flex;
+}
+
+/* Desktop – bigger + stay horizontal as long as possible */
+@media (min-width: 768px) {
+  .subject-badges-desktop {
+    display: flex;
+  }
+
+  .subject-badges-mobile {
+    display: none;
+  }
+
+  .subject-badges {
+    gap: 12px;
+    max-width: 1100px;          /* wider container so more fit in one row */
+  }
+
+  .subject-badges .badge {
+    width: 148px;               /* slightly smaller so they stay in one line longer */
+    max-width: none;
+    height: 46px;
+    padding: 0 14px !important;
+    font-size: 0.93rem !important;
+  }
+
+  .subject-badges .badge > span:first-child {
+    font-size: 1.45rem !important;
+  }
+}

@@ -1,11 +1,13 @@
 // src/components/CameraInput.jsx
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Capacitor } from "@capacitor/core";
 
 export default function CameraInput({ onFileSelect }) {
   const cameraInputRef = useRef();
   const galleryInputRef = useRef();
+  const dropZoneRef = useRef();
+  const [isDragging, setIsDragging] = useState(false);
   const isNative = Capacitor.isNativePlatform();
 
   const handleFileChange = (e) => {
@@ -33,10 +35,36 @@ export default function CameraInput({ onFileSelect }) {
     input.click();
   };
 
+  // ─── Drag & Drop handlers (desktop) ───
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!dropZoneRef.current?.contains(e.relatedTarget)) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      onFileSelect(file);
+    }
+  };
+
   return (
     <main className="camera-main">
       {/* ─── Always visible (app + browser) ─── */}
-            <section className="hero">
+      <section className="hero">
         {/*
 <div className="hero-symbols" aria-hidden="true">
   <span>π</span>
@@ -52,23 +80,23 @@ export default function CameraInput({ onFileSelect }) {
 
         <div className="container text-center">
           <h1
-  className={`hero-title${!isNative ? " hero-title-web" : ""}`}
-  style={
-    !isNative
-      ? {
-          width: "100%",
-          maxWidth: "100%",
-          boxSizing: "border-box",
-          textAlign: "center",
-          paddingLeft: 16,
-          paddingRight: 16,
-        }
-      : undefined
-  }
->
-  <span className="no-break">Understand Math & Physics </span>
-  step by step
-</h1>
+            className={`hero-title${!isNative ? " hero-title-web" : ""}`}
+            style={
+              !isNative
+                ? {
+                    width: "100%",
+                    maxWidth: "100%",
+                    boxSizing: "border-box",
+                    textAlign: "center",
+                    paddingLeft: 16,
+                    paddingRight: 16,
+                  }
+                : undefined
+            }
+          >
+            <span className="no-break">Understand Math & Physics </span>
+            step by step
+          </h1>
 
           <div className="camera-container container">
             {/* Camera */}
@@ -86,19 +114,63 @@ export default function CameraInput({ onFileSelect }) {
               <span className="action-label">Take Photo</span>
             </div>
 
-            {/* Gallery */}
-            <div className="action-item">
-              <div className="gallery-btn" onClick={handleGalleryClick}>
+            {/* Gallery – mobile only */}
+            {/* Gallery – mobile only (modern card) */}
+<div className="action-item mobile-gallery">
+  <div className="gallery-card" onClick={handleGalleryClick}>
+    <div className="gallery-card-icon">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"
+        />
+      </svg>
+    </div>
+    <div className="gallery-card-text">
+      <span className="gallery-card-title">Upload Image</span>
+      <span className="gallery-card-sub">From gallery</span>
+    </div>
+  </div>
+</div>
+
+            {/* Desktop Drop Zone */}
+            <div
+              ref={dropZoneRef}
+              className={`desktop-dropzone ${isDragging ? "dragging" : ""}`}
+              onClick={handleGalleryClick}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
+              <div className="dropzone-content">
                 <svg
-                  className="gallery-icon"
+                  className="dropzone-icon"
                   xmlns="http://www.w3.org/2000/svg"
-                  fill="currentColor"
+                  fill="none"
                   viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
                 >
-                  <path d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4 2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
+                  />
                 </svg>
+                <div className="dropzone-text">
+                  <span className="dropzone-main">
+                    {isDragging ? "Drop image here" : "Drag & drop an image"}
+                  </span>
+                  <span className="dropzone-sub">or click to upload</span>
+                </div>
               </div>
-              <span className="action-label">Upload Image</span>
             </div>
           </div>
 
@@ -120,70 +192,70 @@ export default function CameraInput({ onFileSelect }) {
           />
 
           {/* Desktop */}
-<div className="subject-badges subject-badges-desktop">
-  <span className="badge" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
-    <span style={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1, color: "var(--accent)" }}>π</span>
-    Math
-  </span>
-  <span className="badge" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
-    <span style={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1, color: "var(--accent)" }}>Δ</span>
-    Physics
-  </span>
-  <span className="badge" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
-    <span style={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1, color: "var(--accent)" }}>√</span>
-    Algebra
-  </span>
-  <span className="badge" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
-    <span style={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1, color: "var(--accent)" }}>τ</span>
-    Mechanics
-  </span>
-  <span className="badge" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
-    <span style={{ fontSize: "1.85rem", fontWeight: 700, lineHeight: 1, color: "var(--accent)" }}>∫</span>
-    Calculus
-  </span>
-  <span className="badge" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
-    <span style={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1, color: "var(--accent)" }}>Ω</span>
-    Electricity
-  </span>
-  <span className="badge badge-accent" style={{ display: "inline-flex", alignItems: "center", fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
-    + More
-  </span>
-</div>
+          <div className="subject-badges subject-badges-desktop">
+            <span className="badge" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
+              <span style={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1, color: "var(--accent)" }}>π</span>
+              Math
+            </span>
+            <span className="badge" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
+              <span style={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1, color: "var(--accent)" }}>Δ</span>
+              Physics
+            </span>
+            <span className="badge" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
+              <span style={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1, color: "var(--accent)" }}>√</span>
+              Algebra
+            </span>
+            <span className="badge" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
+              <span style={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1, color: "var(--accent)" }}>τ</span>
+              Mechanics
+            </span>
+            <span className="badge" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
+              <span style={{ fontSize: "1.85rem", fontWeight: 700, lineHeight: 1, color: "var(--accent)" }}>∫</span>
+              Calculus
+            </span>
+            <span className="badge" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
+              <span style={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1, color: "var(--accent)" }}>Ω</span>
+              Electricity
+            </span>
+            <span className="badge badge-accent" style={{ display: "inline-flex", alignItems: "center", fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
+              + More
+            </span>
+          </div>
 
-{/* Phone + phone browser */}
-<div className="subject-badges subject-badges-mobile">
-  {[
-    ["π", "Math"],
-    ["Δ", "Physics"],
-    ["√", "Algebra"],
-    ["τ", "Mechanics"],
-    ["∫", "Calculus"],
-    ["Ω", "Electricity"],
-  ].map(([symbol, label]) => (
-    <span
-      key={label}
-      className="badge"
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 6,
-        fontSize: "0.8rem",
-        fontWeight: 600,
-        padding: "6px 10px",
-        lineHeight: 1,
-        whiteSpace: "nowrap",
-      }}
-    >
-      <span style={{ fontSize: "1.15rem", fontWeight: 700, color: "var(--accent)", lineHeight: 1 }}>
-        {symbol}
-      </span>
-      {label}
-    </span>
-  ))}
-  <span className="badge badge-accent" style={{ display: "inline-flex", alignItems: "center", fontSize: "0.8rem", fontWeight: 600, padding: "6px 10px", whiteSpace: "nowrap" }}>
-    + More
-  </span>
-</div>
+          {/* Phone + phone browser */}
+          <div className="subject-badges subject-badges-mobile">
+            {[
+              ["π", "Math"],
+              ["Δ", "Physics"],
+              ["√", "Algebra"],
+              ["τ", "Mechanics"],
+              ["∫", "Calculus"],
+              ["Ω", "Electricity"],
+            ].map(([symbol, label]) => (
+              <span
+                key={label}
+                className="badge"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                  padding: "6px 10px",
+                  lineHeight: 1,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                <span style={{ fontSize: "1.15rem", fontWeight: 700, color: "var(--accent)", lineHeight: 1 }}>
+                  {symbol}
+                </span>
+                {label}
+              </span>
+            ))}
+            <span className="badge badge-accent" style={{ display: "inline-flex", alignItems: "center", fontSize: "0.8rem", fontWeight: 600, padding: "6px 10px", whiteSpace: "nowrap" }}>
+              + More
+            </span>
+          </div>
         </div>
       </section>
 
