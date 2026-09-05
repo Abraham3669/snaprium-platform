@@ -7,12 +7,10 @@ import {
 } from "firebase/auth";
 import { auth, googleProvider } from "../lib/firebase";
 import { Capacitor } from "@capacitor/core";
+import { FirebaseAuthentication } from "@capacitor-firebase/authentication";
 import { showAppError } from "../utils/errorReporter";
 import { useAuth } from "../context/AuthContext";
 import { ensureUserDocument } from "../lib/userProfile";
-
-const WEB_CLIENT_ID =
-  "16016330247-0pehuf4ugm4ibp229hkc94lpj0t27bf3.apps.googleusercontent.com";
 
 export default function Login() {
   const { user, loading: authLoading } = useAuth();
@@ -33,17 +31,16 @@ export default function Login() {
       let firebaseUser;
 
       if (Capacitor.isNativePlatform()) {
-        const { GoogleSignIn } = await import(
-          "@capawesome/capacitor-google-sign-in"
-        );
-        await GoogleSignIn.initialize({ clientId: WEB_CLIENT_ID });
-        const nativeResult = await GoogleSignIn.signIn();
-        const idToken = nativeResult?.idToken;
+        // Native (iOS / Android) – use Firebase Authentication plugin
+        const result = await FirebaseAuthentication.signInWithGoogle();
+        const idToken = result.credential?.idToken;
         if (!idToken) throw new Error("No Google idToken from native sign-in");
+
         const credential = GoogleAuthProvider.credential(idToken);
-        const result = await signInWithCredential(auth, credential);
-        firebaseUser = result.user;
+        const userCredential = await signInWithCredential(auth, credential);
+        firebaseUser = userCredential.user;
       } else {
+        // Web
         const result = await signInWithPopup(auth, googleProvider);
         firebaseUser = result.user;
       }
