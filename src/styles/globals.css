@@ -7040,428 +7040,102 @@ canvas {
 
 
 /* =========================================================
-   SNAPRIUM STUDY ROOM
-   MOBILE VIEWPORT / FULL SCREEN FIX
+   PROPER FIX — Study Room under main Snaprium header
+   Works on iPhone, Android, mobile browser & Capacitor
    ========================================================= */
 
-/* Prevent the browser from creating a wider layout */
-html,
-body,
-#root {
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-
-  margin: 0;
-  padding: 0;
-
-  overflow-x: hidden;
+/* Main app header is approximately 64px tall */
+:root {
+  --main-header-height: 64px;
 }
-
-
-/* Make sizing predictable everywhere */
-.study-room,
-.study-room *,
-.study-room *::before,
-.study-room *::after {
-  box-sizing: border-box;
-}
-
-
-/* =========================================================
-   FULL PHONE SCREEN
-   ========================================================= */
 
 .study-room {
-  width: 100%;
-  max-width: 100vw;
-
-  height: 100vh;
-  height: 100dvh;
-
-  min-height: 0;
-
-  margin: 0;
-  padding: 0;
-
-  overflow: hidden;
-
   position: relative;
+  width: 100%;
+  height: calc(100dvh - var(--main-header-height)) !important;
+  min-height: calc(100dvh - var(--main-header-height)) !important;
+  max-height: calc(100dvh - var(--main-header-height)) !important;
+  margin-top: var(--main-header-height) !important; /* push below main header */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden !important;
+  box-sizing: border-box;
+  background: var(--bg);
 }
 
+/* Remove any previous padding-top that was fighting the header */
+.study-room {
+  padding-top: 0 !important;
+}
 
-/* =========================================================
-   MOBILE
-   ========================================================= */
+/* Make the internal Study Room header normal (not fighting the main header) */
+.study-room-header {
+  position: relative !important;
+  top: 0 !important;
+  flex-shrink: 0;
+  z-index: 5;
+}
 
-@media screen and (max-width: 650px) {
+/* Chat + input layout */
+.study-chat {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 
-  html,
-  body,
-  #root {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
+.messages {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
 
-    min-height: 100%;
-  }
+/* Keep the input bar at the bottom and stop it from jumping */
+.chat-input {
+  flex-shrink: 0 !important;
+  position: relative !important;
+  bottom: auto !important;
+  margin-top: 8px;
+  z-index: 10;
+}
 
-  body {
-    overflow-x: hidden;
-  }
-
+/* ========== MOBILE ========== */
+@media (max-width: 650px) {
   .study-room {
-    width: 100%;
-    max-width: 100%;
-
-    height: 100vh;
-    height: 100dvh;
-
-    min-height: 0;
-
-    margin: 0;
-    padding: 0;
-
-    overflow: hidden;
+    height: calc(100dvh - var(--main-header-height)) !important;
+    min-height: calc(100dvh - var(--main-header-height)) !important;
+    max-height: calc(100dvh - var(--main-header-height)) !important;
   }
 
-
-  /* =======================================================
-     HEADER
-     ======================================================= */
+  .study-top-controls,
+  .study-chat {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    box-sizing: border-box;
+  }
 
   .study-room-header {
-    width: 100%;
-    max-width: 100%;
-
-    min-width: 0;
-
-    padding-left: max(13px, env(safe-area-inset-left));
-    padding-right: max(13px, env(safe-area-inset-right));
-
-    flex-shrink: 0;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
   }
 
-
-  /* =======================================================
-     CONTROLS
-     ======================================================= */
-
-  .study-top-controls {
-    width: 100%;
-    max-width: 100%;
-
-    min-width: 0;
-
-    padding-left: max(13px, env(safe-area-inset-left));
-    padding-right: max(13px, env(safe-area-inset-right));
-
-    margin-left: 0;
-    margin-right: 0;
-  }
-
-
-  /* =======================================================
-     CHAT
-     ======================================================= */
-
-  .study-chat {
-    width: 100%;
-    max-width: 100%;
-
-    min-width: 0;
-
-    margin-left: 0;
-    margin-right: 0;
-
-    padding-left: max(13px, env(safe-area-inset-left));
-    padding-right: max(13px, env(safe-area-inset-right));
-
-    padding-bottom: max(
-      10px,
-      env(safe-area-inset-bottom)
-    );
-  }
-
-
-  /* =======================================================
-     MESSAGE WINDOW
-     ======================================================= */
-
-  .messages {
-    width: 100%;
-    max-width: 100%;
-
-    min-width: 0;
-
-    min-height: 0;
-
-    overflow-x: hidden;
-    overflow-y: auto;
-
-    -webkit-overflow-scrolling: touch;
-
-    overscroll-behavior: contain;
-  }
-
-
-  /* =======================================================
-     MESSAGES
-     ======================================================= */
-
-  .message {
-    max-width: 88%;
-
-    min-width: 0;
-
-    overflow-wrap: anywhere;
-    word-break: break-word;
-  }
-
-  .ai-message {
-    max-width: 94%;
-  }
-
-
-  /* =======================================================
-     LONG MATH / KATEX
-     ======================================================= */
-
-  .ai-markdown {
-    max-width: 100%;
-    min-width: 0;
-
-    overflow-wrap: anywhere;
-  }
-
-  .ai-markdown .katex-display {
-    max-width: 100%;
-
-    overflow-x: auto;
-    overflow-y: hidden;
-
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .ai-markdown pre {
-    max-width: 100%;
-
-    overflow-x: auto;
-
-    -webkit-overflow-scrolling: touch;
-  }
-
-
-  /* =======================================================
-     INPUT
-     ======================================================= */
-
+  /* Extra safe area for iPhone home indicator */
   .chat-input {
-    width: 100%;
-    max-width: 100%;
-
-    min-width: 0;
-
-    flex-shrink: 0;
-
-    margin-left: 0;
-    margin-right: 0;
-
-    padding-left: 6px;
-    padding-right: 6px;
-  }
-
-  .chat-input input {
-    min-width: 0;
-    width: 100%;
-  }
-
-
-  /* Prevent buttons from forcing the composer wider */
-  .chat-input button {
-    flex-shrink: 0;
-
-    white-space: nowrap;
+    padding-bottom: max(8px, env(safe-area-inset-bottom)) !important;
   }
 }
 
-
-/* =========================================================
-   SMALL PHONES
-   ========================================================= */
-
-@media screen and (max-width: 390px) {
-
-  .study-room-header {
-    padding-left: max(9px, env(safe-area-inset-left));
-    padding-right: max(9px, env(safe-area-inset-right));
-  }
-
-  .study-top-controls {
-    padding-left: max(9px, env(safe-area-inset-left));
-    padding-right: max(9px, env(safe-area-inset-right));
-  }
-
+/* Very small phones */
+@media (max-width: 380px) {
+  .study-top-controls,
   .study-chat {
-    padding-left: max(9px, env(safe-area-inset-left));
-    padding-right: max(9px, env(safe-area-inset-right));
-  }
-
-  .message {
-    max-width: 91%;
-  }
-
-  .ai-message {
-    max-width: 96%;
-  }
-}
-
-
-/* =========================================================
-   VERY SMALL PHONES
-   ========================================================= */
-
-@media screen and (max-width: 350px) {
-
-  .study-room-header {
-    padding-left: max(7px, env(safe-area-inset-left));
-    padding-right: max(7px, env(safe-area-inset-right));
-  }
-
-  .study-top-controls {
-    padding-left: max(7px, env(safe-area-inset-left));
-    padding-right: max(7px, env(safe-area-inset-right));
-  }
-
-  .study-chat {
-    padding-left: max(7px, env(safe-area-inset-left));
-    padding-right: max(7px, env(safe-area-inset-right));
-  }
-
-  .message {
-    max-width: 94%;
-  }
-
-  .ai-message {
-    max-width: 98%;
-  }
-}
-
-
-/* =========================================================
-   LANDSCAPE PHONES
-   ========================================================= */
-
-@media screen and (max-width: 900px) and (orientation: landscape) {
-
-  .study-room-header {
-    min-height: 54px;
-    height: 54px;
-    flex-basis: 54px;
-  }
-
-  .study-top-controls {
-    grid-template-columns: 230px minmax(0, 1fr);
-
-    padding-top: 7px;
-    padding-bottom: 7px;
-  }
-
-  .study-timer-card,
-  .study-participants {
-    padding: 9px 12px;
-  }
-
-  .timer-display {
-    font-size: 24px;
-  }
-
-  .timer-controls {
-    margin-top: 6px;
-  }
-
-  .timer-controls button {
-    height: 29px;
-  }
-
-  .study-chat {
-    padding-bottom: 7px;
-  }
-
-  .messages {
-    padding: 12px 15px;
-  }
-
-  .chat-input {
-    margin-top: 6px;
-  }
-}
-
-
-/* =========================================================
-   CAPACITOR / ANDROID WEBVIEW
-   ========================================================= */
-
-@media screen and (max-width: 650px) {
-
-  .study-room {
-    -webkit-user-select: none;
-    user-select: none;
-
-    -webkit-touch-callout: none;
-
-    overscroll-behavior: none;
-  }
-
-  .messages,
-  .chat-input input {
-    -webkit-user-select: text;
-    user-select: text;
-  }
-}
-
-
-/* =========================================================
-   IOS KEYBOARD / INPUT FIX
-   ========================================================= */
-
-@supports (-webkit-touch-callout: none) {
-
-  .study-room {
-    min-height: 100dvh;
-  }
-
-  .chat-input input {
-    font-size: 16px;
-  }
-}
-
-
-/* =========================================================
-   PREVENT INPUT ZOOM ON MOBILE
-   ========================================================= */
-
-@media screen and (max-width: 650px) {
-
-  .chat-input input,
-  .chat-input textarea,
-  .chat-input select {
-    font-size: 16px;
-  }
-}
-
-
-/* =========================================================
-   SAFE AREA
-   ========================================================= */
-
-@supports (padding: env(safe-area-inset-bottom)) {
-
-  .study-room {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-
-  .chat-input {
-    margin-bottom: env(safe-area-inset-bottom);
+    padding-left: 10px !important;
+    padding-right: 10px !important;
   }
 }
