@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { createStudyRoom } from "../lib/studyRooms";
+import { createStudyRoom, joinStudyRoomByCode } from "../lib/studyRooms";
 import { toast } from "react-toastify";
 
 export default function StudyLobby() {
@@ -59,9 +59,17 @@ export default function StudyLobby() {
       return;
     }
 
-    // For V1 we will improve code lookup later.
-    // Right now the easiest reliable way is the shareable link.
-    toast.info("Please use the shareable link your friend sent you for now.");
+    setIsJoining(true);
+    try {
+      const room = await joinStudyRoomByCode(code, user);
+      toast.success("Joined the room!");
+      navigate(`/study/${room.id}`);
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || "Could not join room. Check the code.");
+    } finally {
+      setIsJoining(false);
+    }
   };
 
   return (
@@ -97,14 +105,14 @@ export default function StudyLobby() {
         <form onSubmit={handleJoin} className="study-card">
           <h2>Join a Room</h2>
           <p className="study-hint">
-            Ask your friend for the shareable link (easiest) or room code.
+            Enter the 4-character code your friend shared with you.
           </p>
           <input
             type="text"
-            placeholder="Enter room code (coming soon)"
+            placeholder="Enter room code (e.g. A7K2)"
             value={joinCode}
             onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-            maxLength={8}
+            maxLength={6}
             disabled={isJoining}
           />
           <button type="submit" disabled={isJoining || !joinCode.trim()}>

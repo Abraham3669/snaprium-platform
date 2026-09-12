@@ -13,7 +13,6 @@ import {
 import { toast } from "react-toastify";
 import { postAPI } from "../utils/apiClient";
 
-// KaTeX + Markdown (same as ResultPanel)
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
@@ -34,7 +33,6 @@ export default function StudyRoom() {
   const messagesEndRef = useRef(null);
   const timerIntervalRef = useRef(null);
 
-  // Join room + subscribe
   useEffect(() => {
     if (!user || !roomId) return;
 
@@ -69,18 +67,14 @@ export default function StudyRoom() {
     };
   }, [user, roomId, navigate]);
 
-  // Auto scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Shared timer
   useEffect(() => {
     if (!room?.timer) return;
 
-    if (timerIntervalRef.current) {
-      clearInterval(timerIntervalRef.current);
-    }
+    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
 
     if (room.timer.mode === "running") {
       timerIntervalRef.current = setInterval(() => {
@@ -127,7 +121,6 @@ export default function StudyRoom() {
     setInput("");
     setIsAskingAI(true);
 
-    // Show user question first
     await sendMessage(roomId, {
       text: question,
       uid: user.uid,
@@ -217,13 +210,13 @@ export default function StudyRoom() {
     <div className="study-room">
       {/* Header */}
       <header className="study-room-header">
-        <div>
+        <div className="study-room-header-left">
           <h1>{room.topic}</h1>
           <p className="study-room-code">Code: {room.code}</p>
         </div>
         <div className="study-room-actions">
           <button onClick={copyInviteLink} className="invite-btn">
-            Copy Invite Link
+            Invite
           </button>
           <button onClick={() => navigate("/study")} className="leave-btn">
             Leave
@@ -231,124 +224,115 @@ export default function StudyRoom() {
         </div>
       </header>
 
-      <div className="study-room-body">
-        {/* Sidebar */}
-        <aside className="study-sidebar">
-          <div className="study-timer-card">
-            <h3>Shared Timer</h3>
-            <div className="timer-display">
-              {formatTime(room.timer?.remaining ?? 25 * 60)}
-            </div>
-            <div className="timer-controls">
-              {room.timer?.mode !== "running" ? (
-                <button onClick={() => startTimer(25)}>Start 25 min</button>
-              ) : (
-                <button onClick={pauseTimer}>Pause</button>
-              )}
-              <button onClick={resetTimer}>Reset</button>
-            </div>
+      {/* Top controls (Timer + Participants) */}
+      <div className="study-top-controls">
+        <div className="study-timer-card">
+          <div className="timer-label">Shared Timer</div>
+          <div className="timer-display">
+            {formatTime(room.timer?.remaining ?? 25 * 60)}
           </div>
-
-          <div className="study-participants">
-            <h3>Online ({onlineParticipants.length})</h3>
-            <ul>
-              {onlineParticipants.map((p) => (
-                <li key={p.uid}>
-                  {p.displayName}
-                </li>
-              ))}
-              <li className="ai-participant">Snaprium AI 🤖</li>
-            </ul>
+          <div className="timer-controls">
+            {room.timer?.mode !== "running" ? (
+              <button onClick={() => startTimer(25)}>Start</button>
+            ) : (
+              <button onClick={pauseTimer}>Pause</button>
+            )}
+            <button onClick={resetTimer}>Reset</button>
           </div>
-        </aside>
+        </div>
 
-        {/* Chat */}
-        <main className="study-chat">
-          <div className="messages">
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`message ${msg.isAI ? "ai-message" : ""} ${
-                  msg.uid === user?.uid ? "my-message" : ""
-                }`}
-              >
-                <div className="message-author">
-                  {msg.displayName}
-                  {msg.isAI && " 🤖"}
-                </div>
-
-                <div className="message-text">
-                  {msg.isAI ? (
-                    <div className="ai-markdown">
-                      <ReactMarkdown
-                        remarkPlugins={[remarkMath]}
-                        rehypePlugins={[
-                          [
-                            rehypeKatex,
-                            {
-                              output: "html",
-                              throwOnError: false,
-                              strict: "ignore",
-                              trust: true,
-                            },
-                          ],
-                        ]}
-                      >
-                        {prepareMathForKaTeX(msg.text)}
-                      </ReactMarkdown>
-                    </div>
-                  ) : (
-                    msg.text
-                  )}
-                </div>
-              </div>
+        <div className="study-participants">
+          <div className="participants-label">
+            Online · {onlineParticipants.length + 1}
+          </div>
+          <div className="participants-list">
+            {onlineParticipants.map((p) => (
+              <span key={p.uid} className="participant-chip">
+                {p.displayName}
+              </span>
             ))}
-            <div ref={messagesEndRef} />
+            <span className="participant-chip ai">Snaprium AI</span>
           </div>
-
-          <form className="chat-input" onSubmit={handleSend}>
-            <input
-              type="text"
-              placeholder="Type a message or ask the AI..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              disabled={isSending || isAskingAI}
-            />
-            <button type="submit" disabled={isSending || !input.trim()}>
-              Send
-            </button>
-            <button
-              type="button"
-              className="ask-ai-btn"
-              onClick={handleAskAI}
-              disabled={isAskingAI || !input.trim()}
-            >
-              {isAskingAI ? "Thinking..." : "Ask AI"}
-            </button>
-          </form>
-        </main>
+        </div>
       </div>
+
+      {/* Chat */}
+      <main className="study-chat">
+        <div className="messages">
+          {messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`message ${msg.isAI ? "ai-message" : ""} ${
+                msg.uid === user?.uid ? "my-message" : ""
+              }`}
+            >
+              <div className="message-author">
+                {msg.displayName}
+                {msg.isAI && " · AI"}
+              </div>
+
+              <div className="message-text">
+                {msg.isAI ? (
+                  <div className="ai-markdown">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkMath]}
+                      rehypePlugins={[
+                        [
+                          rehypeKatex,
+                          {
+                            output: "html",
+                            throwOnError: false,
+                            strict: "ignore",
+                            trust: true,
+                          },
+                        ],
+                      ]}
+                    >
+                      {prepareMathForKaTeX(msg.text)}
+                    </ReactMarkdown>
+                  </div>
+                ) : (
+                  msg.text
+                )}
+              </div>
+            </div>
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
+
+        <form className="chat-input" onSubmit={handleSend}>
+          <input
+            type="text"
+            placeholder="Message or ask AI..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            disabled={isSending || isAskingAI}
+          />
+          <button type="submit" disabled={isSending || !input.trim()}>
+            Send
+          </button>
+          <button
+            type="button"
+            className="ask-ai-btn"
+            onClick={handleAskAI}
+            disabled={isAskingAI || !input.trim()}
+          >
+            {isAskingAI ? "..." : "Ask AI"}
+          </button>
+        </form>
+      </main>
     </div>
   );
 }
 
-// ── Helper (same style as ResultPanel) ──
 function prepareMathForKaTeX(rawText) {
   if (!rawText) return "";
-
   let text = rawText;
-
-  // Convert simple a/b to \frac
   text = text.replace(
     /(\b\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?\b)(?!\s*\/)/g,
     "\\frac{$1}{$2}"
   );
-
-  // Normalize \[ \] to $$
   text = text.replace(/\\\[([\s\S]*?)\\\]/g, "$$$$$1$$$$");
-
-  // Clean extra whitespace around $$
   text = text.replace(/\$\$[\s\n]+/g, "$$").replace(/[\s\n]+\$\$/g, "$$");
-
   return text;
 }

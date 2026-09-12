@@ -4,21 +4,21 @@ import {
   doc,
   setDoc,
   getDoc,
+  getDocs,
   updateDoc,
   onSnapshot,
   serverTimestamp,
   arrayUnion,
-  arrayRemove,
   query,
+  where,
   orderBy,
   limit,
   addDoc,
-  deleteDoc,
 } from "firebase/firestore";
 import { db } from "./firebase";
 
 /**
- * Generate a short readable room code (e.g. "CALC-7X9K")
+ * Generate a short readable room code
  */
 function generateRoomCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -52,8 +52,8 @@ export async function createStudyRoom({ topic, createdBy, displayName }) {
       },
     ],
     timer: {
-      mode: "idle", // idle | running | paused
-      duration: 25 * 60, // 25 minutes default
+      mode: "idle",
+      duration: 25 * 60,
       remaining: 25 * 60,
       startedAt: null,
       updatedAt: serverTimestamp(),
@@ -69,12 +69,28 @@ export async function createStudyRoom({ topic, createdBy, displayName }) {
  * Join a room by code
  */
 export async function joinStudyRoomByCode(code, user) {
-  // Find room by code (simple approach for V1)
-  // In production we can add a code → roomId index
-  const roomsRef = collection(db, "studyRooms");
-  // For V1 we will pass roomId via link, but also support code
-  // We'll improve this later. For now return null and handle in UI.
-  return null; // temporary – we will use roomId primarily
+  if (!code || !user) {
+    throw new Error("Missing code or user");
+  }
+
+  const cleanCode = code.trim().toUpperCase();
+
+  const q = query(
+    collection(db, "studyRooms"),
+    where("code", "==", cleanCode)
+  );
+
+  const snapshot = await getDocs(q);
+
+  if (snapshot.empty) {
+    throw new Error("Room not found. Check the code and try again.");
+  }
+
+  const roomDoc = snapshot.docs[0];
+  const roomId = roomDoc.id;
+
+  // Re-use the existing join logic
+  return await joinStudyRoom(roomId, user);
 }
 
 /**
@@ -135,7 +151,7 @@ export async function leaveStudyRoom(roomId, uid) {
 }
 
 /**
- * Listen to room changes (presence + timer)
+ * Listen to room changes
  */
 export function subscribeToRoom(roomId, callback) {
   const roomRef = doc(db, "studyRooms", roomId);
