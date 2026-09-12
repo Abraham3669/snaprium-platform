@@ -5554,11 +5554,10 @@ canvas {
 
 
 /* =========================================================
-   SNAPRIUM STUDY ROOMS - Production Ready Styles
-   Matches your real accent color (#3b82f6)
+   SNAPRIUM STUDY ROOMS - Production Ready + Mobile Fixed
    ========================================================= */
 
-/* ---------- Study with Friends Button (Main Screen) ---------- */
+/* ---------- Study with Friends Button ---------- */
 .study-with-friends-btn {
   width: 100%;
   max-width: 340px;
@@ -5584,14 +5583,10 @@ canvas {
   box-shadow: 0 6px 20px var(--accent-glow);
 }
 
-.study-with-friends-btn:active {
-  transform: translateY(0);
-}
-
 /* ---------- Study Lobby ---------- */
 .study-lobby {
   min-height: 100vh;
-  padding: 80px 16px 80px; /* ← fixed: space for main header */
+  padding: 80px 16px 100px;
   background: var(--bg);
 }
 
@@ -5601,7 +5596,7 @@ canvas {
 }
 
 .study-lobby-title {
-  font-size: 1.75rem;
+  font-size: 1.7rem;
   font-weight: 700;
   text-align: center;
   margin-bottom: 8px;
@@ -5611,36 +5606,35 @@ canvas {
 .study-lobby-subtitle {
   text-align: center;
   color: var(--text-secondary);
-  margin-bottom: 32px;
+  margin-bottom: 28px;
   font-size: 0.95rem;
 }
 
 .study-card {
   background: var(--surface);
   border-radius: 16px;
-  padding: 24px;
-  margin-bottom: 20px;
+  padding: 22px;
+  margin-bottom: 18px;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border);
 }
 
 .study-card h2 {
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   font-weight: 600;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   color: var(--text-primary);
 }
 
 .study-card input {
   width: 100%;
-  padding: 14px 16px;
+  padding: 13px 15px;
   border-radius: 12px;
   border: 1.5px solid var(--border);
   background: var(--bg);
   font-size: 1rem;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   outline: none;
-  transition: border-color 0.2s;
   color: var(--text-primary);
 }
 
@@ -5650,7 +5644,7 @@ canvas {
 
 .study-card button {
   width: 100%;
-  padding: 14px;
+  padding: 13px;
   border-radius: 12px;
   border: none;
   background: linear-gradient(135deg, var(--accent), var(--accent-dark));
@@ -5658,17 +5652,12 @@ canvas {
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s;
   box-shadow: 0 4px 12px var(--accent-glow);
 }
 
 .study-card button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-}
-
-.study-card button:not(:disabled):hover {
-  opacity: 0.92;
 }
 
 .study-hint {
@@ -5680,8 +5669,8 @@ canvas {
 .study-divider {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin: 8px 0 24px;
+  gap: 14px;
+  margin: 6px 0 20px;
   color: var(--text-secondary);
   font-size: 0.9rem;
 }
@@ -5697,7 +5686,7 @@ canvas {
 .study-back-btn {
   display: block;
   width: 100%;
-  margin-top: 12px;
+  margin-top: 10px;
   padding: 12px;
   background: transparent;
   border: none;
@@ -5707,24 +5696,20 @@ canvas {
   text-align: center;
 }
 
-.study-back-btn:hover {
-  color: var(--accent);
-}
-
 /* ---------- Study Room ---------- */
 .study-room {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100dvh; /* better than 100vh on mobile */
   background: var(--bg);
-  padding-top: 64px; /* ← space for main header */
+  padding-top: 64px;
 }
 
 .study-room-loading {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  height: 100dvh;
   font-size: 1.1rem;
   color: var(--text-secondary);
 }
@@ -5734,48 +5719,50 @@ canvas {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
+  padding: 12px 14px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
+  gap: 10px;
 }
 
 .study-room-header h1 {
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   font-weight: 650;
   margin: 0;
   color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
 }
 
 .study-room-code {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--text-secondary);
   margin: 2px 0 0;
 }
 
 .study-room-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .invite-btn,
 .leave-btn {
-  padding: 8px 14px;
-  border-radius: 10px;
-  font-size: 0.85rem;
+  padding: 7px 11px;
+  border-radius: 9px;
+  font-size: 0.8rem;
   font-weight: 550;
   border: none;
   cursor: pointer;
-  transition: all 0.15s;
+  white-space: nowrap;
 }
 
 .invite-btn {
   background: var(--accent);
   color: white;
-}
-
-.invite-btn:hover {
-  background: var(--accent-dark);
 }
 
 .leave-btn {
@@ -5784,86 +5771,76 @@ canvas {
   border: 1px solid var(--border);
 }
 
-.leave-btn:hover {
-  background: #fee2e2;
-  color: #dc2626;
-  border-color: #fecaca;
-}
-
-[data-theme="dark"] .leave-btn:hover {
-  background: rgba(220, 38, 38, 0.15);
-  color: #f87171;
-  border-color: rgba(248, 113, 113, 0.3);
-}
-
-/* Body layout */
+/* Body */
 .study-room-body {
   display: flex;
   flex: 1;
   overflow: hidden;
+  flex-direction: column; /* mobile first */
 }
 
 /* Sidebar */
 .study-sidebar {
-  width: 260px;
-  padding: 16px;
-  border-right: 1px solid var(--border);
+  width: 100%;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
   background: var(--surface);
-  overflow-y: auto;
+  display: flex;
+  gap: 12px;
   flex-shrink: 0;
 }
 
 .study-timer-card {
+  flex: 1;
   background: linear-gradient(135deg, var(--accent), var(--accent-dark));
   color: white;
   border-radius: 14px;
-  padding: 18px;
-  margin-bottom: 20px;
+  padding: 12px 10px;
   text-align: center;
-  box-shadow: 0 4px 16px var(--accent-glow);
+  box-shadow: 0 4px 14px var(--accent-glow);
 }
 
 .study-timer-card h3 {
-  margin: 0 0 8px;
-  font-size: 0.9rem;
+  margin: 0 0 4px;
+  font-size: 0.8rem;
   font-weight: 500;
   opacity: 0.9;
 }
 
 .timer-display {
-  font-size: 2.4rem;
+  font-size: 1.7rem;
   font-weight: 700;
-  letter-spacing: 2px;
-  margin-bottom: 14px;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
   font-variant-numeric: tabular-nums;
 }
 
 .timer-controls {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   justify-content: center;
 }
 
 .timer-controls button {
-  padding: 7px 14px;
-  border-radius: 8px;
+  padding: 5px 10px;
+  border-radius: 7px;
   border: none;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.22);
   color: white;
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 550;
   cursor: pointer;
-  transition: background 0.15s;
 }
 
-.timer-controls button:hover {
-  background: rgba(255, 255, 255, 0.3);
+.study-participants {
+  flex: 1;
+  min-width: 0;
 }
 
 .study-participants h3 {
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   font-weight: 600;
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   color: var(--text-primary);
 }
 
@@ -5871,15 +5848,20 @@ canvas {
   list-style: none;
   padding: 0;
   margin: 0;
+  max-height: 72px;
+  overflow-y: auto;
 }
 
 .study-participants li {
-  padding: 8px 10px;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  margin-bottom: 4px;
+  padding: 5px 8px;
+  border-radius: 7px;
+  font-size: 0.82rem;
+  margin-bottom: 3px;
   color: var(--text-primary);
   background: var(--bg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ai-participant {
@@ -5888,26 +5870,28 @@ canvas {
   font-weight: 550;
 }
 
-/* Chat area */
+/* Chat */
 .study-chat {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
 }
 
 .messages {
   flex: 1;
   overflow-y: auto;
-  padding: 20px 16px;
+  padding: 14px 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  -webkit-overflow-scrolling: touch;
 }
 
 .message {
-  max-width: 85%;
-  padding: 10px 14px;
+  max-width: 88%;
+  padding: 9px 12px;
   border-radius: 14px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -5927,33 +5911,29 @@ canvas {
 
 .message.ai-message {
   background: color-mix(in srgb, var(--accent) 12%, transparent);
-  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
-}
-
-[data-theme="dark"] .message.ai-message {
-  background: color-mix(in srgb, var(--accent) 18%, transparent);
-  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 28%, transparent);
 }
 
 .message-author {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 600;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
   color: var(--text-secondary);
 }
 
 .message-text {
-  font-size: 0.95rem;
-  line-height: 1.5;
+  font-size: 0.92rem;
+  line-height: 1.45;
   white-space: pre-wrap;
   word-break: break-word;
 }
 
-/* Chat input */
+/* Chat input - very important for mobile */
 .chat-input {
   display: flex;
-  gap: 8px;
-  padding: 12px 16px;
+  gap: 6px;
+  padding: 10px 12px;
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
   background: var(--surface);
   border-top: 1px solid var(--border);
   flex-shrink: 0;
@@ -5961,7 +5941,8 @@ canvas {
 
 .chat-input input {
   flex: 1;
-  padding: 12px 16px;
+  min-width: 0;
+  padding: 11px 13px;
   border-radius: 12px;
   border: 1.5px solid var(--border);
   background: var(--bg);
@@ -5975,13 +5956,14 @@ canvas {
 }
 
 .chat-input button {
-  padding: 0 18px;
+  padding: 0 14px;
   border-radius: 12px;
   border: none;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   cursor: pointer;
-  transition: opacity 0.15s;
+  flex-shrink: 0;
+  height: 44px;
 }
 
 .chat-input button:disabled {
@@ -5998,86 +5980,102 @@ canvas {
   background: linear-gradient(135deg, var(--accent), var(--accent-dark)) !important;
   color: white !important;
   white-space: nowrap;
-  box-shadow: 0 2px 8px var(--accent-glow);
 }
 
-/* ---------- Mobile Responsive ---------- */
-@media (max-width: 768px) {
-  .study-room {
-    padding-top: 60px;
-  }
-
+/* ---------- Desktop improvements ---------- */
+@media (min-width: 769px) {
   .study-room-body {
-    flex-direction: column;
+    flex-direction: row;
   }
 
   .study-sidebar {
-    width: 100%;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-    padding: 12px 16px;
-    display: flex;
-    gap: 16px;
-    align-items: flex-start;
+    width: 260px;
+    border-right: 1px solid var(--border);
+    border-bottom: none;
+    flex-direction: column;
+    padding: 16px;
   }
 
   .study-timer-card {
-    flex: 1;
-    margin-bottom: 0;
-    padding: 14px;
+    margin-bottom: 18px;
   }
 
   .timer-display {
-    font-size: 1.8rem;
-  }
-
-  .study-participants {
-    flex: 1;
+    font-size: 2.3rem;
   }
 
   .study-participants ul {
-    max-height: 90px;
-    overflow-y: auto;
-  }
-
-  .message {
-    max-width: 92%;
-  }
-
-  .chat-input {
-    padding: 10px 12px;
-  }
-
-  .chat-input button {
-    padding: 0 14px;
-  }
-}
-
-@media (max-width: 480px) {
-  .study-lobby {
-    padding-top: 72px;
-  }
-
-  .study-room-header {
-    padding: 12px;
+    max-height: none;
   }
 
   .study-room-header h1 {
-    font-size: 1rem;
+    max-width: 280px;
   }
 
-  .invite-btn,
-  .leave-btn {
-    padding: 7px 10px;
-    font-size: 0.8rem;
+  .message {
+    max-width: 75%;
   }
+}
 
-  .study-sidebar {
-    flex-direction: column;
-    gap: 12px;
-  }
 
-  .study-timer-card {
-    width: 100%;
-  }
+
+
+
+
+
+
+/* ========== FORCE correct spacing for Study with Friends ========== */
+
+.study-friends-wrapper {
+  margin-top: 10px !important;
+  margin-bottom: 36px !important;
+  padding: 0 16px !important;
+  display: flex !important;
+  justify-content: center !important;
+}
+
+.study-with-friends-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  padding: 12px 22px !important;
+  border-radius: 14px !important;
+  border: 1.5px solid var(--accent) !important;
+  background: var(--surface) !important;
+  color: var(--text-primary) !important;
+  font-size: 0.98rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  box-shadow: var(--shadow-sm) !important;
+  transition: var(--transition) !important;
+  max-width: 340px !important;
+  width: 100% !important;
+}
+
+.study-with-friends-btn svg {
+  color: var(--accent) !important;
+  flex-shrink: 0 !important;
+}
+
+.study-with-friends-btn:hover {
+  background: color-mix(in srgb, var(--accent) 9%, var(--surface)) !important;
+  border-color: var(--accent-dark) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 16px var(--accent-glow) !important;
+}
+
+.study-with-friends-btn:active {
+  transform: translateY(0) !important;
+}
+
+/* Also reduce any extra margin coming from camera-container */
+.camera-container {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* Give the subject badges a bit more breathing room from the button */
+.subject-badges {
+  margin-top: 8px !important;
 }

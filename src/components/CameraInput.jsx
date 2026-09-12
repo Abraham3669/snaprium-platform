@@ -161,35 +161,32 @@ export default function CameraInput({ onFileSelect }) {
             </div>
           </div>
 
-          {/* ========== NEW: Study with Friends Button ========== */}
-          <div style={{ marginTop: "28px", padding: "0 16px" }}>
-            <button
-              onClick={() => navigate("/study")}
-              className="study-with-friends-btn"
-              style={{
-                width: "100%",
-                maxWidth: "340px",
-                margin: "0 auto",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "10px",
-                padding: "14px 20px",
-                borderRadius: "14px",
-                border: "none",
-                background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-                color: "white",
-                fontSize: "1.05rem",
-                fontWeight: 600,
-                cursor: "pointer",
-                boxShadow: "0 4px 14px rgba(99, 102, 241, 0.35)",
-              }}
-            >
-              <span style={{ fontSize: "1.3rem" }}>👥</span>
-              Study with Friends
-            </button>
-          </div>
-          {/* ================================================== */}
+        {/* ========== Study with Friends Button ========== */}
+<div className="study-friends-wrapper">
+  <button
+    onClick={() => navigate("/study")}
+    className="study-with-friends-btn"
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+    Study with Friends
+  </button>
+</div>
+{/* ============================================== */}
 
           {/* Hidden inputs */}
           <input

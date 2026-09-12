@@ -1,5 +1,4 @@
 // src/pages/StudyRoom.jsx
-
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -13,6 +12,12 @@ import {
 } from "../lib/studyRooms";
 import { toast } from "react-toastify";
 import { postAPI } from "../utils/apiClient";
+
+// KaTeX + Markdown (same as ResultPanel)
+import ReactMarkdown from "react-markdown";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 
 export default function StudyRoom() {
   const { roomId } = useParams();
@@ -64,12 +69,12 @@ export default function StudyRoom() {
     };
   }, [user, roomId, navigate]);
 
-  // Auto scroll chat
+  // Auto scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Shared timer logic
+  // Shared timer
   useEffect(() => {
     if (!room?.timer) return;
 
@@ -79,7 +84,6 @@ export default function StudyRoom() {
 
     if (room.timer.mode === "running") {
       timerIntervalRef.current = setInterval(() => {
-        // Local countdown (real source of truth is Firestore)
         setRoom((prev) => {
           if (!prev?.timer) return prev;
           const remaining = Math.max(0, (prev.timer.remaining || 0) - 1);
@@ -123,7 +127,7 @@ export default function StudyRoom() {
     setInput("");
     setIsAskingAI(true);
 
-    // First show the user's question in the chat
+    // Show user question first
     await sendMessage(roomId, {
       text: question,
       uid: user.uid,
@@ -132,7 +136,6 @@ export default function StudyRoom() {
     });
 
     try {
-      // Call AI (we will create the endpoint next)
       const res = await postAPI("/api/room-ai", {
         roomId,
         topic: room?.topic || "Math & Physics",
@@ -229,7 +232,7 @@ export default function StudyRoom() {
       </header>
 
       <div className="study-room-body">
-        {/* Left: Participants + Timer */}
+        {/* Sidebar */}
         <aside className="study-sidebar">
           <div className="study-timer-card">
             <h3>Shared Timer</h3>
@@ -252,10 +255,8 @@ export default function StudyRoom() {
               {onlineParticipants.map((p) => (
                 <li key={p.uid}>
                   {p.displayName}
-                  {p.uid === "snaprium-ai" && " 🤖"}
                 </li>
               ))}
-              {/* Always show AI */}
               <li className="ai-participant">Snaprium AI 🤖</li>
             </ul>
           </div>
@@ -275,7 +276,31 @@ export default function StudyRoom() {
                   {msg.displayName}
                   {msg.isAI && " 🤖"}
                 </div>
-                <div className="message-text">{msg.text}</div>
+
+                <div className="message-text">
+                  {msg.isAI ? (
+                    <div className="ai-markdown">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkMath]}
+                        rehypePlugins={[
+                          [
+                            rehypeKatex,
+                            {
+                              output: "html",
+                              throwOnError: false,
+                              strict: "ignore",
+                              trust: true,
+                            },
+                          ],
+                        ]}
+                      >
+                        {prepareMathForKaTeX(msg.text)}
+                      </ReactMarkdown>
+                    </div>
+                  ) : (
+                    msg.text
+                  )}
+                </div>
               </div>
             ))}
             <div ref={messagesEndRef} />
@@ -305,4 +330,25 @@ export default function StudyRoom() {
       </div>
     </div>
   );
+}
+
+// ── Helper (same style as ResultPanel) ──
+function prepareMathForKaTeX(rawText) {
+  if (!rawText) return "";
+
+  let text = rawText;
+
+  // Convert simple a/b to \frac
+  text = text.replace(
+    /(\b\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?\b)(?!\s*\/)/g,
+    "\\frac{$1}{$2}"
+  );
+
+  // Normalize \[ \] to $$
+  text = text.replace(/\\\[([\s\S]*?)\\\]/g, "$$$$$1$$$$");
+
+  // Clean extra whitespace around $$
+  text = text.replace(/\$\$[\s\n]+/g, "$$").replace(/[\s\n]+\$\$/g, "$$");
+
+  return text;
 }
