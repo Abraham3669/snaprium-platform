@@ -6085,38 +6085,45 @@ canvas {
 
 
 
+
+
+
 /* =========================================================
-   SNAPRIUM STUDY ROOM — Fully Fixed (Desktop + Mobile)
+   SNAPRIUM STUDY ROOM - Professional Fixed Version
    ========================================================= */
 
 :root {
-  --main-header-height: 64px; /* Snaprium main header */
+  --main-header-height: 64px;
 }
 
-/* ---------- Base Room ---------- */
 .study-room {
   width: 100%;
   height: calc(100dvh - var(--main-header-height));
-  min-height: calc(100dvh - var(--main-header-height));
   max-height: calc(100dvh - var(--main-header-height));
   margin-top: var(--main-header-height);
-
   display: flex;
   flex-direction: column;
   overflow: hidden;
   background: var(--bg);
-  color: var(--text-primary);
   box-sizing: border-box;
 }
 
-/* ---------- Internal Header ---------- */
+.study-room-loading {
+  height: calc(100dvh - var(--main-header-height));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+/* Header */
 .study-room-header {
-  flex: 0 0 auto;
-  min-height: 56px;
+  flex-shrink: 0;
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
+  padding: 0 14px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   gap: 10px;
@@ -6126,11 +6133,11 @@ canvas {
   margin: 0;
   font-size: 16px;
   font-weight: 700;
-  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 180px;
+  max-width: 160px;
+  color: var(--text-primary);
 }
 
 .study-room-code {
@@ -6163,44 +6170,48 @@ canvas {
   border-color: rgba(59, 130, 246, 0.2) !important;
 }
 
-.leave-btn:hover {
-  color: #ef4444;
-  border-color: rgba(239, 68, 68, 0.3);
-}
-
-/* ---------- Timer + Participants ---------- */
+/* Top Controls */
 .study-top-controls {
-  flex: 0 0 auto;
+  flex-shrink: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
   padding: 10px 12px;
   background: var(--bg);
+  overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.25s ease, padding 0.25s ease;
+  max-height: 220px;
+  opacity: 1;
 }
 
+.study-top-controls.hidden {
+  max-height: 0;
+  opacity: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  pointer-events: none;
+}
 .study-timer-card,
 .study-participants {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 12px;
-  box-shadow: var(--shadow-sm);
 }
 
 .timer-label,
 .participants-label {
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.04em;
   text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: var(--text-secondary);
   margin-bottom: 4px;
 }
 
 .timer-display {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 700;
-  letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
   color: var(--text-primary);
   margin: 2px 0 8px;
@@ -6232,16 +6243,15 @@ canvas {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  max-height: 52px;
+  max-height: 48px;
   overflow-y: auto;
 }
 
 .participant-chip {
   font-size: 11px;
-  padding: 4px 9px;
+  padding: 3px 9px;
   border-radius: 999px;
   background: var(--icon-bg);
-  color: var(--text-primary);
   border: 1px solid rgba(59, 130, 246, 0.15);
   white-space: nowrap;
 }
@@ -6251,10 +6261,10 @@ canvas {
   background: rgba(59, 130, 246, 0.1);
 }
 
-/* ---------- Chat Area (most important) ---------- */
+/* Chat - most important part */
 .study-chat {
   flex: 1 1 auto;
-  min-height: 0;               /* critical for flex scroll */
+  min-height: 0;
   display: flex;
   flex-direction: column;
   padding: 0 12px 10px;
@@ -6273,10 +6283,8 @@ canvas {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  box-shadow: var(--shadow-sm);
 }
 
-/* Messages */
 .message {
   max-width: 85%;
   padding: 9px 12px;
@@ -6297,7 +6305,7 @@ canvas {
 }
 
 .message.my-message .message-author {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255,255,255,0.8);
 }
 
 .message.ai-message {
@@ -6315,7 +6323,7 @@ canvas {
 
 /* Input */
 .chat-input {
-  flex: 0 0 auto;
+  flex-shrink: 0;
   display: flex;
   gap: 6px;
   margin-top: 8px;
@@ -6323,7 +6331,6 @@ canvas {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
-  box-shadow: var(--shadow-sm);
 }
 
 .chat-input input {
@@ -6364,121 +6371,92 @@ canvas {
   cursor: not-allowed;
 }
 
-/* ---------- Desktop ---------- */
+/* Desktop */
 @media (min-width: 769px) {
   .study-room-header {
-    padding: 0 24px;
-    min-height: 64px;
+    height: 60px;
+    padding: 0 20px;
   }
-
   .study-room-header h1 {
-    font-size: 18px;
-    max-width: 320px;
+    font-size: 17px;
+    max-width: 300px;
   }
-
   .study-top-controls {
-    grid-template-columns: 260px 1fr;
-    padding: 14px 20px;
-    gap: 14px;
+    grid-template-columns: 240px 1fr;
+    padding: 12px 16px;
   }
-
   .study-chat {
-    padding: 0 20px 16px;
+    padding: 0 16px 14px;
   }
-
-  .messages {
-    padding: 18px 20px;
-  }
-
   .message {
     max-width: 70%;
-    font-size: 14px;
   }
 }
 
-/* ---------- Mobile refinements ---------- */
+/* Mobile */
 @media (max-width: 650px) {
-  .study-room-header h1 {
-    max-width: 140px;
-  }
-
   .study-top-controls {
     grid-template-columns: 1fr;
     gap: 8px;
     padding: 8px 10px;
   }
-
   .timer-display {
-    font-size: 24px;
+    font-size: 22px;
   }
-
   .participants-list {
-    max-height: 40px;
+    max-height: 38px;
     flex-wrap: nowrap;
     overflow-x: auto;
     scrollbar-width: none;
   }
-
   .participants-list::-webkit-scrollbar {
     display: none;
   }
-
   .chat-input {
     padding-bottom: max(6px, env(safe-area-inset-bottom));
   }
 }
 
-/* Very small phones */
-@media (max-width: 380px) {
-  .study-room-header {
-    padding: 0 10px;
-  }
 
-  .study-top-controls,
-  .study-chat {
-    padding-left: 8px;
-    padding-right: 8px;
-  }
 
-  .timer-display {
-    font-size: 22px;
-  }
+
+
+
+
+/* Force input bar to stay at the bottom */
+.study-chat {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
 }
 
-
-
-
-/* =========================================================
-   SCROLL-AWAY TOP CONTROLS (Professional behavior)
-   ========================================================= */
-
-.study-top-controls {
-  transition: 
-    max-height 0.28s ease,
-    opacity 0.22s ease,
-    padding 0.22s ease,
-    margin 0.22s ease;
-  max-height: 220px;
-  opacity: 1;
-  overflow: hidden;
+.messages {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
 }
 
-.study-top-controls.hidden {
-  max-height: 0 !important;
-  opacity: 0;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  margin: 0 !important;
-  pointer-events: none;
+.chat-input {
+  flex: 0 0 auto !important;
+  flex-shrink: 0 !important;
+  position: relative !important;
+  bottom: auto !important;
+  margin-top: 8px !important;
+  margin-bottom: 0 !important;
+  z-index: 20;
 }
 
-/* On mobile make the transition feel faster and cleaner */
+/* Remove any leftover black space on mobile */
 @media (max-width: 650px) {
-  .study-top-controls {
-    max-height: 280px;
+  .study-room {
+    height: calc(100dvh - var(--main-header-height)) !important;
+    max-height: calc(100dvh - var(--main-header-height)) !important;
   }
-  
-  .study-top-controls.hidden {
-    max-height: 0 !important;
+
+  .chat-input {
+    padding-bottom: max(6px, env(safe-area-inset-bottom)) !important;
   }
 }

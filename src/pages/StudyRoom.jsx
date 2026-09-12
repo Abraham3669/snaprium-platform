@@ -29,95 +29,72 @@ export default function StudyRoom() {
   const [isSending, setIsSending] = useState(false);
   const [isAskingAI, setIsAskingAI] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [hideTopControls, setHideTopControls] = useState(false);
 
   const messagesEndRef = useRef(null);
   const timerIntervalRef = useRef(null);
+  const lastScrollTop = useRef(0);
 
-  const [hideTopControls, setHideTopControls] = useState(false);
-const lastScrollTop = useRef(0);
-
-  // Join room + subscribe (safer version)
-useEffect(() => {
-  if (!user || !roomId) {
-    setLoading(false);
-    return;
-  }
-
-  let unsubRoom = null;
-  let unsubMessages = null;
-  let isMounted = true;
-
-  const init = async () => {
-    try {
-      await joinStudyRoom(roomId, user);
-
-      if (!isMounted) return;
-
-      unsubRoom = subscribeToRoom(roomId, (data) => {
-        if (isMounted) {
-          setRoom(data);
-          setLoading(false);
-        }
-      });
-
-      unsubMessages = subscribeToMessages(roomId, (msgs) => {
-        if (isMounted) {
-          setMessages(msgs);
-        }
-      });
-    } catch (err) {
-      console.error(err);
-      if (isMounted) {
-        toast.error("Could not join the room");
-        navigate("/study");
-      }
+  // Join room
+  useEffect(() => {
+    if (!user || !roomId) {
+      setLoading(false);
+      return;
     }
-  };
 
-  init();
+    let unsubRoom = null;
+    let unsubMessages = null;
+    let isMounted = true;
 
-  return () => {
-    isMounted = false;
-
-    // Always unsubscribe first
-    if (unsubRoom) {
+    const init = async () => {
       try {
-        unsubRoom();
-      } catch (e) {
-        console.warn("Error unsubscribing room:", e);
+        await joinStudyRoom(roomId, user);
+        if (!isMounted) return;
+
+        unsubRoom = subscribeToRoom(roomId, (data) => {
+          if (isMounted) {
+            setRoom(data);
+            setLoading(false);
+          }
+        });
+
+        unsubMessages = subscribeToMessages(roomId, (msgs) => {
+          if (isMounted) setMessages(msgs);
+        });
+      } catch (err) {
+        console.error(err);
+        if (isMounted) {
+          toast.error("Could not join the room");
+          navigate("/study");
+        }
       }
+    };
+
+    init();
+
+    return () => {
+      isMounted = false;
+      if (unsubRoom) try { unsubRoom(); } catch {}
+      if (unsubMessages) try { unsubMessages(); } catch {}
+      if (user?.uid) leaveStudyRoom(roomId, user.uid).catch(() => {});
+    };
+  }, [user, roomId, navigate]);
+
+  // Redirect if signed out
+  useEffect(() => {
+    if (!user && roomId) {
+      navigate("/study", { replace: true });
     }
-    if (unsubMessages) {
-      try {
-        unsubMessages();
-      } catch (e) {
-        console.warn("Error unsubscribing messages:", e);
-      }
-    }
+  }, [user, roomId, navigate]);
 
-    // Only try to leave if we still have a user
-    if (user?.uid) {
-      leaveStudyRoom(roomId, user.uid).catch(() => {});
-    }
-  };
-}, [user, roomId, navigate]);
-
-
-// If user signs out while inside the room → leave cleanly
-useEffect(() => {
-  if (!user && roomId) {
-    // User just signed out
-    navigate("/study", { replace: true });
-  }
-}, [user, roomId, navigate]);
-
+  // Auto scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Timer
   useEffect(() => {
     if (!room?.timer) return;
-
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
 
     if (room.timer.mode === "running") {
@@ -125,10 +102,7 @@ useEffect(() => {
         setRoom((prev) => {
           if (!prev?.timer) return prev;
           const remaining = Math.max(0, (prev.timer.remaining || 0) - 1);
-          return {
-            ...prev,
-            timer: { ...prev.timer, remaining },
-          };
+          return { ...prev, timer: { ...prev.timer, remaining } };
         });
       }, 1000);
     }
@@ -151,7 +125,7 @@ useEffect(() => {
         isAI: false,
       });
       setInput("");
-    } catch (err) {
+    } catch {
       toast.error("Failed to send message");
     } finally {
       setIsSending(false);
@@ -189,8 +163,7 @@ useEffect(() => {
         displayName: "Snaprium AI",
         isAI: true,
       });
-    } catch (err) {
-      console.error(err);
+    } catch {
       await sendMessage(roomId, {
         text: "Sorry, I had trouble answering just now. Please try again.",
         uid: "snaprium-ai",
@@ -213,10 +186,7 @@ useEffect(() => {
 
   const pauseTimer = async () => {
     if (!room?.timer) return;
-    await updateTimer(roomId, {
-      ...room.timer,
-      mode: "paused",
-    });
+    await updateTimer(roomId, { ...room.timer, mode: "paused" });
   };
 
   const resetTimer = async () => {
@@ -229,8 +199,7 @@ useEffect(() => {
   };
 
   const copyInviteLink = () => {
-    const link = `${window.location.origin}/study/${roomId}`;
-    navigator.clipboard.writeText(link);
+    navigator.clipboard.writeText(`${window.location.origin}/study/${roomId}`);
     toast.success("Invite link copied!");
   };
 
@@ -259,18 +228,13 @@ useEffect(() => {
           <p className="study-room-code">Code: {room.code}</p>
         </div>
         <div className="study-room-actions">
-          <button onClick={copyInviteLink} className="invite-btn">
-            Invite
-          </button>
-          <button onClick={() => navigate("/study")} className="leave-btn">
-            Leave
-          </button>
+          <button onClick={copyInviteLink} className="invite-btn">Invite</button>
+          <button onClick={() => navigate("/study")} className="leave-btn">Leave</button>
         </div>
       </header>
 
-      {/* Top controls (Timer + Participants) */}
-     {/* Top controls (Timer + Participants) */}
-<div className={`study-top-controls ${hideTopControls ? "hidden" : ""}`}>
+      {/* Top Controls */}
+      <div className={`study-top-controls ${hideTopControls ? "hidden" : ""}`}>
         <div className="study-timer-card">
           <div className="timer-label">Shared Timer</div>
           <div className="timer-display">
@@ -292,9 +256,7 @@ useEffect(() => {
           </div>
           <div className="participants-list">
             {onlineParticipants.map((p) => (
-              <span key={p.uid} className="participant-chip">
-                {p.displayName}
-              </span>
+              <span key={p.uid} className="participant-chip">{p.displayName}</span>
             ))}
             <span className="participant-chip ai">Snaprium AI</span>
           </div>
@@ -304,24 +266,27 @@ useEffect(() => {
       {/* Chat */}
       <main className="study-chat">
         <div
-  className="messages"
-  onScroll={(e) => {
-    const current = e.target.scrollTop;
-    const diff = current - lastScrollTop.current;
+          className="messages"
+          onScroll={(e) => {
+  const el = e.currentTarget;
+  const current = el.scrollTop;
+  const diff = current - lastScrollTop.current;
 
-    // Scrolling down → hide top controls
-    if (diff > 8 && current > 40) {
-      setHideTopControls(true);
-    }
-    // Scrolling up → show them again
-    else if (diff < -8) {
-      setHideTopControls(false);
-    }
+  // Only react to clear intentional scrolls
+  if (Math.abs(diff) < 12) return;
 
-    lastScrollTop.current = current;
-  }}
->
-  {messages.map((msg) => (
+  if (diff > 0 && current > 60) {
+    // Scrolling down
+    setHideTopControls(true);
+  } else if (diff < 0 && current < 80) {
+    // Scrolling up near the top
+    setHideTopControls(false);
+  }
+
+  lastScrollTop.current = current;
+}}
+        >
+          {messages.map((msg) => (
             <div
               key={msg.id}
               className={`message ${msg.isAI ? "ai-message" : ""} ${
@@ -329,26 +294,14 @@ useEffect(() => {
               }`}
             >
               <div className="message-author">
-                {msg.displayName}
-                {msg.isAI && " · AI"}
+                {msg.displayName}{msg.isAI && " · AI"}
               </div>
-
               <div className="message-text">
                 {msg.isAI ? (
                   <div className="ai-markdown">
                     <ReactMarkdown
                       remarkPlugins={[remarkMath]}
-                      rehypePlugins={[
-                        [
-                          rehypeKatex,
-                          {
-                            output: "html",
-                            throwOnError: false,
-                            strict: "ignore",
-                            trust: true,
-                          },
-                        ],
-                      ]}
+                      rehypePlugins={[[rehypeKatex, { throwOnError: false, strict: "ignore", trust: true }]]}
                     >
                       {prepareMathForKaTeX(msg.text)}
                     </ReactMarkdown>
@@ -370,9 +323,7 @@ useEffect(() => {
             onChange={(e) => setInput(e.target.value)}
             disabled={isSending || isAskingAI}
           />
-          <button type="submit" disabled={isSending || !input.trim()}>
-            Send
-          </button>
+          <button type="submit" disabled={isSending || !input.trim()}>Send</button>
           <button
             type="button"
             className="ask-ai-btn"
@@ -390,10 +341,7 @@ useEffect(() => {
 function prepareMathForKaTeX(rawText) {
   if (!rawText) return "";
   let text = rawText;
-  text = text.replace(
-    /(\b\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?\b)(?!\s*\/)/g,
-    "\\frac{$1}{$2}"
-  );
+  text = text.replace(/(\b\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?\b)(?!\s*\/)/g, "\\frac{$1}{$2}");
   text = text.replace(/\\\[([\s\S]*?)\\\]/g, "$$$$$1$$$$");
   text = text.replace(/\$\$[\s\n]+/g, "$$").replace(/[\s\n]+\$\$/g, "$$");
   return text;
