@@ -5541,3 +5541,543 @@ canvas {
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   SNAPRIUM STUDY ROOMS - Production Ready Styles
+   Matches your real accent color (#3b82f6)
+   ========================================================= */
+
+/* ---------- Study with Friends Button (Main Screen) ---------- */
+.study-with-friends-btn {
+  width: 100%;
+  max-width: 340px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-radius: var(--radius, 14px);
+  border: none;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: white;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 14px var(--accent-glow);
+  transition: var(--transition);
+}
+
+.study-with-friends-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--accent-glow);
+}
+
+.study-with-friends-btn:active {
+  transform: translateY(0);
+}
+
+/* ---------- Study Lobby ---------- */
+.study-lobby {
+  min-height: 100vh;
+  padding: 80px 16px 80px; /* ← fixed: space for main header */
+  background: var(--bg);
+}
+
+.study-lobby-container {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.study-lobby-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.study-lobby-subtitle {
+  text-align: center;
+  color: var(--text-secondary);
+  margin-bottom: 32px;
+  font-size: 0.95rem;
+}
+
+.study-card {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+}
+
+.study-card h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+
+.study-card input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  background: var(--bg);
+  font-size: 1rem;
+  margin-bottom: 16px;
+  outline: none;
+  transition: border-color 0.2s;
+  color: var(--text-primary);
+}
+
+.study-card input:focus {
+  border-color: var(--accent);
+}
+
+.study-card button {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+.study-card button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.study-card button:not(:disabled):hover {
+  opacity: 0.92;
+}
+
+.study-hint {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.study-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 8px 0 24px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.study-divider::before,
+.study-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.study-back-btn {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-align: center;
+}
+
+.study-back-btn:hover {
+  color: var(--accent);
+}
+
+/* ---------- Study Room ---------- */
+.study-room {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--bg);
+  padding-top: 64px; /* ← space for main header */
+}
+
+.study-room-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+}
+
+/* Header */
+.study-room-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.study-room-header h1 {
+  font-size: 1.15rem;
+  font-weight: 650;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.study-room-code {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 2px 0 0;
+}
+
+.study-room-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.invite-btn,
+.leave-btn {
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 550;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.invite-btn {
+  background: var(--accent);
+  color: white;
+}
+
+.invite-btn:hover {
+  background: var(--accent-dark);
+}
+
+.leave-btn {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.leave-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+[data-theme="dark"] .leave-btn:hover {
+  background: rgba(220, 38, 38, 0.15);
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.3);
+}
+
+/* Body layout */
+.study-room-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Sidebar */
+.study-sidebar {
+  width: 260px;
+  padding: 16px;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.study-timer-card {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: white;
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 20px;
+  text-align: center;
+  box-shadow: 0 4px 16px var(--accent-glow);
+}
+
+.study-timer-card h3 {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.timer-display {
+  font-size: 2.4rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin-bottom: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-controls {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.timer-controls button {
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 550;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.timer-controls button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.study-participants h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0 0 12px;
+  color: var(--text-primary);
+}
+
+.study-participants ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.study-participants li {
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+  color: var(--text-primary);
+  background: var(--bg);
+}
+
+.ai-participant {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark)) !important;
+  color: white !important;
+  font-weight: 550;
+}
+
+/* Chat area */
+.study-chat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.message {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  align-self: flex-start;
+}
+
+.message.my-message {
+  align-self: flex-end;
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.message.my-message .message-author {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.message.ai-message {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+[data-theme="dark"] .message.ai-message {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.message-author {
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--text-secondary);
+}
+
+.message-text {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Chat input */
+.chat-input {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.chat-input input {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  background: var(--bg);
+  font-size: 0.95rem;
+  outline: none;
+  color: var(--text-primary);
+}
+
+.chat-input input:focus {
+  border-color: var(--accent);
+}
+
+.chat-input button {
+  padding: 0 18px;
+  border-radius: 12px;
+  border: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.chat-input button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.chat-input button[type="submit"] {
+  background: var(--accent);
+  color: white;
+}
+
+.ask-ai-btn {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark)) !important;
+  color: white !important;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px var(--accent-glow);
+}
+
+/* ---------- Mobile Responsive ---------- */
+@media (max-width: 768px) {
+  .study-room {
+    padding-top: 60px;
+  }
+
+  .study-room-body {
+    flex-direction: column;
+  }
+
+  .study-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .study-timer-card {
+    flex: 1;
+    margin-bottom: 0;
+    padding: 14px;
+  }
+
+  .timer-display {
+    font-size: 1.8rem;
+  }
+
+  .study-participants {
+    flex: 1;
+  }
+
+  .study-participants ul {
+    max-height: 90px;
+    overflow-y: auto;
+  }
+
+  .message {
+    max-width: 92%;
+  }
+
+  .chat-input {
+    padding: 10px 12px;
+  }
+
+  .chat-input button {
+    padding: 0 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .study-lobby {
+    padding-top: 72px;
+  }
+
+  .study-room-header {
+    padding: 12px;
+  }
+
+  .study-room-header h1 {
+    font-size: 1rem;
+  }
+
+  .invite-btn,
+  .leave-btn {
+    padding: 7px 10px;
+    font-size: 0.8rem;
+  }
+
+  .study-sidebar {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .study-timer-card {
+    width: 100%;
+  }
+}

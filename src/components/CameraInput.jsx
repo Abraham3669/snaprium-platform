@@ -1,6 +1,6 @@
 // src/components/CameraInput.jsx
 import { useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Capacitor } from "@capacitor/core";
 
 export default function CameraInput({ onFileSelect }) {
@@ -9,6 +9,7 @@ export default function CameraInput({ onFileSelect }) {
   const dropZoneRef = useRef();
   const [isDragging, setIsDragging] = useState(false);
   const isNative = Capacitor.isNativePlatform();
+  const navigate = useNavigate();
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -65,19 +66,6 @@ export default function CameraInput({ onFileSelect }) {
     <main className="camera-main">
       {/* ─── Always visible (app + browser) ─── */}
       <section className="hero">
-        {/*
-<div className="hero-symbols" aria-hidden="true">
-  <span>π</span>
-  <span>∫</span>
-  <span>Δ</span>
-  <span>√</span>
-  <span>τ</span>
-  <span>Ω</span>
-  <span>Σ</span>
-  <span>λ</span>
-</div>
-*/}
-
         <div className="container text-center">
           <h1
             className={`hero-title${!isNative ? " hero-title-web" : ""}`}
@@ -115,30 +103,29 @@ export default function CameraInput({ onFileSelect }) {
             </div>
 
             {/* Gallery – mobile only */}
-            {/* Gallery – mobile only (modern card) */}
-<div className="action-item mobile-gallery">
-  <div className="gallery-card" onClick={handleGalleryClick}>
-    <div className="gallery-card-icon">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth="1.8"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"
-        />
-      </svg>
-    </div>
-    <div className="gallery-card-text">
-      <span className="gallery-card-title">Upload Image</span>
-      <span className="gallery-card-sub">From gallery</span>
-    </div>
-  </div>
-</div>
+            <div className="action-item mobile-gallery">
+              <div className="gallery-card" onClick={handleGalleryClick}>
+                <div className="gallery-card-icon">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"
+                    />
+                  </svg>
+                </div>
+                <div className="gallery-card-text">
+                  <span className="gallery-card-title">Upload Image</span>
+                  <span className="gallery-card-sub">From gallery</span>
+                </div>
+              </div>
+            </div>
 
             {/* Desktop Drop Zone */}
             <div
@@ -173,6 +160,36 @@ export default function CameraInput({ onFileSelect }) {
               </div>
             </div>
           </div>
+
+          {/* ========== NEW: Study with Friends Button ========== */}
+          <div style={{ marginTop: "28px", padding: "0 16px" }}>
+            <button
+              onClick={() => navigate("/study")}
+              className="study-with-friends-btn"
+              style={{
+                width: "100%",
+                maxWidth: "340px",
+                margin: "0 auto",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "10px",
+                padding: "14px 20px",
+                borderRadius: "14px",
+                border: "none",
+                background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                color: "white",
+                fontSize: "1.05rem",
+                fontWeight: 600,
+                cursor: "pointer",
+                boxShadow: "0 4px 14px rgba(99, 102, 241, 0.35)",
+              }}
+            >
+              <span style={{ fontSize: "1.3rem" }}>👥</span>
+              Study with Friends
+            </button>
+          </div>
+          {/* ================================================== */}
 
           {/* Hidden inputs */}
           <input
@@ -262,6 +279,7 @@ export default function CameraInput({ onFileSelect }) {
       {/* ─── Browser only (marketing website look) ─── */}
       {!isNative && (
         <>
+          
           <section>
             <div className="container">
               <h2 className="section-heading">Build Confidence in Learning</h2>

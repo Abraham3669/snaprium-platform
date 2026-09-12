@@ -21,6 +21,9 @@ import Refund from "./pages/Refund";
 import Checkout from "./pages/Checkout";
 import CheckoutReturn from "./pages/CheckoutReturn";
 
+import StudyLobby from "./pages/StudyLobby";
+import StudyRoom from "./pages/StudyRoom";
+
 import { postAPI } from "./utils/apiClient";
 import {
   doc,
@@ -400,6 +403,10 @@ function App() {
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/checkout-return" element={<CheckoutReturn />} />
           <Route path="*" element={<Navigate to="/" replace />} />
+
+          <Route path="/study" element={<StudyLobby />} />
+<Route path="/study/:roomId" element={<StudyRoom />} />
+
         </Routes>
       </main>
 
