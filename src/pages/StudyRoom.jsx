@@ -33,6 +33,9 @@ export default function StudyRoom() {
   const messagesEndRef = useRef(null);
   const timerIntervalRef = useRef(null);
 
+  const [hideTopControls, setHideTopControls] = useState(false);
+const lastScrollTop = useRef(0);
+
   // Join room + subscribe (safer version)
 useEffect(() => {
   if (!user || !roomId) {
@@ -266,7 +269,8 @@ useEffect(() => {
       </header>
 
       {/* Top controls (Timer + Participants) */}
-      <div className="study-top-controls">
+     {/* Top controls (Timer + Participants) */}
+<div className={`study-top-controls ${hideTopControls ? "hidden" : ""}`}>
         <div className="study-timer-card">
           <div className="timer-label">Shared Timer</div>
           <div className="timer-display">
@@ -299,8 +303,25 @@ useEffect(() => {
 
       {/* Chat */}
       <main className="study-chat">
-        <div className="messages">
-          {messages.map((msg) => (
+        <div
+  className="messages"
+  onScroll={(e) => {
+    const current = e.target.scrollTop;
+    const diff = current - lastScrollTop.current;
+
+    // Scrolling down → hide top controls
+    if (diff > 8 && current > 40) {
+      setHideTopControls(true);
+    }
+    // Scrolling up → show them again
+    else if (diff < -8) {
+      setHideTopControls(false);
+    }
+
+    lastScrollTop.current = current;
+  }}
+>
+  {messages.map((msg) => (
             <div
               key={msg.id}
               className={`message ${msg.isAI ? "ai-message" : ""} ${

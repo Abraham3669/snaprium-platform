@@ -6085,120 +6085,82 @@ canvas {
 
 
 
-
 /* =========================================================
-   SNAPRIUM — STUDY ROOM
-   Professional desktop + mobile layout
+   SNAPRIUM STUDY ROOM — Fully Fixed (Desktop + Mobile)
    ========================================================= */
 
+:root {
+  --main-header-height: 64px; /* Snaprium main header */
+}
+
+/* ---------- Base Room ---------- */
 .study-room {
   width: 100%;
-  height: 100vh;
-  height: 100dvh;
-  min-height: 0;
+  height: calc(100dvh - var(--main-header-height));
+  min-height: calc(100dvh - var(--main-header-height));
+  max-height: calc(100dvh - var(--main-header-height));
+  margin-top: var(--main-header-height);
 
   display: flex;
   flex-direction: column;
-
+  overflow: hidden;
   background: var(--bg);
   color: var(--text-primary);
-
-  overflow: hidden;
+  box-sizing: border-box;
 }
 
-
-/* =========================================================
-   HEADER
-   ========================================================= */
-
+/* ---------- Internal Header ---------- */
 .study-room-header {
-  width: 100%;
-  min-height: 68px;
-  flex: 0 0 68px;
-
+  flex: 0 0 auto;
+  min-height: 56px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-
-  padding: 0 28px;
-  box-sizing: border-box;
-
+  padding: 0 16px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-
-  z-index: 10;
-}
-
-.study-room-header-left {
-  min-width: 0;
+  gap: 10px;
 }
 
 .study-room-header h1 {
   margin: 0;
-
-  color: var(--text-primary);
-
-  font-size: 19px;
-  line-height: 1.25;
+  font-size: 16px;
   font-weight: 700;
-  letter-spacing: -0.015em;
-
+  color: var(--text-primary);
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  max-width: 180px;
 }
 
 .study-room-code {
-  margin: 4px 0 0;
-
+  margin: 2px 0 0;
+  font-size: 11px;
   color: var(--text-secondary);
-
-  font-size: 12px;
-  line-height: 1.3;
 }
 
 .study-room-actions {
   display: flex;
-  align-items: center;
-  gap: 8px;
-
+  gap: 6px;
   flex-shrink: 0;
 }
 
 .study-room-actions button {
-  height: 36px;
-
-  padding: 0 14px;
-
-  border-radius: 9px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 8px;
   border: 1px solid var(--border);
-
-  font-family: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
-
   cursor: pointer;
-
-  transition:
-    background 0.18s ease,
-    border-color 0.18s ease,
-    color 0.18s ease;
+  background: var(--surface);
+  color: var(--text-secondary);
 }
 
 .invite-btn {
-  background: var(--icon-bg);
-  color: var(--accent);
-
-  border-color: rgba(59, 130, 246, 0.18) !important;
-}
-
-.invite-btn:hover {
-  background: rgba(59, 130, 246, 0.15);
-}
-
-.leave-btn {
-  background: var(--surface);
-  color: var(--text-secondary);
+  background: var(--icon-bg) !important;
+  color: var(--accent) !important;
+  border-color: rgba(59, 130, 246, 0.2) !important;
 }
 
 .leave-btn:hover {
@@ -6206,106 +6168,58 @@ canvas {
   border-color: rgba(239, 68, 68, 0.3);
 }
 
-
-/* =========================================================
-   MAIN STUDY AREA
-   ========================================================= */
-
-.study-top-controls,
-.study-chat {
-  width: min(1180px, calc(100% - 48px));
-  margin-left: auto;
-  margin-right: auto;
-  box-sizing: border-box;
-}
-
-
-/* =========================================================
-   TIMER + PARTICIPANTS
-   ========================================================= */
-
+/* ---------- Timer + Participants ---------- */
 .study-top-controls {
   flex: 0 0 auto;
-
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
-
-  gap: 14px;
-
-  padding-top: 16px;
-  padding-bottom: 12px;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg);
 }
 
-
-/* =========================================================
-   TIMER CARD
-   ========================================================= */
-
-.study-timer-card {
-  min-width: 0;
-
-  padding: 15px 17px;
-
+.study-timer-card,
+.study-participants {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
-
+  padding: 12px;
   box-shadow: var(--shadow-sm);
-
-  box-sizing: border-box;
 }
 
-.timer-label {
-  color: var(--text-secondary);
-
-  font-size: 11px;
+.timer-label,
+.participants-label {
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.055em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
 }
 
 .timer-display {
-  margin-top: 5px;
-
-  color: var(--text-primary);
-
-  font-size: 31px;
-  line-height: 1;
+  font-size: 26px;
   font-weight: 700;
-
-  letter-spacing: -0.04em;
-
+  letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  margin: 2px 0 8px;
 }
 
 .timer-controls {
   display: flex;
-  gap: 7px;
-
-  margin-top: 13px;
+  gap: 6px;
 }
 
 .timer-controls button {
   flex: 1;
-
-  height: 34px;
-
+  height: 30px;
+  border-radius: 7px;
   border: 1px solid var(--border);
-  border-radius: 8px;
-
   background: var(--surface);
-  color: var(--text-primary);
-
-  font-family: inherit;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-
   cursor: pointer;
-
-  transition:
-    background 0.18s ease,
-    border-color 0.18s ease,
-    color 0.18s ease;
 }
 
 .timer-controls button:first-child {
@@ -6314,380 +6228,124 @@ canvas {
   color: white;
 }
 
-.timer-controls button:first-child:hover {
-  background: var(--accent-dark);
-}
-
-.timer-controls button:last-child:hover {
-  color: var(--accent);
-  border-color: rgba(59, 130, 246, 0.35);
-}
-
-
-/* =========================================================
-   PARTICIPANTS
-   ========================================================= */
-
-.study-participants {
-  min-width: 0;
-
-  padding: 15px 17px;
-
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-
-  box-shadow: var(--shadow-sm);
-
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-
-  box-sizing: border-box;
-}
-
-.participants-label {
-  margin-bottom: 9px;
-
-  color: var(--text-secondary);
-
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.055em;
-  text-transform: uppercase;
-}
-
 .participants-list {
   display: flex;
-  align-items: center;
   flex-wrap: wrap;
-  gap: 7px;
-
-  min-width: 0;
+  gap: 6px;
+  max-height: 52px;
+  overflow-y: auto;
 }
 
 .participant-chip {
-  display: inline-flex;
-  align-items: center;
-
-  max-width: 180px;
-  min-height: 29px;
-
-  padding: 0 10px;
-
-  box-sizing: border-box;
-
-  background: var(--icon-bg);
-
-  border: 1px solid rgba(59, 130, 246, 0.13);
+  font-size: 11px;
+  padding: 4px 9px;
   border-radius: 999px;
-
+  background: var(--icon-bg);
   color: var(--text-primary);
-
-  font-size: 12px;
-  font-weight: 500;
-
+  border: 1px solid rgba(59, 130, 246, 0.15);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .participant-chip.ai {
   color: var(--accent);
-
-  background: rgba(59, 130, 246, 0.09);
-  border-color: rgba(59, 130, 246, 0.18);
+  background: rgba(59, 130, 246, 0.1);
 }
 
-
-/* =========================================================
-   CHAT CONTAINER
-   ========================================================= */
-
+/* ---------- Chat Area (most important) ---------- */
 .study-chat {
   flex: 1 1 auto;
-
-  min-height: 0;
-
+  min-height: 0;               /* critical for flex scroll */
   display: flex;
   flex-direction: column;
-
-  padding-bottom: 18px;
-
-  box-sizing: border-box;
+  padding: 0 12px 10px;
+  overflow: hidden;
 }
-
-
-/* =========================================================
-   MESSAGE AREA
-   ========================================================= */
 
 .messages {
   flex: 1 1 auto;
-
   min-height: 0;
-
-  width: 100%;
-
-  padding: 22px 24px;
-
-  box-sizing: border-box;
-
-  background: var(--surface);
-
-  border: 1px solid var(--border);
-  border-radius: 13px;
-
   overflow-y: auto;
-  overflow-x: hidden;
-
-  display: flex;
-  flex-direction: column;
-  gap: 13px;
-
-  box-shadow: var(--shadow-sm);
-
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
-}
-
-.messages::-webkit-scrollbar {
-  width: 6px;
-}
-
-.messages::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.messages::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 999px;
-}
-
-
-/* =========================================================
-   MESSAGE BUBBLES
-   ========================================================= */
-
-.message {
-  width: fit-content;
-  max-width: min(680px, 72%);
-
-  padding: 10px 13px;
-
-  box-sizing: border-box;
-
-  background: var(--bg);
-
+  -webkit-overflow-scrolling: touch;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: var(--shadow-sm);
+}
 
-  color: var(--text-primary);
-
-  font-size: 14px;
-  line-height: 1.55;
-
-  overflow-wrap: anywhere;
-
+/* Messages */
+.message {
+  max-width: 85%;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: 13.5px;
+  line-height: 1.5;
   align-self: flex-start;
+  overflow-wrap: anywhere;
+}
+
+.message.my-message {
+  align-self: flex-end;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+.message.my-message .message-author {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.message.ai-message {
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 25%, transparent);
+  border-left: 3px solid var(--accent);
 }
 
 .message-author {
-  margin-bottom: 4px;
-
-  color: var(--text-secondary);
-
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 3px;
 }
 
-.message-text {
-  white-space: pre-wrap;
-}
-
-
-/* =========================================================
-   YOUR MESSAGE
-   ========================================================= */
-
-.my-message {
-  align-self: flex-end;
-
-  background: var(--accent);
-  border-color: var(--accent);
-
-  color: white;
-
-  border-bottom-right-radius: 4px;
-}
-
-.my-message .message-author {
-  color: rgba(255, 255, 255, 0.78);
-}
-
-
-/* =========================================================
-   AI MESSAGE
-   ========================================================= */
-
-.ai-message {
-  max-width: min(760px, 78%);
-
-  background: var(--icon-bg);
-
-  border: 1px solid rgba(59, 130, 246, 0.16);
-  border-left: 3px solid var(--accent);
-
-  border-bottom-left-radius: 4px;
-}
-
-.ai-message .message-author {
-  color: var(--accent);
-}
-
-.ai-markdown {
-  line-height: 1.65;
-}
-
-.ai-markdown p {
-  margin: 0 0 10px;
-}
-
-.ai-markdown p:last-child {
-  margin-bottom: 0;
-}
-
-.ai-markdown ul,
-.ai-markdown ol {
-  margin: 8px 0;
-  padding-left: 22px;
-}
-
-.ai-markdown li {
-  margin: 4px 0;
-}
-
-.ai-markdown strong {
-  font-weight: 700;
-}
-
-.ai-markdown code {
-  padding: 2px 5px;
-
-  background: rgba(100, 116, 139, 0.12);
-
-  border-radius: 5px;
-
-  font-size: 0.9em;
-}
-
-.ai-markdown pre {
-  margin: 10px 0;
-  padding: 12px;
-
-  background: rgba(15, 23, 42, 0.08);
-
-  border-radius: 9px;
-
-  overflow-x: auto;
-}
-
-.ai-markdown pre code {
-  padding: 0;
-  background: transparent;
-}
-
-.ai-markdown .katex-display {
-  margin: 10px 0;
-
-  max-width: 100%;
-
-  overflow-x: auto;
-  overflow-y: hidden;
-
-  padding: 6px 0;
-}
-
-
-/* =========================================================
-   COMPOSER / INPUT
-   THIS STAYS AT THE BOTTOM
-   ========================================================= */
-
+/* Input */
 .chat-input {
   flex: 0 0 auto;
-
-  width: 100%;
-
-  margin-top: 10px;
-
-  min-height: 56px;
-
   display: flex;
-  align-items: center;
-
-  gap: 8px;
-
-  padding: 7px;
-
-  box-sizing: border-box;
-
+  gap: 6px;
+  margin-top: 8px;
+  padding: 6px;
   background: var(--surface);
-
   border: 1px solid var(--border);
-  border-radius: 13px;
-
+  border-radius: 12px;
   box-shadow: var(--shadow-sm);
 }
 
 .chat-input input {
-  flex: 1 1 auto;
-
+  flex: 1;
   min-width: 0;
-
   height: 40px;
-
-  padding: 0 10px;
-
-  box-sizing: border-box;
-
   border: none;
   outline: none;
-
   background: transparent;
-
-  color: var(--text-primary);
-
-  font-family: inherit;
   font-size: 14px;
-}
-
-.chat-input input::placeholder {
-  color: var(--text-secondary);
-  opacity: 0.75;
+  color: var(--text-primary);
+  padding: 0 8px;
 }
 
 .chat-input button {
-  flex: 0 0 auto;
-
   height: 40px;
-
-  padding: 0 15px;
-
+  padding: 0 14px;
   border-radius: 9px;
-  border: 1px solid transparent;
-
-  font-family: inherit;
+  border: none;
   font-size: 13px;
   font-weight: 600;
-
   cursor: pointer;
-
-  transition:
-    background 0.18s ease,
-    border-color 0.18s ease,
-    color 0.18s ease,
-    opacity 0.18s ease;
 }
 
 .chat-input button[type="submit"] {
@@ -6695,156 +6353,69 @@ canvas {
   color: white;
 }
 
-.chat-input button[type="submit"]:hover:not(:disabled) {
-  background: var(--accent-dark);
-}
-
 .ask-ai-btn {
-  background: var(--icon-bg);
-  color: var(--accent);
-
-  border-color: rgba(59, 130, 246, 0.16) !important;
-}
-
-.ask-ai-btn:hover:not(:disabled) {
-  background: rgba(59, 130, 246, 0.15);
+  background: var(--icon-bg) !important;
+  color: var(--accent) !important;
+  border: 1px solid rgba(59, 130, 246, 0.18) !important;
 }
 
 .chat-input button:disabled {
-  opacity: 0.45;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
-
-/* =========================================================
-   TABLET
-   ========================================================= */
-
-@media (max-width: 900px) {
-
+/* ---------- Desktop ---------- */
+@media (min-width: 769px) {
   .study-room-header {
-    padding: 0 20px;
-  }
-
-  .study-top-controls,
-  .study-chat {
-    width: calc(100% - 36px);
-  }
-
-  .study-top-controls {
-    grid-template-columns: 250px minmax(0, 1fr);
-  }
-
-  .message {
-    max-width: 78%;
-  }
-
-  .ai-message {
-    max-width: 84%;
-  }
-}
-
-
-/* =========================================================
-   MOBILE
-   ========================================================= */
-
-@media (max-width: 650px) {
-
-  .study-room {
-    height: 100dvh;
-    min-height: 0;
-
-    overflow: hidden;
-  }
-
-
-  /* ---------- Header ---------- */
-
-  .study-room-header {
-    min-height: 60px;
-    height: 60px;
-    flex-basis: 60px;
-
-    padding: 0 13px;
-
-    gap: 8px;
+    padding: 0 24px;
+    min-height: 64px;
   }
 
   .study-room-header h1 {
-    font-size: 16px;
+    font-size: 18px;
+    max-width: 320px;
   }
-
-  .study-room-code {
-    margin-top: 2px;
-    font-size: 10px;
-  }
-
-  .study-room-actions {
-    gap: 5px;
-  }
-
-  .study-room-actions button {
-    height: 34px;
-
-    padding: 0 10px;
-
-    border-radius: 8px;
-
-    font-size: 11px;
-  }
-
-
-  /* ---------- Controls ---------- */
 
   .study-top-controls {
-    width: calc(100% - 26px);
+    grid-template-columns: 260px 1fr;
+    padding: 14px 20px;
+    gap: 14px;
+  }
 
-    padding-top: 9px;
-    padding-bottom: 8px;
+  .study-chat {
+    padding: 0 20px 16px;
+  }
 
+  .messages {
+    padding: 18px 20px;
+  }
+
+  .message {
+    max-width: 70%;
+    font-size: 14px;
+  }
+}
+
+/* ---------- Mobile refinements ---------- */
+@media (max-width: 650px) {
+  .study-room-header h1 {
+    max-width: 140px;
+  }
+
+  .study-top-controls {
     grid-template-columns: 1fr;
-
-    gap: 7px;
-  }
-
-  .study-timer-card,
-  .study-participants {
-    padding: 11px 13px;
-
-    border-radius: 11px;
-  }
-
-  .timer-label,
-  .participants-label {
-    font-size: 9px;
+    gap: 8px;
+    padding: 8px 10px;
   }
 
   .timer-display {
-    font-size: 27px;
-  }
-
-  .timer-controls {
-    margin-top: 9px;
-  }
-
-  .timer-controls button {
-    height: 31px;
-
-    font-size: 11px;
-  }
-
-  .participants-label {
-    margin-bottom: 7px;
+    font-size: 24px;
   }
 
   .participants-list {
+    max-height: 40px;
     flex-wrap: nowrap;
-
     overflow-x: auto;
-
-    padding-bottom: 1px;
-
     scrollbar-width: none;
   }
 
@@ -6852,290 +6423,62 @@ canvas {
     display: none;
   }
 
-  .participant-chip {
-    flex: 0 0 auto;
-
-    min-height: 27px;
-
-    font-size: 10px;
-  }
-
-
-  /* ---------- Chat ---------- */
-
-  .study-chat {
-    width: calc(100% - 26px);
-
-    min-height: 0;
-
-    padding-bottom: 10px;
-  }
-
-  .messages {
-    min-height: 0;
-
-    padding: 14px 11px;
-
-    border-radius: 11px;
-
-    gap: 9px;
-  }
-
-  .message {
-    max-width: 88%;
-
-    padding: 9px 11px;
-
-    border-radius: 10px;
-
-    font-size: 13px;
-    line-height: 1.5;
-  }
-
-  .ai-message {
-    max-width: 94%;
-  }
-
-  .message-author {
-    margin-bottom: 3px;
-
-    font-size: 10px;
-  }
-
-
-  /* ---------- Composer ---------- */
-
   .chat-input {
-    min-height: 50px;
-
-    margin-top: 7px;
-
-    padding: 5px;
-
-    gap: 5px;
-
-    border-radius: 11px;
-  }
-
-  .chat-input input {
-    height: 38px;
-
-    padding: 0 7px;
-
-    font-size: 13px;
-  }
-
-  .chat-input button {
-    height: 36px;
-
-    padding: 0 10px;
-
-    border-radius: 8px;
-
-    font-size: 11px;
-  }
-}
-
-
-/* =========================================================
-   VERY SMALL PHONES
-   ========================================================= */
-
-@media (max-width: 380px) {
-
-  .study-room-header {
-    padding: 0 9px;
-  }
-
-  .study-room-header h1 {
-    font-size: 14px;
-  }
-
-  .study-room-actions button {
-    padding: 0 8px;
-  }
-
-  .study-top-controls,
-  .study-chat {
-    width: calc(100% - 18px);
-  }
-
-  .study-timer-card,
-  .study-participants {
-    padding: 9px 11px;
-  }
-
-  .timer-display {
-    font-size: 25px;
-  }
-
-  .chat-input button {
-    padding: 0 8px;
-  }
-
-  .chat-input input {
-    font-size: 12px;
-  }
-}
-
-
-/* =========================================================
-   DARK MODE
-   ========================================================= */
-
-[data-theme="dark"] .study-room {
-  background: var(--bg);
-}
-
-[data-theme="dark"] .study-room-header,
-[data-theme="dark"] .study-timer-card,
-[data-theme="dark"] .study-participants,
-[data-theme="dark"] .messages,
-[data-theme="dark"] .chat-input {
-  box-shadow: none;
-}
-
-[data-theme="dark"] .message {
-  background: rgba(30, 41, 59, 0.52);
-}
-
-[data-theme="dark"] .ai-message {
-  background: rgba(96, 165, 250, 0.07);
-  border-color: rgba(96, 165, 250, 0.14);
-  border-left-color: var(--accent);
-}
-
-[data-theme="dark"] .ai-markdown pre {
-  background: rgba(0, 0, 0, 0.25);
-}
-
-
-/* =========================================================
-   TOUCH DEVICES
-   ========================================================= */
-
-@media (hover: none) {
-
-  .study-room button {
-    -webkit-tap-highlight-color: transparent;
-  }
-}
-
-
-/* =========================================================
-   SAFE AREA
-   ========================================================= */
-
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-
-  @media (max-width: 650px) {
-
-    .study-chat {
-      padding-bottom: max(10px, env(safe-area-inset-bottom));
-    }
-  }
-}
-
-
-
-
-/* =========================================================
-   PROPER FIX — Study Room under main Snaprium header
-   Works on iPhone, Android, mobile browser & Capacitor
-   ========================================================= */
-
-/* Main app header is approximately 64px tall */
-:root {
-  --main-header-height: 64px;
-}
-
-.study-room {
-  position: relative;
-  width: 100%;
-  height: calc(100dvh - var(--main-header-height)) !important;
-  min-height: calc(100dvh - var(--main-header-height)) !important;
-  max-height: calc(100dvh - var(--main-header-height)) !important;
-  margin-top: var(--main-header-height) !important; /* push below main header */
-  display: flex;
-  flex-direction: column;
-  overflow: hidden !important;
-  box-sizing: border-box;
-  background: var(--bg);
-}
-
-/* Remove any previous padding-top that was fighting the header */
-.study-room {
-  padding-top: 0 !important;
-}
-
-/* Make the internal Study Room header normal (not fighting the main header) */
-.study-room-header {
-  position: relative !important;
-  top: 0 !important;
-  flex-shrink: 0;
-  z-index: 5;
-}
-
-/* Chat + input layout */
-.study-chat {
-  flex: 1 1 auto !important;
-  min-height: 0 !important;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.messages {
-  flex: 1 1 auto !important;
-  min-height: 0 !important;
-  overflow-y: auto !important;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Keep the input bar at the bottom and stop it from jumping */
-.chat-input {
-  flex-shrink: 0 !important;
-  position: relative !important;
-  bottom: auto !important;
-  margin-top: 8px;
-  z-index: 10;
-}
-
-/* ========== MOBILE ========== */
-@media (max-width: 650px) {
-  .study-room {
-    height: calc(100dvh - var(--main-header-height)) !important;
-    min-height: calc(100dvh - var(--main-header-height)) !important;
-    max-height: calc(100dvh - var(--main-header-height)) !important;
-  }
-
-  .study-top-controls,
-  .study-chat {
-    width: 100% !important;
-    max-width: 100% !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    padding-left: 12px !important;
-    padding-right: 12px !important;
-    box-sizing: border-box;
-  }
-
-  .study-room-header {
-    padding-left: 12px !important;
-    padding-right: 12px !important;
-  }
-
-  /* Extra safe area for iPhone home indicator */
-  .chat-input {
-    padding-bottom: max(8px, env(safe-area-inset-bottom)) !important;
+    padding-bottom: max(6px, env(safe-area-inset-bottom));
   }
 }
 
 /* Very small phones */
 @media (max-width: 380px) {
+  .study-room-header {
+    padding: 0 10px;
+  }
+
   .study-top-controls,
   .study-chat {
-    padding-left: 10px !important;
-    padding-right: 10px !important;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .timer-display {
+    font-size: 22px;
+  }
+}
+
+
+
+
+/* =========================================================
+   SCROLL-AWAY TOP CONTROLS (Professional behavior)
+   ========================================================= */
+
+.study-top-controls {
+  transition: 
+    max-height 0.28s ease,
+    opacity 0.22s ease,
+    padding 0.22s ease,
+    margin 0.22s ease;
+  max-height: 220px;
+  opacity: 1;
+  overflow: hidden;
+}
+
+.study-top-controls.hidden {
+  max-height: 0 !important;
+  opacity: 0;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  margin: 0 !important;
+  pointer-events: none;
+}
+
+/* On mobile make the transition feel faster and cleaner */
+@media (max-width: 650px) {
+  .study-top-controls {
+    max-height: 280px;
+  }
+  
+  .study-top-controls.hidden {
+    max-height: 0 !important;
   }
 }
