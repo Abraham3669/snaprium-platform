@@ -33,39 +33,80 @@ export default function StudyRoom() {
   const messagesEndRef = useRef(null);
   const timerIntervalRef = useRef(null);
 
-  useEffect(() => {
-    if (!user || !roomId) return;
+  // Join room + subscribe (safer version)
+useEffect(() => {
+  if (!user || !roomId) {
+    setLoading(false);
+    return;
+  }
 
-    let unsubRoom = null;
-    let unsubMessages = null;
+  let unsubRoom = null;
+  let unsubMessages = null;
+  let isMounted = true;
 
-    const init = async () => {
-      try {
-        await joinStudyRoom(roomId, user);
+  const init = async () => {
+    try {
+      await joinStudyRoom(roomId, user);
 
-        unsubRoom = subscribeToRoom(roomId, (data) => {
+      if (!isMounted) return;
+
+      unsubRoom = subscribeToRoom(roomId, (data) => {
+        if (isMounted) {
           setRoom(data);
           setLoading(false);
-        });
+        }
+      });
 
-        unsubMessages = subscribeToMessages(roomId, (msgs) => {
+      unsubMessages = subscribeToMessages(roomId, (msgs) => {
+        if (isMounted) {
           setMessages(msgs);
-        });
-      } catch (err) {
-        console.error(err);
+        }
+      });
+    } catch (err) {
+      console.error(err);
+      if (isMounted) {
         toast.error("Could not join the room");
         navigate("/study");
       }
-    };
+    }
+  };
 
-    init();
+  init();
 
-    return () => {
-      if (unsubRoom) unsubRoom();
-      if (unsubMessages) unsubMessages();
+  return () => {
+    isMounted = false;
+
+    // Always unsubscribe first
+    if (unsubRoom) {
+      try {
+        unsubRoom();
+      } catch (e) {
+        console.warn("Error unsubscribing room:", e);
+      }
+    }
+    if (unsubMessages) {
+      try {
+        unsubMessages();
+      } catch (e) {
+        console.warn("Error unsubscribing messages:", e);
+      }
+    }
+
+    // Only try to leave if we still have a user
+    if (user?.uid) {
       leaveStudyRoom(roomId, user.uid).catch(() => {});
-    };
-  }, [user, roomId, navigate]);
+    }
+  };
+}, [user, roomId, navigate]);
+
+
+// If user signs out while inside the room → leave cleanly
+useEffect(() => {
+  if (!user && roomId) {
+    // User just signed out
+    navigate("/study", { replace: true });
+  }
+}, [user, roomId, navigate]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
