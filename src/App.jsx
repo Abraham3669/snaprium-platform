@@ -290,139 +290,151 @@ function App() {
   };
 
   return (
-    <div className="App min-h-screen">
-      <ErrorBanner />
-      <ToastContainer
-        position="bottom-center"
-        autoClose={5000}
-        hideProgressBar
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme={theme}
-      />
+  <div className="App min-h-screen">
+    <ErrorBanner />
+    <ToastContainer
+      position="bottom-center"
+      autoClose={5000}
+      hideProgressBar
+      newestOnTop
+      closeOnClick
+      rtl={false}
+      pauseOnFocusLoss
+      draggable
+      pauseOnHover
+      theme={theme}
+    />
 
-      <header className="snaprium-header">
-        <div className="snaprium-header-inner">
-          <div className="snaprium-brand">
-            <img
-              src={new URL("./assets/logo.png", import.meta.url).href}
-              alt="Snaprium Logo"
-              className="snaprium-logo"
-              width="32"
-              height="32"
-            />
-            snaprium
-          </div>
-
-          <div className="header-right">
-            {user && (user.plan === "unlimited" || user.plan === "premium") && (
-              <div className="plan-badge unlimited" title="Unlimited Plan Active">
-                <span className="diamond-icon">◆</span>
-                Unlimited
-              </div>
-            )}
-
-            <button
-              onClick={() => setIsDashboardOpen(true)}
-              className="snaprium-menu-btn"
-              aria-label="Open dashboard"
-            >
-              <svg viewBox="0 0 24 24" fill="none">
-                <line x1="4" y1="7" x2="20" y2="7" />
-                <line x1="4" y1="12" x2="20" y2="12" />
-                <line x1="4" y1="17" x2="20" y2="17" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main className="pt-16">
-        <Dashboard
-          isOpen={isDashboardOpen}
-          onClose={() => setIsDashboardOpen(false)}
-          toggleTheme={toggleTheme}
-          theme={theme}
-        />
-
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <>
-                <CameraInput
-                  onFileSelect={(selectedFile) => {
-                    setFile(selectedFile);
-                    setIsCropperOpen(true);
-                    logEvent(analytics, "camera_input_started", {
-                      user_type: user ? "registered" : "guest",
-                    });
-                  }}
-                  onOpenDashboard={() => setIsDashboardOpen(true)}
-                />
-
-                <CropperModal
-                  file={file}
-                  isOpen={isCropperOpen}
-                  onClose={() => {
-                    setIsCropperOpen(false);
-                    setFile(null);
-                  }}
-                  onCrop={handleCropComplete}
-                />
-
-                {isResultOpen && (
-                  <ResultPanel
-                    result={{ image: croppedImage, text: resultText }}
-                    loading={isProcessing}
-                    onClose={() => setIsResultOpen(false)}
-                  />
-                )}
-
-                {showUpgradeModal && (
-                  <UpgradeModal
-                    isOpen={showUpgradeModal}
-                    onClose={() => setShowUpgradeModal(false)}
-                  />
-                )}
-              </>
-            }
+    {!location.pathname.startsWith("/study") && (
+  <header className="snaprium-header">
+      <div className="snaprium-header-inner">
+        <div className="snaprium-brand">
+          <img
+            src={new URL("./assets/logo.png", import.meta.url).href}
+            alt="Snaprium Logo"
+            className="snaprium-logo"
+            width="32"
+            height="32"
           />
+          snaprium
+        </div>
 
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/terms" element={<Terms />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/upgrade" element={<Upgrade />} />
-          <Route path="/refunds" element={<Refund />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/checkout-return" element={<CheckoutReturn />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+        <div className="header-right">
+          {user && (user.plan === "unlimited" || user.plan === "premium") && (
+            <div className="plan-badge unlimited" title="Unlimited Plan Active">
+              <span className="diamond-icon">◆</span>
+              Unlimited
+            </div>
+          )}
 
-          <Route path="/study" element={<StudyLobby />} />
-<Route path="/study/:roomId" element={<StudyRoom />} />
+          <button
+            onClick={() => setIsDashboardOpen(true)}
+            className="snaprium-menu-btn"
+            aria-label="Open dashboard"
+          >
+            <svg viewBox="0 0 24 24" fill="none">
+              <line x1="4" y1="7" x2="20" y2="7" />
+              <line x1="4" y1="12" x2="20" y2="12" />
+              <line x1="4" y1="17" x2="20" y2="17" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      </header>
+)}
 
-        </Routes>
-      </main>
+    <Dashboard
+      isOpen={isDashboardOpen}
+      onClose={() => setIsDashboardOpen(false)}
+      toggleTheme={toggleTheme}
+      theme={theme}
+    />
 
-      {showWelcomeModal && user && (
-        <WelcomeModal
-          plan={user.plan}
-          onClose={() => setShowWelcomeModal(false)}
-        />
-      )}
+    {/* Single Routes — no conflict */}
+    <Routes>
+      {/* Study Room needs full control of the screen */}
+      <Route path="/study/:roomId" element={<StudyRoom />} />
 
-      <BottomNav
-        toggleTheme={toggleTheme}
-        theme={theme}
-        isResultOpen={isResultOpen}
+      {/* Everything else stays in the normal padded layout */}
+      <Route
+        path="*"
+        element={
+          <main className="pt-16">
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  <>
+                    <CameraInput
+                      onFileSelect={(selectedFile) => {
+                        setFile(selectedFile);
+                        setIsCropperOpen(true);
+                        logEvent(analytics, "camera_input_started", {
+                          user_type: user ? "registered" : "guest",
+                        });
+                      }}
+                      onOpenDashboard={() => setIsDashboardOpen(true)}
+                    />
+
+                    <CropperModal
+                      file={file}
+                      isOpen={isCropperOpen}
+                      onClose={() => {
+                        setIsCropperOpen(false);
+                        setFile(null);
+                      }}
+                      onCrop={handleCropComplete}
+                    />
+
+                    {isResultOpen && (
+                      <ResultPanel
+                        result={{ image: croppedImage, text: resultText }}
+                        loading={isProcessing}
+                        onClose={() => setIsResultOpen(false)}
+                      />
+                    )}
+
+                    {showUpgradeModal && (
+                      <UpgradeModal
+                        isOpen={showUpgradeModal}
+                        onClose={() => setShowUpgradeModal(false)}
+                      />
+                    )}
+                  </>
+                }
+              />
+
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/upgrade" element={<Upgrade />} />
+              <Route path="/refunds" element={<Refund />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/checkout-return" element={<CheckoutReturn />} />
+              <Route path="/study" element={<StudyLobby />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </main>
+        }
       />
-    </div>
+    </Routes>
+
+    {showWelcomeModal && user && (
+      <WelcomeModal
+        plan={user.plan}
+        onClose={() => setShowWelcomeModal(false)}
+      />
+    )}
+
+    <BottomNav
+      toggleTheme={toggleTheme}
+      theme={theme}
+      isResultOpen={isResultOpen}
+    />
+  </div>
+
   );
 }
 

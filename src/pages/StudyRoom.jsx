@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import "../styles/study-room.css";
 import {
   subscribeToRoom,
   subscribeToMessages,
@@ -33,9 +34,7 @@ export default function StudyRoom() {
 
   const messagesEndRef = useRef(null);
   const timerIntervalRef = useRef(null);
-  const lastScrollTop = useRef(0);
 
-  // Join room
   useEffect(() => {
     if (!user || !roomId) {
       setLoading(false);
@@ -80,19 +79,16 @@ export default function StudyRoom() {
     };
   }, [user, roomId, navigate]);
 
-  // Redirect if signed out
   useEffect(() => {
     if (!user && roomId) {
       navigate("/study", { replace: true });
     }
   }, [user, roomId, navigate]);
 
-  // Auto scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Timer
   useEffect(() => {
     if (!room?.timer) return;
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
@@ -221,7 +217,6 @@ export default function StudyRoom() {
 
   return (
     <div className="study-room">
-      {/* Header */}
       <header className="study-room-header">
         <div className="study-room-header-left">
           <h1>{room.topic}</h1>
@@ -233,7 +228,14 @@ export default function StudyRoom() {
         </div>
       </header>
 
-      {/* Top Controls */}
+      <button
+        type="button"
+        className="study-tools-toggle"
+        onClick={() => setHideTopControls((v) => !v)}
+      >
+        {hideTopControls ? "Show timer & people" : "Hide timer & people"}
+      </button>
+
       <div className={`study-top-controls ${hideTopControls ? "hidden" : ""}`}>
         <div className="study-timer-card">
           <div className="timer-label">Shared Timer</div>
@@ -242,11 +244,11 @@ export default function StudyRoom() {
           </div>
           <div className="timer-controls">
             {room.timer?.mode !== "running" ? (
-              <button onClick={() => startTimer(25)}>Start</button>
+              <button type="button" onClick={() => startTimer(25)}>Start</button>
             ) : (
-              <button onClick={pauseTimer}>Pause</button>
+              <button type="button" onClick={pauseTimer}>Pause</button>
             )}
-            <button onClick={resetTimer}>Reset</button>
+            <button type="button" onClick={resetTimer}>Reset</button>
           </div>
         </div>
 
@@ -263,29 +265,8 @@ export default function StudyRoom() {
         </div>
       </div>
 
-      {/* Chat */}
       <main className="study-chat">
-        <div
-          className="messages"
-          onScroll={(e) => {
-  const el = e.currentTarget;
-  const current = el.scrollTop;
-  const diff = current - lastScrollTop.current;
-
-  // Only react to clear intentional scrolls
-  if (Math.abs(diff) < 12) return;
-
-  if (diff > 0 && current > 60) {
-    // Scrolling down
-    setHideTopControls(true);
-  } else if (diff < 0 && current < 80) {
-    // Scrolling up near the top
-    setHideTopControls(false);
-  }
-
-  lastScrollTop.current = current;
-}}
-        >
+        <div className="messages">
           {messages.map((msg) => (
             <div
               key={msg.id}
