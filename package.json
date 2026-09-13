@@ -17,6 +17,7 @@
     "@capacitor/cli": "^8.5.0",
     "@capacitor/core": "^8.5.0",
     "@capacitor/ios": "^8.5.1",
+    "@daily-co/daily-js": "^0.92.2",
     "@paddle/paddle-js": "^1.6.2",
     "cropperjs": "^1.6.2",
     "firebase": "^12.10.0",

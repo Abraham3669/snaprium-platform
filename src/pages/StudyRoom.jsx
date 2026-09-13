@@ -13,6 +13,7 @@ import {
 } from "../lib/studyRooms";
 import { toast } from "react-toastify";
 import { postAPI } from "../utils/apiClient";
+import StudyCall from "../components/StudyCall";
 
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
@@ -31,6 +32,7 @@ export default function StudyRoom() {
   const [isAskingAI, setIsAskingAI] = useState(false);
   const [loading, setLoading] = useState(true);
   const [hideTopControls, setHideTopControls] = useState(false);
+  const [callOpen, setCallOpen] = useState(false);
 
   const messagesEndRef = useRef(null);
   const timerIntervalRef = useRef(null);
@@ -223,10 +225,21 @@ export default function StudyRoom() {
           <p className="study-room-code">Code: {room.code}</p>
         </div>
         <div className="study-room-actions">
+          <button type="button" onClick={() => setCallOpen(true)} className="invite-btn">
+            {callOpen ? "In call" : "Start video"}
+          </button>
           <button onClick={copyInviteLink} className="invite-btn">Invite</button>
           <button onClick={() => navigate("/study")} className="leave-btn">Leave</button>
         </div>
       </header>
+
+      {callOpen && (
+        <StudyCall
+          roomId={roomId}
+          user={user}
+          onClose={() => setCallOpen(false)}
+        />
+      )}
 
       <button
         type="button"
