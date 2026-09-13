@@ -16,7 +16,8 @@ export default function StudyCall({ roomId, user, onClose }) {
   const [camOn, setCamOn] = useState(false);
   const [micOn, setMicOn] = useState(false);
   const [sharing, setSharing] = useState(false);
-  const [participants, setParticipants] = useState([]);
+const [participants, setParticipants] = useState([]);
+const [activeScreenId, setActiveScreenId] = useState(null);
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -149,23 +150,40 @@ export default function StudyCall({ roomId, user, onClose }) {
     onCloseRef.current?.();
   };
 
-  const screens = participants.filter((p) => getTrack(p, "screenVideo"));
+const screens = participants.filter((p) => getTrack(p, "screenVideo"));
+const activeScreen =
+  screens.find((p) => p.session_id === activeScreenId) || screens[0] || null;
 
   return (
     <div className="study-call">
       {screens.length > 0 && (
-        <div className="study-call-stage">
-          {screens.map((p) => (
-            <video
-              key={`screen-${p.session_id}`}
-              data-daily-screen={p.session_id}
-              autoPlay
-              playsInline
-              muted
-            />
-          ))}
-        </div>
-      )}
+  <div className="study-call-stage">
+    {screens.length > 1 && (
+      <div className="study-call-screen-switch">
+        {screens.map((p) => (
+          <button
+            key={`pick-${p.session_id}`}
+            type="button"
+            className={activeScreen?.session_id === p.session_id ? "active" : ""}
+            onClick={() => setActiveScreenId(p.session_id)}
+          >
+            {p.local ? "Your screen" : `${p.user_name || "Student"}'s screen`}
+          </button>
+        ))}
+      </div>
+    )}
+
+    {activeScreen && (
+      <video
+        key={`screen-${activeScreen.session_id}`}
+        data-daily-screen={activeScreen.session_id}
+        autoPlay
+        playsInline
+        muted
+      />
+    )}
+  </div>
+)}
 
       <div className="study-call-strip">
         {joining && <div className="study-call-status">Joining call...</div>}

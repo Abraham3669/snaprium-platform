@@ -36,6 +36,7 @@ export default function StudyRoom() {
 
   const messagesEndRef = useRef(null);
   const timerIntervalRef = useRef(null);
+  
 
   useEffect(() => {
     if (!user || !roomId) {

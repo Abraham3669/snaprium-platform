@@ -390,3 +390,59 @@
   color: var(--text-secondary);
   padding: 12px 0;
 }
+
+
+
+
+.study-call-screen-switch {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+  overflow-x: auto;
+}
+
+.study-call-screen-switch button {
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.study-call-screen-switch button.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+
+
+.study-room button {
+  color: var(--text-primary);
+}
+
+.study-room-actions button,
+.study-tools-toggle,
+.timer-controls button,
+.study-call-controls button,
+.chat-input button {
+  color: var(--text-primary);
+}
+
+.invite-btn,
+.chat-input button[type="submit"],
+.timer-controls button:first-child {
+  color: #fff !important;
+}
+
+.ask-ai-btn {
+  color: var(--accent) !important;
+}
+
+.study-call-leave,
+.leave-btn {
+  color: #ef4444 !important;
+}
