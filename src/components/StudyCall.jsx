@@ -6,17 +6,26 @@ import { toast } from "react-toastify";
 
 export default function StudyCall({ roomId, user, onClose }) {
   const callRef = useRef(null);
+  const onCloseRef = useRef(onClose);
   const [joining, setJoining] = useState(true);
+  const [error, setError] = useState("");
   const [camOn, setCamOn] = useState(false);
   const [micOn, setMicOn] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [participants, setParticipants] = useState([]);
 
   useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
     let cancelled = false;
 
     const start = async () => {
       try {
+        setError("");
+        setJoining(true);
+
         const data = await postAPI("/api/daily-room", {
           roomId,
           userName: user?.displayName || "Student",
@@ -24,23 +33,30 @@ export default function StudyCall({ roomId, user, onClose }) {
 
         if (cancelled) return;
 
-        const call = DailyIframe.createCallObject({
-          videoSource: false,
-          audioSource: false,
-        });
+        if (!data?.url) {
+          throw new Error(data?.error || "No Daily room URL returned");
+        }
+
+        const call = DailyIframe.createCallObject();
         callRef.current = call;
 
         const sync = () => {
-          const list = Object.values(call.participants() || {});
-          setParticipants(list);
+          setParticipants(Object.values(call.participants() || {}));
         };
 
-        call.on("joined-meeting", sync);
+        call.on("joined-meeting", () => {
+          sync();
+          setJoining(false);
+        });
         call.on("participant-joined", sync);
         call.on("participant-updated", sync);
         call.on("participant-left", sync);
         call.on("track-started", sync);
         call.on("track-stopped", sync);
+        call.on("error", (e) => {
+          console.error("[Daily]", e);
+          setError(e?.errorMsg || "Call error");
+        });
 
         await call.join({
           url: data.url,
@@ -48,12 +64,13 @@ export default function StudyCall({ roomId, user, onClose }) {
           startVideoOff: true,
           startAudioOff: true,
         });
-
-        if (!cancelled) setJoining(false);
       } catch (err) {
         console.error(err);
-        toast.error("Could not start the study call");
-        onClose?.();
+        if (!cancelled) {
+          setJoining(false);
+          setError(err.message || "Could not start the study call");
+          toast.error("Could not start the study call");
+        }
       }
     };
 
@@ -67,16 +84,18 @@ export default function StudyCall({ roomId, user, onClose }) {
         callRef.current = null;
       }
     };
-  }, [roomId, user?.displayName, onClose]);
+  }, [roomId, user?.displayName]);
 
   useEffect(() => {
-    const videos = document.querySelectorAll("[data-daily-session]");
-    videos.forEach((el) => {
-      const sessionId = el.getAttribute("data-daily-session");
-      const p = participants.find((x) => x.session_id === sessionId);
+    participants.forEach((p) => {
+      const el = document.querySelector(`[data-daily-session="${p.session_id}"]`);
+      if (!el) return;
       const track = p?.tracks?.video?.persistentTrack || p?.tracks?.video?.track;
-      if (track && el.srcObject?.getVideoTracks?.()[0] !== track) {
-        el.srcObject = new MediaStream([track]);
+      if (track) {
+        const current = el.srcObject?.getVideoTracks?.()[0];
+        if (current !== track) {
+          el.srcObject = new MediaStream([track]);
+        }
       }
     });
   }, [participants]);
@@ -103,7 +122,7 @@ export default function StudyCall({ roomId, user, onClose }) {
         setSharing(true);
       }
     } catch {
-      toast.error("Screen share is best on desktop for now");
+      toast.error("Screen share works best on desktop");
     }
   };
 
@@ -111,13 +130,14 @@ export default function StudyCall({ roomId, user, onClose }) {
     try {
       await callRef.current?.leave();
     } catch {}
-    onClose?.();
+    onCloseRef.current?.();
   };
 
   return (
     <div className="study-call">
       <div className="study-call-strip">
         {joining && <div className="study-call-status">Joining call...</div>}
+        {error && <div className="study-call-status">{error}</div>}
 
         {participants.map((p) => (
           <div key={p.session_id} className="study-call-tile">
@@ -125,7 +145,7 @@ export default function StudyCall({ roomId, user, onClose }) {
               data-daily-session={p.session_id}
               autoPlay
               playsInline
-              muted={p.local}
+              muted={!!p.local}
             />
             <div className="study-call-name">
               {p.local ? "You" : p.user_name || "Student"}
