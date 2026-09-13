@@ -5726,3 +5726,17 @@ canvas {
   min-height: 100dvh;
   padding-top: 24px;
 }
+
+
+
+.study-call-stage {
+  margin-bottom: 8px;
+}
+
+.study-call-stage video {
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+  background: #0f172a;
+  border-radius: 12px;
+}
