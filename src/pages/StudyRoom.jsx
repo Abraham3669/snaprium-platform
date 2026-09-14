@@ -368,13 +368,23 @@ export default function StudyRoom() {
                     )}
                   </>
                 )}
-                {msg.isAI ? (
+                                {msg.isAI ? (
                   <div className="ai-markdown">
                     <ReactMarkdown
                       remarkPlugins={[remarkMath]}
-                      rehypePlugins={[[rehypeKatex, { throwOnError: false, strict: "ignore", trust: true }]]}
+                      rehypePlugins={[
+                        [
+                          rehypeKatex,
+                          {
+                            output: "html",
+                            throwOnError: false,
+                            strict: "ignore",
+                            trust: true,
+                          },
+                        ],
+                      ]}
                     >
-                      {prepareMathForKaTeX(msg.text)}
+                      {fixCommonMathGlue(prepareMathForKaTeX(msg.text))}
                     </ReactMarkdown>
                   </div>
                 ) : (
@@ -451,11 +461,20 @@ function fileToCompressedDataUrl(file) {
   });
 }
 
+function fixCommonMathGlue(text) {
+  if (!text) return text;
+  return text.replace(/(\$[^\s$]{1,60}?)\$\$/g, "$1$");
+}
+
 function prepareMathForKaTeX(rawText) {
   if (!rawText) return "";
   let text = rawText;
-  text = text.replace(/(\b\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?\b)(?!\s*\/)/g, "\\frac{$1}{$2}");
+  text = text.replace(
+    /(\b\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?\b)(?!\s*\/)/g,
+    "\\frac{$1}{$2}"
+  );
   text = text.replace(/\\\[([\s\S]*?)\\\]/g, "$$$$$1$$$$");
+  text = text.replace(/\\\(([\s\S]*?)\\\)/g, "$$$1$$");
   text = text.replace(/\$\$[\s\n]+/g, "$$").replace(/[\s\n]+\$\$/g, "$$");
   return text;
 }

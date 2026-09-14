@@ -16,8 +16,8 @@ export default function StudyCall({ roomId, user, onClose }) {
   const [camOn, setCamOn] = useState(false);
   const [micOn, setMicOn] = useState(false);
   const [sharing, setSharing] = useState(false);
-const [participants, setParticipants] = useState([]);
-const [activeScreenId, setActiveScreenId] = useState(null);
+  const [participants, setParticipants] = useState([]);
+  const [activeScreenId, setActiveScreenId] = useState(null);
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -106,7 +106,6 @@ const [activeScreenId, setActiveScreenId] = useState(null);
         screenEl.srcObject = new MediaStream([screen]);
       }
 
-      // Play everyone else's mic. Keep your own muted to avoid echo.
       if (audioEl && audio && !p.local) {
         if (audioEl.srcObject?.getAudioTracks?.()[0] !== audio) {
           audioEl.srcObject = new MediaStream([audio]);
@@ -150,40 +149,40 @@ const [activeScreenId, setActiveScreenId] = useState(null);
     onCloseRef.current?.();
   };
 
-const screens = participants.filter((p) => getTrack(p, "screenVideo"));
-const activeScreen =
-  screens.find((p) => p.session_id === activeScreenId) || screens[0] || null;
+  const screens = participants.filter((p) => getTrack(p, "screenVideo"));
+  const activeScreen =
+    screens.find((p) => p.session_id === activeScreenId) || screens[0] || null;
 
   return (
     <div className="study-call">
       {screens.length > 0 && (
-  <div className="study-call-stage">
-    {screens.length > 1 && (
-      <div className="study-call-screen-switch">
-        {screens.map((p) => (
-          <button
-            key={`pick-${p.session_id}`}
-            type="button"
-            className={activeScreen?.session_id === p.session_id ? "active" : ""}
-            onClick={() => setActiveScreenId(p.session_id)}
-          >
-            {p.local ? "Your screen" : `${p.user_name || "Student"}'s screen`}
-          </button>
-        ))}
-      </div>
-    )}
+        <div className="study-call-stage">
+          {screens.length > 1 && (
+            <div className="study-call-screen-switch">
+              {screens.map((p) => (
+                <button
+                  key={`pick-${p.session_id}`}
+                  type="button"
+                  className={activeScreen?.session_id === p.session_id ? "active" : ""}
+                  onClick={() => setActiveScreenId(p.session_id)}
+                >
+                  {p.local ? "Your screen" : `${p.user_name || "Student"}'s screen`}
+                </button>
+              ))}
+            </div>
+          )}
 
-    {activeScreen && (
-      <video
-        key={`screen-${activeScreen.session_id}`}
-        data-daily-screen={activeScreen.session_id}
-        autoPlay
-        playsInline
-        muted
-      />
-    )}
-  </div>
-)}
+          {activeScreen && (
+            <video
+              key={`screen-${activeScreen.session_id}`}
+              data-daily-screen={activeScreen.session_id}
+              autoPlay
+              playsInline
+              muted
+            />
+          )}
+        </div>
+      )}
 
       <div className="study-call-strip">
         {joining && <div className="study-call-status">Joining call...</div>}
@@ -197,9 +196,7 @@ const activeScreen =
               playsInline
               muted={!!p.local}
             />
-            {!p.local && (
-              <audio data-daily-audio={p.session_id} autoPlay />
-            )}
+            {!p.local && <audio data-daily-audio={p.session_id} autoPlay />}
             <div className="study-call-name">
               {p.local ? "You" : p.user_name || "Student"}
             </div>
@@ -208,11 +205,82 @@ const activeScreen =
       </div>
 
       <div className="study-call-controls">
-        <button type="button" onClick={toggleMic}>{micOn ? "Mute" : "Unmute"}</button>
-        <button type="button" onClick={toggleCam}>{camOn ? "Camera off" : "Camera on"}</button>
-        <button type="button" onClick={toggleShare}>{sharing ? "Stop share" : "Share screen"}</button>
-        <button type="button" className="study-call-leave" onClick={leave}>Leave call</button>
+        <button type="button" onClick={toggleMic} title={micOn ? "Mute" : "Unmute"}>
+          {micOn ? <MicOnIcon /> : <MicOffIcon />}
+          <span>{micOn ? "Mute" : "Unmute"}</span>
+        </button>
+        <button type="button" onClick={toggleCam} title={camOn ? "Camera off" : "Camera on"}>
+          {camOn ? <CamOnIcon /> : <CamOffIcon />}
+          <span>{camOn ? "Camera off" : "Camera on"}</span>
+        </button>
+        <button type="button" onClick={toggleShare} title={sharing ? "Stop share" : "Share screen"}>
+          <ShareIcon />
+          <span>{sharing ? "Stop share" : "Share"}</span>
+        </button>
+        <button type="button" className="study-call-leave" onClick={leave} title="Leave call">
+          <LeaveCallIcon />
+          <span>Leave</span>
+        </button>
       </div>
     </div>
+  );
+}
+
+function MicOnIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="9" y="2" width="6" height="11" rx="3" />
+      <path d="M5 11a7 7 0 0 0 14 0" />
+      <line x1="12" y1="18" x2="12" y2="22" />
+    </svg>
+  );
+}
+
+function MicOffIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="9" y="2" width="6" height="11" rx="3" />
+      <path d="M5 11a7 7 0 0 0 14 0" />
+      <line x1="4" y1="4" x2="20" y2="20" />
+    </svg>
+  );
+}
+
+function CamOnIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M23 7l-7 5 7 5V7z" />
+      <rect x="1" y="5" width="15" height="14" rx="2" />
+    </svg>
+  );
+}
+
+function CamOffIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M23 7l-7 5 7 5V7z" />
+      <rect x="1" y="5" width="15" height="14" rx="2" />
+      <line x1="2" y1="2" x2="22" y2="22" />
+    </svg>
+  );
+}
+
+function ShareIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="2" y="3" width="20" height="14" rx="2" />
+      <path d="M8 21h8" />
+      <path d="M12 17v4" />
+    </svg>
+  );
+}
+
+function LeaveCallIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M10 5H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h5" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
   );
 }

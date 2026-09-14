@@ -511,3 +511,56 @@
   font-weight: 600;
   cursor: pointer;
 }
+
+
+
+
+
+.message.ai-message {
+  align-self: flex-start !important;
+  max-width: 94% !important;
+  text-align: left !important;
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface)) !important;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border)) !important;
+  border-left: 3px solid var(--accent) !important;
+}
+
+.ai-markdown {
+  text-align: left !important;
+  color: var(--text-primary) !important;
+  line-height: 1.65 !important;
+}
+
+.ai-markdown p,
+.ai-markdown li,
+.ai-markdown h1,
+.ai-markdown h2,
+.ai-markdown h3 {
+  text-align: left !important;
+  margin: 0 0 10px !important;
+}
+
+.ai-markdown p:last-child {
+  margin-bottom: 0 !important;
+}
+
+.ai-markdown ul,
+.ai-markdown ol {
+  margin: 8px 0 10px !important;
+  padding-left: 20px !important;
+}
+
+.ai-markdown .katex {
+  font-size: 1.12em !important;
+  font-weight: 600 !important;
+}
+
+.ai-markdown .katex-display {
+  margin: 12px 0 !important;
+  text-align: left !important;
+  overflow-x: auto !important;
+}
+
+.ai-markdown .katex-display > .katex {
+  text-align: left !important;
+}
