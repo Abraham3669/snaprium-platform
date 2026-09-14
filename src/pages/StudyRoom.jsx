@@ -460,9 +460,9 @@ export default function StudyRoom() {
             )}
           </div>
 
-          <input
+                    <input
             type="text"
-            placeholder={!isPaid ? `Message or ask AI · ${roomAILeft} left` : "Message or ask AI..."}
+            placeholder="Message friends..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={isSending || isAskingAI}
@@ -476,7 +476,7 @@ export default function StudyRoom() {
             onClick={handleAskAI}
             disabled={isAskingAI || (!input.trim() && !messages.some((m) => m.imageUrl))}
           >
-            {isAskingAI ? "..." : "Ask AI"}
+                        {isAskingAI ? "..." : "Ask AI"}
           </button>
         </form>
       </main>
