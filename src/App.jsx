@@ -428,11 +428,13 @@ function App() {
       />
     )}
 
-    <BottomNav
-      toggleTheme={toggleTheme}
-      theme={theme}
-      isResultOpen={isResultOpen}
-    />
+        {!location.pathname.startsWith("/study") && (
+      <BottomNav
+        toggleTheme={toggleTheme}
+        theme={theme}
+        isResultOpen={isResultOpen}
+      />
+    )}
   </div>
 
   );

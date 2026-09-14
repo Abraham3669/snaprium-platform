@@ -17,6 +17,12 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 
+import { deleteDoc } from "firebase/firestore";
+
+export async function deleteMessage(roomId, messageId) {
+  await deleteDoc(doc(db, "studyRooms", roomId, "messages", messageId));
+}
+
 /**
  * Generate a short readable room code
  */

@@ -7,6 +7,7 @@ import {
   subscribeToRoom,
   subscribeToMessages,
   sendMessage,
+  deleteMessage,
   joinStudyRoom,
   leaveStudyRoom,
   updateTimer,
@@ -22,7 +23,7 @@ import "katex/dist/katex.min.css";
 
 export default function StudyRoom() {
   const { roomId } = useParams();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const [room, setRoom] = useState(null);
@@ -33,12 +34,15 @@ export default function StudyRoom() {
   const [loading, setLoading] = useState(true);
   const [hideTopControls, setHideTopControls] = useState(false);
   const [callOpen, setCallOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const messagesEndRef = useRef(null);
   const timerIntervalRef = useRef(null);
-  
+  const photoInputRef = useRef(null);
 
   useEffect(() => {
+    if (authLoading) return;
+
     if (!user || !roomId) {
       setLoading(false);
       return;
@@ -78,15 +82,14 @@ export default function StudyRoom() {
       isMounted = false;
       if (unsubRoom) try { unsubRoom(); } catch {}
       if (unsubMessages) try { unsubMessages(); } catch {}
-      if (user?.uid) leaveStudyRoom(roomId, user.uid).catch(() => {});
     };
-  }, [user, roomId, navigate]);
+  }, [authLoading, user, roomId, navigate]);
 
   useEffect(() => {
-    if (!user && roomId) {
+    if (!authLoading && !user && roomId) {
       navigate("/study", { replace: true });
     }
-  }, [user, roomId, navigate]);
+  }, [authLoading, user, roomId, navigate]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -122,6 +125,7 @@ export default function StudyRoom() {
         uid: user.uid,
         displayName: user.displayName || "Student",
         isAI: false,
+        type: "text",
       });
       setInput("");
     } catch {
@@ -131,10 +135,11 @@ export default function StudyRoom() {
     }
   };
 
-  const handleAskAI = async () => {
-    if (!input.trim() || isAskingAI || !user) return;
+    const handleAskAI = async () => {
+    const lastImage = [...messages].reverse().find((m) => m.imageUrl)?.imageUrl || "";
+    if ((!input.trim() && !lastImage) || isAskingAI || !user) return;
 
-    const question = input.trim();
+    const question = input.trim() || "Please help the group with this shared question photo.";
     setInput("");
     setIsAskingAI(true);
 
@@ -143,6 +148,7 @@ export default function StudyRoom() {
       uid: user.uid,
       displayName: user.displayName || "Student",
       isAI: false,
+      type: "text",
     });
 
     try {
@@ -150,6 +156,10 @@ export default function StudyRoom() {
         roomId,
         topic: room?.topic || "Math & Physics",
         question,
+               imageUrl: lastImage?.startsWith("http") ? lastImage : "",
+        imageBase64: lastImage?.startsWith("data:")
+          ? lastImage.split(",")[1]
+          : "",
         recentMessages: messages.slice(-8).map((m) => ({
           role: m.isAI ? "assistant" : "user",
           content: m.text,
@@ -161,6 +171,7 @@ export default function StudyRoom() {
         uid: "snaprium-ai",
         displayName: "Snaprium AI",
         isAI: true,
+        type: "text",
       });
     } catch {
       await sendMessage(roomId, {
@@ -168,9 +179,34 @@ export default function StudyRoom() {
         uid: "snaprium-ai",
         displayName: "Snaprium AI",
         isAI: true,
+        type: "text",
       });
     } finally {
       setIsAskingAI(false);
+    }
+  };
+
+    const handleShareQuestion = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !user) return;
+
+    setIsUploading(true);
+    try {
+      const dataUrl = await fileToCompressedDataUrl(file);
+      await sendMessage(roomId, {
+        text: "Shared a question",
+        imageUrl: dataUrl,
+        type: "image",
+        uid: user.uid,
+        displayName: user.displayName || "Student",
+        isAI: false,
+      });
+    } catch (err) {
+      console.error(err);
+      toast.error("Could not share the question");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -197,6 +233,13 @@ export default function StudyRoom() {
     });
   };
 
+  const handleLeave = async () => {
+    try {
+      if (user?.uid) await leaveStudyRoom(roomId, user.uid);
+    } catch {}
+    navigate("/study");
+  };
+
   const copyInviteLink = () => {
     navigator.clipboard.writeText(`${window.location.origin}/study/${roomId}`);
     toast.success("Invite link copied!");
@@ -208,7 +251,7 @@ export default function StudyRoom() {
     return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
-  if (loading || !room) {
+  if (authLoading || loading || !room) {
     return (
       <div className="study-room-loading">
         <p>Joining study room...</p>
@@ -226,11 +269,22 @@ export default function StudyRoom() {
           <p className="study-room-code">Code: {room.code}</p>
         </div>
         <div className="study-room-actions">
-          <button type="button" onClick={() => setCallOpen(true)} className="invite-btn">
+          <button
+            type="button"
+            onClick={() => setCallOpen((v) => !v)}
+            className="invite-btn"
+          >
+            <VideoIcon />
             {callOpen ? "In call" : "Start video"}
           </button>
-          <button onClick={copyInviteLink} className="invite-btn">Invite</button>
-          <button onClick={() => navigate("/study")} className="leave-btn">Leave</button>
+          <button onClick={copyInviteLink} className="invite-btn">
+            <LinkIcon />
+            Invite
+          </button>
+          <button onClick={handleLeave} className="leave-btn">
+            <LeaveIcon />
+            Leave
+          </button>
         </div>
       </header>
 
@@ -292,6 +346,28 @@ export default function StudyRoom() {
                 {msg.displayName}{msg.isAI && " · AI"}
               </div>
               <div className="message-text">
+                                {msg.imageUrl && (
+                  <>
+                    <img
+                      src={msg.imageUrl}
+                      alt="Shared question"
+                      className="room-shared-image"
+                    />
+                    {msg.uid === user?.uid && (
+                      <button
+                        type="button"
+                        className="delete-msg-btn"
+                        onClick={() =>
+                          deleteMessage(roomId, msg.id).catch(() =>
+                            toast.error("Could not delete")
+                          )
+                        }
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </>
+                )}
                 {msg.isAI ? (
                   <div className="ai-markdown">
                     <ReactMarkdown
@@ -312,18 +388,37 @@ export default function StudyRoom() {
 
         <form className="chat-input" onSubmit={handleSend}>
           <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            hidden
+            onChange={handleShareQuestion}
+          />
+          <button
+            type="button"
+            className="share-photo-btn"
+            onClick={() => photoInputRef.current?.click()}
+            disabled={isUploading}
+            title="Share a question"
+          >
+            <CameraIcon />
+          </button>
+          <input
             type="text"
             placeholder="Message or ask AI..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={isSending || isAskingAI}
           />
-          <button type="submit" disabled={isSending || !input.trim()}>Send</button>
+          <button type="submit" disabled={isSending || !input.trim()}>
+            <SendIcon />
+          </button>
           <button
             type="button"
             className="ask-ai-btn"
             onClick={handleAskAI}
-            disabled={isAskingAI || !input.trim()}
+           disabled={isAskingAI || (!input.trim() && !messages.some((m) => m.imageUrl))}
           >
             {isAskingAI ? "..." : "Ask AI"}
           </button>
@@ -333,6 +428,29 @@ export default function StudyRoom() {
   );
 }
 
+function fileToCompressedDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const max = 900;
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.65));
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 function prepareMathForKaTeX(rawText) {
   if (!rawText) return "";
   let text = rawText;
@@ -340,4 +458,50 @@ function prepareMathForKaTeX(rawText) {
   text = text.replace(/\\\[([\s\S]*?)\\\]/g, "$$$$$1$$$$");
   text = text.replace(/\$\$[\s\n]+/g, "$$").replace(/[\s\n]+\$\$/g, "$$");
   return text;
+}
+
+function VideoIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M23 7l-7 5 7 5V7z" />
+      <rect x="1" y="5" width="15" height="14" rx="2" />
+    </svg>
+  );
+}
+
+function LinkIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+    </svg>
+  );
+}
+
+function LeaveIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  );
+}
+
+function CameraIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+      <circle cx="12" cy="13" r="4" />
+    </svg>
+  );
+}
+
+function SendIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <line x1="22" y1="2" x2="11" y2="13" />
+      <polygon points="22 2 15 22 11 13 2 9 22 2" />
+    </svg>
+  );
 }

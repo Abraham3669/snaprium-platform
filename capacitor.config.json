@@ -8,8 +8,8 @@
   },
   "plugins": {
     "CapacitorHttp": {
-  "enabled": false
-},
+      "enabled": false
+    },
     "FirebaseAuthentication": {
       "skipNativeAuth": false,
       "providers": ["google.com"],
