@@ -4,7 +4,12 @@ import { X } from 'lucide-react';
 import { useNavigate } from "react-router-dom";
 import { useAuth } from '../context/AuthContext';
 
-export default function UpgradeModal({ isOpen, onClose }) {
+export default function UpgradeModal({
+  isOpen,
+  onClose,
+  title = "Daily Limit Reached",
+  subtitle = "You've used your 5 free solves for today.",
+}) {
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -36,10 +41,8 @@ export default function UpgradeModal({ isOpen, onClose }) {
     </svg>
   </div>
 
-  <h2 className="upgrade-title">Daily Limit Reached</h2>
-  <p className="upgrade-subtitle">
-    You've used your <strong>5 free solves</strong> for today.
-  </p>
+    <h2 className="upgrade-title">{title}</h2>
+  <p className="upgrade-subtitle">{subtitle}</p>
 </div>
 
         <div className="upgrade-body">

@@ -90,8 +90,8 @@ export default function Upgrade() {
   return (
     <div className="upgrade-page">
       <div className="upgrade-header">
-        <h2>Upgrade to Unlimited</h2>
-        <p>Study Math and Physics without limits</p>
+               <h2>Upgrade to Unlimited</h2>
+        <p>Solve freely. Study with friends. Keep going when it matters.</p>
       </div>
 
       {!showCheckout && (
@@ -101,26 +101,28 @@ export default function Upgrade() {
             <div className="plan-price">
               $0 <span>per month</span>
             </div>
-            <p className="plan-desc">
-              <strong>5 solves per day</strong>
+                        <p className="plan-desc">
+              <strong>5 home solves / day</strong>
             </p>
-            <p className="plan-detail">Great for occasional help and trying out the app</p>
+            <p className="plan-detail">
+              Try the solver, join study rooms, and use 5 group AI asks per day.
+            </p>
             <button className="plan-cta disabled">Current Plan</button>
           </div>
 
           <div className="pricing-card premium">
             <div className="popular-badge">RECOMMENDED</div>
-            <h3>Unlimited</h3>
+                        <h3>Unlimited</h3>
             <div className="plan-price">
-              $5.99 <span>per month</span>
+              $9.99 <span>per month</span>
             </div>
-            <p className="plan-desc">Solve as many problems as you need</p>
+            <p className="plan-desc">For students who study every day</p>
             <ul className="plan-features">
-              <li><CheckIcon /> Ask more follow-up questions to fully understand every solution</li>
-              <li><CheckIcon /> Study whenever you need — no daily limits</li>
-              <li><CheckIcon /> Perfect for heavy study sessions and exam preparation</li>
-              
-              <li><CheckIcon /> Continue learning without interruptions</li>
+              <li><CheckIcon /> Unlimited photo solves on the home screen</li>
+              <li><CheckIcon /> More follow-up questions on every solution</li>
+              <li><CheckIcon /> Study rooms stay included — video, screen share, and shared questions</li>
+<li><CheckIcon /> 40 group AI asks per day, enough for real study sessions with friends</li>
+              <li><CheckIcon /> Built for exam nights and long study sessions</li>
             </ul>
             <button
               className="plan-cta primary"

@@ -15,15 +15,22 @@ import {
 import { toast } from "react-toastify";
 import { postAPI } from "../utils/apiClient";
 import StudyCall from "../components/StudyCall";
+import UpgradeModal from "../components/UpgradeModal";
+import { doc, updateDoc, increment, serverTimestamp } from "firebase/firestore";
+import { db } from "../lib/firebase";
 
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
 
+const FREE_ROOM_AI_LIMIT = 5;
+const PAID_ROOM_AI_LIMIT = 40;
+const getToday = () => new Date().toISOString().split("T")[0];
+
 export default function StudyRoom() {
   const { roomId } = useParams();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, refreshUser } = useAuth();
   const navigate = useNavigate();
 
   const [room, setRoom] = useState(null);
@@ -35,10 +42,20 @@ export default function StudyRoom() {
   const [hideTopControls, setHideTopControls] = useState(false);
   const [callOpen, setCallOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showPhotoMenu, setShowPhotoMenu] = useState(false);
 
   const messagesEndRef = useRef(null);
   const timerIntervalRef = useRef(null);
-  const photoInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
+  const galleryInputRef = useRef(null);
+
+  const isPaid = user?.plan === "unlimited" || user?.plan === "premium";
+  const today = getToday();
+  const usedRoomAI = user?.lastRoomAIDate === today ? user?.dailyRoomAI || 0 : 0;
+  const roomAILimit = isPaid ? PAID_ROOM_AI_LIMIT : FREE_ROOM_AI_LIMIT;
+    const roomAILeft = Math.max(0, roomAILimit - usedRoomAI);
+  const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   useEffect(() => {
     if (authLoading) return;
@@ -114,6 +131,32 @@ export default function StudyRoom() {
     };
   }, [room?.timer?.mode, room?.timer?.startedAt]);
 
+  const incrementRoomAI = async () => {
+    if (!user?.uid) return;
+    const userRef = doc(db, "users", user.uid);
+    const nextCount = usedRoomAI + 1;
+    await updateDoc(userRef, {
+      dailyRoomAI: nextCount,
+      lastRoomAIDate: today,
+      updatedAt: serverTimestamp(),
+    });
+    refreshUser?.();
+  };
+
+  const canUseRoomAI = () => {
+    if (!user) return false;
+    if (usedRoomAI >= roomAILimit) {
+      if (isPaid) {
+        toast.info("You’ve used a lot of group AI today. Keep studying — it resets tomorrow.");
+      } else {
+        toast.info("You’ve used today’s free group AI. Upgrade to keep asking.");
+        setShowUpgradeModal(true);
+      }
+      return false;
+    }
+    return true;
+  };
+
   const handleSend = async (e) => {
     e.preventDefault();
     if (!input.trim() || isSending || !user) return;
@@ -135,9 +178,10 @@ export default function StudyRoom() {
     }
   };
 
-    const handleAskAI = async () => {
+  const handleAskAI = async () => {
     const lastImage = [...messages].reverse().find((m) => m.imageUrl)?.imageUrl || "";
     if ((!input.trim() && !lastImage) || isAskingAI || !user) return;
+    if (!canUseRoomAI()) return;
 
     const question = input.trim() || "Please help the group with this shared question photo.";
     setInput("");
@@ -156,10 +200,8 @@ export default function StudyRoom() {
         roomId,
         topic: room?.topic || "Math & Physics",
         question,
-               imageUrl: lastImage?.startsWith("http") ? lastImage : "",
-        imageBase64: lastImage?.startsWith("data:")
-          ? lastImage.split(",")[1]
-          : "",
+        imageUrl: lastImage?.startsWith("http") ? lastImage : "",
+        imageBase64: lastImage?.startsWith("data:") ? lastImage.split(",")[1] : "",
         recentMessages: messages.slice(-8).map((m) => ({
           role: m.isAI ? "assistant" : "user",
           content: m.text,
@@ -173,6 +215,8 @@ export default function StudyRoom() {
         isAI: true,
         type: "text",
       });
+
+      await incrementRoomAI();
     } catch {
       await sendMessage(roomId, {
         text: "Sorry, I had trouble answering just now. Please try again.",
@@ -186,9 +230,10 @@ export default function StudyRoom() {
     }
   };
 
-    const handleShareQuestion = async (e) => {
+  const handleShareQuestion = async (e) => {
     const file = e.target.files?.[0];
     e.target.value = "";
+    setShowPhotoMenu(false);
     if (!file || !user) return;
 
     setIsUploading(true);
@@ -269,11 +314,7 @@ export default function StudyRoom() {
           <p className="study-room-code">Code: {room.code}</p>
         </div>
         <div className="study-room-actions">
-          <button
-            type="button"
-            onClick={() => setCallOpen((v) => !v)}
-            className="invite-btn"
-          >
+          <button type="button" onClick={() => setCallOpen((v) => !v)} className="invite-btn">
             <VideoIcon />
             {callOpen ? "In call" : "Start video"}
           </button>
@@ -289,11 +330,7 @@ export default function StudyRoom() {
       </header>
 
       {callOpen && (
-        <StudyCall
-          roomId={roomId}
-          user={user}
-          onClose={() => setCallOpen(false)}
-        />
+        <StudyCall roomId={roomId} user={user} onClose={() => setCallOpen(false)} />
       )}
 
       <button
@@ -346,13 +383,9 @@ export default function StudyRoom() {
                 {msg.displayName}{msg.isAI && " · AI"}
               </div>
               <div className="message-text">
-                                {msg.imageUrl && (
+                {msg.imageUrl && (
                   <>
-                    <img
-                      src={msg.imageUrl}
-                      alt="Shared question"
-                      className="room-shared-image"
-                    />
+                    <img src={msg.imageUrl} alt="Shared question" className="room-shared-image" />
                     {msg.uid === user?.uid && (
                       <button
                         type="button"
@@ -368,21 +401,11 @@ export default function StudyRoom() {
                     )}
                   </>
                 )}
-                                {msg.isAI ? (
+                {msg.isAI ? (
                   <div className="ai-markdown">
                     <ReactMarkdown
                       remarkPlugins={[remarkMath]}
-                      rehypePlugins={[
-                        [
-                          rehypeKatex,
-                          {
-                            output: "html",
-                            throwOnError: false,
-                            strict: "ignore",
-                            trust: true,
-                          },
-                        ],
-                      ]}
+                      rehypePlugins={[[rehypeKatex, { output: "html", throwOnError: false, strict: "ignore", trust: true }]]}
                     >
                       {fixCommonMathGlue(prepareMathForKaTeX(msg.text))}
                     </ReactMarkdown>
@@ -398,25 +421,48 @@ export default function StudyRoom() {
 
         <form className="chat-input" onSubmit={handleSend}>
           <input
-            ref={photoInputRef}
+            ref={cameraInputRef}
             type="file"
             accept="image/*"
             capture="environment"
             hidden
             onChange={handleShareQuestion}
           />
-          <button
-            type="button"
-            className="share-photo-btn"
-            onClick={() => photoInputRef.current?.click()}
-            disabled={isUploading}
-            title="Share a question"
-          >
-            <CameraIcon />
-          </button>
+          <input
+            ref={galleryInputRef}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={handleShareQuestion}
+          />
+
+          <div className="photo-picker">
+            <button
+              type="button"
+              className="share-photo-btn"
+              onClick={() => setShowPhotoMenu((v) => !v)}
+              disabled={isUploading}
+              title="Share a question"
+            >
+              <CameraIcon />
+            </button>
+                       {showPhotoMenu && (
+              <div className="photo-menu">
+                {isMobile && (
+                  <button type="button" onClick={() => cameraInputRef.current?.click()}>
+                    Take photo
+                  </button>
+                )}
+                <button type="button" onClick={() => galleryInputRef.current?.click()}>
+                  {isMobile ? "Choose from gallery" : "Upload question"}
+                </button>
+              </div>
+            )}
+          </div>
+
           <input
             type="text"
-            placeholder="Message or ask AI..."
+            placeholder={!isPaid ? `Message or ask AI · ${roomAILeft} left` : "Message or ask AI..."}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={isSending || isAskingAI}
@@ -428,12 +474,21 @@ export default function StudyRoom() {
             type="button"
             className="ask-ai-btn"
             onClick={handleAskAI}
-           disabled={isAskingAI || (!input.trim() && !messages.some((m) => m.imageUrl))}
+            disabled={isAskingAI || (!input.trim() && !messages.some((m) => m.imageUrl))}
           >
             {isAskingAI ? "..." : "Ask AI"}
           </button>
         </form>
       </main>
+
+            {showUpgradeModal && (
+        <UpgradeModal
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+          title="Group AI limit reached"
+          subtitle="You've used today's 5 free group AI asks. Upgrade to keep asking with friends."
+        />
+      )}
     </div>
   );
 }
@@ -469,10 +524,7 @@ function fixCommonMathGlue(text) {
 function prepareMathForKaTeX(rawText) {
   if (!rawText) return "";
   let text = rawText;
-  text = text.replace(
-    /(\b\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?\b)(?!\s*\/)/g,
-    "\\frac{$1}{$2}"
-  );
+  text = text.replace(/(\b\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?\b)(?!\s*\/)/g, "\\frac{$1}{$2}");
   text = text.replace(/\\\[([\s\S]*?)\\\]/g, "$$$$$1$$$$");
   text = text.replace(/\\\(([\s\S]*?)\\\)/g, "$$$1$$");
   text = text.replace(/\$\$[\s\n]+/g, "$$").replace(/[\s\n]+\$\$/g, "$$");
@@ -487,7 +539,6 @@ function VideoIcon() {
     </svg>
   );
 }
-
 function LinkIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -496,7 +547,6 @@ function LinkIcon() {
     </svg>
   );
 }
-
 function LeaveIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -506,7 +556,6 @@ function LeaveIcon() {
     </svg>
   );
 }
-
 function CameraIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -515,7 +564,6 @@ function CameraIcon() {
     </svg>
   );
 }
-
 function SendIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

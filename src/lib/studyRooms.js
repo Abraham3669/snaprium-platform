@@ -14,18 +14,34 @@ import {
   orderBy,
   limit,
   addDoc,
+  deleteDoc,
 } from "firebase/firestore";
 import { db } from "./firebase";
-
-import { deleteDoc } from "firebase/firestore";
 
 export async function deleteMessage(roomId, messageId) {
   await deleteDoc(doc(db, "studyRooms", roomId, "messages", messageId));
 }
 
-/**
- * Generate a short readable room code
- */
+export async function rememberJoinedRoom(uid, room) {
+  if (!uid || !room?.id) return;
+  const userRef = doc(db, "users", uid);
+  await updateDoc(userRef, {
+    joinedStudyRooms: arrayUnion({
+      id: room.id,
+      topic: room.topic || "Study Room",
+      code: room.code || "",
+    }),
+  });
+}
+
+export async function hideRoomForMe(uid, roomId) {
+  if (!uid || !roomId) return;
+  const userRef = doc(db, "users", uid);
+  await updateDoc(userRef, {
+    hiddenStudyRooms: arrayUnion(roomId),
+  });
+}
+
 function generateRoomCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "";
@@ -35,9 +51,6 @@ function generateRoomCode() {
   return code;
 }
 
-/**
- * Create a new study room
- */
 export async function createStudyRoom({ topic, createdBy, displayName }) {
   const code = generateRoomCode();
   const roomRef = doc(collection(db, "studyRooms"));
@@ -68,40 +81,32 @@ export async function createStudyRoom({ topic, createdBy, displayName }) {
   };
 
   await setDoc(roomRef, roomData);
+
+  try {
+    await rememberJoinedRoom(createdBy, { id: roomRef.id, code, topic: roomData.topic });
+  } catch (err) {
+    console.warn("[studyRooms] rememberJoinedRoom create", err);
+  }
+
   return { id: roomRef.id, code, ...roomData };
 }
 
-/**
- * Join a room by code
- */
 export async function joinStudyRoomByCode(code, user) {
   if (!code || !user) {
     throw new Error("Missing code or user");
   }
 
   const cleanCode = code.trim().toUpperCase();
-
-  const q = query(
-    collection(db, "studyRooms"),
-    where("code", "==", cleanCode)
-  );
-
+  const q = query(collection(db, "studyRooms"), where("code", "==", cleanCode));
   const snapshot = await getDocs(q);
 
   if (snapshot.empty) {
     throw new Error("Room not found. Check the code and try again.");
   }
 
-  const roomDoc = snapshot.docs[0];
-  const roomId = roomDoc.id;
-
-  // Re-use the existing join logic
-  return await joinStudyRoom(roomId, user);
+  return await joinStudyRoom(snapshot.docs[0].id, user);
 }
 
-/**
- * Join room by ID
- */
 export async function joinStudyRoom(roomId, user) {
   const roomRef = doc(db, "studyRooms", roomId);
   const snap = await getDoc(roomRef);
@@ -124,7 +129,6 @@ export async function joinStudyRoom(roomId, user) {
       lastActivity: serverTimestamp(),
     });
   } else {
-    // Mark as online
     const updatedParticipants = data.participants.map((p) =>
       p.uid === user.uid ? { ...p, isOnline: true } : p
     );
@@ -134,19 +138,25 @@ export async function joinStudyRoom(roomId, user) {
     });
   }
 
+  try {
+    await rememberJoinedRoom(user.uid, {
+      id: roomId,
+      topic: data.topic,
+      code: data.code,
+    });
+  } catch (err) {
+    console.warn("[studyRooms] rememberJoinedRoom join", err);
+  }
+
   return { id: roomId, ...data };
 }
 
-/**
- * Leave room / set offline
- */
 export async function leaveStudyRoom(roomId, uid) {
   const roomRef = doc(db, "studyRooms", roomId);
   const snap = await getDoc(roomRef);
   if (!snap.exists()) return;
 
-  const data = snap.data();
-  const updated = (data.participants || []).map((p) =>
+  const updated = (snap.data().participants || []).map((p) =>
     p.uid === uid ? { ...p, isOnline: false } : p
   );
 
@@ -156,9 +166,6 @@ export async function leaveStudyRoom(roomId, uid) {
   });
 }
 
-/**
- * Listen to room changes
- */
 export function subscribeToRoom(roomId, callback) {
   const roomRef = doc(db, "studyRooms", roomId);
   return onSnapshot(roomRef, (snap) => {
@@ -170,9 +177,6 @@ export function subscribeToRoom(roomId, callback) {
   });
 }
 
-/**
- * Send a chat message
- */
 export async function sendMessage(roomId, message) {
   const messagesRef = collection(db, "studyRooms", roomId, "messages");
   await addDoc(messagesRef, {
@@ -181,9 +185,6 @@ export async function sendMessage(roomId, message) {
   });
 }
 
-/**
- * Listen to chat messages
- */
 export function subscribeToMessages(roomId, callback) {
   const q = query(
     collection(db, "studyRooms", roomId, "messages"),
@@ -192,17 +193,10 @@ export function subscribeToMessages(roomId, callback) {
   );
 
   return onSnapshot(q, (snap) => {
-    const messages = snap.docs.map((d) => ({
-      id: d.id,
-      ...d.data(),
-    }));
-    callback(messages);
+    callback(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
   });
 }
 
-/**
- * Update the shared timer
- */
 export async function updateTimer(roomId, timerData) {
   const roomRef = doc(db, "studyRooms", roomId);
   await updateDoc(roomRef, {

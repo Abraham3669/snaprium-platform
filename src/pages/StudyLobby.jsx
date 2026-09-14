@@ -2,7 +2,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { createStudyRoom, joinStudyRoomByCode } from "../lib/studyRooms";
+import {
+  createStudyRoom,
+  joinStudyRoomByCode,
+  rememberJoinedRoom,
+  hideRoomForMe,
+} from "../lib/studyRooms";
 import { toast } from "react-toastify";
 
 export default function StudyLobby() {
@@ -13,6 +18,14 @@ export default function StudyLobby() {
   const [joinCode, setJoinCode] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
+
+  const hidden = user?.hiddenStudyRooms || [];
+  const myRooms = (user?.joinedStudyRooms || []).filter(
+    (room, index, list) =>
+      room?.id &&
+      !hidden.includes(room.id) &&
+      list.findIndex((item) => item.id === room.id) === index
+  );
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -34,7 +47,7 @@ export default function StudyLobby() {
         createdBy: user.uid,
         displayName: user.displayName || user.email?.split("@")[0] || "Student",
       });
-
+      await rememberJoinedRoom(user.uid, room);
       toast.success("Room created!");
       navigate(`/study/${room.id}`);
     } catch (err) {
@@ -62,6 +75,7 @@ export default function StudyLobby() {
     setIsJoining(true);
     try {
       const room = await joinStudyRoomByCode(code, user);
+      await rememberJoinedRoom(user.uid, room);
       toast.success("Joined the room!");
       navigate(`/study/${room.id}`);
     } catch (err) {
@@ -69,6 +83,17 @@ export default function StudyLobby() {
       toast.error(err.message || "Could not join room. Check the code.");
     } finally {
       setIsJoining(false);
+    }
+  };
+
+  const handleHideRoom = async (roomId) => {
+    if (!user?.uid) return;
+    try {
+      await hideRoomForMe(user.uid, roomId);
+      toast.success("Room removed from your list");
+    } catch (err) {
+      console.error(err);
+      toast.error("Could not remove room");
     }
   };
 
@@ -80,7 +105,37 @@ export default function StudyLobby() {
           Create a room or join your friends. Snaprium AI will join you.
         </p>
 
-        {/* Create Room */}
+        {user && (
+          <section className="study-card my-rooms-card">
+            <h2>My rooms</h2>
+            {myRooms.length === 0 ? (
+              <p className="study-hint">Rooms you create or join will show up here.</p>
+            ) : (
+              <ul className="my-rooms-list">
+                {myRooms.map((room) => (
+                  <li key={room.id} className="my-room-item">
+                    <button
+                      type="button"
+                      className="my-room-open"
+                      onClick={() => navigate(`/study/${room.id}`)}
+                    >
+                      <span className="my-room-topic">{room.topic || "Study Room"}</span>
+                      {room.code && <span className="my-room-code">Code {room.code}</span>}
+                    </button>
+                    <button
+                      type="button"
+                      className="my-room-hide"
+                      onClick={() => handleHideRoom(room.id)}
+                    >
+                      Delete
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
+
         <form onSubmit={handleCreate} className="study-card">
           <h2>Create a Study Room</h2>
           <input
@@ -96,12 +151,10 @@ export default function StudyLobby() {
           </button>
         </form>
 
-        {/* Divider */}
         <div className="study-divider">
           <span>or</span>
         </div>
 
-        {/* Join Room */}
         <form onSubmit={handleJoin} className="study-card">
           <h2>Join a Room</h2>
           <p className="study-hint">
