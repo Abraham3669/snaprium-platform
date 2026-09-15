@@ -5,6 +5,9 @@ import OpenAI from "openai";
 const THANKS_RE =
   /^(thanks|thank you|thx|ty|ok|okay|cool|got it|great|nice|wow|perfect|yes|yep|yeah)\b[.!\s]*$/i;
 
+const ABOUT_PHOTO_RE =
+  /\b(photo|image|picture|this problem|the problem|this question|solve|step|equation|integral|derivative|force|velocity)\b/i;
+
 export default async function handler(req, res) {
   if (applyCors(req, res)) return;
 
@@ -27,17 +30,19 @@ export default async function handler(req, res) {
 
     const cleanQuestion = String(question || "").trim();
     const isShortReaction = THANKS_RE.test(cleanQuestion);
+    const isAboutPhoto = !cleanQuestion || ABOUT_PHOTO_RE.test(cleanQuestion);
 
     const cleanBase64 = String(imageBase64 || "").replace(
       /^data:image\/[a-zA-Z]+;base64,/,
       ""
     );
 
-    const visionUrl = isShortReaction
-      ? ""
-      : cleanBase64
-      ? `data:image/jpeg;base64,${cleanBase64}`
-      : imageUrl;
+    const visionUrl =
+      isShortReaction || !isAboutPhoto
+        ? ""
+        : cleanBase64
+        ? `data:image/jpeg;base64,${cleanBase64}`
+        : imageUrl;
 
     if (!cleanQuestion && !visionUrl) {
       return res.status(400).json({ error: "No question or image provided" });
@@ -80,34 +85,31 @@ export default async function handler(req, res) {
 
     const response = await client.chat.completions.create({
       model: "gpt-4o",
-      temperature: 0.25,
+      temperature: 0.3,
       max_tokens: isShortReaction ? 180 : 1200,
       messages: [
         {
           role: "system",
-          content: `You are Snaprium AI, a sharp math and physics tutor inside a live group study room.
+          content: `You are Snaprium AI in a live group study room.
+
+Home subjects: math and physics.
+You can still answer normal student questions in other subjects: English, chemistry, biology, history, exam tips, grammar, and general study help.
 
 Room topic: ${topic || "Math & Physics"}
 
-How you teach:
-- You are talking to the group, not one isolated student.
-- Watch the recent chat. Do not repeat a solution that was already given.
-- If someone says thanks, ok, got it, or a short reaction: reply in 1 short friendly sentence. Do NOT solve again.
-- If they ask a follow-up ("why", "explain step 2", "what if", "check this"), answer only that part.
-- If they ask to solve a new problem or share a new photo, then solve.
-- Prefer a short hint first when they are stuck, then the working.
-- After a full solve, end with one check-your-understanding question. Do not restart the whole solution.
+Rules:
+- Answer the CURRENT message. Do not paste an old math solution unless they asked about that same problem.
+- If they say thanks / ok / got it: one short friendly line. Do not solve again.
+- If they change topic ("teach us English", "what is a noun", "help with essay"), switch topics and help. Do not bring back the previous math answer.
+- If they ask a follow-up about the last problem, answer only that part.
+- If a photo is attached and they are asking about it, read the photo and help.
+- If no photo is attached, do not pretend there is one.
 
-When solving:
-- Restate the problem in one line.
-- Show clean working.
-- Give the final answer clearly.
-- Use LaTeX: $inline$ and $$display$$. Fractions as \\frac{a}{b}.
-
-Tone:
-- Calm, collaborative, not condescending.
-- "Let's look at this together..."
-- Never say you cannot see images if a photo is attached.`,
+Teaching style:
+- Clear, collaborative, not condescending.
+- For math/physics use LaTeX: $inline$ and $$display$$, fractions as \\frac{a}{b}.
+- For other subjects, write normally. No fake formulas.
+- Keep answers useful for the whole group.`,
         },
         ...history,
         { role: "user", content: userContent },
