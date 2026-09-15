@@ -2,7 +2,7 @@
   "id": "/",
   "name": "Snaprium",
   "short_name": "Snaprium",
-  "description": "Snap a math or physics question and get clear numbered steps. Ask about a step when you get stuck, then study with friends.",
+  "description": "Snap a math or physics question and understand it step by step. Then study with friends in a live room.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -55,8 +55,14 @@
       "purpose": "any"
     },
     {
-      "src": "/assets/icons/icon-512.webp",
-      "type": "image/webp",
+      "src": "/assets/icons/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-512.png",
+      "type": "image/png",
       "sizes": "512x512",
       "purpose": "maskable"
     }
