@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { usePaddle } from "../context/PaddleContext";
 import { Capacitor } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
+import { analytics, logEvent } from "../lib/firebase";
 
 export default function Upgrade() {
   const { user, loading: authLoading } = useAuth();
@@ -15,7 +16,10 @@ export default function Upgrade() {
 
   const UNLIMITED_PRICE_ID = "pri_01ktdn3fppsgkgjhm8xm5ha015";
 
-  useEffect(() => {
+   useEffect(() => {
+    logEvent(analytics, "upgrade_page_opened", {
+      plan: user?.plan || "free",
+    });
     console.log("[Upgrade]", {
       uid: user?.uid,
       plan: user?.plan,
@@ -34,8 +38,11 @@ export default function Upgrade() {
       return;
     }
 
-    setError("");
+        setError("");
     setUpgrading(true);
+    logEvent(analytics, "checkout_started", {
+      platform: Capacitor.isNativePlatform() ? "native" : "web",
+    });
 
     try {
       // ─── APK: open clean checkout page in system browser ───

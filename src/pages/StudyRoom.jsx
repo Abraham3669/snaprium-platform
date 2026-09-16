@@ -16,8 +16,8 @@ import { toast } from "react-toastify";
 import { postAPI } from "../utils/apiClient";
 import StudyCall from "../components/StudyCall";
 import UpgradeModal from "../components/UpgradeModal";
-import { doc, updateDoc, increment, serverTimestamp } from "firebase/firestore";
-import { db } from "../lib/firebase";
+import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { db, analytics, logEvent } from "../lib/firebase";
 
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
@@ -54,7 +54,6 @@ export default function StudyRoom() {
   const today = getToday();
   const usedRoomAI = user?.lastRoomAIDate === today ? user?.dailyRoomAI || 0 : 0;
   const roomAILimit = isPaid ? PAID_ROOM_AI_LIMIT : FREE_ROOM_AI_LIMIT;
-    const roomAILeft = Math.max(0, roomAILimit - usedRoomAI);
   const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   useEffect(() => {
@@ -72,6 +71,7 @@ export default function StudyRoom() {
     const init = async () => {
       try {
         await joinStudyRoom(roomId, user);
+        logEvent(analytics, "room_joined", { room_id: roomId });
         if (!isMounted) return;
 
         unsubRoom = subscribeToRoom(roomId, (data) => {
@@ -134,9 +134,8 @@ export default function StudyRoom() {
   const incrementRoomAI = async () => {
     if (!user?.uid) return;
     const userRef = doc(db, "users", user.uid);
-    const nextCount = usedRoomAI + 1;
     await updateDoc(userRef, {
-      dailyRoomAI: nextCount,
+      dailyRoomAI: usedRoomAI + 1,
       lastRoomAIDate: today,
       updatedAt: serverTimestamp(),
     });
@@ -146,6 +145,10 @@ export default function StudyRoom() {
   const canUseRoomAI = () => {
     if (!user) return false;
     if (usedRoomAI >= roomAILimit) {
+      logEvent(analytics, "room_ai_limit_hit", {
+        plan: isPaid ? "paid" : "free",
+        used: usedRoomAI,
+      });
       if (isPaid) {
         toast.info("You’ve used a lot of group AI today. Keep studying — it resets tomorrow.");
       } else {
@@ -216,6 +219,10 @@ export default function StudyRoom() {
         type: "text",
       });
 
+      logEvent(analytics, "ask_ai", {
+        has_image: Boolean(lastImage),
+        plan: isPaid ? "paid" : "free",
+      });
       await incrementRoomAI();
     } catch {
       await sendMessage(roomId, {
@@ -247,6 +254,7 @@ export default function StudyRoom() {
         displayName: user.displayName || "Student",
         isAI: false,
       });
+      logEvent(analytics, "photo_shared", { room_id: roomId });
     } catch (err) {
       console.error(err);
       toast.error("Could not share the question");
@@ -314,7 +322,17 @@ export default function StudyRoom() {
           <p className="study-room-code">Code: {room.code}</p>
         </div>
         <div className="study-room-actions">
-          <button type="button" onClick={() => setCallOpen((v) => !v)} className="invite-btn">
+          <button
+            type="button"
+            onClick={() => {
+              setCallOpen((v) => {
+                const next = !v;
+                logEvent(analytics, next ? "call_started" : "call_ended", { room_id: roomId });
+                return next;
+              });
+            }}
+            className="invite-btn"
+          >
             <VideoIcon />
             {callOpen ? "In call" : "Start video"}
           </button>
@@ -446,7 +464,7 @@ export default function StudyRoom() {
             >
               <CameraIcon />
             </button>
-                       {showPhotoMenu && (
+            {showPhotoMenu && (
               <div className="photo-menu">
                 {isMobile && (
                   <button type="button" onClick={() => cameraInputRef.current?.click()}>
@@ -460,7 +478,7 @@ export default function StudyRoom() {
             )}
           </div>
 
-                    <input
+          <input
             type="text"
             placeholder="Message friends..."
             value={input}
@@ -476,12 +494,12 @@ export default function StudyRoom() {
             onClick={handleAskAI}
             disabled={isAskingAI || (!input.trim() && !messages.some((m) => m.imageUrl))}
           >
-                        {isAskingAI ? "..." : "Ask AI"}
+            {isAskingAI ? "..." : "Ask AI"}
           </button>
         </form>
       </main>
 
-            {showUpgradeModal && (
+      {showUpgradeModal && (
         <UpgradeModal
           isOpen={showUpgradeModal}
           onClose={() => setShowUpgradeModal(false)}

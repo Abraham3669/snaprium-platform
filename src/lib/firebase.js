@@ -56,7 +56,38 @@ try {
 
 export { db };
 
-export const analytics = null;
-export const logEvent = () => {};
-export const setUserId = () => {};
+import { getAnalytics, logEvent as fbLogEvent, setUserId as fbSetUserId } from "firebase/analytics";
+
+let analytics = null;
+try {
+  if (typeof window !== "undefined" && firebaseConfig.measurementId) {
+    analytics = getAnalytics(app);
+  }
+} catch (err) {
+  console.warn("[Firebase] analytics unavailable", err?.message);
+}
+
+export { analytics };
+
+export function logEvent(analyticsInstance, name, params = {}) {
+  const instance = analyticsInstance || analytics;
+  if (!instance || !name) return;
+  try {
+    fbLogEvent(instance, name, {
+      ...params,
+      platform: Capacitor.isNativePlatform() ? Capacitor.getPlatform() : "web",
+    });
+  } catch (err) {
+    console.warn("[analytics]", name, err?.message);
+  }
+}
+
+export function setUserId(analyticsInstance, uid) {
+  const instance = analyticsInstance || analytics;
+  if (!instance || !uid) return;
+  try {
+    fbSetUserId(instance, uid);
+  } catch {}
+}
+
 export default app;
