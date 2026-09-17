@@ -49,6 +49,11 @@ function App() {
   const location = useLocation();
 
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
+
+useEffect(() => {
+  document.documentElement.setAttribute("data-theme", theme);
+}, [theme]);
+
   const [file, setFile] = useState(null);
   const [croppedImage, setCroppedImage] = useState(null);
   const [resultText, setResultText] = useState("");
@@ -103,12 +108,11 @@ function App() {
     });
   }, [location]);
 
-  const toggleTheme = () => {
-    const nextTheme = theme === "dark" ? "light" : "dark";
-    setTheme(nextTheme);
-    localStorage.setItem("theme", nextTheme);
-    document.documentElement.setAttribute("data-theme", nextTheme);
-  };
+ const toggleTheme = () => {
+  const nextTheme = theme === "dark" ? "light" : "dark";
+  setTheme(nextTheme);
+  localStorage.setItem("theme", nextTheme);
+};
 
   const checkSolveLimit = async () => {
     if (!user) {
