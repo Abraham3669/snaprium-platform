@@ -27,6 +27,7 @@ import "katex/dist/katex.min.css";
 const FREE_ROOM_AI_LIMIT = 5;
 const PAID_ROOM_AI_LIMIT = 40;
 const getToday = () => new Date().toISOString().split("T")[0];
+const AI_PING_RE = /(^|\s)@(ai|snaprium|snapriumai)\b/i;
 
 export default function StudyRoom() {
   const { roomId } = useParams();
@@ -44,17 +45,25 @@ export default function StudyRoom() {
   const [isUploading, setIsUploading] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showPhotoMenu, setShowPhotoMenu] = useState(false);
+  const [showMentions, setShowMentions] = useState(false);
 
   const messagesEndRef = useRef(null);
   const timerIntervalRef = useRef(null);
   const cameraInputRef = useRef(null);
   const galleryInputRef = useRef(null);
+  const chatInputRef = useRef(null);
 
   const isPaid = user?.plan === "unlimited" || user?.plan === "premium";
   const today = getToday();
   const usedRoomAI = user?.lastRoomAIDate === today ? user?.dailyRoomAI || 0 : 0;
   const roomAILimit = isPaid ? PAID_ROOM_AI_LIMIT : FREE_ROOM_AI_LIMIT;
   const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  const focusChat = () => {
+    requestAnimationFrame(() => {
+      chatInputRef.current?.focus();
+    });
+  };
 
   useEffect(() => {
     if (authLoading) return;
@@ -78,6 +87,7 @@ export default function StudyRoom() {
           if (isMounted) {
             setRoom(data);
             setLoading(false);
+            focusChat();
           }
         });
 
@@ -160,43 +170,65 @@ export default function StudyRoom() {
     return true;
   };
 
+  const insertMention = (name) => {
+    const next = input.replace(/(^|\s)@\w*$/, `$1@${name} `);
+    setInput(next.endsWith(`@${name} `) || next.includes(`@${name}`) ? next : `${input}@${name} `);
+    setShowMentions(false);
+    focusChat();
+  };
+
   const handleSend = async (e) => {
-    e.preventDefault();
+    e?.preventDefault?.();
     if (!input.trim() || isSending || !user) return;
+
+    const text = input.trim();
+    const shouldPingAI = AI_PING_RE.test(text);
 
     setIsSending(true);
     try {
       await sendMessage(roomId, {
-        text: input.trim(),
+        text,
         uid: user.uid,
         displayName: user.displayName || "Student",
         isAI: false,
         type: "text",
       });
       setInput("");
+      setShowMentions(false);
+      focusChat();
+
+      if (shouldPingAI) {
+        handleAskAI(text.replace(AI_PING_RE, " ").trim());
+      }
     } catch {
       toast.error("Failed to send message");
     } finally {
       setIsSending(false);
+      focusChat();
     }
   };
 
-  const handleAskAI = async () => {
+  const handleAskAI = async (forcedQuestion = "") => {
     const lastImage = [...messages].reverse().find((m) => m.imageUrl)?.imageUrl || "";
-    if ((!input.trim() && !lastImage) || isAskingAI || !user) return;
+    const typed = (forcedQuestion || input).trim();
+    if ((!typed && !lastImage) || isAskingAI || !user) return;
     if (!canUseRoomAI()) return;
 
-    const question = input.trim() || "Please help the group with this shared question photo.";
-    setInput("");
+        const question = lastImage
+      ? `${typed || "Help the group with this shared question photo."}\n\nA photo IS attached. Read the problem from the image. Do not say you cannot see it.`
+      : typed || "Please help the group with this question.";
+    if (!forcedQuestion) setInput("");
     setIsAskingAI(true);
 
-    await sendMessage(roomId, {
-      text: question,
-      uid: user.uid,
-      displayName: user.displayName || "Student",
-      isAI: false,
-      type: "text",
-    });
+    if (!forcedQuestion) {
+      await sendMessage(roomId, {
+        text: question,
+        uid: user.uid,
+        displayName: user.displayName || "Student",
+        isAI: false,
+        type: "text",
+      });
+    }
 
     try {
       const res = await postAPI("/api/room-ai", {
@@ -222,6 +254,7 @@ export default function StudyRoom() {
       logEvent(analytics, "ask_ai", {
         has_image: Boolean(lastImage),
         plan: isPaid ? "paid" : "free",
+        via: forcedQuestion ? "mention" : "button",
       });
       await incrementRoomAI();
     } catch {
@@ -234,6 +267,7 @@ export default function StudyRoom() {
       });
     } finally {
       setIsAskingAI(false);
+      focusChat();
     }
   };
 
@@ -255,11 +289,13 @@ export default function StudyRoom() {
         isAI: false,
       });
       logEvent(analytics, "photo_shared", { room_id: roomId });
+      toast.info("Photo shared. Type @AI or tap Ask AI so the tutor can read it.");
     } catch (err) {
       console.error(err);
       toast.error("Could not share the question");
     } finally {
       setIsUploading(false);
+      focusChat();
     }
   };
 
@@ -313,6 +349,12 @@ export default function StudyRoom() {
   }
 
   const onlineParticipants = (room.participants || []).filter((p) => p.isOnline);
+  const mentionNames = [
+    "AI",
+    ...onlineParticipants
+      .map((p) => p.displayName)
+      .filter((name) => name && name !== user?.displayName),
+  ];
 
   return (
     <div className="study-room">
@@ -381,15 +423,33 @@ export default function StudyRoom() {
           </div>
           <div className="participants-list">
             {onlineParticipants.map((p) => (
-              <span key={p.uid} className="participant-chip">{p.displayName}</span>
+              <button
+                key={p.uid}
+                type="button"
+                className="participant-chip"
+                onClick={() => insertMention(p.displayName)}
+              >
+                {p.displayName}
+              </button>
             ))}
-            <span className="participant-chip ai">Snaprium AI</span>
+            <button
+              type="button"
+              className="participant-chip ai"
+              onClick={() => insertMention("AI")}
+            >
+              Snaprium AI
+            </button>
           </div>
         </div>
       </div>
 
       <main className="study-chat">
         <div className="messages">
+          {messages.length === 0 && (
+            <div className="empty-chat-hint">
+              Message the group here. Share a photo, then type @AI or tap Ask AI.
+            </div>
+          )}
           {messages.map((msg) => (
             <div
               key={msg.id}
@@ -478,11 +538,33 @@ export default function StudyRoom() {
             )}
           </div>
 
-          <input
-            type="text"
-            placeholder="Message friends..."
+          {showMentions && (
+            <div className="mention-menu">
+              {mentionNames.map((name) => (
+                <button key={name} type="button" onClick={() => insertMention(name)}>
+                  @{name}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <textarea
+            ref={chatInputRef}
+            className="chat-textarea"
+            rows={1}
+            placeholder="Message friends…  @AI to ask the tutor"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              setInput(value);
+              setShowMentions(/(^|\s)@\w*$/.test(value));
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSend(e);
+              }
+            }}
             disabled={isSending || isAskingAI}
           />
           <button type="submit" disabled={isSending || !input.trim()}>
@@ -491,7 +573,7 @@ export default function StudyRoom() {
           <button
             type="button"
             className="ask-ai-btn"
-            onClick={handleAskAI}
+            onClick={() => handleAskAI()}
             disabled={isAskingAI || (!input.trim() && !messages.some((m) => m.imageUrl))}
           >
             {isAskingAI ? "..." : "Ask AI"}

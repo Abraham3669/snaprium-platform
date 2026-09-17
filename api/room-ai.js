@@ -5,8 +5,7 @@ import OpenAI from "openai";
 const THANKS_RE =
   /^(thanks|thank you|thx|ty|ok|okay|cool|got it|great|nice|wow|perfect|yes|yep|yeah)\b[.!\s]*$/i;
 
-const ABOUT_PHOTO_RE =
-  /\b(photo|image|picture|this problem|the problem|this question|solve|step|equation|integral|derivative|force|velocity)\b/i;
+
 
 export default async function handler(req, res) {
   if (applyCors(req, res)) return;
@@ -28,30 +27,29 @@ export default async function handler(req, res) {
       imageBase64 = "",
     } = req.body;
 
-    const cleanQuestion = String(question || "").trim();
+        const cleanQuestion = String(question || "").trim();
     const isShortReaction = THANKS_RE.test(cleanQuestion);
-    const isAboutPhoto = !cleanQuestion || ABOUT_PHOTO_RE.test(cleanQuestion);
 
     const cleanBase64 = String(imageBase64 || "").replace(
       /^data:image\/[a-zA-Z]+;base64,/,
       ""
     );
 
-    const visionUrl =
-      isShortReaction || !isAboutPhoto
-        ? ""
-        : cleanBase64
-        ? `data:image/jpeg;base64,${cleanBase64}`
-        : imageUrl;
+    const visionUrl = isShortReaction
+      ? ""
+      : cleanBase64
+      ? `data:image/jpeg;base64,${cleanBase64}`
+      : imageUrl || "";
 
     if (!cleanQuestion && !visionUrl) {
       return res.status(400).json({ error: "No question or image provided" });
     }
 
-    if (cleanQuestion.length > 800) {
-      return res.status(400).json({ error: "Question too long (max 800 characters)" });
+    if (cleanQuestion.length > 1500) {
+      return res.status(400).json({ error: "Question too long (max 1500 characters)" });
     }
 
+    
     if (!process.env.OPENAI_API_KEY) {
       return res.status(500).json({ error: "Server configuration error" });
     }
