@@ -3,10 +3,10 @@ import {
   getAuth,
   initializeAuth,
   indexedDBLocalPersistence,
-  browserPopupRedirectResolver,
   GoogleAuthProvider,
 } from "firebase/auth";
 import { initializeFirestore, getFirestore } from "firebase/firestore";
+import { getAnalytics, logEvent as fbLogEvent, setUserId as fbSetUserId } from "firebase/analytics";
 import { Capacitor } from "@capacitor/core";
 
 const firebaseConfig = {
@@ -56,8 +56,6 @@ try {
 
 export { db };
 
-import { getAnalytics, logEvent as fbLogEvent, setUserId as fbSetUserId } from "firebase/analytics";
-
 let analytics = null;
 try {
   if (typeof window !== "undefined" && firebaseConfig.measurementId) {
@@ -88,6 +86,15 @@ export function setUserId(analyticsInstance, uid) {
   try {
     fbSetUserId(instance, uid);
   } catch {}
+}
+
+export function isStandaloneApp() {
+  if (typeof window === "undefined") return false;
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.matchMedia("(display-mode: windows-app)").matches ||
+    window.navigator.standalone === true
+  );
 }
 
 export default app;
