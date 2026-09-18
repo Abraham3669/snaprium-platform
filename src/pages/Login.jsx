@@ -49,9 +49,6 @@ export default function Login() {
         const credential = GoogleAuthProvider.credential(idToken);
         const userCredential = await signInWithCredential(auth, credential);
         firebaseUser = userCredential.user;
-      } else if (isStandaloneApp()) {
-        await signInWithRedirect(auth, googleProvider);
-        return;
       } else {
         try {
           const result = await signInWithPopup(auth, googleProvider);
@@ -60,6 +57,7 @@ export default function Login() {
           if (
             popupErr?.code === "auth/popup-blocked" ||
             popupErr?.code === "auth/popup-closed-by-user" ||
+            popupErr?.code === "auth/operation-not-supported-in-this-environment" ||
             /getContext|popup/i.test(popupErr?.message || "")
           ) {
             await signInWithRedirect(auth, googleProvider);
