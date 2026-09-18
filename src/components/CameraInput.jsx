@@ -2,14 +2,15 @@
 import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Capacitor } from "@capacitor/core";
+import { isStandaloneApp } from "../lib/firebase";
 
 export default function CameraInput({ onFileSelect }) {
   const cameraInputRef = useRef();
   const galleryInputRef = useRef();
   const dropZoneRef = useRef();
   const [isDragging, setIsDragging] = useState(false);
-  const isNative = Capacitor.isNativePlatform();
-  const navigate = useNavigate();
+  const isNative = Capacitor.isNativePlatform() || isStandaloneApp();
+const navigate = useNavigate();
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
