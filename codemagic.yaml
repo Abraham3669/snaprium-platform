@@ -4,7 +4,7 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m2
     integrations:
-      app_store_connect: Codemagic          # keep the exact name that worked for you
+      app_store_connect: Codemagic          # keep the exact name that worked
     environment:
       ios_signing:
         distribution_type: app_store
@@ -16,7 +16,6 @@ workflows:
         APP_STORE_APPLE_ID: 6814171428
       node: v22
       xcode: 16.4
-      # cocoapods removed – not needed with SPM
     scripts:
       - name: Install dependencies
         script: npm ci
@@ -29,13 +28,6 @@ workflows:
 
       - name: Set up keychain
         script: keychain initialize
-
-      - name: Fetch signing files
-        script: |
-          app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --platform IOS \
-            --type IOS_APP_STORE \
-            --create
 
       - name: Add certificates to keychain
         script: keychain add-certificates
