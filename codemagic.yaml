@@ -4,7 +4,7 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m2
     integrations:
-      app_store_connect: Codemagic          # must match the name of your connected API key
+      app_store_connect: Codemagic          # keep the exact name that worked for you
     environment:
       ios_signing:
         distribution_type: app_store
@@ -13,30 +13,22 @@ workflows:
         BUNDLE_ID: com.snaprium.app
         XCODE_PROJECT: ios/App/App.xcodeproj
         XCODE_SCHEME: App
-        APP_STORE_APPLE_ID: 6814171428      # App Store Connect → App → General → App Information → Apple ID
+        APP_STORE_APPLE_ID: 6814171428
       node: v22
-      xcode: 16.4                           # pin a version (or keep "latest" if you prefer)
-      cocoapods: default
+      xcode: 16.4
+      # cocoapods removed – not needed with SPM
     scripts:
       - name: Install dependencies
-        script: |
-          npm ci
+        script: npm ci
 
       - name: Build web
-        script: |
-          npm run build
+        script: npm run build
 
       - name: Sync Capacitor iOS
-        script: |
-          npx cap sync ios
-
-      - name: Install CocoaPods
-        script: |
-          cd ios/App && pod install
+        script: npx cap sync ios
 
       - name: Set up keychain
-        script: |
-          keychain initialize
+        script: keychain initialize
 
       - name: Fetch signing files
         script: |
@@ -46,12 +38,10 @@ workflows:
             --create
 
       - name: Add certificates to keychain
-        script: |
-          keychain add-certificates
+        script: keychain add-certificates
 
       - name: Apply provisioning profiles
-        script: |
-          xcode-project use-profiles
+        script: xcode-project use-profiles
 
       - name: Increment build number
         script: |
