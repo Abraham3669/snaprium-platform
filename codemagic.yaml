@@ -1,57 +1,80 @@
-```yaml
 workflows:
   ios-testflight:
     name: iOS TestFlight
     max_build_duration: 60
     instance_type: mac_mini_m2
-
     integrations:
-      app_store_connect: codemagic
-
+      app_store_connect: codemagic          # must match the name of your connected API key
     environment:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.snaprium.app
-
       vars:
         BUNDLE_ID: com.snaprium.app
-        XCODE_WORKSPACE: ios/App/App.xcworkspace
+        XCODE_PROJECT: ios/App/App.xcodeproj
         XCODE_SCHEME: App
-        APP_STORE_APPLE_ID: 6814171428
-
+        APP_STORE_APPLE_ID: 6814171428      # App Store Connect → App → General → App Information → Apple ID
       node: v22
-      xcode: latest
-
+      xcode: 16.4                           # pin a version (or keep "latest" if you prefer)
+      cocoapods: default
     scripts:
       - name: Install dependencies
-        script: npm ci
+        script: |
+          npm ci
 
       - name: Build web
-        script: npm run build
+        script: |
+          npm run build
 
       - name: Sync Capacitor iOS
-        script: npx cap sync ios
+        script: |
+          npx cap sync ios
 
       - name: Install CocoaPods
         script: |
-          cd ios/App
-          pod install
+          cd ios/App && pod install
 
-      - name: Apply provisioning profile
-        script: xcode-project use-profiles
+      - name: Set up keychain
+        script: |
+          keychain initialize
+
+      - name: Fetch signing files
+        script: |
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --platform IOS \
+            --type IOS_APP_STORE \
+            --create
+
+      - name: Add certificates to keychain
+        script: |
+          keychain add-certificates
+
+      - name: Apply provisioning profiles
+        script: |
+          xcode-project use-profiles
+
+      - name: Increment build number
+        script: |
+          cd ios/App
+          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" || \
+                                app-store-connect get-latest-app-store-build-number "$APP_STORE_APPLE_ID" || echo 0)
+          agvtool new-version -all $(($LATEST_BUILD_NUMBER + 1))
+          echo "New build number: $(($LATEST_BUILD_NUMBER + 1))"
 
       - name: Build IPA
         script: |
           xcode-project build-ipa \
-            --workspace "$XCODE_WORKSPACE" \
-            --scheme "$XCODE_SCHEME"
+            --project "$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME" \
+            --archive-flags="-destination 'generic/platform=iOS'"
 
     artifacts:
-      - build/ios/ipa/*.ipa
+      - ios/App/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
 
     publishing:
       app_store_connect:
         auth: integration
         submit_to_testflight: true
         submit_to_app_store: false
-```
