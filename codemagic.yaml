@@ -10,6 +10,7 @@ workflows:
         distribution_type: app_store
         bundle_identifier: com.snaprium.app
       vars:
+        BUNDLE_ID: com.snaprium.app
         XCODE_PROJECT: ios/App/App.xcodeproj
         XCODE_SCHEME: App
         APP_STORE_APPLE_ID: 6814171428
@@ -26,14 +27,14 @@ workflows:
         script: keychain initialize
       - name: Fetch signing files
         script: |
-          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+          app-store-connect fetch-signing-files "com.snaprium.app" \
+            --platform IOS \
             --type IOS_APP_STORE \
             --create
-      - name: Use signing
+      - name: Add certificates to keychain
         script: keychain add-certificates
-      - name: Set code signing settings
-        script: |
-          xcode-project use-profiles
+      - name: Apply provisioning profiles
+        script: xcode-project use-profiles
       - name: Build IPA
         script: |
           xcode-project build-ipa \
