@@ -15,8 +15,9 @@ workflows:
         XCODE_SCHEME: App
         APP_STORE_APPLE_ID: 6814171428
       node: v22
-      xcode: 16.4
+      xcode: 26.6          # ← change this (or use "latest")
     scripts:
+      # ... rest of your scripts stay the same ...
       - name: Install dependencies
         script: npm ci
 
