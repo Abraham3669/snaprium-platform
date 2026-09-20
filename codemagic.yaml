@@ -4,7 +4,7 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m2
     integrations:
-      app_store_connect: Codemagic          # keep the exact name that worked
+      app_store_connect: Codemagic
     environment:
       ios_signing:
         distribution_type: app_store
@@ -46,11 +46,20 @@ workflows:
       - name: Build IPA
         script: |
           xcode-project build-ipa \
-            --project "$XCODE_PROJECT" \
+            --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
             --scheme "$XCODE_SCHEME" \
+            --ipa-directory "$CM_BUILD_DIR/build/ios/ipa" \
             --archive-flags="-destination 'generic/platform=iOS'"
 
+      - name: Find IPA (debug)
+        script: |
+          echo "Looking for IPA files..."
+          find "$CM_BUILD_DIR" -name "*.ipa" -type f || true
+          ls -la "$CM_BUILD_DIR/build/ios/ipa/" || true
+
     artifacts:
+      - build/ios/ipa/*.ipa
+      - $CM_BUILD_DIR/build/ios/ipa/*.ipa
       - ios/App/build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
       - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
