@@ -176,3 +176,27 @@
   background: var(--bg);
   padding-top: 8px;
 }
+
+
+
+
+
+.cd-banner {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.cd-placeholder,
+.cd-avatar svg {
+  width: 36px;
+  height: 36px;
+  color: var(--accent);
+}
+.cd-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+}

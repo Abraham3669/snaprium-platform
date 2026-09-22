@@ -13,6 +13,10 @@ import {
   subscribeToCommunityMessages,
   sendCommunityMessage,
 } from "../lib/communities";
+import ReactMarkdown from "react-markdown";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 
 const FREE_ROOM_AI_LIMIT = 5;
 const PAID_ROOM_AI_LIMIT = 40;
@@ -37,6 +41,20 @@ function compressImage(file, max = 900, quality = 0.65) {
     };
     reader.readAsDataURL(file);
   });
+}
+
+function fixCommonMathGlue(text) {
+  if (!text) return text;
+  return text.replace(/(\$[^\s$]{1,60}?)\$\$/g, "$1$");
+}
+
+function prepareMathForKaTeX(rawText) {
+  if (!rawText) return "";
+  let text = rawText;
+  text = text.replace(/\\\[([\s\S]*?)\\\]/g, "$$$$$1$$$$");
+  text = text.replace(/\\\(([\s\S]*?)\\\)/g, "$$$1$$");
+  text = text.replace(/\$\$[\s\n]+/g, "$$").replace(/[\s\n]+\$\$/g, "$$");
+  return text;
 }
 
 function IconBack() {
@@ -71,13 +89,21 @@ function IconAI() {
     </svg>
   );
 }
+function IconSend() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M22 2L11 13" strokeLinecap="round" />
+      <path d="M22 2l-7 20-4-9-9-4 20-7z" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 export default function CommunityChat() {
   const { communityId } = useParams();
   const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
   const photoRef = useRef(null);
-  const endRef = useRef(null);
+  const feedRef = useRef(null);
 
   const [community, setCommunity] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -95,13 +121,17 @@ export default function CommunityChat() {
     (async () => {
       const data = await getCommunity(communityId);
       setCommunity(data);
-      unsub = subscribeToCommunityMessages(communityId, setMessages);
+      if (user?.uid && (data?.members || []).includes(user.uid)) {
+        unsub = subscribeToCommunityMessages(communityId, setMessages);
+      }
     })();
     return () => unsub && unsub();
-  }, [communityId]);
+  }, [communityId, user?.uid]);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = feedRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
   }, [messages, askingAI]);
 
   const isMember = user && community && (community.members || []).includes(user.uid);
@@ -157,8 +187,8 @@ export default function CommunityChat() {
 
   const handleSend = async (e) => {
     e?.preventDefault?.();
-    if (!input.trim() || !user || !isMember) return;
     const text = input.trim();
+    if (!text || !user || !isMember) return;
     setInput("");
     try {
       await sendCommunityMessage(communityId, {
@@ -170,8 +200,16 @@ export default function CommunityChat() {
       });
       if (/(^|\s)@(ai|snaprium)\b/i.test(text)) askAI(text);
     } catch {
+      setInput(text);
       toast.error("Could not send");
     }
+  };
+
+  const handleAskAI = () => {
+    const text = input.trim();
+    if (!text && !messages.some((m) => m.imageUrl)) return;
+    setInput("");
+    askAI(text || "Help the group with this.");
   };
 
   const handleSharePhoto = async (e) => {
@@ -243,7 +281,7 @@ export default function CommunityChat() {
         </div>
       )}
 
-      <div className="cc-feed">
+      <div className="cc-feed" ref={feedRef}>
         {messages.length === 0 && <p className="cc-muted">No messages yet. Start the thread.</p>}
         {messages.map((msg) => (
           <article
@@ -252,7 +290,18 @@ export default function CommunityChat() {
           >
             <header>{msg.displayName}{msg.isAI ? " · AI" : ""}</header>
             {msg.imageUrl && <img src={msg.imageUrl} alt="" />}
-            {msg.text && <p>{msg.text}</p>}
+            {msg.text && msg.isAI ? (
+              <div className="cc-md">
+                <ReactMarkdown
+                  remarkPlugins={[remarkMath]}
+                  rehypePlugins={[[rehypeKatex, { output: "html", throwOnError: false, strict: "ignore", trust: true }]]}
+                >
+                  {fixCommonMathGlue(prepareMathForKaTeX(msg.text))}
+                </ReactMarkdown>
+              </div>
+            ) : (
+              msg.text && <p>{msg.text}</p>
+            )}
           </article>
         ))}
         {askingAI && (
@@ -265,7 +314,6 @@ export default function CommunityChat() {
             </p>
           </article>
         )}
-        <div ref={endRef} />
       </div>
 
       <form className="cc-composer" onSubmit={handleSend}>
@@ -282,13 +330,13 @@ export default function CommunityChat() {
           type="button"
           className="cc-icon-btn"
           disabled={askingAI || (!input.trim() && !messages.some((m) => m.imageUrl))}
-          onClick={() => askAI(input.trim() || "Help the group with this.")}
+          onClick={handleAskAI}
           aria-label="Ask AI"
         >
           <IconAI />
         </button>
-        <button type="submit" className="cc-send" disabled={!input.trim()}>
-          Send
+        <button type="submit" className="cc-send" disabled={!input.trim()} aria-label="Send">
+          <IconSend />
         </button>
       </form>
 

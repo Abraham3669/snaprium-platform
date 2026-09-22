@@ -9,6 +9,7 @@ import {
   COMMUNITY_TAGS,
   createCommunity,
   listPublicCommunities,
+  joinCommunityByCode,
 } from "../lib/communities";
 
 const isUnlimitedPlan = (plan) => plan === "unlimited" || plan === "premium";
@@ -19,6 +20,8 @@ export default function Community() {
 
   const [tag, setTag] = useState("");
   const [search, setSearch] = useState("");
+  const [joinCode, setJoinCode] = useState("");
+  const [joining, setJoining] = useState(false);
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -54,6 +57,31 @@ export default function Community() {
   }, [list, search]);
 
   const hostedCount = list.filter((c) => c.createdBy === user?.uid).length;
+
+  const handleJoinCode = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      toast.info("Sign in to join a community");
+      navigate("/login");
+      return;
+    }
+    const code = joinCode.trim().toUpperCase();
+    if (code.length < 4) {
+      toast.warning("Enter the community code");
+      return;
+    }
+    setJoining(true);
+    try {
+      const community = await joinCommunityByCode(code, user.uid);
+      toast.success("Joined community");
+      setJoinCode("");
+      navigate(`/community/${community.id}`);
+    } catch (err) {
+      toast.error(err.message || "Invalid or expired code");
+    } finally {
+      setJoining(false);
+    }
+  };
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -96,8 +124,21 @@ export default function Community() {
       <header className="hub-top">
         <p className="hub-kicker">Communities</p>
         <h1 className="hub-title">Find a class or start one</h1>
-        <p className="hub-sub">Public groups are listed here. Private groups stay off this list.</p>
+        <p className="hub-sub">Public groups are listed here. Private groups join with a code.</p>
       </header>
+
+      <form className="community-toolbar" onSubmit={handleJoinCode}>
+        <input
+          className="community-search"
+          placeholder="Enter invite code"
+          value={joinCode}
+          onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+          maxLength={8}
+        />
+        <button type="submit" className="community-create-btn" disabled={joining}>
+          {joining ? "Joining..." : "Join with code"}
+        </button>
+      </form>
 
       <div className="community-toolbar">
         <input

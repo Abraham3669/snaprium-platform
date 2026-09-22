@@ -49,6 +49,31 @@ function IconLink() {
     </svg>
   );
 }
+function IconImage() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <circle cx="9" cy="10" r="1.5" />
+      <path d="M21 16l-5-5-5 6-3-3-5 5" />
+    </svg>
+  );
+}
+function IconCommunityMark() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18M12 3c2.6 2.4 4 5.5 4 9s-1.4 6.6-4 9c-2.6-2.4-4-5.5-4-9s1.4-6.6 4-9z" />
+    </svg>
+  );
+}
+function IconCamera() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M4 8h3l2-2h6l2 2h3v11H4V8z" />
+      <circle cx="12" cy="13" r="3.2" />
+    </svg>
+  );
+}
 
 export default function CommunityDetail() {
   const { communityId } = useParams();
@@ -134,24 +159,33 @@ export default function CommunityDetail() {
   const copyInvite = async () => {
     const link = `${window.location.origin}/community/${community.id}`;
     const text = community.code ? `${link}\nCode: ${community.code}` : link;
-    await navigator.clipboard.writeText(text);
-    toast.success("Invite copied");
+    try {
+      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(text);
+      else window.prompt("Copy invite", text);
+      toast.success(community.code ? `Copied. Code ${community.code}` : "Invite copied");
+    } catch {
+      window.prompt("Copy invite", text);
+    }
   };
 
   return (
     <div className="cd-page">
       <button type="button" className="cd-back" onClick={() => navigate("/community")}>← Communities</button>
 
-      <div
+      <button
+        type="button"
         className="cd-banner"
         style={community.coverUrl ? { backgroundImage: `url(${community.coverUrl})` } : undefined}
+        onClick={() => isAdmin && bannerRef.current?.click()}
+        disabled={!isAdmin || busy}
+        aria-label="Change banner"
       >
-        {isAdmin && (
-          <button type="button" className="cd-banner-edit" disabled={busy} onClick={() => bannerRef.current?.click()}>
-            Change banner
-          </button>
+                {!community.coverUrl && (
+          <span className="cd-placeholder">
+            <IconCamera />
+          </span>
         )}
-      </div>
+      </button>
 
       <div className="cd-identity">
         <button
@@ -159,8 +193,11 @@ export default function CommunityDetail() {
           className="cd-avatar"
           style={community.photoUrl ? { backgroundImage: `url(${community.photoUrl})` } : undefined}
           onClick={() => isAdmin && photoRef.current?.click()}
-          disabled={!isAdmin}
-        />
+          disabled={!isAdmin || busy}
+          aria-label="Change photo"
+        >
+{!community.photoUrl && <IconCommunityMark />}
+        </button>
         <div className="cd-identity-text">
           <p className="cd-kicker">{community.tag}</p>
           <h1 className="cd-title">{community.name}</h1>
@@ -184,25 +221,37 @@ export default function CommunityDetail() {
           <IconLink /> Invite
         </button>
         {isMember && !isAdmin && (
-          <button type="button" className="cd-text-btn" onClick={async () => {
-            try {
-              await leaveCommunity(community.id, user.uid);
-              navigate("/community");
-            } catch (err) {
-              toast.error(err.message || "Could not leave");
-            }
-          }}>Leave</button>
+          <button
+            type="button"
+            className="cd-text-btn"
+            onClick={async () => {
+              try {
+                await leaveCommunity(community.id, user.uid);
+                navigate("/community");
+              } catch (err) {
+                toast.error(err.message || "Could not leave");
+              }
+            }}
+          >
+            Leave
+          </button>
         )}
         {isAdmin && (
-          <button type="button" className="cd-text-btn danger" onClick={async () => {
-            if (!window.confirm("Unlist this community for everyone?")) return;
-            try {
-              await unlistCommunity(community.id);
-              navigate("/community");
-            } catch (err) {
-              toast.error(err.message || "Could not delete");
-            }
-          }}>Delete community</button>
+          <button
+            type="button"
+            className="cd-text-btn danger"
+            onClick={async () => {
+              if (!window.confirm("Unlist this community for everyone?")) return;
+              try {
+                await unlistCommunity(community.id);
+                navigate("/community");
+              } catch (err) {
+                toast.error(err.message || "Could not delete");
+              }
+            }}
+          >
+            Delete community
+          </button>
         )}
       </div>
 
