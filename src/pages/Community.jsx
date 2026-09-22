@@ -167,7 +167,7 @@ export default function Community() {
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Name (e.g. SHS Physics 2026)"
+            placeholder="Name (e.g. Calculus study group)"
             maxLength={60}
             required
           />
