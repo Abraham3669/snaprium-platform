@@ -9,6 +9,7 @@ import {
   COMMUNITY_TAGS,
   createCommunity,
   listPublicCommunities,
+  listMyCommunities,
   joinCommunityByCode,
 } from "../lib/communities";
 
@@ -23,6 +24,7 @@ export default function Community() {
   const [joinCode, setJoinCode] = useState("");
   const [joining, setJoining] = useState(false);
   const [list, setList] = useState([]);
+  const [mine, setMine] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -36,8 +38,12 @@ export default function Community() {
   const load = async (selectedTag = tag) => {
     setLoading(true);
     try {
-      const rows = await listPublicCommunities(selectedTag);
+      const [rows, own] = await Promise.all([
+        listPublicCommunities(selectedTag),
+        user?.uid ? listMyCommunities(user.uid) : Promise.resolve([]),
+      ]);
       setList(rows);
+      setMine(own);
     } catch (err) {
       console.error(err);
       toast.error("Could not load communities");
@@ -48,7 +54,7 @@ export default function Community() {
 
   useEffect(() => {
     load("");
-  }, []);
+  }, [user?.uid]);
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -56,7 +62,7 @@ export default function Community() {
     return list.filter((c) => (c.name || "").toLowerCase().includes(q));
   }, [list, search]);
 
-  const hostedCount = list.filter((c) => c.createdBy === user?.uid).length;
+  const hostedCount = mine.filter((c) => c.createdBy === user?.uid).length;
 
   const handleJoinCode = async (e) => {
     e.preventDefault();
@@ -90,13 +96,11 @@ export default function Community() {
       navigate("/login");
       return;
     }
-
     if (!isUnlimitedPlan(user.plan) && hostedCount >= 1) {
       toast.info("Free accounts can create 1 community. Upgrade to create more.");
       setShowUpgradeModal(true);
       return;
     }
-
     setSaving(true);
     try {
       const created = await createCommunity({
@@ -112,19 +116,42 @@ export default function Community() {
       setName("");
       navigate(`/community/${created.id}`);
     } catch (err) {
-      console.error(err);
       toast.error(err.message || "Could not create community");
     } finally {
       setSaving(false);
     }
   };
 
+  const renderRow = (c) => (
+    <button
+      key={c.id}
+      type="button"
+      className="community-row"
+      onClick={() => navigate(`/community/${c.id}`)}
+    >
+      <div className="community-row-main">
+        <span
+          className="community-row-avatar"
+          style={c.photoUrl ? { backgroundImage: `url(${c.photoUrl})` } : undefined}
+        />
+        <div>
+          <strong>{c.name}</strong>
+          <p>
+            {c.tag} · {c.memberCount || 1} members
+            {c.visibility === "private" ? " · Private" : ""}
+            {c.role === "tutor" ? " · Tutor" : ""}
+          </p>
+        </div>
+      </div>
+    </button>
+  );
+
   return (
     <div className="hub-page">
       <header className="hub-top">
         <p className="hub-kicker">Communities</p>
         <h1 className="hub-title">Find a class or start one</h1>
-        <p className="hub-sub">Public groups are listed here. Private groups join with a code.</p>
+        <p className="hub-sub">Your private groups stay under Your communities. Public groups are listed below.</p>
       </header>
 
       <form className="community-toolbar" onSubmit={handleJoinCode}>
@@ -152,6 +179,13 @@ export default function Community() {
         </button>
       </div>
 
+      {mine.length > 0 && (
+        <>
+          <h2 className="community-section-title">Your communities</h2>
+          <div className="community-list">{mine.map(renderRow)}</div>
+        </>
+      )}
+
       <div className="community-tags">
         <button type="button" className={!tag ? "tag on" : "tag"} onClick={() => { setTag(""); load(""); }}>
           All
@@ -174,32 +208,9 @@ export default function Community() {
       {loading ? (
         <p className="hub-sub">Loading communities…</p>
       ) : visible.length === 0 ? (
-        <p className="hub-sub">No public communities yet. Create the first one.</p>
+        <p className="hub-sub">No public communities yet.</p>
       ) : (
-        <div className="community-list">
-          {visible.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              className="community-row"
-              onClick={() => navigate(`/community/${c.id}`)}
-            >
-              <div className="community-row-main">
-                <span
-                  className="community-row-avatar"
-                  style={c.photoUrl ? { backgroundImage: `url(${c.photoUrl})` } : undefined}
-                />
-                <div>
-                  <strong>{c.name}</strong>
-                  <p>
-                    {c.tag} · {c.memberCount || 1} members
-                    {c.role === "tutor" ? " · Tutor" : ""}
-                  </p>
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
+        <div className="community-list">{visible.map(renderRow)}</div>
       )}
 
       {showCreate && (

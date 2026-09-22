@@ -271,3 +271,54 @@
 .community-call {
   margin: 16px 0;
 }
+
+
+
+
+
+
+.community-section-title {
+  margin: 20px 0 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.community-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.community-row {
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  padding: 14px;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.community-row-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.community-row-avatar {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border-radius: 12px;
+  background: var(--icon-bg) center/cover no-repeat;
+}
+
+.community-row p {
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}

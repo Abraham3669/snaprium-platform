@@ -47,6 +47,24 @@ export async function ensureCommunityCode(id) {
   return { id: snap.id, ...data, code };
 }
 
+
+
+export async function listMyCommunities(uid) {
+  if (!uid) return [];
+  const q = query(
+    collection(db, "communities"),
+    where("members", "array-contains", uid)
+  );
+  const snap = await getDocs(q);
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .filter((c) => c.deleted !== true);
+}
+
+
+
+
+
 export async function updateCommunityMedia(id, fields) {
   const ref = doc(db, "communities", id);
   await updateDoc(ref, {
