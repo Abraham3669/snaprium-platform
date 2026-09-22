@@ -11,6 +11,7 @@ const AuthContext = createContext();
 
 function buildUser(firebaseUser, data = {}) {
   const plan = data.plan || "free";
+  const banned = data.banned === true;
   return {
     uid: firebaseUser.uid,
     email: firebaseUser.email || data.email || "",
@@ -22,11 +23,14 @@ function buildUser(firebaseUser, data = {}) {
     photoURL: data.photoURL || firebaseUser.photoURL || "",
     ...data,
     plan,
+    banned,
+    isBanned: banned,
     subscriptionStatus: data.subscriptionStatus || "inactive",
     isUnlimited: plan === "unlimited",
     isPremium: ["premium", "unlimited"].includes(plan),
   };
 }
+
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);

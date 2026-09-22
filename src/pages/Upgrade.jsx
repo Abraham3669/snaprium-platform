@@ -3,11 +3,11 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { usePaddle } from "../context/PaddleContext";
 import { Capacitor } from "@capacitor/core";
-import { Browser } from "@capacitor/browser";
 import { analytics, logEvent } from "../lib/firebase";
+import { iapConfigured, purchaseUnlimited, restoreUnlimited } from "../lib/iap";
 
 export default function Upgrade() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, refreshUser } = useAuth();
   const { openCheckout, isReady: paddleReady } = usePaddle();
 
   const [upgrading, setUpgrading] = useState(false);
@@ -15,18 +15,13 @@ export default function Upgrade() {
   const [showCheckout, setShowCheckout] = useState(false);
 
   const UNLIMITED_PRICE_ID = "pri_01ktdn3fppsgkgjhm8xm5ha015";
+  const isNative = Capacitor.isNativePlatform();
 
-   useEffect(() => {
+  useEffect(() => {
     logEvent(analytics, "upgrade_page_opened", {
       plan: user?.plan || "free",
     });
-    console.log("[Upgrade]", {
-      uid: user?.uid,
-      plan: user?.plan,
-      paddleReady,
-      native: Capacitor.isNativePlatform(),
-    });
-  }, [user, paddleReady]);
+  }, [user]);
 
   const handleUpgrade = async () => {
     if (authLoading) {
@@ -38,33 +33,19 @@ export default function Upgrade() {
       return;
     }
 
-        setError("");
+    setError("");
     setUpgrading(true);
     logEvent(analytics, "checkout_started", {
-      platform: Capacitor.isNativePlatform() ? "native" : "web",
+      platform: isNative ? "native" : "web",
     });
 
     try {
-      // ─── APK: open clean checkout page in system browser ───
-      if (Capacitor.isNativePlatform()) {
-        const params = new URLSearchParams({
-          userId: user.uid,
-          email: user.email || "",
-          priceId: UNLIMITED_PRICE_ID,
-        });
-
-        // This page ONLY starts Paddle — no second upgrade UI
-        const checkoutUrl = `https://snaprium.com/checkout?${params.toString()}`;
-
-        console.log("Opening:", checkoutUrl);
-        await Browser.open({
-          url: checkoutUrl,
-          presentationStyle: "popover",
-        });
+      if (isNative) {
+        await purchaseUnlimited(user.uid);
+        await refreshUser?.();
         return;
       }
 
-      // ─── WEB: same as before ───
       if (!paddleReady) {
         alert("Paddle is still loading. Please refresh the page.");
         return;
@@ -72,7 +53,6 @@ export default function Upgrade() {
 
       setShowCheckout(true);
       await new Promise((r) => setTimeout(r, 100));
-
       await openCheckout({
         priceId: UNLIMITED_PRICE_ID,
         userId: user.uid,
@@ -81,8 +61,22 @@ export default function Upgrade() {
       });
     } catch (err) {
       console.error(err);
-      setError("Failed to open checkout. Please try again.");
+      setError(err.message || "Failed to start checkout. Please try again.");
       setShowCheckout(false);
+    } finally {
+      setUpgrading(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    if (!user?.uid) return;
+    setError("");
+    setUpgrading(true);
+    try {
+      await restoreUnlimited(user.uid);
+      await refreshUser?.();
+    } catch (err) {
+      setError(err.message || "Could not restore purchases.");
     } finally {
       setUpgrading(false);
     }
@@ -97,7 +91,7 @@ export default function Upgrade() {
   return (
     <div className="upgrade-page">
       <div className="upgrade-header">
-               <h2>Upgrade to Unlimited</h2>
+        <h2>Upgrade to Unlimited</h2>
         <p>Solve freely. Study with friends. Keep going when it matters.</p>
       </div>
 
@@ -108,7 +102,7 @@ export default function Upgrade() {
             <div className="plan-price">
               $0 <span>per month</span>
             </div>
-                        <p className="plan-desc">
+            <p className="plan-desc">
               <strong>5 home solves / day</strong>
             </p>
             <p className="plan-detail">
@@ -119,16 +113,16 @@ export default function Upgrade() {
 
           <div className="pricing-card premium">
             <div className="popular-badge">RECOMMENDED</div>
-                        <h3>Unlimited</h3>
+            <h3>Unlimited</h3>
             <div className="plan-price">
-              $9.99 <span>per month</span>
+              $14.99 <span>per month</span>
             </div>
             <p className="plan-desc">For students who study every day</p>
             <ul className="plan-features">
               <li><CheckIcon /> Unlimited photo solves on the home screen</li>
               <li><CheckIcon /> More follow-up questions on every solution</li>
               <li><CheckIcon /> Study rooms stay included — video, screen share, and shared questions</li>
-<li><CheckIcon /> 40 group AI asks per day, enough for real study sessions with friends</li>
+              <li><CheckIcon /> Communities and group AI for real study sessions</li>
               <li><CheckIcon /> Built for exam nights and long study sessions</li>
             </ul>
             <button
@@ -137,25 +131,39 @@ export default function Upgrade() {
               disabled={upgrading || isUnlimited}
             >
               {upgrading
-                ? "Opening Checkout..."
+                ? isNative ? "Starting store…" : "Opening Checkout..."
                 : isUnlimited
                 ? "✅ Unlimited Active"
                 : "Upgrade to Unlimited"}
             </button>
-            <p className="billed-text">Cancel anytime • Monthly subscription</p>
+            {isNative && !isUnlimited && (
+              <button
+                type="button"
+                className="back-button"
+                onClick={handleRestore}
+                disabled={upgrading}
+                style={{ marginTop: 12 }}
+              >
+                Restore purchases
+              </button>
+            )}
+            <p className="billed-text">
+              {isNative
+                ? "Billed by Apple or Google • Cancel anytime"
+                : "Cancel anytime • Monthly subscription"}
+            </p>
+            {isNative && !iapConfigured() && (
+              <p className="plan-detail">Store product is not live yet. Add RevenueCat keys after the subscription exists in App Store Connect / Play.</p>
+            )}
           </div>
         </div>
       )}
 
-      {showCheckout && !Capacitor.isNativePlatform() && (
+      {showCheckout && !isNative && (
         <div className="paddle-checkout-wrapper">
           <h3 className="checkout-title">Complete Your Upgrade</h3>
           <div id="paddle-checkout-container" className="my-8 paddle-checkout-frame" />
-          <button
-            className="back-button"
-            onClick={() => setShowCheckout(false)}
-            style={{ marginTop: "24px" }}
-          >
+          <button className="back-button" onClick={() => setShowCheckout(false)} style={{ marginTop: "24px" }}>
             ← Back to Plans
           </button>
         </div>
@@ -171,17 +179,7 @@ export default function Upgrade() {
 }
 
 const CheckIcon = () => (
-  <svg
-    width="20"
-    height="20"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="#10b981"
-    strokeWidth="3"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    style={{ marginRight: 10, flexShrink: 0 }}
-  >
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 10, flexShrink: 0 }}>
     <polyline points="20 6 9 17 4 12" />
   </svg>
 );

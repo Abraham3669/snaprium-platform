@@ -1,6 +1,5 @@
 // src/components/CameraInput.jsx
 import { useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
 import { Capacitor } from "@capacitor/core";
 import { isStandaloneApp } from "../lib/firebase";
 
@@ -10,7 +9,6 @@ export default function CameraInput({ onFileSelect }) {
   const dropZoneRef = useRef();
   const [isDragging, setIsDragging] = useState(false);
   const isNative = Capacitor.isNativePlatform() || isStandaloneApp();
-const navigate = useNavigate();
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -37,7 +35,6 @@ const navigate = useNavigate();
     input.click();
   };
 
-  // ─── Drag & Drop handlers (desktop) ───
   const handleDragOver = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -65,7 +62,6 @@ const navigate = useNavigate();
 
   return (
     <main className="camera-main">
-      {/* ─── Always visible (app + browser) ─── */}
       <section className="hero">
         <div className="container text-center">
           <h1
@@ -88,7 +84,6 @@ const navigate = useNavigate();
           </h1>
 
           <div className="camera-container container">
-            {/* Camera */}
             <div className="action-item mobile-camera">
               <div onClick={handleCameraClick} className="camera-btn">
                 <svg
@@ -103,7 +98,6 @@ const navigate = useNavigate();
               <span className="action-label">Take Photo</span>
             </div>
 
-            {/* Gallery – mobile only */}
             <div className="action-item mobile-gallery">
               <div className="gallery-card" onClick={handleGalleryClick}>
                 <div className="gallery-card-icon">
@@ -128,7 +122,6 @@ const navigate = useNavigate();
               </div>
             </div>
 
-            {/* Desktop Drop Zone */}
             <div
               ref={dropZoneRef}
               className={`desktop-dropzone ${isDragging ? "dragging" : ""}`}
@@ -162,34 +155,6 @@ const navigate = useNavigate();
             </div>
           </div>
 
-        {/* ========== Study with Friends Button ========== */}
-<div className="study-friends-wrapper">
-  <button
-    onClick={() => navigate("/study")}
-    className="study-with-friends-btn"
-  >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
-    Study with Friends
-  </button>
-</div>
-{/* ============================================== */}
-
-          {/* Hidden inputs */}
           <input
             type="file"
             accept="image/*"
@@ -206,7 +171,6 @@ const navigate = useNavigate();
             onChange={handleFileChange}
           />
 
-          {/* Desktop */}
           <div className="subject-badges subject-badges-desktop">
             <span className="badge" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: "0.95rem", fontWeight: 600, padding: "10px 16px" }}>
               <span style={{ fontSize: "1.75rem", fontWeight: 700, lineHeight: 1, color: "var(--accent)" }}>π</span>
@@ -237,7 +201,6 @@ const navigate = useNavigate();
             </span>
           </div>
 
-          {/* Phone + phone browser */}
           <div className="subject-badges subject-badges-mobile">
             {[
               ["π", "Math"],
@@ -273,140 +236,6 @@ const navigate = useNavigate();
           </div>
         </div>
       </section>
-
-      {/* ─── Browser only (marketing website look) ─── */}
-      {!isNative && (
-        <>
-          
-          <section>
-            <div className="container">
-              <h2 className="section-heading">Build Confidence in Learning</h2>
-              <div className="gallery-text">
-                Snap your question and get{" "}
-                <strong>step-by-step, exam-ready solutions</strong> instantly —
-                no confusion, no messy answers.
-              </div>
-            </div>
-          </section>
-
-          <div className="demo-animation container">
-            <div className="phone">
-              <div className="screen">
-                <div className="question-card">
-                  <p className="question">∫ (2x³ - 5x² + 4) dx = ?</p>
-                  <div className="scan-line"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <section className="subjects-section">
-            <div className="container">
-              <h2 className="section-heading">
-                Snaprium solves <span className="hero-accent">Math (∫ √ π)</span>{" "}
-                and <span className="hero-accent">Physics (F=ma, E=mc²)</span>
-              </h2>
-              <p className="gallery-text">
-                From algebra and calculus to mechanics and electricity and more —
-                Snaprium breaks every problem into clear, step-by-step solutions.
-              </p>
-            </div>
-          </section>
-
-          <section className="solution-demo">
-            <div className="solution-card">
-              <div className="solution-question-card">
-                <div className="solution-question-preview">
-                  <p className="solution-question">
-                    A particle has velocity v(t) = 3t² − 4t + 1. Find its
-                    displacement function s(t).
-                  </p>
-                </div>
-              </div>
-              <div className="solution-steps">
-                <div className="solution-step">
-                  <div className="step-title">
-                    Use the relation between velocity and displacement
-                  </div>
-                  <div className="step-math">
-                    v(t) ={" "}
-                    <span className="frac">
-                      <span className="top">ds</span>
-                      <span className="bottom">dt</span>
-                    </span>
-                  </div>
-                </div>
-                <div className="solution-step">
-                  <div className="step-title">Integrate the velocity function</div>
-                  <div className="step-math">s(t) = ∫ (3t² − 4t + 1) dt</div>
-                </div>
-                <div className="solution-final">
-                  <div className="step-title">Final Answer</div>
-                  <div className="step-math">s(t) = t³ − 2t² + t + C</div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section className="banner-section">
-            <div className="dual-banner">
-              <div className="banner-card primary">
-                <h1 className="banner-title">Solve Math & Physics Instantly.</h1>
-                <p className="banner-subtext">Built for learners everywhere.</p>
-                <ul className="banner-list">
-                  <li>
-                    <span>Take a photo to solve instantly</span>
-                  </li>
-                  <li>
-                    <span>Step-by-step Math & Physics solutions</span>
-                  </li>
-                  <li>
-                    <span>High school and university problems solved</span>
-                  </li>
-                </ul>
-              </div>
-              <div className="banner-card secondary">
-                <h1 className="banner-title">Learn Smarter, Perform Better.</h1>
-                <p className="banner-subtext">Confidence through clear solutions.</p>
-                <ul className="banner-list">
-                  <li>
-                    <span>Clear explanations for every solution</span>
-                  </li>
-                  <li>
-                    <span>Solve problems with confidence</span>
-                  </li>
-                  <li>
-                    <span>Designed for effective learning</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </section>
-
-          <section>
-            <div className="container">
-              <h2 className="cta-heading">Study Smarter. Perform Better.</h2>
-              <div className="post-animation-text">
-                Level up your math and physics skills with Snaprium —{" "}
-                <strong>study smarter, score higher</strong>.
-              </div>
-            </div>
-          </section>
-
-          <footer className="footer">
-            <div className="footer-links">
-              <Link to="/terms">Terms of Service</Link>
-              <span className="footer-separator"> • </span>
-              <Link to="/privacy">Privacy Policy</Link>
-              <span className="footer-separator"> • </span>
-              <Link to="/refunds">Refund Policy</Link>
-              <span className="footer-separator"> • </span>
-              <Link to="/upgrade">Pricing</Link>
-            </div>
-            <p>© {new Date().getFullYear()} Snaprium. All rights reserved.</p>
-          </footer>
-        </>
-      )}
     </main>
   );
 }

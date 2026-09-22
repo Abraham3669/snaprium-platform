@@ -3,13 +3,17 @@ import { useState, useEffect } from "react";
 import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+import Home from "./pages/Home";
+import Community from "./pages/Community";
+import Admin from "./pages/Admin";
 import CameraInput from "./components/CameraInput";
 import CropperModal from "./components/CropperModal";
 import ResultPanel from "./components/ResultPanel";
 import Dashboard from "./components/Dashboard";
 import UpgradeModal from "./components/UpgradeModal";
 import WelcomeModal from "./components/WelcomeModal";
+import CommunityDetail from "./pages/CommunityDetail";
+import CommunityChat from "./pages/CommunityChat";
 
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -309,7 +313,12 @@ useEffect(() => {
       theme={theme}
     />
 
-    {!location.pathname.startsWith("/study") && (
+    {!(
+  location.pathname.startsWith("/study") ||
+  location.pathname.includes("/chat") ||
+  location.pathname === "/solo" ||
+  /^\/community\/[^/]+$/.test(location.pathname)
+) && (
   <header className="snaprium-header">
       <div className="snaprium-header-inner">
         <div className="snaprium-brand">
@@ -365,49 +374,57 @@ useEffect(() => {
         element={
           <main className="pt-16">
             <Routes>
-              <Route
-                path="/"
-                element={
-                  <>
-                    <CameraInput
-                      onFileSelect={(selectedFile) => {
-                        setFile(selectedFile);
-                        setIsCropperOpen(true);
-                        logEvent(analytics, "camera_input_started", {
-                          user_type: user ? "registered" : "guest",
-                        });
-                      }}
-                      onOpenDashboard={() => setIsDashboardOpen(true)}
-                    />
+              <Route path="/" element={<Home />} />
 
-                    <CropperModal
-                      file={file}
-                      isOpen={isCropperOpen}
-                      onClose={() => {
-                        setIsCropperOpen(false);
-                        setFile(null);
-                      }}
-                      onCrop={handleCropComplete}
-                    />
+<Route
+  path="/solo"
+  element={
+    <>
+      <button
+        type="button"
+        className="hub-back"
+        onClick={() => navigate("/")}
+      >
+        ← Home
+      </button>
+      <CameraInput
+        onFileSelect={(selectedFile) => {
+          setFile(selectedFile);
+          setIsCropperOpen(true);
+          logEvent(analytics, "camera_input_started", {
+            user_type: user ? "registered" : "guest",
+          });
+        }}
+        onOpenDashboard={() => setIsDashboardOpen(true)}
+      />
 
-                    {isResultOpen && (
-                      <ResultPanel
-                        result={{ image: croppedImage, text: resultText }}
-                        loading={isProcessing}
-                        onClose={() => setIsResultOpen(false)}
-                      />
-                    )}
+      <CropperModal
+        file={file}
+        isOpen={isCropperOpen}
+        onClose={() => {
+          setIsCropperOpen(false);
+          setFile(null);
+        }}
+        onCrop={handleCropComplete}
+      />
 
-                    {showUpgradeModal && (
-                      <UpgradeModal
-                        isOpen={showUpgradeModal}
-                        onClose={() => setShowUpgradeModal(false)}
-                      />
-                    )}
-                  </>
-                }
-              />
+      {isResultOpen && (
+        <ResultPanel
+          result={{ image: croppedImage, text: resultText }}
+          loading={isProcessing}
+          onClose={() => setIsResultOpen(false)}
+        />
+      )}
 
+      {showUpgradeModal && (
+        <UpgradeModal
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+        />
+      )}
+    </>
+  }
+/>
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -418,7 +435,13 @@ useEffect(() => {
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/checkout-return" element={<CheckoutReturn />} />
               <Route path="/study" element={<StudyLobby />} />
+              <Route path="/community" element={<Community />} />
               <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/community/:communityId" element={<CommunityDetail />} />
+              <Route path="/community/:communityId/chat" element={<CommunityChat />} />
+<Route path="/community/:communityId" element={<CommunityDetail />} />
+<Route path="/community/:communityId/chat" element={<CommunityChat />} />
             </Routes>
           </main>
         }
@@ -432,11 +455,16 @@ useEffect(() => {
       />
     )}
 
-        {!location.pathname.startsWith("/study") && (
-      <BottomNav
-        toggleTheme={toggleTheme}
-        theme={theme}
-        isResultOpen={isResultOpen}
+      {!(
+  location.pathname.startsWith("/study") ||
+  location.pathname.includes("/chat") ||
+  location.pathname === "/solo" ||
+  /^\/community\/[^/]+$/.test(location.pathname)
+) && (
+  <BottomNav
+    toggleTheme={toggleTheme}
+    theme={theme}
+    isResultOpen={isResultOpen}
       />
     )}
   </div>

@@ -9,6 +9,9 @@ import {
   hideRoomForMe,
 } from "../lib/studyRooms";
 import { toast } from "react-toastify";
+import UpgradeModal from "../components/UpgradeModal";
+
+const isUnlimitedPlan = (plan) => plan === "unlimited" || plan === "premium";
 
 export default function StudyLobby() {
   const { user } = useAuth();
@@ -18,6 +21,7 @@ export default function StudyLobby() {
   const [joinCode, setJoinCode] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const hidden = user?.hiddenStudyRooms || [];
   const myRooms = (user?.joinedStudyRooms || []).filter(
@@ -26,6 +30,9 @@ export default function StudyLobby() {
       !hidden.includes(room.id) &&
       list.findIndex((item) => item.id === room.id) === index
   );
+
+  const roomsIHost = myRooms.filter((room) => room.createdBy === user?.uid);
+  const canHostMore = !user || isUnlimitedPlan(user.plan) || roomsIHost.length < 1;
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -40,15 +47,24 @@ export default function StudyLobby() {
       return;
     }
 
+    if (!canHostMore) {
+      toast.info("Free accounts can host 1 private room. Upgrade to host more.");
+      setShowUpgradeModal(true);
+      return;
+    }
+
     setIsCreating(true);
     try {
       const room = await createStudyRoom({
-        topic: topic.trim(),
-        createdBy: user.uid,
-        displayName: user.displayName || user.email?.split("@")[0] || "Student",
-      });
+  topic: topic.trim(),
+  createdBy: user.uid,
+  displayName: user.displayName || user.email?.split("@")[0] || "Student",
+  visibility: "private",
+  kind: "friends",
+  maxParticipants: isUnlimitedPlan(user.plan) ? 8 : 4,
+});
       await rememberJoinedRoom(user.uid, room);
-      toast.success("Room created!");
+      toast.success("Private room created");
       navigate(`/study/${room.id}`);
     } catch (err) {
       console.error(err);
@@ -76,7 +92,7 @@ export default function StudyLobby() {
     try {
       const room = await joinStudyRoomByCode(code, user);
       await rememberJoinedRoom(user.uid, room);
-      toast.success("Joined the room!");
+      toast.success("Joined the room");
       navigate(`/study/${room.id}`);
     } catch (err) {
       console.error(err);
@@ -102,14 +118,15 @@ export default function StudyLobby() {
       <div className="study-lobby-container">
         <h1 className="study-lobby-title">Study with Friends</h1>
         <p className="study-lobby-subtitle">
-          Create a room or join your friends. Snaprium AI will join you.
+          Private sessions only. These rooms are not listed and cannot be searched.
+          Share the code with people you trust.
         </p>
 
         {user && (
           <section className="study-card my-rooms-card">
-            <h2>My rooms</h2>
+            <h2>My private rooms</h2>
             {myRooms.length === 0 ? (
-              <p className="study-hint">Rooms you create or join will show up here.</p>
+              <p className="study-hint">Rooms you create or join with a code show up here.</p>
             ) : (
               <ul className="my-rooms-list">
                 {myRooms.map((room) => (
@@ -137,7 +154,10 @@ export default function StudyLobby() {
         )}
 
         <form onSubmit={handleCreate} className="study-card">
-          <h2>Create a Study Room</h2>
+          <h2>Create a private room</h2>
+          <p className="study-hint">
+            Free: host 1 room. Unlimited: host more and run longer live sessions.
+          </p>
           <input
             type="text"
             placeholder="What are you studying? (e.g. Calculus, Newton's Laws)"
@@ -147,7 +167,7 @@ export default function StudyLobby() {
             disabled={isCreating}
           />
           <button type="submit" disabled={isCreating || !topic.trim()}>
-            {isCreating ? "Creating..." : "Create Room & Invite Friends"}
+            {isCreating ? "Creating..." : "Create private room"}
           </button>
         </form>
 
@@ -156,9 +176,9 @@ export default function StudyLobby() {
         </div>
 
         <form onSubmit={handleJoin} className="study-card">
-          <h2>Join a Room</h2>
+          <h2>Join with a code</h2>
           <p className="study-hint">
-            Enter the 4-character code your friend shared with you.
+            Enter the code your friend or tutor shared. Joining stays free.
           </p>
           <input
             type="text"
@@ -169,7 +189,7 @@ export default function StudyLobby() {
             disabled={isJoining}
           />
           <button type="submit" disabled={isJoining || !joinCode.trim()}>
-            {isJoining ? "Joining..." : "Join Room"}
+            {isJoining ? "Joining..." : "Join room"}
           </button>
         </form>
 
@@ -181,6 +201,13 @@ export default function StudyLobby() {
           ← Back to Home
         </button>
       </div>
+
+      {showUpgradeModal && (
+        <UpgradeModal
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+        />
+      )}
     </div>
   );
 }

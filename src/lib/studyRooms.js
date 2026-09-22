@@ -30,6 +30,7 @@ export async function rememberJoinedRoom(uid, room) {
       id: room.id,
       topic: room.topic || "Study Room",
       code: room.code || "",
+      createdBy: room.createdBy || "",
     }),
   });
 }
@@ -51,7 +52,15 @@ function generateRoomCode() {
   return code;
 }
 
-export async function createStudyRoom({ topic, createdBy, displayName }) {
+export async function createStudyRoom({
+  topic,
+  createdBy,
+  displayName,
+  visibility = "private",
+  kind = "friends",
+  communityId = null,
+  maxParticipants = 4,
+}) {
   const code = generateRoomCode();
   const roomRef = doc(collection(db, "studyRooms"));
 
@@ -61,6 +70,10 @@ export async function createStudyRoom({ topic, createdBy, displayName }) {
     topic: topic || "General Study",
     createdBy,
     createdByName: displayName || "Student",
+    visibility,
+    kind,
+    communityId,
+    maxParticipants,
     createdAt: serverTimestamp(),
     participants: [
       {
@@ -83,7 +96,12 @@ export async function createStudyRoom({ topic, createdBy, displayName }) {
   await setDoc(roomRef, roomData);
 
   try {
-    await rememberJoinedRoom(createdBy, { id: roomRef.id, code, topic: roomData.topic });
+    await rememberJoinedRoom(createdBy, {
+      id: roomRef.id,
+      code,
+      topic: roomData.topic,
+      createdBy,
+    });
   } catch (err) {
     console.warn("[studyRooms] rememberJoinedRoom create", err);
   }
@@ -117,6 +135,12 @@ export async function joinStudyRoom(roomId, user) {
 
   const data = snap.data();
   const alreadyIn = data.participants?.some((p) => p.uid === user.uid);
+  const onlineCount = (data.participants || []).filter((p) => p.isOnline).length;
+  const maxParticipants = data.maxParticipants || 8;
+
+  if (!alreadyIn && onlineCount >= maxParticipants) {
+    throw new Error("This room is full. The host can upgrade for more seats.");
+  }
 
   if (!alreadyIn) {
     await updateDoc(roomRef, {
@@ -143,6 +167,7 @@ export async function joinStudyRoom(roomId, user) {
       id: roomId,
       topic: data.topic,
       code: data.code,
+      createdBy: data.createdBy,
     });
   } catch (err) {
     console.warn("[studyRooms] rememberJoinedRoom join", err);
