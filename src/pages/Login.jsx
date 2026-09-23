@@ -6,6 +6,7 @@ import {
   getRedirectResult,
   signInWithCredential,
   GoogleAuthProvider,
+  onAuthStateChanged,
 } from "firebase/auth";
 import { auth, googleProvider, isStandaloneApp } from "../lib/firebase";
 import { Capacitor } from "@capacitor/core";
@@ -20,16 +21,17 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [checkingRedirect, setCheckingRedirect] = useState(true);
 
-  // 1. Handle the return from signInWithRedirect (most important part)
+  // 1. Handle return from signInWithRedirect + extra safety for Edge WebView2 / MSIX
   useEffect(() => {
     let cancelled = false;
+    let unsub = null;
 
     async function handleRedirect() {
       try {
+        // Classic redirect result
         const result = await getRedirectResult(auth);
 
         if (result?.user) {
-          // Successful redirect login
           await ensureUserDocument(result.user);
           if (!cancelled) {
             navigate("/", { replace: true });
@@ -38,7 +40,7 @@ export default function Login() {
         }
 
         // Sometimes getRedirectResult is null but auth.currentUser is already set
-        // (common in packaged PWAs / Edge WebView)
+        // (very common in packaged PWAs / Edge WebView2)
         if (auth.currentUser) {
           await ensureUserDocument(auth.currentUser);
           if (!cancelled) {
@@ -60,8 +62,21 @@ export default function Login() {
 
     handleRedirect();
 
+    // Extra safety net – catches cases where session is restored via onAuthStateChanged
+    unsub = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser && !cancelled) {
+        try {
+          await ensureUserDocument(firebaseUser);
+          navigate("/", { replace: true });
+        } catch (e) {
+          console.error("ensureUserDocument failed", e);
+        }
+      }
+    });
+
     return () => {
       cancelled = true;
+      if (unsub) unsub();
     };
   }, [navigate]);
 
@@ -76,6 +91,7 @@ export default function Login() {
     setLoading(true);
     setError("");
     try {
+      // Native Capacitor platforms (iOS / Android)
       if (Capacitor.isNativePlatform()) {
         const result = await FirebaseAuthentication.signInWithGoogle();
         const idToken = result.credential?.idToken;
@@ -87,29 +103,31 @@ export default function Login() {
         return;
       }
 
-      // ★ Microsoft Store / packaged PWA path
-      if (isStandaloneApp) {
-        await signInWithRedirect(auth, googleProvider);
-        return; // page will leave and come back
-      }
-
-      // Normal browser
+      // Web + Microsoft Store packaged PWA path
+      // Prefer popup first – works better in Edge WebView2 / MSIX
       try {
         const result = await signInWithPopup(auth, googleProvider);
         await ensureUserDocument(result.user);
         navigate("/", { replace: true });
+        return;
       } catch (popupErr) {
+        console.warn("Popup failed, falling back to redirect", popupErr?.code, popupErr?.message);
+
         const shouldFallback =
           popupErr?.code === "auth/popup-blocked" ||
           popupErr?.code === "auth/popup-closed-by-user" ||
           popupErr?.code === "auth/operation-not-supported-in-this-environment" ||
           popupErr?.code === "auth/cancelled-popup-request" ||
-          /getContext|popup|blocked|closed|opener|COOP/i.test(popupErr?.message || "");
+          /getContext|popup|blocked|closed|opener|COOP|storage/i.test(
+            popupErr?.message || ""
+          );
 
         if (shouldFallback) {
+          // Full page redirect – getRedirectResult + onAuthStateChanged will pick it up
           await signInWithRedirect(auth, googleProvider);
-          return;
+          return; // page navigates away
         }
+
         throw popupErr;
       }
     } catch (err) {
@@ -139,13 +157,27 @@ export default function Login() {
         disabled={loading}
         className="btn-google"
       >
-        {loading ? "Connecting..." : (
+        {loading ? (
+          "Connecting..."
+        ) : (
           <>
             <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
-              <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303C33.654 32.657 29.239 36 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.277 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" />
-              <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 16.108 18.961 13 24 13c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.277 4 24 4c-7.682 0-14.318 4.337-17.694 10.691z" />
-              <path fill="#4CAF50" d="M24 44c5.177 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.143 35.091 26.715 36 24 36c-5.218 0-9.621-3.317-11.283-7.946l-6.522 5.025C9.532 39.556 16.227 44 24 44z" />
-              <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.793 2.239-2.231 4.166-4.084 5.57l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z" />
+              <path
+                fill="#FFC107"
+                d="M43.611 20.083H42V20H24v8h11.303C33.654 32.657 29.239 36 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.277 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"
+              />
+              <path
+                fill="#FF3D00"
+                d="M6.306 14.691l6.571 4.819C14.655 16.108 18.961 13 24 13c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.277 4 24 4c-7.682 0-14.318 4.337-17.694 10.691z"
+              />
+              <path
+                fill="#4CAF50"
+                d="M24 44c5.177 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.143 35.091 26.715 36 24 36c-5.218 0-9.621-3.317-11.283-7.946l-6.522 5.025C9.532 39.556 16.227 44 24 44z"
+              />
+              <path
+                fill="#1976D2"
+                d="M43.611 20.083H42V20H24v8h11.303c-.793 2.239-2.231 4.166-4.084 5.57l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"
+              />
             </svg>
             <span>Continue with Google</span>
           </>
