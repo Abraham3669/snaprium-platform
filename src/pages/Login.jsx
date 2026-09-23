@@ -6,6 +6,9 @@ import {
   getRedirectResult,
   signInWithCredential,
   GoogleAuthProvider,
+  setPersistence,
+  indexedDBLocalPersistence,
+  browserLocalPersistence,
   // OAuthProvider, // only needed for Apple sign-in — re-enable when Apple is turned back on
 } from "firebase/auth";
 import { auth, googleProvider, isStandaloneApp } from "../lib/firebase";
@@ -29,6 +32,24 @@ function withTimeout(promise, ms) {
   ]);
 }
 
+// Force durable persistence before any redirect-based sign-in. If
+// indexedDB isn't available/writable in this WebView2 context, fall
+// back to localStorage rather than letting Firebase silently default
+// to in-memory persistence, which would lose the pending-redirect
+// state across the navigation to Google and back.
+async function ensurePersistence() {
+  try {
+    await setPersistence(auth, indexedDBLocalPersistence);
+  } catch (e) {
+    console.warn("indexedDB persistence failed, falling back", e);
+    try {
+      await setPersistence(auth, browserLocalPersistence);
+    } catch (e2) {
+      console.error("browserLocal persistence also failed", e2);
+    }
+  }
+}
+
 export default function Login() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -36,9 +57,25 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // Diagnostics: log immediately on mount so you can see in WebView2
+    // devtools whether this file even re-runs after the redirect, and
+    // whether auth.currentUser is already populated by the time we ask.
+    console.log("[auth] mount — auth.currentUser:", auth.currentUser);
+
     getRedirectResult(auth)
       .then(async (result) => {
-        if (result?.user) await ensureUserDocument(result.user);
+        console.log("[auth] getRedirectResult ->", result);
+        if (result?.user) {
+          await ensureUserDocument(result.user);
+        } else if (auth.currentUser) {
+          // Some environments populate auth.currentUser via
+          // onAuthStateChanged slightly before/without a redirect
+          // result object being returned. Treat that as success too.
+          console.log("[auth] no redirect result, but currentUser present");
+          await ensureUserDocument(auth.currentUser);
+        } else {
+          console.warn("[auth] redirect returned no user and no currentUser — persistence likely didn't survive the navigation");
+        }
       })
       .catch((err) => {
         console.error("Redirect sign-in", err.code, err.message);
@@ -71,6 +108,7 @@ export default function Login() {
         // NewWindowRequested bug that never opens a real popup and
         // never throws), so go straight to redirect instead of waiting
         // on a popup error that may never come.
+        await ensurePersistence();
         await signInWithRedirect(auth, googleProvider);
         return;
       } else {
@@ -88,6 +126,7 @@ export default function Login() {
             popupErr?.message === "popup-timeout" ||
             /getContext|popup/i.test(popupErr?.message || "")
           ) {
+            await ensurePersistence();
             await signInWithRedirect(auth, googleProvider);
             return;
           }

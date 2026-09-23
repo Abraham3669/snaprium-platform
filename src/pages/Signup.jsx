@@ -6,6 +6,9 @@ import {
   getRedirectResult,
   signInWithCredential,
   GoogleAuthProvider,
+  setPersistence,
+  indexedDBLocalPersistence,
+  browserLocalPersistence,
   // OAuthProvider, // only needed for Apple sign-up — re-enable when Apple is turned back on
 } from "firebase/auth";
 import { auth, googleProvider, isStandaloneApp } from "../lib/firebase";
@@ -16,9 +19,6 @@ import { ensureUserDocument } from "../lib/userProfile";
 
 // const appleProvider = new OAuthProvider("apple.com"); // Apple sign-up disabled for now
 
-// Helper: race a promise against a timeout so a silently-hanging popup
-// (e.g. WebView2 in a signed/installed MSIX app failing to open a real
-// popup window) doesn't leave the user stuck on "Connecting..." forever.
 function withTimeout(promise, ms) {
   return Promise.race([
     promise,
@@ -28,6 +28,24 @@ function withTimeout(promise, ms) {
   ]);
 }
 
+// Force durable persistence before any redirect-based sign-in. If
+// indexedDB isn't available/writable in this WebView2 context, fall
+// back to localStorage rather than letting Firebase silently default
+// to in-memory persistence, which would lose the pending-redirect
+// state across the navigation to Google and back.
+async function ensurePersistence() {
+  try {
+    await setPersistence(auth, indexedDBLocalPersistence);
+  } catch (e) {
+    console.warn("indexedDB persistence failed, falling back", e);
+    try {
+      await setPersistence(auth, browserLocalPersistence);
+    } catch (e2) {
+      console.error("browserLocal persistence also failed", e2);
+    }
+  }
+}
+
 export default function Signup() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -35,9 +53,25 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // Diagnostics: log immediately on mount so you can see in WebView2
+    // devtools whether this file even re-runs after the redirect, and
+    // whether auth.currentUser is already populated by the time we ask.
+    console.log("[auth] mount — auth.currentUser:", auth.currentUser);
+
     getRedirectResult(auth)
       .then(async (result) => {
-        if (result?.user) await ensureUserDocument(result.user);
+        console.log("[auth] getRedirectResult ->", result);
+        if (result?.user) {
+          await ensureUserDocument(result.user);
+        } else if (auth.currentUser) {
+          // Some environments populate auth.currentUser via
+          // onAuthStateChanged slightly before/without a redirect
+          // result object being returned. Treat that as success too.
+          console.log("[auth] no redirect result, but currentUser present");
+          await ensureUserDocument(auth.currentUser);
+        } else {
+          console.warn("[auth] redirect returned no user and no currentUser — persistence likely didn't survive the navigation");
+        }
       })
       .catch((err) => {
         console.error("Redirect sign-up", err.code, err.message);
@@ -65,11 +99,7 @@ export default function Signup() {
         const userCredential = await signInWithCredential(auth, credential);
         firebaseUser = userCredential.user;
       } else if (isStandaloneApp) {
-        // Installed PWA / MSIX-packaged WebView2 — popups can silently
-        // hang here (Store-signed installs hit a documented WebView2
-        // NewWindowRequested bug that never opens a real popup and
-        // never throws), so go straight to redirect instead of waiting
-        // on a popup error that may never come.
+        await ensurePersistence();
         await signInWithRedirect(auth, googleProvider);
         return;
       } else {
@@ -87,6 +117,7 @@ export default function Signup() {
             popupErr?.message === "popup-timeout" ||
             /getContext|popup/i.test(popupErr?.message || "")
           ) {
+            await ensurePersistence();
             await signInWithRedirect(auth, googleProvider);
             return;
           }
@@ -103,57 +134,9 @@ export default function Signup() {
     }
   };
 
-  // Apple sign-up temporarily disabled. Not deleted — uncomment this
-  // function, the appleProvider above, the OAuthProvider import, and the
-  // button block below when Apple is ready to go back live.
+  // Apple sign-up temporarily disabled. Not deleted — uncomment when ready.
   //
-  // const handleAppleSignUp = async () => {
-  //   setLoading(true);
-  //   setError("");
-  //   try {
-  //     let firebaseUser;
-  //
-  //     if (Capacitor.isNativePlatform()) {
-  //       const result = await FirebaseAuthentication.signInWithApple();
-  //       const idToken = result.credential?.idToken;
-  //       const rawNonce = result.credential?.nonce;
-  //       if (!idToken) throw new Error("No Apple idToken from native sign-in");
-  //       const credential = appleProvider.credential({
-  //         idToken,
-  //         rawNonce,
-  //       });
-  //       const userCredential = await signInWithCredential(auth, credential);
-  //       firebaseUser = userCredential.user;
-  //     } else {
-  //       try {
-  //         const result = await withTimeout(
-  //           signInWithPopup(auth, appleProvider),
-  //           8000
-  //         );
-  //         firebaseUser = result.user;
-  //       } catch (popupErr) {
-  //         if (
-  //           popupErr?.code === "auth/popup-blocked" ||
-  //           popupErr?.code === "auth/popup-closed-by-user" ||
-  //           popupErr?.code === "auth/operation-not-supported-in-this-environment" ||
-  //           popupErr?.message === "popup-timeout" ||
-  //           /getContext|popup/i.test(popupErr?.message || "")
-  //         ) {
-  //           await signInWithRedirect(auth, appleProvider);
-  //           return;
-  //         }
-  //         throw popupErr;
-  //       }
-  //     }
-  //
-  //     await ensureUserDocument(firebaseUser);
-  //   } catch (err) {
-  //     console.error("Apple sign-up", err.code, err.message);
-  //     setError(err.message || "Failed to sign up with Apple.");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+  // const handleAppleSignUp = async () => { ... };
 
   if (authLoading) {
     return (
@@ -190,8 +173,6 @@ export default function Signup() {
       {/*
         Apple sign-up temporarily disabled — commented out below, not
         removed. Uncomment when Apple auth is ready to go back live.
-        Reminder: Apple requires this whenever a third-party social login
-        is offered (guideline 4.8), except on Android.
       */}
       {/*
       {(Capacitor.getPlatform() !== "android") && (
