@@ -14,7 +14,7 @@ import { db } from "../lib/firebase";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-toastify";
 
-const ADMIN_UIDS = ["PASTE_YOUR_FIREBASE_UID_HERE"];
+const ADMIN_UIDS = ["Lk4u7TOvblTYl1NAxtOAeYBHRHu1"];
 
 export default function Admin() {
   const { user, loading } = useAuth();

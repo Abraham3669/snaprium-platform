@@ -6,7 +6,7 @@ import {
   getRedirectResult,
   signInWithCredential,
   GoogleAuthProvider,
-  OAuthProvider,
+  // OAuthProvider, // only needed for Apple sign-up — re-enable when Apple is turned back on
 } from "firebase/auth";
 import { auth, googleProvider, isStandaloneApp } from "../lib/firebase";
 import { Capacitor } from "@capacitor/core";
@@ -14,7 +14,19 @@ import { FirebaseAuthentication } from "@capacitor-firebase/authentication";
 import { useAuth } from "../context/AuthContext";
 import { ensureUserDocument } from "../lib/userProfile";
 
-const appleProvider = new OAuthProvider("apple.com");
+// const appleProvider = new OAuthProvider("apple.com"); // Apple sign-up disabled for now
+
+// Helper: race a promise against a timeout so a silently-hanging popup
+// (e.g. WebView2 in a signed/installed MSIX app failing to open a real
+// popup window) doesn't leave the user stuck on "Connecting..." forever.
+function withTimeout(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("popup-timeout")), ms)
+    ),
+  ]);
+}
 
 export default function Signup() {
   const { user, loading: authLoading } = useAuth();
@@ -52,15 +64,27 @@ export default function Signup() {
         const credential = GoogleAuthProvider.credential(idToken);
         const userCredential = await signInWithCredential(auth, credential);
         firebaseUser = userCredential.user;
+      } else if (isStandaloneApp) {
+        // Installed PWA / MSIX-packaged WebView2 — popups can silently
+        // hang here (Store-signed installs hit a documented WebView2
+        // NewWindowRequested bug that never opens a real popup and
+        // never throws), so go straight to redirect instead of waiting
+        // on a popup error that may never come.
+        await signInWithRedirect(auth, googleProvider);
+        return;
       } else {
         try {
-          const result = await signInWithPopup(auth, googleProvider);
+          const result = await withTimeout(
+            signInWithPopup(auth, googleProvider),
+            8000
+          );
           firebaseUser = result.user;
         } catch (popupErr) {
           if (
             popupErr?.code === "auth/popup-blocked" ||
             popupErr?.code === "auth/popup-closed-by-user" ||
             popupErr?.code === "auth/operation-not-supported-in-this-environment" ||
+            popupErr?.message === "popup-timeout" ||
             /getContext|popup/i.test(popupErr?.message || "")
           ) {
             await signInWithRedirect(auth, googleProvider);
@@ -79,49 +103,57 @@ export default function Signup() {
     }
   };
 
-  const handleAppleSignUp = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      let firebaseUser;
-
-      if (Capacitor.isNativePlatform()) {
-        const result = await FirebaseAuthentication.signInWithApple();
-        const idToken = result.credential?.idToken;
-        const rawNonce = result.credential?.nonce;
-        if (!idToken) throw new Error("No Apple idToken from native sign-in");
-        const credential = appleProvider.credential({
-          idToken,
-          rawNonce,
-        });
-        const userCredential = await signInWithCredential(auth, credential);
-        firebaseUser = userCredential.user;
-      } else {
-        try {
-          const result = await signInWithPopup(auth, appleProvider);
-          firebaseUser = result.user;
-        } catch (popupErr) {
-          if (
-            popupErr?.code === "auth/popup-blocked" ||
-            popupErr?.code === "auth/popup-closed-by-user" ||
-            popupErr?.code === "auth/operation-not-supported-in-this-environment" ||
-            /getContext|popup/i.test(popupErr?.message || "")
-          ) {
-            await signInWithRedirect(auth, appleProvider);
-            return;
-          }
-          throw popupErr;
-        }
-      }
-
-      await ensureUserDocument(firebaseUser);
-    } catch (err) {
-      console.error("Apple sign-up", err.code, err.message);
-      setError(err.message || "Failed to sign up with Apple.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Apple sign-up temporarily disabled. Not deleted — uncomment this
+  // function, the appleProvider above, the OAuthProvider import, and the
+  // button block below when Apple is ready to go back live.
+  //
+  // const handleAppleSignUp = async () => {
+  //   setLoading(true);
+  //   setError("");
+  //   try {
+  //     let firebaseUser;
+  //
+  //     if (Capacitor.isNativePlatform()) {
+  //       const result = await FirebaseAuthentication.signInWithApple();
+  //       const idToken = result.credential?.idToken;
+  //       const rawNonce = result.credential?.nonce;
+  //       if (!idToken) throw new Error("No Apple idToken from native sign-in");
+  //       const credential = appleProvider.credential({
+  //         idToken,
+  //         rawNonce,
+  //       });
+  //       const userCredential = await signInWithCredential(auth, credential);
+  //       firebaseUser = userCredential.user;
+  //     } else {
+  //       try {
+  //         const result = await withTimeout(
+  //           signInWithPopup(auth, appleProvider),
+  //           8000
+  //         );
+  //         firebaseUser = result.user;
+  //       } catch (popupErr) {
+  //         if (
+  //           popupErr?.code === "auth/popup-blocked" ||
+  //           popupErr?.code === "auth/popup-closed-by-user" ||
+  //           popupErr?.code === "auth/operation-not-supported-in-this-environment" ||
+  //           popupErr?.message === "popup-timeout" ||
+  //           /getContext|popup/i.test(popupErr?.message || "")
+  //         ) {
+  //           await signInWithRedirect(auth, appleProvider);
+  //           return;
+  //         }
+  //         throw popupErr;
+  //       }
+  //     }
+  //
+  //     await ensureUserDocument(firebaseUser);
+  //   } catch (err) {
+  //     console.error("Apple sign-up", err.code, err.message);
+  //     setError(err.message || "Failed to sign up with Apple.");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   if (authLoading) {
     return (
@@ -156,9 +188,12 @@ export default function Signup() {
       </button>
 
       {/*
-        Apple requires this whenever a third-party social login is offered
-        (guideline 4.8). Skip it on Android — not required there.
+        Apple sign-up temporarily disabled — commented out below, not
+        removed. Uncomment when Apple auth is ready to go back live.
+        Reminder: Apple requires this whenever a third-party social login
+        is offered (guideline 4.8), except on Android.
       */}
+      {/*
       {(Capacitor.getPlatform() !== "android") && (
         <button
           onClick={handleAppleSignUp}
@@ -188,6 +223,7 @@ export default function Signup() {
           )}
         </button>
       )}
+      */}
 
       {error && <p className="error-message">{error}</p>}
 
