@@ -6,10 +6,7 @@ import {
   getRedirectResult,
   signInWithCredential,
   GoogleAuthProvider,
-  setPersistence,
-  indexedDBLocalPersistence,
-  browserLocalPersistence,
-  // OAuthProvider, // only needed for Apple sign-in — re-enable when Apple is turned back on
+  // OAuthProvider, // temporarily disabled for Store certification
 } from "firebase/auth";
 import { auth, googleProvider, isStandaloneApp } from "../lib/firebase";
 import { Capacitor } from "@capacitor/core";
@@ -18,37 +15,7 @@ import { useAuth } from "../context/AuthContext";
 import { ensureUserDocument } from "../lib/userProfile";
 
 // Web fallback provider for Apple (native path uses FirebaseAuthentication.signInWithApple)
-// const appleProvider = new OAuthProvider("apple.com"); // Apple sign-in disabled for now
-
-// Helper: race a promise against a timeout so a silently-hanging popup
-// (e.g. WebView2 in a signed/installed MSIX app failing to open a real
-// popup window) doesn't leave the user stuck on "Connecting..." forever.
-function withTimeout(promise, ms) {
-  return Promise.race([
-    promise,
-    new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("popup-timeout")), ms)
-    ),
-  ]);
-}
-
-// Force durable persistence before any redirect-based sign-in. If
-// indexedDB isn't available/writable in this WebView2 context, fall
-// back to localStorage rather than letting Firebase silently default
-// to in-memory persistence, which would lose the pending-redirect
-// state across the navigation to Google and back.
-async function ensurePersistence() {
-  try {
-    await setPersistence(auth, indexedDBLocalPersistence);
-  } catch (e) {
-    console.warn("indexedDB persistence failed, falling back", e);
-    try {
-      await setPersistence(auth, browserLocalPersistence);
-    } catch (e2) {
-      console.error("browserLocal persistence also failed", e2);
-    }
-  }
-}
+// const appleProvider = new OAuthProvider("apple.com"); // temporarily disabled for Store certification
 
 export default function Login() {
   const { user, loading: authLoading } = useAuth();
@@ -57,25 +24,9 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Diagnostics: log immediately on mount so you can see in WebView2
-    // devtools whether this file even re-runs after the redirect, and
-    // whether auth.currentUser is already populated by the time we ask.
-    console.log("[auth] mount — auth.currentUser:", auth.currentUser);
-
     getRedirectResult(auth)
       .then(async (result) => {
-        console.log("[auth] getRedirectResult ->", result);
-        if (result?.user) {
-          await ensureUserDocument(result.user);
-        } else if (auth.currentUser) {
-          // Some environments populate auth.currentUser via
-          // onAuthStateChanged slightly before/without a redirect
-          // result object being returned. Treat that as success too.
-          console.log("[auth] no redirect result, but currentUser present");
-          await ensureUserDocument(auth.currentUser);
-        } else {
-          console.warn("[auth] redirect returned no user and no currentUser — persistence likely didn't survive the navigation");
-        }
+        if (result?.user) await ensureUserDocument(result.user);
       })
       .catch((err) => {
         console.error("Redirect sign-in", err.code, err.message);
@@ -96,6 +47,7 @@ export default function Login() {
       let firebaseUser;
 
       if (Capacitor.isNativePlatform()) {
+        // Native Capacitor path (unchanged)
         const result = await FirebaseAuthentication.signInWithGoogle();
         const idToken = result.credential?.idToken;
         if (!idToken) throw new Error("No Google idToken from native sign-in");
@@ -103,30 +55,24 @@ export default function Login() {
         const userCredential = await signInWithCredential(auth, credential);
         firebaseUser = userCredential.user;
       } else if (isStandaloneApp) {
-        // Installed PWA / MSIX-packaged WebView2 — popups can silently
-        // hang here (Store-signed installs hit a documented WebView2
-        // NewWindowRequested bug that never opens a real popup and
-        // never throws), so go straight to redirect instead of waiting
-        // on a popup error that may never come.
-        await ensurePersistence();
+        // ★ CRITICAL FIX for Microsoft Store MSIX / packaged PWA ★
+        // Popup hangs on "Connecting..." in this environment → force redirect
         await signInWithRedirect(auth, googleProvider);
-        return;
+        return; // page will navigate away
       } else {
+        // Normal browser: try popup first, fall back to redirect on any popup failure
         try {
-          const result = await withTimeout(
-            signInWithPopup(auth, googleProvider),
-            8000
-          );
+          const result = await signInWithPopup(auth, googleProvider);
           firebaseUser = result.user;
         } catch (popupErr) {
-          if (
+          const shouldFallback =
             popupErr?.code === "auth/popup-blocked" ||
             popupErr?.code === "auth/popup-closed-by-user" ||
             popupErr?.code === "auth/operation-not-supported-in-this-environment" ||
-            popupErr?.message === "popup-timeout" ||
-            /getContext|popup/i.test(popupErr?.message || "")
-          ) {
-            await ensurePersistence();
+            popupErr?.code === "auth/cancelled-popup-request" ||
+            /getContext|popup|blocked|closed|opener|COOP/i.test(popupErr?.message || "");
+
+          if (shouldFallback) {
             await signInWithRedirect(auth, googleProvider);
             return;
           }
@@ -143,59 +89,56 @@ export default function Login() {
     }
   };
 
-  // Apple sign-in temporarily disabled. Not deleted — uncomment this
-  // function, the appleProvider above, the OAuthProvider import, and the
-  // button block below when Apple is ready to go back live.
-  //
-  // const handleAppleSignIn = async () => {
-  //   setLoading(true);
-  //   setError("");
-  //   try {
-  //     let firebaseUser;
-  //
-  //     if (Capacitor.isNativePlatform()) {
-  //       // Native iOS: uses the real Sign in with Apple sheet via the
-  //       // capacitor-firebase plugin, requires the entitlement set up in Xcode.
-  //       const result = await FirebaseAuthentication.signInWithApple();
-  //       const idToken = result.credential?.idToken;
-  //       const rawNonce = result.credential?.nonce;
-  //       if (!idToken) throw new Error("No Apple idToken from native sign-in");
-  //       const credential = appleProvider.credential({
-  //         idToken,
-  //         rawNonce,
-  //       });
-  //       const userCredential = await signInWithCredential(auth, credential);
-  //       firebaseUser = userCredential.user;
-  //     } else {
-  //       try {
-  //         const result = await withTimeout(
-  //           signInWithPopup(auth, appleProvider),
-  //           8000
-  //         );
-  //         firebaseUser = result.user;
-  //       } catch (popupErr) {
-  //         if (
-  //           popupErr?.code === "auth/popup-blocked" ||
-  //           popupErr?.code === "auth/popup-closed-by-user" ||
-  //           popupErr?.code === "auth/operation-not-supported-in-this-environment" ||
-  //           popupErr?.message === "popup-timeout" ||
-  //           /getContext|popup/i.test(popupErr?.message || "")
-  //         ) {
-  //           await signInWithRedirect(auth, appleProvider);
-  //           return;
-  //         }
-  //         throw popupErr;
-  //       }
-  //     }
-  //
-  //     await ensureUserDocument(firebaseUser);
-  //   } catch (err) {
-  //     console.error("Apple sign-in", err.code, err.message);
-  //     setError(err.message || "Apple sign-in failed");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+  /*
+  // ===== APPLE LOGIN TEMPORARILY DISABLED FOR MICROSOFT STORE CERTIFICATION =====
+  // Re-enable later once Google is fully approved
+  const handleAppleSignIn = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      let firebaseUser;
+
+      if (Capacitor.isNativePlatform()) {
+        // Native iOS: uses the real Sign in with Apple sheet via the
+        // capacitor-firebase plugin, requires the entitlement set up in Xcode.
+        const result = await FirebaseAuthentication.signInWithApple();
+        const idToken = result.credential?.idToken;
+        const rawNonce = result.credential?.nonce;
+        if (!idToken) throw new Error("No Apple idToken from native sign-in");
+        const credential = appleProvider.credential({
+          idToken,
+          rawNonce,
+        });
+        const userCredential = await signInWithCredential(auth, credential);
+        firebaseUser = userCredential.user;
+      } else {
+        try {
+          const result = await signInWithPopup(auth, appleProvider);
+          firebaseUser = result.user;
+        } catch (popupErr) {
+          if (
+            popupErr?.code === "auth/popup-blocked" ||
+            popupErr?.code === "auth/popup-closed-by-user" ||
+            popupErr?.code === "auth/operation-not-supported-in-this-environment" ||
+            /getContext|popup/i.test(popupErr?.message || "")
+          ) {
+            await signInWithRedirect(auth, appleProvider);
+            return;
+          }
+          throw popupErr;
+        }
+      }
+
+      await ensureUserDocument(firebaseUser);
+    } catch (err) {
+      console.error("Apple sign-in", err.code, err.message);
+      setError(err.message || "Apple sign-in failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+  // ===== END APPLE LOGIN =====
+  */
 
   if (authLoading) {
     return (
@@ -225,11 +168,13 @@ export default function Login() {
       </button>
 
       {/*
-        Apple sign-in temporarily disabled — commented out below, not
-        removed. Uncomment when Apple auth is ready to go back live.
-        Reminder: Apple requires this button to be shown whenever a
-        third-party social login (Google) is offered as a sign-in option
-        (guideline 4.8), except on Android.
+        Apple requires this button to be shown whenever a third-party
+        social login (Google, in your case) is offered as a sign-in
+        option (guideline 4.8). Only show it on iOS/web, not Android —
+        Apple doesn't require or expect it there.
+
+        ===== TEMPORARILY DISABLED FOR MICROSOFT STORE CERTIFICATION =====
+        Uncomment the whole block below when ready to re-enable.
       */}
       {/*
       {(Capacitor.getPlatform() !== "android") && (
