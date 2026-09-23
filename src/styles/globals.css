@@ -6444,4 +6444,97 @@ main.camera-main .study-friends-wrapper {
 }
 
 
+.hub-page,
+.hub-top,
+.hub-title,
+.hub-sub,
+.hub-card,
+.hub-card h2,
+.hub-card p,
+.hub-card-copy,
+.hub-card-copy h2,
+.hub-card-copy p,
+.community-section-title,
+.community-row,
+.community-row strong,
+.community-row p,
+.community-search,
+.community-create-btn,
+.tag,
+.study-card,
+.study-card h2,
+.study-card input,
+.study-card select,
+.study-card button,
+.cd-title,
+.cd-meta,
+.cd-kicker,
+.cd-back,
+.cd-btn,
+.cc-top-copy h1,
+.cc-top-copy p,
+.cc-session-btn,
+.cc-post,
+.cc-post p,
+.cc-post header,
+.cc-muted {
+  color: inherit;
+}
+
+.hub-page,
+.cd-page,
+.cc-page {
+  color: var(--text-primary);
+  background: var(--bg);
+}
+
+.hub-title,
+.hub-card h2,
+.hub-card-copy h2,
+.community-row strong,
+.cd-title,
+.cc-top-copy h1 {
+  color: var(--text-primary);
+}
+
+.hub-sub,
+.hub-card p,
+.hub-card-copy p,
+.community-section-title,
+.community-row p,
+.cd-meta,
+.cc-top-copy p,
+.cc-muted,
+.cd-back {
+  color: var(--text-secondary);
+}
+
+.hub-kicker,
+.cd-kicker {
+  color: var(--accent);
+}
+
+.hub-card,
+.community-row,
+.study-card,
+.cd-btn,
+.community-search {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+
+.community-search::placeholder,
+.study-card input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.85;
+}
+
+[data-theme="dark"] .hub-card,
+[data-theme="dark"] .community-row,
+[data-theme="dark"] .study-card {
+  background: var(--surface);
+  color: var(--text-primary);
+}
+
 
