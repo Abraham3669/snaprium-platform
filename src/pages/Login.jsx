@@ -6,7 +6,6 @@ import {
   getRedirectResult,
   signInWithCredential,
   GoogleAuthProvider,
-  // OAuthProvider, // temporarily disabled for Store certification
 } from "firebase/auth";
 import { auth, googleProvider, isStandaloneApp } from "../lib/firebase";
 import { Capacitor } from "@capacitor/core";
@@ -14,73 +13,105 @@ import { FirebaseAuthentication } from "@capacitor-firebase/authentication";
 import { useAuth } from "../context/AuthContext";
 import { ensureUserDocument } from "../lib/userProfile";
 
-// Web fallback provider for Apple (native path uses FirebaseAuthentication.signInWithApple)
-// const appleProvider = new OAuthProvider("apple.com"); // temporarily disabled for Store certification
-
 export default function Login() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checkingRedirect, setCheckingRedirect] = useState(true);
 
+  // 1. Handle the return from signInWithRedirect (most important part)
   useEffect(() => {
-    getRedirectResult(auth)
-      .then(async (result) => {
-        if (result?.user) await ensureUserDocument(result.user);
-      })
-      .catch((err) => {
-        console.error("Redirect sign-in", err.code, err.message);
-        setError(err.message || "Sign-in failed");
-      });
-  }, []);
+    let cancelled = false;
 
+    async function handleRedirect() {
+      try {
+        const result = await getRedirectResult(auth);
+
+        if (result?.user) {
+          // Successful redirect login
+          await ensureUserDocument(result.user);
+          if (!cancelled) {
+            navigate("/", { replace: true });
+          }
+          return;
+        }
+
+        // Sometimes getRedirectResult is null but auth.currentUser is already set
+        // (common in packaged PWAs / Edge WebView)
+        if (auth.currentUser) {
+          await ensureUserDocument(auth.currentUser);
+          if (!cancelled) {
+            navigate("/", { replace: true });
+          }
+          return;
+        }
+      } catch (err) {
+        console.error("Redirect sign-in error", err.code, err.message);
+        if (!cancelled) {
+          setError(err.message || "Sign-in failed after redirect");
+        }
+      } finally {
+        if (!cancelled) {
+          setCheckingRedirect(false);
+        }
+      }
+    }
+
+    handleRedirect();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate]);
+
+  // 2. Normal navigation once AuthContext has the user
   useEffect(() => {
-    if (user && !authLoading && !loading) {
+    if (user && !authLoading && !loading && !checkingRedirect) {
       navigate("/", { replace: true });
     }
-  }, [user, authLoading, loading, navigate]);
+  }, [user, authLoading, loading, checkingRedirect, navigate]);
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
     setError("");
     try {
-      let firebaseUser;
-
       if (Capacitor.isNativePlatform()) {
-        // Native Capacitor path (unchanged)
         const result = await FirebaseAuthentication.signInWithGoogle();
         const idToken = result.credential?.idToken;
         if (!idToken) throw new Error("No Google idToken from native sign-in");
         const credential = GoogleAuthProvider.credential(idToken);
         const userCredential = await signInWithCredential(auth, credential);
-        firebaseUser = userCredential.user;
-      } else if (isStandaloneApp) {
-        // ★ CRITICAL FIX for Microsoft Store MSIX / packaged PWA ★
-        // Popup hangs on "Connecting..." in this environment → force redirect
-        await signInWithRedirect(auth, googleProvider);
-        return; // page will navigate away
-      } else {
-        // Normal browser: try popup first, fall back to redirect on any popup failure
-        try {
-          const result = await signInWithPopup(auth, googleProvider);
-          firebaseUser = result.user;
-        } catch (popupErr) {
-          const shouldFallback =
-            popupErr?.code === "auth/popup-blocked" ||
-            popupErr?.code === "auth/popup-closed-by-user" ||
-            popupErr?.code === "auth/operation-not-supported-in-this-environment" ||
-            popupErr?.code === "auth/cancelled-popup-request" ||
-            /getContext|popup|blocked|closed|opener|COOP/i.test(popupErr?.message || "");
-
-          if (shouldFallback) {
-            await signInWithRedirect(auth, googleProvider);
-            return;
-          }
-          throw popupErr;
-        }
+        await ensureUserDocument(userCredential.user);
+        navigate("/", { replace: true });
+        return;
       }
 
-      await ensureUserDocument(firebaseUser);
+      // ★ Microsoft Store / packaged PWA path
+      if (isStandaloneApp) {
+        await signInWithRedirect(auth, googleProvider);
+        return; // page will leave and come back
+      }
+
+      // Normal browser
+      try {
+        const result = await signInWithPopup(auth, googleProvider);
+        await ensureUserDocument(result.user);
+        navigate("/", { replace: true });
+      } catch (popupErr) {
+        const shouldFallback =
+          popupErr?.code === "auth/popup-blocked" ||
+          popupErr?.code === "auth/popup-closed-by-user" ||
+          popupErr?.code === "auth/operation-not-supported-in-this-environment" ||
+          popupErr?.code === "auth/cancelled-popup-request" ||
+          /getContext|popup|blocked|closed|opener|COOP/i.test(popupErr?.message || "");
+
+        if (shouldFallback) {
+          await signInWithRedirect(auth, googleProvider);
+          return;
+        }
+        throw popupErr;
+      }
     } catch (err) {
       console.error("Google sign-in", err.code, err.message);
       setError(err.message || "Google sign-in failed");
@@ -89,61 +120,11 @@ export default function Login() {
     }
   };
 
-  /*
-  // ===== APPLE LOGIN TEMPORARILY DISABLED FOR MICROSOFT STORE CERTIFICATION =====
-  // Re-enable later once Google is fully approved
-  const handleAppleSignIn = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      let firebaseUser;
-
-      if (Capacitor.isNativePlatform()) {
-        // Native iOS: uses the real Sign in with Apple sheet via the
-        // capacitor-firebase plugin, requires the entitlement set up in Xcode.
-        const result = await FirebaseAuthentication.signInWithApple();
-        const idToken = result.credential?.idToken;
-        const rawNonce = result.credential?.nonce;
-        if (!idToken) throw new Error("No Apple idToken from native sign-in");
-        const credential = appleProvider.credential({
-          idToken,
-          rawNonce,
-        });
-        const userCredential = await signInWithCredential(auth, credential);
-        firebaseUser = userCredential.user;
-      } else {
-        try {
-          const result = await signInWithPopup(auth, appleProvider);
-          firebaseUser = result.user;
-        } catch (popupErr) {
-          if (
-            popupErr?.code === "auth/popup-blocked" ||
-            popupErr?.code === "auth/popup-closed-by-user" ||
-            popupErr?.code === "auth/operation-not-supported-in-this-environment" ||
-            /getContext|popup/i.test(popupErr?.message || "")
-          ) {
-            await signInWithRedirect(auth, appleProvider);
-            return;
-          }
-          throw popupErr;
-        }
-      }
-
-      await ensureUserDocument(firebaseUser);
-    } catch (err) {
-      console.error("Apple sign-in", err.code, err.message);
-      setError(err.message || "Apple sign-in failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-  // ===== END APPLE LOGIN =====
-  */
-
-  if (authLoading) {
+  // Show loading while we check for a pending redirect result
+  if (authLoading || checkingRedirect) {
     return (
       <div className="auth-container">
-        <p>Loading...</p>
+        <p>Signing you in...</p>
       </div>
     );
   }
@@ -153,7 +134,11 @@ export default function Login() {
       <h1>Welcome Back</h1>
       <p>Sign in to continue to Snaprium</p>
 
-      <button onClick={handleGoogleSignIn} disabled={loading} className="btn-google">
+      <button
+        onClick={handleGoogleSignIn}
+        disabled={loading}
+        className="btn-google"
+      >
         {loading ? "Connecting..." : (
           <>
             <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
@@ -167,46 +152,7 @@ export default function Login() {
         )}
       </button>
 
-      {/*
-        Apple requires this button to be shown whenever a third-party
-        social login (Google, in your case) is offered as a sign-in
-        option (guideline 4.8). Only show it on iOS/web, not Android —
-        Apple doesn't require or expect it there.
-
-        ===== TEMPORARILY DISABLED FOR MICROSOFT STORE CERTIFICATION =====
-        Uncomment the whole block below when ready to re-enable.
-      */}
-      {/*
-      {(Capacitor.getPlatform() !== "android") && (
-        <button
-          onClick={handleAppleSignIn}
-          disabled={loading}
-          className="btn-apple"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 10,
-            width: "100%",
-            marginTop: "12px",
-            background: "#000",
-            color: "#fff",
-            borderRadius: 8,
-            padding: "12px 16px",
-            border: "none",
-          }}
-        >
-          {loading ? "Connecting..." : (
-            <>
-              <svg width="18" height="18" viewBox="0 0 384 512" fill="#fff" aria-hidden="true">
-                <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/>
-              </svg>
-              <span>Continue with Apple</span>
-            </>
-          )}
-        </button>
-      )}
-      */}
+      {/* Apple login still commented out for Store certification */}
 
       {error && <p className="error-message">{error}</p>}
 
