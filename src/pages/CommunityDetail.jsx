@@ -24,6 +24,16 @@ import {
 
 const isUnlimitedPlan = (plan) => plan === "unlimited" || plan === "premium";
 
+function uniqueBoards(rows) {
+  const seen = new Set();
+  return (rows || []).filter((b) => {
+    const key = b.slug || b.id;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function compressImage(file, max = 900, quality = 0.7) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -95,18 +105,23 @@ export default function CommunityDetail() {
     (async () => {
       setLoading(true);
       try {
-               const data = await getCommunity(communityId);
+        const data = await getCommunity(communityId);
         setCommunity(data);
-        if (data) setBoards(uniqueBoards(await listBoards(data.id)));
-        if (
-          data &&
-          !data.code &&
-          user?.uid &&
-          (data.createdBy === user.uid || (data.admins || []).includes(user.uid))
-        ) {
+        if (data) {
           try {
-            setCommunity(await ensureCommunityCode(data.id));
-          } catch {}
+            setBoards(uniqueBoards(await listBoards(data.id)));
+          } catch {
+            setBoards([]);
+          }
+          if (
+            !data.code &&
+            user?.uid &&
+            (data.createdBy === user.uid || (data.admins || []).includes(user.uid))
+          ) {
+            try {
+              setCommunity(await ensureCommunityCode(data.id));
+            } catch {}
+          }
         }
       } catch {
         toast.error("Could not open circle");
@@ -114,7 +129,7 @@ export default function CommunityDetail() {
         setLoading(false);
       }
     })();
-  }, [communityId]);
+  }, [communityId, user?.uid]);
 
   if (loading) {
     return <div className="cd-page"><p className="cd-muted">Loading circle…</p></div>;
@@ -134,15 +149,7 @@ export default function CommunityDetail() {
   const paid = isUnlimitedPlan(user?.plan);
 
 
-  function uniqueBoards(rows) {
-  const seen = new Set();
-  return (rows || []).filter((b) => {
-    const key = b.slug || b.id;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
+
 
   const openBoard = async (board) => {
     if (!user) return navigate("/login");

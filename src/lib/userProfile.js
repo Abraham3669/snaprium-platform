@@ -55,6 +55,7 @@ export async function ensureUserDocument(firebaseUser) {
     }
   } catch (e) {
     console.warn("[userProfile] getDoc failed", e.code || "", e.message || e);
+    return null;
   }
 
   try {
