@@ -31,7 +31,7 @@ export async function ensureUserDocument(firebaseUser) {
   const userRef = doc(db, "users", uid);
 
   try {
-    const existing = await withTimeout(getDoc(userRef), 5000);
+        const existing = await withTimeout(getDoc(userRef), 15000);
     if (existing.exists()) {
       const prev = existing.data() || {};
       await withTimeout(
@@ -55,7 +55,7 @@ export async function ensureUserDocument(firebaseUser) {
     }
   } catch (e) {
     console.warn("[userProfile] getDoc failed", e.code || "", e.message || e);
-    return null;
+    return { exists: () => true };
   }
 
   try {
