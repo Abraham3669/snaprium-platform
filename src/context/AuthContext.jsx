@@ -89,10 +89,8 @@ export function AuthProvider({ children }) {
 
       (async () => {
         try {
-          const snap = await ensureUserDocument(firebaseUser);
-          if (snap?.exists()) {
-            setUser(buildUser(firebaseUser, snap.data()));
-          }
+          await ensureUserDocument(firebaseUser);
+          setUser(buildUser(firebaseUser));
         } catch (error) {
           console.error("[Auth] ensureUserDocument", error.code, error.message);
           showAppError("Create profile", error);
@@ -140,11 +138,7 @@ export function AuthProvider({ children }) {
   };
 
 
-  useEffect(() => {
-    if (!user?.banned) return;
-    auth.signOut().catch(() => {});
-    setUser(null);
-  }, [user?.banned]);
+
 
 
 
