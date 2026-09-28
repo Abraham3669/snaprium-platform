@@ -95,10 +95,19 @@ export default function CommunityDetail() {
     (async () => {
       setLoading(true);
       try {
-        let data = await getCommunity(communityId);
-        if (data && !data.code) data = await ensureCommunityCode(data.id);
+               const data = await getCommunity(communityId);
         setCommunity(data);
-                if (data) setBoards(uniqueBoards(await listBoards(data.id)));
+        if (data) setBoards(uniqueBoards(await listBoards(data.id)));
+        if (
+          data &&
+          !data.code &&
+          user?.uid &&
+          (data.createdBy === user.uid || (data.admins || []).includes(user.uid))
+        ) {
+          try {
+            setCommunity(await ensureCommunityCode(data.id));
+          } catch {}
+        }
       } catch {
         toast.error("Could not open circle");
       } finally {
