@@ -29,11 +29,75 @@ export const COMMUNITY_TAGS = [
   "Other",
 ];
 
+export const DEFAULT_BOARDS = [
+  { slug: "general", name: "General", kind: "chat" },
+  { slug: "homework", name: "Homework", kind: "chat" },
+  { slug: "session", name: "Session", kind: "session" },
+];
+
+export const FREE_BOARD_LIMIT = 5;
+export const PAID_BOARD_LIMIT = 15;
+
 function generateCommunityCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "";
   for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
   return code;
+}
+
+function boardsCol(communityId) {
+  return collection(db, "communities", communityId, "boards");
+}
+
+export async function seedDefaultBoards(communityId) {
+  const existing = await getDocs(boardsCol(communityId));
+  if (!existing.empty) {
+    return existing.docs.map((d) => ({ id: d.id, ...d.data() }));
+  }
+  const created = [];
+  for (const board of DEFAULT_BOARDS) {
+    const ref = doc(boardsCol(communityId));
+    const row = {
+      id: ref.id,
+      ...board,
+      createdAt: serverTimestamp(),
+    };
+    await setDoc(ref, row);
+    created.push(row);
+  }
+  return created;
+}
+
+export async function listBoards(communityId) {
+  const snap = await getDocs(boardsCol(communityId));
+  const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  if (rows.length === 0) return seedDefaultBoards(communityId);
+  const order = { general: 0, homework: 1, session: 2 };
+  return rows.sort(
+    (a, b) =>
+      (order[a.slug] ?? 50) - (order[b.slug] ?? 50) ||
+      (a.name || "").localeCompare(b.name || "")
+  );
+}
+
+export async function createBoard(communityId, { name, kind = "chat" }, { isPaid = false } = {}) {
+  const clean = String(name || "").trim();
+  if (!clean) throw new Error("Board name is required");
+  const current = await listBoards(communityId);
+  const cap = isPaid ? PAID_BOARD_LIMIT : FREE_BOARD_LIMIT;
+  if (current.length >= cap) {
+    throw new Error(isPaid ? "Board limit reached." : "Upgrade to add more boards.");
+  }
+  const ref = doc(boardsCol(communityId));
+  const row = {
+    id: ref.id,
+    slug: clean.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 32) || "board",
+    name: clean.slice(0, 40),
+    kind,
+    createdAt: serverTimestamp(),
+  };
+  await setDoc(ref, row);
+  return row;
 }
 
 export async function ensureCommunityCode(id) {
@@ -47,8 +111,6 @@ export async function ensureCommunityCode(id) {
   return { id: snap.id, ...data, code };
 }
 
-
-
 export async function listMyCommunities(uid) {
   if (!uid) return [];
   const q = query(
@@ -60,10 +122,6 @@ export async function listMyCommunities(uid) {
     .map((d) => ({ id: d.id, ...d.data() }))
     .filter((c) => c.deleted !== true);
 }
-
-
-
-
 
 export async function updateCommunityMedia(id, fields) {
   const ref = doc(db, "communities", id);
@@ -103,12 +161,14 @@ export async function createCommunity({
     memberCount: 1,
     members: [createdBy],
     admins: [createdBy],
+    banned: [],
     deleted: false,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   };
 
   await setDoc(ref, data);
+  await seedDefaultBoards(ref.id);
   return data;
 }
 
@@ -141,9 +201,10 @@ export async function getCommunity(id) {
 export async function joinCommunity(id, uid) {
   const ref = doc(db, "communities", id);
   const snap = await getDoc(ref);
-  if (!snap.exists()) throw new Error("Community not found");
+  if (!snap.exists()) throw new Error("Circle not found");
   const data = snap.data();
-  if (data.deleted) throw new Error("This community is unavailable");
+  if (data.deleted) throw new Error("This circle is unavailable");
+  if ((data.banned || []).includes(uid)) throw new Error("You can’t join this circle");
   if ((data.members || []).includes(uid)) return { id, ...data };
 
   await updateDoc(ref, {
@@ -157,10 +218,10 @@ export async function joinCommunity(id, uid) {
 
 export async function joinCommunityByCode(code, uid) {
   const clean = String(code || "").trim().toUpperCase();
-  if (!clean) throw new Error("Enter a community code");
+  if (!clean) throw new Error("Enter an invite code");
   const q = query(collection(db, "communities"), where("code", "==", clean));
   const snap = await getDocs(q);
-  if (snap.empty) throw new Error("Community not found. Check the code.");
+  if (snap.empty) throw new Error("Circle not found. Check the code.");
   return joinCommunity(snap.docs[0].id, uid);
 }
 
@@ -171,7 +232,7 @@ export async function leaveCommunity(id, uid) {
   const data = snap.data();
   if (!(data.members || []).includes(uid)) return;
   if (data.createdBy === uid) {
-    throw new Error("Creators can’t leave. Delete the community instead.");
+    throw new Error("Creators can’t leave. Remove the circle instead.");
   }
 
   await updateDoc(ref, {
@@ -190,20 +251,51 @@ export async function unlistCommunity(id) {
   });
 }
 
-export function subscribeToCommunityMessages(communityId, callback) {
+export function subscribeToCommunityMessages(communityId, callback, boardId = "", boardSlug = "") {
   const q = query(
     collection(db, "communities", communityId, "messages"),
     orderBy("createdAt", "asc"),
-    limit(100)
+    limit(200)
   );
-  return onSnapshot(q, (snap) => {
-    callback(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+
+  return onSnapshot(
+    q,
+    (snap) => {
+      const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      if (!boardId && !boardSlug) {
+        callback(rows);
+        return;
+      }
+      callback(
+        rows.filter((m) => {
+          const bid = m.boardId || "general";
+          return bid === boardId || bid === boardSlug || bid === "general" && boardSlug === "general";
+        })
+      );
+    },
+    (err) => {
+      console.error("[community messages]", err);
+      callback([]);
+    }
+  );
+}
+
+export async function reportCommunity({ communityId, communityName, reporterId, reason }) {
+  await addDoc(collection(db, "reports"), {
+    type: "community",
+    communityId,
+    communityName: communityName || "",
+    reporterId,
+    reason: reason || "Reported",
+    status: "open",
+    createdAt: serverTimestamp(),
   });
 }
 
 export async function sendCommunityMessage(communityId, message) {
   await addDoc(collection(db, "communities", communityId, "messages"), {
     ...message,
+    boardId: message.boardId || "general",
     createdAt: serverTimestamp(),
   });
 }

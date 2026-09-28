@@ -3,7 +3,12 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
+import UpgradeModal from "../components/UpgradeModal";
 import "../styles/community-detail.css";
+
+
+
+
 import {
   getCommunity,
   joinCommunity,
@@ -11,7 +16,13 @@ import {
   unlistCommunity,
   updateCommunityMedia,
   ensureCommunityCode,
+  listBoards,
+  createBoard,
+  reportCommunity,
+  FREE_BOARD_LIMIT,
 } from "../lib/communities";
+
+const isUnlimitedPlan = (plan) => plan === "unlimited" || plan === "premium";
 
 function compressImage(file, max = 900, quality = 0.7) {
   return new Promise((resolve, reject) => {
@@ -49,15 +60,6 @@ function IconLink() {
     </svg>
   );
 }
-function IconImage() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
-      <rect x="3" y="5" width="18" height="14" rx="2" />
-      <circle cx="9" cy="10" r="1.5" />
-      <path d="M21 16l-5-5-5 6-3-3-5 5" />
-    </svg>
-  );
-}
 function IconCommunityMark() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
@@ -83,8 +85,11 @@ export default function CommunityDetail() {
   const photoRef = useRef(null);
 
   const [community, setCommunity] = useState(null);
+  const [boards, setBoards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [newBoard, setNewBoard] = useState("");
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -93,8 +98,9 @@ export default function CommunityDetail() {
         let data = await getCommunity(communityId);
         if (data && !data.code) data = await ensureCommunityCode(data.id);
         setCommunity(data);
+                if (data) setBoards(uniqueBoards(await listBoards(data.id)));
       } catch {
-        toast.error("Could not open community");
+        toast.error("Could not open circle");
       } finally {
         setLoading(false);
       }
@@ -102,13 +108,13 @@ export default function CommunityDetail() {
   }, [communityId]);
 
   if (loading) {
-    return <div className="cd-page"><p className="cd-muted">Loading community…</p></div>;
+    return <div className="cd-page"><p className="cd-muted">Loading circle…</p></div>;
   }
 
   if (!community || community.deleted) {
     return (
       <div className="cd-page">
-        <h1 className="cd-title">Community unavailable</h1>
+        <h1 className="cd-title">Circle unavailable</h1>
         <button type="button" className="cd-btn" onClick={() => navigate("/community")}>Back</button>
       </div>
     );
@@ -116,6 +122,31 @@ export default function CommunityDetail() {
 
   const isMember = user && (community.members || []).includes(user.uid);
   const isAdmin = user && (community.createdBy === user.uid || (community.admins || []).includes(user.uid));
+  const paid = isUnlimitedPlan(user?.plan);
+
+
+  function uniqueBoards(rows) {
+  const seen = new Set();
+  return (rows || []).filter((b) => {
+    const key = b.slug || b.id;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+  const openBoard = async (board) => {
+    if (!user) return navigate("/login");
+    if (!isMember) {
+      try {
+        await joinCommunity(community.id, user.uid);
+      } catch (err) {
+        toast.error(err.message || "Join first");
+        return;
+      }
+    }
+    navigate(`/community/${community.id}/chat?board=${board.id}`);
+  };
 
   const onUpload = async (file, field) => {
     if (!file || !isAdmin) return;
@@ -130,30 +161,24 @@ export default function CommunityDetail() {
     }
   };
 
-  const handleJoin = async () => {
-    if (!user) return navigate("/login");
+  const handleAddBoard = async (e) => {
+    e.preventDefault();
+    if (!isAdmin) return;
+    if (!paid && boards.length >= FREE_BOARD_LIMIT) {
+      setShowUpgradeModal(true);
+      return;
+    }
     setBusy(true);
     try {
-      await joinCommunity(community.id, user.uid);
-      setCommunity(await getCommunity(community.id));
+      const row = await createBoard(community.id, { name: newBoard }, { isPaid: paid });
+           setBoards(uniqueBoards(await listBoards(community.id)));
+      setNewBoard("");
+      toast.success(`${row.name} added`);
     } catch (err) {
-      toast.error(err.message || "Could not join");
+      toast.error(err.message || "Could not add board");
     } finally {
       setBusy(false);
     }
-  };
-
-  const openChat = async () => {
-    if (!user) return navigate("/login");
-    if (!isMember) {
-      try {
-        await joinCommunity(community.id, user.uid);
-      } catch (err) {
-        toast.error(err.message || "Join first");
-        return;
-      }
-    }
-    navigate(`/community/${community.id}/chat`);
   };
 
   const copyInvite = async () => {
@@ -170,7 +195,7 @@ export default function CommunityDetail() {
 
   return (
     <div className="cd-page">
-      <button type="button" className="cd-back" onClick={() => navigate("/community")}>← Communities</button>
+      <button type="button" className="cd-back" onClick={() => navigate("/community")}>← Circles</button>
 
       <button
         type="button"
@@ -180,10 +205,8 @@ export default function CommunityDetail() {
         disabled={!isAdmin || busy}
         aria-label="Change banner"
       >
-                {!community.coverUrl && (
-          <span className="cd-placeholder">
-            <IconCamera />
-          </span>
+        {!community.coverUrl && (
+          <span className="cd-placeholder"><IconCamera /></span>
         )}
       </button>
 
@@ -196,7 +219,7 @@ export default function CommunityDetail() {
           disabled={!isAdmin || busy}
           aria-label="Change photo"
         >
-{!community.photoUrl && <IconCommunityMark />}
+          {!community.photoUrl && <IconCommunityMark />}
         </button>
         <div className="cd-identity-text">
           <p className="cd-kicker">{community.tag}</p>
@@ -212,14 +235,58 @@ export default function CommunityDetail() {
 
       <div className="cd-actions">
         {!isMember && (
-          <button type="button" className="cd-btn" disabled={busy} onClick={handleJoin}>Join</button>
+          <button type="button" className="cd-btn" disabled={busy} onClick={async () => {
+            if (!user) return navigate("/login");
+            setBusy(true);
+            try {
+              await joinCommunity(community.id, user.uid);
+              setCommunity(await getCommunity(community.id));
+            } catch (err) {
+              toast.error(err.message || "Could not join");
+            } finally {
+              setBusy(false);
+            }
+          }}>Join</button>
         )}
-        <button type="button" className="cd-btn" onClick={openChat}>
-          <IconChat /> Open chat
-        </button>
         <button type="button" className="cd-btn ghost" onClick={copyInvite}>
           <IconLink /> Invite
         </button>
+
+
+       
+     
+             {user && (
+          <button
+            type="button"
+            className="cd-text-btn"
+            disabled={busy}
+            onClick={async () => {
+              const reason = window.prompt("Why are you reporting this circle?");
+              if (!reason?.trim()) return;
+              setBusy(true);
+              try {
+                await reportCommunity({
+                  communityId: community.id,
+                  communityName: community.name,
+                  reporterId: user.uid,
+                  reason: reason.trim(),
+                });
+                toast.success("Report sent to Snaprium");
+              } catch {
+                toast.error("Could not send report");
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            Report
+          </button>
+        )}
+
+
+
+
+
         {isMember && !isAdmin && (
           <button
             type="button"
@@ -241,7 +308,7 @@ export default function CommunityDetail() {
             type="button"
             className="cd-text-btn danger"
             onClick={async () => {
-              if (!window.confirm("Unlist this community for everyone?")) return;
+              if (!window.confirm("Remove this circle for everyone?")) return;
               try {
                 await unlistCommunity(community.id);
                 navigate("/community");
@@ -250,13 +317,46 @@ export default function CommunityDetail() {
               }
             }}
           >
-            Delete community
+            Delete circle
           </button>
         )}
       </div>
 
+      <h2 className="cd-kicker" style={{ marginTop: 24 }}>Boards</h2>
+      <div className="cd-actions" style={{ flexWrap: "wrap" }}>
+        {boards.map((board) => (
+          <button
+            key={board.id}
+            type="button"
+            className="cd-btn"
+            onClick={() => openBoard(board)}
+          >
+            <IconChat /> {board.name}
+          </button>
+        ))}
+      </div>
+
+      {isAdmin && (
+        <form className="cd-actions" onSubmit={handleAddBoard}>
+          <input
+            value={newBoard}
+            onChange={(e) => setNewBoard(e.target.value)}
+            placeholder="New board name"
+            maxLength={40}
+            className="community-search"
+          />
+          <button type="submit" className="cd-btn" disabled={busy || !newBoard.trim()}>
+            Add board
+          </button>
+        </form>
+      )}
+
       <input ref={bannerRef} type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) onUpload(f, "coverUrl"); }} />
       <input ref={photoRef} type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) onUpload(f, "photoUrl"); }} />
+
+      {showUpgradeModal && (
+        <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
+      )}
     </div>
   );
 }

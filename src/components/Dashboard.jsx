@@ -6,7 +6,7 @@ import { Capacitor } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
 
 export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
-  const { user, signOutUser } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const isApp = Capacitor.isNativePlatform();
 
@@ -17,31 +17,21 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
     navigate(path);
   };
 
-    const handleManageSubscription = async () => {
+  const handleManageSubscription = async () => {
     if (!user?.uid) return;
-
     onClose();
-
     try {
-      const apiBase = (
-        import.meta.env.VITE_API_URL || "https://snaprium.com"
-      ).replace(/\/$/, "");
-
+      const apiBase = (import.meta.env.VITE_API_URL || "https://snaprium.com").replace(/\/$/, "");
       const response = await fetch(`${apiBase}/api/customer-portal`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: user.uid }),
       });
-
       const data = await response.json();
-
       if (!data.url) {
         alert(data.error || "Unable to open management portal. Please try again.");
         return;
       }
-
       if (Capacitor.isNativePlatform()) {
         await Browser.open({ url: data.url });
       } else {
@@ -67,7 +57,6 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
       <aside className="dashboard-panel open" key={user ? user.uid : "guest"}>
         <div className="dashboard-header">
           <h2>Dashboard</h2>
-
           <button id="closeDashboard" onClick={onClose} aria-label="Close">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="18" y1="6" x2="6" y2="18" />
@@ -78,46 +67,26 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
 
         <div className="dashboard-content">
           {user ? (
-            <div className="user-section">
-              {user.photoURL && (
-                <img
-                  src={user.photoURL}
-                  alt="Profile"
-                  className="user-avatar"
-                  width={48}
-                  height={48}
-                />
+            <button
+              type="button"
+              className="user-section"
+              onClick={() => handleNavigate("/profile")}
+              style={{ width: "100%", textAlign: "left", background: "none", border: 0, cursor: "pointer" }}
+            >
+              {user.photoURL ? (
+                <img src={user.photoURL} alt="" className="user-avatar" width={48} height={48} />
+              ) : (
+                <span className="user-avatar" style={{ display: "inline-grid", placeItems: "center" }}>
+                  {(user.displayName || "S").slice(0, 1).toUpperCase()}
+                </span>
               )}
-
               <div className="user-info">
                 <span className="user-name">{user.displayName || user.email}</span>
-
-                <button
-                  className="signout-btn dashboard-btn"
-                  onClick={async () => {
-                    try {
-                      await signOutUser();
-                      onClose();
-                      navigate("/login");
-                    } catch (error) {
-                      console.error("Sign out failed:", error);
-                    }
-                  }}
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                    <polyline points="16 17 21 12 16 7" />
-                    <line x1="21" y1="12" x2="9" y2="12" />
-                  </svg>
-                  Sign Out
-                </button>
+                <span className="hub-sub">View profile</span>
               </div>
-            </div>
+            </button>
           ) : (
-            <button
-              className="signin-btn dashboard-btn"
-              onClick={() => handleNavigate("/login")}
-            >
+            <button className="signin-btn dashboard-btn" onClick={() => handleNavigate("/login")}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
                 <polyline points="10 17 15 12 10 7" />
@@ -134,17 +103,8 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
                 onClick={handleManageSubscription}
                 type="button"
               >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  width="18"
-                  height="18"
-                >
-                  <rect x="2" y="5" width="20" height="14" rx="2" ry="2" />
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="18" height="18">
+                  <rect x="2" y="5" width="20" height="14" rx="2" />
                   <line x1="2" y1="10" x2="22" y2="10" />
                 </svg>
                 Manage Subscription
@@ -155,17 +115,7 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
                 onClick={() => handleNavigate("/upgrade")}
                 type="button"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.75"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.75" width="20" height="20">
                   <path d="M12 19V5" />
                   <path d="M5 12L12 5L19 12" />
                 </svg>
@@ -175,23 +125,14 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
 
           {!isApp && (
             <>
-              <button
-                className="home-btn dashboard-btn"
-                onClick={() => handleNavigate("/")}
-                style={{ display: "flex" }}
-              >
+              <button className="home-btn dashboard-btn" onClick={() => handleNavigate("/")} style={{ display: "flex" }}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                   <polyline points="9 22 9 12 15 12 15 22" />
                 </svg>
                 Home
               </button>
-
-              <button
-                className="theme-btn dashboard-btn"
-                onClick={toggleTheme}
-                style={{ display: "flex" }}
-              >
+              <button className="theme-btn dashboard-btn" onClick={toggleTheme} style={{ display: "flex" }}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="12" cy="12" r="5" />
                   <line x1="12" y1="1" x2="12" y2="3" />
@@ -218,16 +159,7 @@ export default function Dashboard({ isOpen, onClose, toggleTheme, theme }) {
                 }}
                 type="button"
               >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  width="18"
-                  height="18"
-                >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="18" height="18">
                   <circle cx="12" cy="12" r="10" />
                   <line x1="12" y1="8" x2="12" y2="12" />
                   <line x1="12" y1="16" x2="12.01" y2="16" />

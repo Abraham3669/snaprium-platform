@@ -33,16 +33,17 @@ export async function ensureUserDocument(firebaseUser) {
   try {
     const existing = await withTimeout(getDoc(userRef), 5000);
     if (existing.exists()) {
+      const prev = existing.data() || {};
       await withTimeout(
         setDoc(
           userRef,
           {
-            email: firebaseUser.email || existing.data().email || "",
+            email: firebaseUser.email || prev.email || "",
             displayName:
+              prev.displayName ||
               firebaseUser.displayName ||
-              existing.data().displayName ||
               "User",
-            photoURL: firebaseUser.photoURL || existing.data().photoURL || "",
+            photoURL: prev.photoURL || firebaseUser.photoURL || "",
             updatedAt: serverTimestamp(),
           },
           { merge: true }

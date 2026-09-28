@@ -74,23 +74,23 @@ export default function Home() {
             <IconCommunity />
           </span>
           <div className="hub-card-copy">
-            <h2>Communities</h2>
+            <h2>Circles</h2>
             <p>Public or private groups.</p>
           </div>
         </button>
       </div>
 
       {!isNative && (
-  <footer className="hub-legal">
-    <Link to="/terms">Terms</Link>
-    <span>·</span>
-    <Link to="/privacy">Privacy</Link>
-    <span>·</span>
-    <Link to="/refunds">Refunds</Link>
-    <span>·</span>
-    <Link to="/upgrade">Pricing</Link>
-  </footer>
-)}
+        <footer className="hub-legal">
+          <Link to="/terms">Terms</Link>
+          <span>·</span>
+          <Link to="/privacy">Privacy</Link>
+          <span>·</span>
+          <Link to="/refunds">Refunds</Link>
+          <span>·</span>
+          <Link to="/upgrade">Pricing</Link>
+        </footer>
+      )}
     </div>
   );
 }

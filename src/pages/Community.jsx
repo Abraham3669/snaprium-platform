@@ -46,7 +46,7 @@ export default function Community() {
       setMine(own);
     } catch (err) {
       console.error(err);
-      toast.error("Could not load communities");
+      toast.error("Could not load circles");
     } finally {
       setLoading(false);
     }
@@ -67,19 +67,19 @@ export default function Community() {
   const handleJoinCode = async (e) => {
     e.preventDefault();
     if (!user) {
-      toast.info("Sign in to join a community");
+      toast.info("Sign in to join a circle");
       navigate("/login");
       return;
     }
     const code = joinCode.trim().toUpperCase();
     if (code.length < 4) {
-      toast.warning("Enter the community code");
+      toast.warning("Enter the invite code");
       return;
     }
     setJoining(true);
     try {
       const community = await joinCommunityByCode(code, user.uid);
-      toast.success("Joined community");
+      toast.success("Joined circle");
       setJoinCode("");
       navigate(`/community/${community.id}`);
     } catch (err) {
@@ -92,12 +92,12 @@ export default function Community() {
   const handleCreate = async (e) => {
     e.preventDefault();
     if (!user) {
-      toast.info("Sign in to create a community");
+      toast.info("Sign in to create a circle");
       navigate("/login");
       return;
     }
     if (!isUnlimitedPlan(user.plan) && hostedCount >= 1) {
-      toast.info("Free accounts can create 1 community. Upgrade to create more.");
+      toast.info("Free accounts can create 1 circle. Upgrade to create more.");
       setShowUpgradeModal(true);
       return;
     }
@@ -111,12 +111,12 @@ export default function Community() {
         createdBy: user.uid,
         createdByName: user.displayName || user.email?.split("@")[0] || "Member",
       });
-      toast.success("Community created");
+      toast.success("Circle created");
       setShowCreate(false);
       setName("");
       navigate(`/community/${created.id}`);
     } catch (err) {
-      toast.error(err.message || "Could not create community");
+      toast.error(err.message || "Could not create circle");
     } finally {
       setSaving(false);
     }
@@ -149,15 +149,17 @@ export default function Community() {
   return (
     <div className="hub-page">
       <header className="hub-top">
-        <p className="hub-kicker">Communities</p>
-        <h1 className="hub-title">Find a class or start one</h1>
-        <p className="hub-sub">Your private groups stay under Your communities. Public groups are listed below.</p>
+        <p className="hub-kicker">Circles</p>
+        <h1 className="hub-title">Find a circle or start one</h1>
+        <p className="hub-sub">
+          Private circles stay under Yours. Public circles are listed below.
+        </p>
       </header>
 
       <form className="community-toolbar" onSubmit={handleJoinCode}>
         <input
           className="community-search"
-          placeholder="Enter invite code"
+          placeholder="Invite code"
           value={joinCode}
           onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
           maxLength={8}
@@ -170,18 +172,18 @@ export default function Community() {
       <div className="community-toolbar">
         <input
           className="community-search"
-          placeholder="Search public communities"
+          placeholder="Search public circles"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
         <button type="button" className="community-create-btn" onClick={() => setShowCreate(true)}>
-          Create community
+          Create circle
         </button>
       </div>
 
       {mine.length > 0 && (
         <>
-          <h2 className="community-section-title">Your communities</h2>
+          <h2 className="community-section-title">Your circles</h2>
           <div className="community-list">{mine.map(renderRow)}</div>
         </>
       )}
@@ -206,20 +208,20 @@ export default function Community() {
       </div>
 
       {loading ? (
-        <p className="hub-sub">Loading communities…</p>
+        <p className="hub-sub">Loading circles…</p>
       ) : visible.length === 0 ? (
-        <p className="hub-sub">No public communities yet.</p>
+        <p className="hub-sub">No public circles yet.</p>
       ) : (
         <div className="community-list">{visible.map(renderRow)}</div>
       )}
 
       {showCreate && (
         <form className="study-card" onSubmit={handleCreate}>
-          <h2>Create community</h2>
+          <h2>Create circle</h2>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Name (e.g. Calculus study group)"
+            placeholder="Name (e.g. AP Calculus)"
             maxLength={60}
             required
           />

@@ -14,6 +14,7 @@ import UpgradeModal from "./components/UpgradeModal";
 import WelcomeModal from "./components/WelcomeModal";
 import CommunityDetail from "./pages/CommunityDetail";
 import CommunityChat from "./pages/CommunityChat";
+import Profile from "./pages/Profile";
 
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -442,6 +443,7 @@ useEffect(() => {
               <Route path="/community/:communityId/chat" element={<CommunityChat />} />
 <Route path="/community/:communityId" element={<CommunityDetail />} />
 <Route path="/community/:communityId/chat" element={<CommunityChat />} />
+<Route path="/profile" element={<Profile />} />
             </Routes>
           </main>
         }

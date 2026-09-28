@@ -139,6 +139,16 @@ export function AuthProvider({ children }) {
     }
   };
 
+
+  useEffect(() => {
+    if (!user?.banned) return;
+    auth.signOut().catch(() => {});
+    setUser(null);
+  }, [user?.banned]);
+
+
+
+
   return (
     <AuthContext.Provider value={{ user, loading, signOutUser, refreshUser }}>
       {children}

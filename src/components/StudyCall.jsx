@@ -1,8 +1,15 @@
 // src/components/StudyCall.jsx
 import { useEffect, useRef, useState } from "react";
 import DailyIframe from "@daily-co/daily-js";
+import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "../lib/firebase";
 import { postAPI } from "../utils/apiClient";
 import { toast } from "react-toastify";
+import UpgradeModal from "./UpgradeModal";
+
+const FREE_SESSION_MIN = 45;
+const FREE_SESSIONS_PER_DAY = 2;
+const getToday = () => new Date().toISOString().split("T")[0];
 
 function getTrack(p, kind) {
   return p?.tracks?.[kind]?.persistentTrack || p?.tracks?.[kind]?.track || null;
@@ -19,17 +26,41 @@ export default function StudyCall({ roomId, user, onClose }) {
   const [participants, setParticipants] = useState([]);
   const [activeScreenId, setActiveScreenId] = useState(null);
 
+  const isPaid = user?.plan === "unlimited" || user?.plan === "premium";
+
+const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
   useEffect(() => {
     onCloseRef.current = onClose;
   }, [onClose]);
 
   useEffect(() => {
     let cancelled = false;
+    let capTimer;
 
     const start = async () => {
       try {
         setError("");
         setJoining(true);
+
+        if (!isPaid && user?.uid) {
+          const today = getToday();
+          const used = user.lastLiveSessionDate === today ? user.dailyLiveSessions || 0 : 0;
+                    if (used >= FREE_SESSIONS_PER_DAY) {
+                        toast.info("Free session limit reached (45 minutes).");
+            setShowUpgradeModal(true);
+            try {
+              await callRef.current?.leave();
+            } catch {}
+            onCloseRef.current?.();
+            return;
+          }
+          await updateDoc(doc(db, "users", user.uid), {
+            dailyLiveSessions: used + 1,
+            lastLiveSessionDate: today,
+            updatedAt: serverTimestamp(),
+          });
+        }
 
         const data = await postAPI("/api/daily-room", {
           roomId,
@@ -66,6 +97,16 @@ export default function StudyCall({ roomId, user, onClose }) {
           startVideoOff: true,
           startAudioOff: true,
         });
+
+        if (!isPaid) {
+          capTimer = setTimeout(async () => {
+            toast.info("Free session limit reached (45 minutes).");
+            try {
+              await callRef.current?.leave();
+            } catch {}
+            onCloseRef.current?.();
+          }, FREE_SESSION_MIN * 60 * 1000);
+        }
       } catch (err) {
         console.error(err);
         if (!cancelled) {
@@ -80,13 +121,14 @@ export default function StudyCall({ roomId, user, onClose }) {
 
     return () => {
       cancelled = true;
+      clearTimeout(capTimer);
       if (callRef.current) {
         callRef.current.leave().catch(() => {});
         callRef.current.destroy();
         callRef.current = null;
       }
     };
-  }, [roomId, user?.displayName]);
+  }, [roomId, user?.displayName, user?.uid, isPaid]);
 
   useEffect(() => {
     participants.forEach((p) => {
@@ -101,11 +143,9 @@ export default function StudyCall({ roomId, user, onClose }) {
       if (videoEl && cam && videoEl.srcObject?.getVideoTracks?.()[0] !== cam) {
         videoEl.srcObject = new MediaStream([cam]);
       }
-
       if (screenEl && screen && screenEl.srcObject?.getVideoTracks?.()[0] !== screen) {
         screenEl.srcObject = new MediaStream([screen]);
       }
-
       if (audioEl && audio && !p.local) {
         if (audioEl.srcObject?.getAudioTracks?.()[0] !== audio) {
           audioEl.srcObject = new MediaStream([audio]);
@@ -171,7 +211,6 @@ export default function StudyCall({ roomId, user, onClose }) {
               ))}
             </div>
           )}
-
           {activeScreen && (
             <video
               key={`screen-${activeScreen.session_id}`}
@@ -187,19 +226,11 @@ export default function StudyCall({ roomId, user, onClose }) {
       <div className="study-call-strip">
         {joining && <div className="study-call-status">Joining call...</div>}
         {error && <div className="study-call-status">{error}</div>}
-
         {participants.map((p) => (
           <div key={p.session_id} className="study-call-tile">
-            <video
-              data-daily-video={p.session_id}
-              autoPlay
-              playsInline
-              muted={!!p.local}
-            />
+            <video data-daily-video={p.session_id} autoPlay playsInline muted={!!p.local} />
             {!p.local && <audio data-daily-audio={p.session_id} autoPlay />}
-            <div className="study-call-name">
-              {p.local ? "You" : p.user_name || "Student"}
-            </div>
+            <div className="study-call-name">{p.local ? "You" : p.user_name || "Student"}</div>
           </div>
         ))}
       </div>
@@ -217,11 +248,20 @@ export default function StudyCall({ roomId, user, onClose }) {
           <ShareIcon />
           <span>{sharing ? "Stop share" : "Share"}</span>
         </button>
-        <button type="button" className="study-call-leave" onClick={leave} title="Leave call">
+               <button type="button" className="study-call-leave" onClick={leave} title="Leave call">
           <LeaveCallIcon />
           <span>Leave</span>
         </button>
       </div>
+
+      {showUpgradeModal && (
+        <UpgradeModal
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+          title="Live session limit"
+          subtitle="Free accounts get 2 sessions a day, 45 minutes each."
+        />
+      )}
     </div>
   );
 }
@@ -235,7 +275,6 @@ function MicOnIcon() {
     </svg>
   );
 }
-
 function MicOffIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -245,7 +284,6 @@ function MicOffIcon() {
     </svg>
   );
 }
-
 function CamOnIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -254,7 +292,6 @@ function CamOnIcon() {
     </svg>
   );
 }
-
 function CamOffIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -264,7 +301,6 @@ function CamOffIcon() {
     </svg>
   );
 }
-
 function ShareIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -274,7 +310,6 @@ function ShareIcon() {
     </svg>
   );
 }
-
 function LeaveCallIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
