@@ -67,57 +67,62 @@ export function AuthProvider({ children }) {
     return null;
   }, [fetchUserFromServer]);
 
-  useEffect(() => {
-    const unsubAuth = onAuthStateChanged(auth, (firebaseUser) => {
-      if (unsubSnapRef.current) {
-        unsubSnapRef.current();
-        unsubSnapRef.current = null;
-      }
+ useEffect(() => {
+  const unsubAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+    if (unsubSnapRef.current) {
+      unsubSnapRef.current();
+      unsubSnapRef.current = null;
+    }
 
-      firebaseUserRef.current = firebaseUser;
+    firebaseUserRef.current = firebaseUser;
 
-      if (!firebaseUser) {
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-
-      setUser(buildUser(firebaseUser));
+    if (!firebaseUser) {
+      setUser(null);
       setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Critical: attach a fresh token BEFORE any Firestore reads
+      await firebaseUser.getIdToken(true);
+      await ensureUserDocument(firebaseUser);
 
       const userRef = doc(db, "users", firebaseUser.uid);
+      const next = await fetchUserFromServer(firebaseUser);
+      setUser(next || buildUser(firebaseUser));
+      setLoading(false);
 
-      (async () => {
-        try {
-          await ensureUserDocument(firebaseUser);
-          setUser(buildUser(firebaseUser));
-        } catch (error) {
-          console.error("[Auth] ensureUserDocument", error.code, error.message);
-          showAppError("Create profile", error);
-        }
-
-        unsubSnapRef.current = onSnapshot(
-          userRef,
-          (snapshot) => {
-            if (!snapshot.exists()) {
-              ensureUserDocument(firebaseUser).catch(() => {});
-              return;
-            }
-            setUser(buildUser(firebaseUser, snapshot.data()));
-          },
-          (error) => {
-            console.error("[Auth] snapshot", error.code, error.message);
+      unsubSnapRef.current = onSnapshot(
+        userRef,
+        (snapshot) => {
+          if (!snapshot.exists()) {
+            ensureUserDocument(firebaseUser).catch(() => {});
+            return;
           }
-        );
-      })();
-    });
+          setUser(buildUser(firebaseUser, snapshot.data()));
+        },
+        (error) => {
+          console.error("[Auth] snapshot", error.code, error.message);
+          if (error.code === "permission-denied") {
+            showAppError("Profile access", error);
+          }
+        }
+      );
+    } catch (error) {
+      console.error("[Auth] init", error.code, error.message);
+      showAppError("Sign-in profile", error);
+      setUser(buildUser(firebaseUser));
+      setLoading(false);
+    }
+  });
 
-    return () => {
-      unsubAuth();
-      if (unsubSnapRef.current) unsubSnapRef.current();
-    };
-  }, []);
-
+  return () => {
+    unsubAuth();
+    if (unsubSnapRef.current) unsubSnapRef.current();
+  };
+}, [fetchUserFromServer]);
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
     let handle;

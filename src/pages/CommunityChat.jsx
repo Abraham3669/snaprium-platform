@@ -59,6 +59,52 @@ function fixCommonMathGlue(text) {
   return text.replace(/(\$[^\s$]{1,60}?)\$\$/g, "$1$");
 }
 
+
+const handleOf = (name) => String(name || "").replace(/\s+/g, "");
+const RESERVED = /^(ai|snaprium)$/i;
+
+// returns uids of people mentioned in text, e.g. "@abraham hi" -> [uid]
+function resolveMentions(text, people) {
+  const found = new Set();
+  const re = /@([\p{L}\p{N}_.-]{2,})/gu;
+  let m;
+  while ((m = re.exec(text || ""))) {
+    const token = m[1].replace(/[.-]+$/, "").toLowerCase();
+    if (!token || RESERVED.test(token)) continue;
+    const exact = people.filter(
+      (p) =>
+        handleOf(p.name).toLowerCase() === token ||
+        p.name.toLowerCase().split(/\s+/)[0] === token
+    );
+    if (exact.length) {
+      exact.forEach((p) => found.add(p.uid));
+      continue;
+    }
+    const prefix = people.filter((p) => handleOf(p.name).toLowerCase().startsWith(token));
+    if (prefix.length === 1) found.add(prefix[0].uid);
+  }
+  return [...found];
+}
+
+// turns "@abraham hi" into text + a highlighted <span>
+function renderWithMentions(text, people, myUid) {
+  return String(text)
+    .split(/(@[\p{L}\p{N}_.-]{2,})/gu)
+    .map((part, i) => {
+      if (!part.startsWith("@")) return part;
+      const token = part.slice(1).replace(/[.-]+$/, "");
+      const uids = resolveMentions(part, people);
+      if (!RESERVED.test(token) && !uids.length) return part;
+      return (
+        <span key={i} className={`cc-mention ${uids.includes(myUid) ? "me" : ""}`}>
+          {part}
+        </span>
+      );
+    });
+}
+
+
+
 function prepareMathForKaTeX(rawText) {
   if (!rawText) return "";
   let text = rawText;
@@ -154,7 +200,9 @@ export default function CommunityChat() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [typingNames, setTypingNames] = useState([]);
   const [profiles, setProfiles] = useState({});
-  const [replyTo, setReplyTo] = useState(null);
+    const [replyTo, setReplyTo] = useState(null);
+  const [mentionQuery, setMentionQuery] = useState(null);
+  const seenRef = useRef(null);
 
   const isPaid = user?.plan === "unlimited" || user?.plan === "premium";
   const today = getToday();
@@ -184,6 +232,7 @@ export default function CommunityChat() {
 const boardPeople = [];
   const seen = new Set();
   messages.forEach((m) => {
+    
     if (!m.uid || m.isAI || seen.has(m.uid)) return;
     seen.add(m.uid);
     boardPeople.push({
@@ -192,6 +241,35 @@ const boardPeople = [];
       photo: livePhoto(m),
     });
   });
+
+
+
+
+
+    const mentionable = [
+    ...new Map([
+      ...boardPeople.map((p) => [p.uid, { uid: p.uid, name: p.name }]),
+      ...(community?.members || [])
+        .filter((uid) => profiles[uid]?.displayName)
+        .map((uid) => [uid, { uid, name: profiles[uid].displayName }]),
+    ]).values(),
+  ].filter((p) => p.name && p.name !== "Member");
+
+  const suggestions =
+    mentionQuery === null
+      ? []
+      : [{ uid: "__ai", name: "AI" }, ...mentionable.filter((p) => p.uid !== user?.uid)]
+          .filter(
+            (p) =>
+              handleOf(p.name).toLowerCase().startsWith(mentionQuery) ||
+              p.name.toLowerCase().split(/\s+/).some((w) => w.startsWith(mentionQuery))
+          )
+          .slice(0, 5);
+
+  const pickMention = (p) => {
+    setInput((prev) => prev.replace(/@([\p{L}\p{N}_.-]*)$/u, `@${handleOf(p.name)} `));
+    setMentionQuery(null);
+  };
 
 
 
@@ -318,6 +396,27 @@ const boardPeople = [];
     el.scrollTop = el.scrollHeight;
   }, [messages, askingAI]);
 
+
+  useEffect(() => {
+    seenRef.current = null; // new board = start fresh
+  }, [activeBoardId]);
+
+  useEffect(() => {
+    if (!user?.uid || !messages.length) return;
+    if (!seenRef.current) {
+      seenRef.current = new Set(messages.map((m) => m.id)); // don't toast old messages
+      return;
+    }
+    messages.forEach((m) => {
+      if (seenRef.current.has(m.id)) return;
+      seenRef.current.add(m.id);
+      if (m.uid !== user.uid && (m.mentions || []).includes(user.uid)) {
+        toast.info(`${liveName(m)} mentioned you`);
+      }
+    });
+  }, [messages]);
+
+
   const isMember = user && community && (community.members || []).includes(user.uid);
 
   const switchBoard = (id) => {
@@ -386,12 +485,15 @@ const boardPeople = [];
     if (!text || !user || !isMember) return;
     setInput("");
     clearTyping();
-    const quoted = replyTo;
+        const quoted = replyTo;
     setReplyTo(null);
+    setMentionQuery(null);
+    const mentions = resolveMentions(text, mentionable).filter((id) => id !== user.uid);
     try {
       await sendCommunityMessage(communityId, {
         boardId: activeBoardId,
         text,
+        mentions,
         uid: user.uid,
         displayName: user.displayName || "Member",
         photoURL: user.photoURL || "",
@@ -543,7 +645,9 @@ const boardPeople = [];
             return (
               <article
                 key={msg.id}
-                className={`cc-post ${msg.isAI ? "ai" : ""} ${msg.uid === user?.uid ? "mine" : ""}`}
+                className={`cc-post ${msg.isAI ? "ai" : ""} ${msg.uid === user?.uid ? "mine" : ""} ${
+                  (msg.mentions || []).includes(user?.uid) ? "mentioned" : ""
+                }`}
               >
                 <header className="cc-post-head">
                            <button
@@ -591,7 +695,7 @@ const boardPeople = [];
                     </ReactMarkdown>
                   </div>
                 ) : (
-                  msg.text && <p>{msg.text}</p>
+                  msg.text && <p>{renderWithMentions(msg.text, mentionable, user?.uid)}</p>
                 )}
               </article>
             );
@@ -624,7 +728,23 @@ const boardPeople = [];
                 ×
               </button>
             </div>
+                    )}
+
+          {suggestions.length > 0 && (
+            <div className="cc-mention-list">
+              {suggestions.map((p) => (
+                <button
+                  key={p.uid}
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => pickMention(p)}
+                >
+                  @{handleOf(p.name)}
+                </button>
+              ))}
+            </div>
           )}
+
           <form className="cc-composer" onSubmit={handleSend}>
             <input ref={photoRef} type="file" accept="image/*" hidden onChange={handleSharePhoto} />
             <button type="button" className="cc-icon-btn" onClick={() => photoRef.current?.click()} aria-label="Photo">
@@ -632,9 +752,12 @@ const boardPeople = [];
             </button>
             <input
               value={input}
-              onChange={(e) => {
-                setInput(e.target.value);
-                if (e.target.value.trim()) pulseTyping();
+                            onChange={(e) => {
+                const value = e.target.value;
+                setInput(value);
+                const m = value.match(/(?:^|\s)@([\p{L}\p{N}_.-]*)$/u);
+                setMentionQuery(m ? m[1].toLowerCase() : null);
+                if (value.trim()) pulseTyping();
                 else clearTyping();
               }}
               placeholder={`Message ${activeBoard?.name || "board"}…`}

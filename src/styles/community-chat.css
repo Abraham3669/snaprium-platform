@@ -475,3 +475,46 @@
   margin-left: 58px;
   width: calc(100% - 58px);
 }
+
+
+
+
+/* @mentions */
+.cc-mention {
+  color: var(--accent);
+  font-weight: 600;
+}
+.cc-mention.me {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border-radius: 4px;
+  padding: 0 3px;
+}
+.cc-post.mentioned {
+  padding-left: 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.cc-mention-list {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 0 0 8px;
+}
+.cc-mention-list button {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.cc-mention-list button:hover,
+.cc-mention-list button:active {
+  background: var(--icon-bg);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+}
