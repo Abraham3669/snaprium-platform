@@ -120,6 +120,75 @@ function renderWithMentions(text, people, myUid) {
 
 
 
+
+function autolinkMarkdown(text) {
+  return String(text || "").replace(
+    /(^|[\s(])((https?:\/\/|www\.)[^\s<]+[^.\s<,;:!?"')\]])/gi,
+    (_, pre, url) => {
+      const href = url.startsWith("http") ? url : `https://${url}`;
+      return `${pre}[${url}](${href})`;
+    }
+  );
+}
+
+function prepareUserMessage(text) {
+  // Markdown hard breaks so pasted paragraphs/newlines show up
+  let t = String(text || "").replace(/\n/g, "  \n");
+  t = autolinkMarkdown(t);
+  return t;
+}
+
+function MessageText({ text, people, myUid, isAI }) {
+  if (!text) return null;
+  if (!isAI && isEmojiOnly(text)) {
+    return <p className="cc-emoji-only">{text}</p>;
+  }
+
+  const source = isAI
+    ? fixCommonMathGlue(prepareMathForKaTeX(text))
+    : prepareUserMessage(text);
+
+  return (
+    <div className={`cc-md ${isAI ? "" : "cc-user-md"}`}>
+      <ReactMarkdown
+        remarkPlugins={isAI ? [remarkMath] : []}
+        rehypePlugins={
+          isAI
+            ? [[rehypeKatex, { output: "html", throwOnError: false, strict: "ignore", trust: true }]]
+            : []
+        }
+        components={{
+          a: ({ href, children }) => (
+            <a href={href} target="_blank" rel="noopener noreferrer" className="cc-link">
+              {children}
+            </a>
+          ),
+          // Keep @mentions highlighted inside text nodes when possible
+          p: ({ children }) => (
+            <p>
+              {Array.isArray(children)
+                ? children.map((child, i) =>
+                    typeof child === "string"
+                      ? renderWithMentions(child, people, myUid)
+                      : child
+                  )
+                : typeof children === "string"
+                ? renderWithMentions(children, people, myUid)
+                : children}
+            </p>
+          ),
+        }}
+      >
+        {source}
+      </ReactMarkdown>
+    </div>
+  );
+}
+
+
+
+
+
 function prepareMathForKaTeX(rawText) {
   if (!rawText) return "";
   let text = rawText;
@@ -956,79 +1025,35 @@ const pulseTyping = () => {
                     }
                   />
                 )}
-                {msg.text && msg.isAI ? (
-                  <div className="cc-md">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkMath]}
-                      rehypePlugins={[[rehypeKatex, { output: "html", throwOnError: false, strict: "ignore", trust: true }]]}
-                    >
-                      {fixCommonMathGlue(prepareMathForKaTeX(msg.text))}
-                    </ReactMarkdown>
-                  </div>
-                                  ) : editingId === msg.id ? (
-                  <div className="cc-edit-row">
-                    <input
-                      className="cc-edit-input"
-                      value={editText}
-                      onChange={(e) => setEditText(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") saveEdit(msg);
-                        if (e.key === "Escape") cancelEdit();
-                      }}
-                      autoFocus
-                    />
-                    <button type="button" className="cc-edit-save" onClick={() => saveEdit(msg)}>
-                      Save
-                    </button>
-                    <button type="button" className="cc-edit-cancel" onClick={cancelEdit}>
-                      Cancel
-                    </button>
-                  </div>
-                               ) : editingId === msg.id ? (
-                  <div className="cc-edit-row">
-                    <input
-                      className="cc-edit-input"
-                      value={editText}
-                      onChange={(e) => setEditText(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") saveEdit(msg);
-                        if (e.key === "Escape") cancelEdit();
-                      }}
-                      autoFocus
-                    />
-                    <button type="button" className="cc-edit-save" onClick={() => saveEdit(msg)}>
-                      Save
-                    </button>
-                    <button type="button" className="cc-edit-cancel" onClick={cancelEdit}>
-                      Cancel
-                    </button>
-                  </div>
-                                ) : editingId === msg.id ? (
-                  <div className="cc-edit-row">
-                    <input
-                      className="cc-edit-input"
-                      value={editText}
-                      onChange={(e) => setEditText(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") saveEdit(msg);
-                        if (e.key === "Escape") cancelEdit();
-                      }}
-                      autoFocus
-                    />
-                    <button type="button" className="cc-edit-save" onClick={() => saveEdit(msg)}>
-                      Save
-                    </button>
-                    <button type="button" className="cc-edit-cancel" onClick={cancelEdit}>
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  msg.text && (
-                    <p className={isEmojiOnly(msg.text) ? "cc-emoji-only" : ""}>
-                      {renderWithMentions(msg.text, mentionable, user?.uid)}
-                    </p>
-                  )
-                )}
+{editingId === msg.id ? (
+  <div className="cc-edit-row">
+    <input
+      className="cc-edit-input"
+      value={editText}
+      onChange={(e) => setEditText(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") saveEdit(msg);
+        if (e.key === "Escape") cancelEdit();
+      }}
+      autoFocus
+    />
+    <button type="button" className="cc-edit-save" onClick={() => saveEdit(msg)}>
+      Save
+    </button>
+    <button type="button" className="cc-edit-cancel" onClick={cancelEdit}>
+      Cancel
+    </button>
+  </div>
+) : (
+  msg.text && (
+    <MessageText
+      text={msg.text}
+      people={mentionable}
+      myUid={user?.uid}
+      isAI={!!msg.isAI}
+    />
+  )
+)}
               </article>
             );
           })}
@@ -1043,6 +1068,8 @@ const pulseTyping = () => {
             </article>
           )}
         </div>
+
+
 
         {typingNames.length > 0 && (
           <p className="cc-typing-label">
@@ -1163,21 +1190,30 @@ const pulseTyping = () => {
             <button type="button" className="cc-icon-btn" onClick={() => photoRef.current?.click()} aria-label="Photo">
               <IconPhoto />
             </button>
-            <input
-              value={input}
-                            onChange={(e) => {
-  const value = e.target.value;
-  setInput(value);
+            <textarea
+  className="cc-composer-input"
+  rows={1}
+  value={input}
+  onChange={(e) => {
+    const value = e.target.value;
+    setInput(value);
 
-  const m = value.match(/(?:^|\s)@([\p{L}\p{N}_.-]*)$/u);
-  const nextQuery = m ? m[1].toLowerCase() : null;
-  setMentionQuery((prev) => (prev === nextQuery ? prev : nextQuery));
+    const m = value.match(/(?:^|\s)@([\p{L}\p{N}_.-]*)$/u);
+    const nextQuery = m ? m[1].toLowerCase() : null;
+    setMentionQuery((prev) => (prev === nextQuery ? prev : nextQuery));
 
-  if (value.trim()) pulseTyping();
-  else clearTyping();
-}}
-              placeholder={`Message ${activeBoard?.name || "board"}…`}
-            />
+    if (value.trim()) pulseTyping();
+    else clearTyping();
+  }}
+  onKeyDown={(e) => {
+    // Enter sends; Shift+Enter = new line
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend(e);
+    }
+  }}
+  placeholder={`Message ${activeBoard?.name || "board"}…`}
+/>
 
                         <button
               type="button"
