@@ -21,6 +21,7 @@
     "@paddle/paddle-js": "^1.6.2",
     "@revenuecat/purchases-capacitor": "^13.6.0",
     "cropperjs": "^1.6.2",
+    "emoji-picker-react": "^4.22.3",
     "firebase": "^12.10.0",
     "firebase-admin": "^13.7.0",
     "katex": "^0.16.28",

@@ -187,11 +187,26 @@
 
 .cc-post img {
   display: block;
+  border-radius: 12px;
+  margin: 0 0 8px;
+}
+.cc-post img.cc-msg-photo {
   width: 100%;
   max-height: 240px;
   object-fit: cover;
-  border-radius: 12px;
-  margin: 0 0 8px;
+}
+.cc-post img.cc-msg-gif {
+  width: auto;
+  max-width: 220px;
+  max-height: 220px;
+  object-fit: contain;
+}
+.cc-post img.cc-msg-sticker {
+  width: auto;
+  max-width: 140px;
+  max-height: 140px;
+  object-fit: contain;
+  background: transparent;
 }
 
 .cc-typing { display: flex; gap: 6px; }
@@ -471,9 +486,14 @@
   max-width: min(420px, 100%);
 }
 
-.cc-post > img {
+.cc-post > img.cc-msg-photo {
   margin-left: 58px;
   width: calc(100% - 58px);
+}
+.cc-post > img.cc-msg-gif,
+.cc-post > img.cc-msg-sticker {
+  margin-left: 58px;
+  width: auto;
 }
 
 
@@ -518,3 +538,310 @@
   background: var(--icon-bg);
   border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
 }
+
+
+
+
+
+
+/* emoji + gif + sticker picker */
+.cc-composer-wrap {
+  position: relative; /* anchors the floating picker */
+}
+
+.cc-icon-btn.on {
+  background: var(--icon-bg);
+  color: var(--accent);
+}
+
+.cc-picker {
+  position: fixed;
+  bottom: calc(72px + env(safe-area-inset-bottom));
+  left: 12px;
+  right: 12px;
+  max-width: 420px;
+  margin: 0 auto;
+  height: 360px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  z-index: 999;
+}
+
+.cc-picker-tabs {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 6px;
+  padding: 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.cc-picker-tabs button {
+  flex: 1;
+  height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.cc-picker-tabs button.on {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.cc-gif-pane {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+}
+
+.cc-gif-search {
+  flex: 0 0 auto;
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--text-primary);
+  box-sizing: border-box;
+  margin-bottom: 8px;
+}
+
+.cc-gif-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  align-content: start;
+}
+
+.cc-gif-grid button {
+  position: relative;
+  width: 100%;
+  padding-top: 100%; /* forces a square without aspect-ratio */
+  border: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--icon-bg);
+  cursor: pointer;
+}
+
+.cc-gif-grid img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cc-gif-grid.sticker img {
+  object-fit: contain;
+  padding: 6px;
+  box-sizing: border-box;
+}
+
+.cc-gif-credit {
+  flex: 0 0 auto;
+  margin: 6px 0 0;
+  font-size: 11px;
+  text-align: right;
+  color: var(--text-secondary);
+}
+
+.cc-picker .epr-main {
+  border: none !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+
+
+@media (min-width: 640px) {
+  .cc-picker {
+    left: auto;
+    right: 12px;
+    width: 360px;
+  }
+}
+
+
+
+
+.cc-post p.cc-emoji-only {
+  font-size: 2.4rem;
+  line-height: 1.25;
+}
+
+
+
+
+
+
+.cc-gif-categories {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  flex: 0 0 auto;
+}
+.cc-gif-categories button {
+  flex: 0 0 auto;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.cc-gif-categories button.on {
+  background: var(--icon-bg);
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+}
+
+
+
+
+
+
+
+.cc-edited {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.cc-edit-row {
+  display: flex;
+  gap: 6px;
+  margin-left: 58px;
+}
+.cc-edit-input {
+  flex: 1 1 auto;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text-primary);
+}
+.cc-edit-save,
+.cc-edit-cancel {
+  height: 36px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.cc-edit-save { background: var(--accent); color: #fff; }
+.cc-edit-cancel { background: var(--icon-bg); color: var(--text-primary); }
+
+
+
+
+
+
+.cc-face-more {
+  display: grid;
+  place-items: center;
+  cursor: default;
+  font-size: 10px;
+}
+
+
+
+
+
+
+
+.cc-more-btn {
+  margin-left: auto;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--icon-bg);
+  color: var(--text-primary);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  width: 34px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  opacity: 0.9;
+}
+.cc-post:hover .cc-more-btn,
+.cc-post.menu-open .cc-more-btn {
+  opacity: 1;
+}
+
+.cc-post-menu-wrap {
+  margin-left: auto;
+  position: relative;
+}
+
+.cc-post-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  min-width: 130px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  z-index: 20;
+}
+
+.cc-post-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 14px;
+  border: 0;
+  background: none;
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.cc-post-menu button:hover {
+  background: var(--icon-bg);
+}
+
+.cc-post-menu button.danger {
+  color: #e5484d;
+}
+
+/* On touch devices there's no hover, so always show a faint trigger */
+@media (hover: none) {
+  .cc-more-btn {
+    opacity: 0.6;
+  }
+}
+
+
+
+

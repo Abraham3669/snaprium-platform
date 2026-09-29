@@ -1,8 +1,10 @@
 // src/pages/CommunityChat.jsx
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import EmojiPicker from "emoji-picker-react";
+
 import {
   doc,
   getDoc,
@@ -23,11 +25,15 @@ import {
   listBoards,
   subscribeToCommunityMessages,
   sendCommunityMessage,
+  editCommunityMessage,
+  deleteCommunityMessage,
 } from "../lib/communities";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
+
+ 
 
 const FREE_ROOM_AI_LIMIT = 5;
 const PAID_ROOM_AI_LIMIT = 40;
@@ -85,6 +91,15 @@ function resolveMentions(text, people) {
   }
   return [...found];
 }
+
+
+const EMOJI_ONLY_RE = /^(\p{Extended_Pictographic}|\u200d|\ufe0f|\s){1,12}$/u;
+function isEmojiOnly(text) {
+  const t = String(text || "").trim();
+  return t.length > 0 && EMOJI_ONLY_RE.test(t);
+}
+
+
 
 // turns "@abraham hi" into text + a highlighted <span>
 function renderWithMentions(text, people, myUid) {
@@ -200,8 +215,13 @@ export default function CommunityChat() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [typingNames, setTypingNames] = useState([]);
   const [profiles, setProfiles] = useState({});
-    const [replyTo, setReplyTo] = useState(null);
+     const [replyTo, setReplyTo] = useState(null);
   const [mentionQuery, setMentionQuery] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [editText, setEditText] = useState("");
+  const [menuFor, setMenuFor] = useState(null);
+  const menuRef = useRef(null);
+  const longPressTimer = useRef(null);
   const seenRef = useRef(null);
 
   const isPaid = user?.plan === "unlimited" || user?.plan === "premium";
@@ -210,8 +230,16 @@ export default function CommunityChat() {
   const activeBoard = boards.find((b) => b.id === boardId) || boards[0];
   const activeBoardId = activeBoard?.id || boardId || "general";
   const liveBoard = isLiveBoard(activeBoard);
+  const GIF_CATEGORIES = ["Trending", "Reactions",  "Funny", "Happy", "Sad", "Celebrate"];
 
 
+
+   const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerTab, setPickerTab] = useState("emoji");
+    const [mediaQuery, setMediaQuery] = useState("");
+  const [mediaItems, setMediaItems] = useState([]);
+  const [mediaLoading, setMediaLoading] = useState(false);
+    const pickerRef = useRef(null);
     
 
   const typingRef = user?.uid
@@ -228,43 +256,53 @@ export default function CommunityChat() {
   };
 
 
+    const startLongPress = (msg) => {
+    longPressTimer.current = setTimeout(() => setMenuFor(msg.id), 450);
+  };
+  const cancelLongPress = () => {
+    clearTimeout(longPressTimer.current);
+  };
 
-const boardPeople = [];
+
+
+
+const boardPeople = useMemo(() => {
   const seen = new Set();
-  messages.forEach((m) => {
-    
-    if (!m.uid || m.isAI || seen.has(m.uid)) return;
+  const list = [];
+  for (const m of messages) {
+    if (!m.uid || m.isAI || seen.has(m.uid)) continue;
     seen.add(m.uid);
-    boardPeople.push({
+    list.push({
       uid: m.uid,
       name: liveName(m),
       photo: livePhoto(m),
     });
-  });
+  }
+  return list;
+}, [messages, profiles]);
 
+const mentionable = useMemo(() => {
+  const map = new Map();
+  for (const p of boardPeople) {
+    map.set(p.uid, { uid: p.uid, name: p.name });
+  }
+  for (const uid of community?.members || []) {
+    const name = profiles[uid]?.displayName;
+    if (name) map.set(uid, { uid, name });
+  }
+  return [...map.values()].filter((p) => p.name && p.name !== "Member");
+}, [boardPeople, community?.members, profiles]);
 
-
-
-
-    const mentionable = [
-    ...new Map([
-      ...boardPeople.map((p) => [p.uid, { uid: p.uid, name: p.name }]),
-      ...(community?.members || [])
-        .filter((uid) => profiles[uid]?.displayName)
-        .map((uid) => [uid, { uid, name: profiles[uid].displayName }]),
-    ]).values(),
-  ].filter((p) => p.name && p.name !== "Member");
-
-  const suggestions =
-    mentionQuery === null
-      ? []
-      : [{ uid: "__ai", name: "AI" }, ...mentionable.filter((p) => p.uid !== user?.uid)]
-          .filter(
-            (p) =>
-              handleOf(p.name).toLowerCase().startsWith(mentionQuery) ||
-              p.name.toLowerCase().split(/\s+/).some((w) => w.startsWith(mentionQuery))
-          )
-          .slice(0, 5);
+const suggestions = useMemo(() => {
+  if (mentionQuery === null) return [];
+  return [{ uid: "__ai", name: "AI" }, ...mentionable.filter((p) => p.uid !== user?.uid)]
+    .filter(
+      (p) =>
+        handleOf(p.name).toLowerCase().startsWith(mentionQuery) ||
+        p.name.toLowerCase().split(/\s+/).some((w) => w.startsWith(mentionQuery))
+    )
+    .slice(0, 5);
+}, [mentionQuery, mentionable, user?.uid]);
 
   const pickMention = (p) => {
     setInput((prev) => prev.replace(/@([\p{L}\p{N}_.-]*)$/u, `@${handleOf(p.name)} `));
@@ -280,19 +318,27 @@ const boardPeople = [];
     } catch {}
   };
 
-  const pulseTyping = async () => {
-    if (!typingRef || !user) return;
-    try {
-      await setDoc(typingRef, {
-        uid: user.uid,
-        boardId: activeBoardId,
-        displayName: user.displayName || "Member",
-        at: serverTimestamp(),
-      });
-    } catch {}
-    clearTimeout(typingTimer.current);
-    typingTimer.current = setTimeout(clearTyping, 2500);
-  };
+  const lastTypingWrite = useRef(0);
+
+const pulseTyping = () => {
+  if (!typingRef || !user) return;
+
+  // Clear "stop typing" timer on every key
+  clearTimeout(typingTimer.current);
+  typingTimer.current = setTimeout(clearTyping, 2500);
+
+  // Write to Firestore at most once every 2 seconds
+  const now = Date.now();
+  if (now - lastTypingWrite.current < 2000) return;
+  lastTypingWrite.current = now;
+
+  setDoc(typingRef, {
+    uid: user.uid,
+    boardId: activeBoardId,
+    displayName: user.displayName || "Member",
+    at: serverTimestamp(),
+  }).catch(() => {});
+};
 
   useEffect(() => {
     (async () => {
@@ -312,6 +358,87 @@ const boardPeople = [];
       }
     })();
   }, [communityId]);
+
+
+
+
+    useEffect(() => {
+    if (!menuFor) return;
+    const onClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuFor(null);
+      }
+    };
+    document.addEventListener("mousedown", onClickOutside);
+    document.addEventListener("touchstart", onClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", onClickOutside);
+      document.removeEventListener("touchstart", onClickOutside);
+    };
+  }, [menuFor]);
+
+
+
+
+    useEffect(() => {
+    if (!pickerOpen) return;
+    const onClickOutside = (e) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target)) {
+        setPickerOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onClickOutside);
+    document.addEventListener("touchstart", onClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", onClickOutside);
+      document.removeEventListener("touchstart", onClickOutside);
+    };
+  }, [pickerOpen]);
+
+
+
+   useEffect(() => {
+    if (!pickerOpen || (pickerTab !== "gif" && pickerTab !== "sticker")) return;
+    const key = import.meta.env.VITE_GIPHY_KEY;
+    if (!key) return;
+    const kind = pickerTab === "sticker" ? "stickers" : "gifs";
+    const q = mediaQuery.trim();
+    const url = q
+      ? `https://api.giphy.com/v1/${kind}/search?api_key=${key}&q=${encodeURIComponent(q)}&limit=24&rating=pg-13`
+      : `https://api.giphy.com/v1/${kind}/trending?api_key=${key}&limit=24&rating=pg-13`;
+        const t = setTimeout(async () => {
+      setMediaLoading(true);
+      try {
+        const res = await fetch(url);
+        const json = await res.json();
+        let items = json.data || [];
+        if (!q && items.length < 20) {
+          const fallback = pickerTab === "sticker" ? "sticker" : "funny";
+          const res2 = await fetch(
+            `https://api.giphy.com/v1/${kind}/search?api_key=${key}&q=${fallback}&limit=32&rating=pg-13`
+          );
+          const json2 = await res2.json();
+          const seen = new Set(items.map((i) => i.id));
+          items = [...items, ...(json2.data || []).filter((i) => !seen.has(i.id))];
+        }
+        setMediaItems(items);
+      } catch (err) {
+        console.error("Giphy fetch failed:", err);
+        toast.error("Could not load content");
+      } finally {
+        setMediaLoading(false);
+      }
+    }, 350);
+    return () => clearTimeout(t);
+  }, [pickerOpen, pickerTab, mediaQuery]);
+
+
+    useEffect(() => {
+    setMediaQuery("");
+    setMediaItems([]);
+  }, [pickerTab]);
+
+
 
   useEffect(() => {
     const ids = community?.members || [];
@@ -439,22 +566,53 @@ const boardPeople = [];
   };
 
   const askAI = async (question) => {
-    if (!canUseAI() || askingAI) return;
-    setAskingAI(true);
-    try {
-      const { postAPI } = await import("../utils/apiClient");
-      const lastImage = [...messages].reverse().find((m) => m.imageUrl)?.imageUrl || "";
-      const res = await postAPI("/api/community-ai", {
-        roomId: communityId,
-        topic: `${community?.name || "Circle"} · ${activeBoard?.name || "Board"}`,
-        question,
-        imageUrl: lastImage?.startsWith("http") ? lastImage : "",
-        imageBase64: lastImage?.startsWith("data:") ? lastImage.split(",")[1] : "",
-        recentMessages: messages.slice(-8).map((m) => ({
-          role: m.isAI ? "assistant" : "user",
-          content: m.text,
-        })),
-      });
+  if (!canUseAI() || askingAI) return;
+  setAskingAI(true);
+  try {
+    const { postAPI } = await import("../utils/apiClient");
+
+    // Find the most recent real photo (not gif/sticker)
+    const lastImageMsg = [...messages]
+      .reverse()
+      .find((m) => m.imageUrl && m.type !== "gif" && m.type !== "sticker");
+
+    // Last message that wasn't from the AI
+    const lastUserMsg = [...messages].reverse().find((m) => !m.isAI);
+
+    // Only attach image if it's clearly part of *this* turn
+    const questionAboutImage =
+      /\b(this|that|these|those|image|photo|picture|pic|screenshot|problem|question|equation|diagram|solve|above|attached|here)\b/i.test(
+        question || ""
+      );
+
+    const imageIsLatestUserTurn =
+      lastImageMsg &&
+      lastUserMsg &&
+      (lastUserMsg.id === lastImageMsg.id ||
+        lastUserMsg.imageUrl === lastImageMsg.imageUrl);
+
+    // Attach image only when:
+    // 1) user just shared it (latest user message is the image), or
+    // 2) the question clearly refers to a photo/problem
+    const lastImage =
+      lastImageMsg && (imageIsLatestUserTurn || questionAboutImage)
+        ? lastImageMsg.imageUrl || ""
+        : "";
+
+    const res = await postAPI("/api/community-ai", {
+      roomId: communityId,
+      topic: `${community?.name || "Circle"} · ${activeBoard?.name || "Board"}`,
+      question,
+      imageUrl: lastImage?.startsWith("http") ? lastImage : "",
+      imageBase64: lastImage?.startsWith("data:") ? lastImage.split(",")[1] : "",
+      recentMessages: messages.slice(-8).map((m) => ({
+        role: m.isAI ? "assistant" : "user",
+        // Tell the model when a turn included an image, without forcing that image again
+        content: m.imageUrl && m.type !== "gif" && m.type !== "sticker"
+          ? `${m.text || "[shared a photo]"}`.trim()
+          : m.text || "",
+      })),
+    });
       await sendCommunityMessage(communityId, {
         boardId: activeBoardId,
         text: res.answer || "I couldn't respond right now.",
@@ -543,6 +701,67 @@ const boardPeople = [];
     }
   };
 
+
+
+
+  const startEdit = (msg) => {
+    setEditingId(msg.id);
+    setEditText(msg.text || "");
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditText("");
+  };
+
+  const saveEdit = async (msg) => {
+    const text = editText.trim();
+    if (!text) return;
+    try {
+      await editCommunityMessage(communityId, msg.id, text);
+      cancelEdit();
+    } catch {
+      toast.error("Could not edit message");
+    }
+  };
+
+  const removeMessage = async (msg) => {
+    if (!window.confirm("Delete this message?")) return;
+    try {
+      await deleteCommunityMessage(communityId, msg.id);
+    } catch {
+      toast.error("Could not delete message");
+    }
+  };
+
+
+
+
+  const sendMedia = async (item, kind) => {
+    if (!user || !isMember) return;
+    setPickerOpen(false);
+    try {
+      await sendCommunityMessage(communityId, {
+        boardId: activeBoardId,
+        text: "",
+        imageUrl: item.images.fixed_height.url,
+        type: kind, // "gif" or "sticker"
+        uid: user.uid,
+        displayName: user.displayName || "Member",
+        photoURL: user.photoURL || "",
+        isAI: false,
+      });
+    } catch {
+      toast.error(`Could not send ${kind}`);
+    }
+  };
+
+
+
+
+
+
+
   const frame = (inner) => createPortal(<div className="cc-frame">{inner}</div>, document.body);
 
   if (!community) {
@@ -600,7 +819,7 @@ const boardPeople = [];
               {callOpen ? "End" : "Session"}
             </button>
           ) : (
-                        <div className="cc-faces">
+                                                <div className="cc-faces">
               {boardPeople.slice(0, 6).map((p) => (
                 <button
                   key={p.uid}
@@ -615,14 +834,10 @@ const boardPeople = [];
                     (p.name || "?").slice(0, 1).toUpperCase()
                   )}
                 </button>
-
-                
               ))}
-
-
-
-
-          
+              {boardPeople.length > 6 && (
+                <span className="cc-face cc-face-more">+{boardPeople.length - 6}</span>
+              )}
             </div>
           )}
         </header>
@@ -643,14 +858,17 @@ const boardPeople = [];
             const name = liveName(msg);
             const photo = livePhoto(msg);
             return (
-              <article
+                            <article
                 key={msg.id}
                 className={`cc-post ${msg.isAI ? "ai" : ""} ${msg.uid === user?.uid ? "mine" : ""} ${
                   (msg.mentions || []).includes(user?.uid) ? "mentioned" : ""
-                }`}
+                } ${menuFor === msg.id ? "menu-open" : ""}`}
+                onTouchStart={() => !msg.isAI && startLongPress(msg)}
+                onTouchEnd={cancelLongPress}
+                onTouchMove={cancelLongPress}
               >
-                <header className="cc-post-head">
-                           <button
+                                <header className="cc-post-head">
+                  <button
                     type="button"
                     className="cc-avatar-btn"
                     onClick={() => msg.uid === user?.uid && navigate("/profile")}
@@ -664,18 +882,59 @@ const boardPeople = [];
                     )}
                   </button>
 
-
-            
-
-
                   <span>
                     {name}
                     {msg.isAI ? " · AI" : ""}
+                    {msg.edited ? <em className="cc-edited"> · edited</em> : ""}
                   </span>
+
                   {!msg.isAI && (
-                    <button type="button" className="cc-reply-btn" onClick={() => setReplyTo(msg)}>
-                      Reply
-                    </button>
+                    <div className="cc-post-menu-wrap">
+                      <button
+                        type="button"
+                        className="cc-more-btn"
+                        onClick={() => setMenuFor(menuFor === msg.id ? null : msg.id)}
+                        aria-label="Message actions"
+                      >
+                        ⋯
+                      </button>
+                      {menuFor === msg.id && (
+                        <div className="cc-post-menu" ref={menuRef}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setReplyTo(msg);
+                              setMenuFor(null);
+                            }}
+                          >
+                            Reply
+                          </button>
+                          {msg.uid === user?.uid && msg.text && !msg.imageUrl && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                startEdit(msg);
+                                setMenuFor(null);
+                              }}
+                            >
+                              Edit
+                            </button>
+                          )}
+                          {msg.uid === user?.uid && (
+                            <button
+                              type="button"
+                              className="danger"
+                              onClick={() => {
+                                removeMessage(msg);
+                                setMenuFor(null);
+                              }}
+                            >
+                              Delete
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   )}
                 </header>
                 {msg.replyTo && (
@@ -684,7 +943,19 @@ const boardPeople = [];
                     <span>{msg.replyTo.text}</span>
                   </div>
                 )}
-                {msg.imageUrl && <img src={msg.imageUrl} alt="" />}
+                                {msg.imageUrl && (
+                  <img
+                    src={msg.imageUrl}
+                    alt=""
+                    className={
+                      msg.type === "gif"
+                        ? "cc-msg-gif"
+                        : msg.type === "sticker"
+                        ? "cc-msg-sticker"
+                        : "cc-msg-photo"
+                    }
+                  />
+                )}
                 {msg.text && msg.isAI ? (
                   <div className="cc-md">
                     <ReactMarkdown
@@ -694,8 +965,69 @@ const boardPeople = [];
                       {fixCommonMathGlue(prepareMathForKaTeX(msg.text))}
                     </ReactMarkdown>
                   </div>
+                                  ) : editingId === msg.id ? (
+                  <div className="cc-edit-row">
+                    <input
+                      className="cc-edit-input"
+                      value={editText}
+                      onChange={(e) => setEditText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") saveEdit(msg);
+                        if (e.key === "Escape") cancelEdit();
+                      }}
+                      autoFocus
+                    />
+                    <button type="button" className="cc-edit-save" onClick={() => saveEdit(msg)}>
+                      Save
+                    </button>
+                    <button type="button" className="cc-edit-cancel" onClick={cancelEdit}>
+                      Cancel
+                    </button>
+                  </div>
+                               ) : editingId === msg.id ? (
+                  <div className="cc-edit-row">
+                    <input
+                      className="cc-edit-input"
+                      value={editText}
+                      onChange={(e) => setEditText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") saveEdit(msg);
+                        if (e.key === "Escape") cancelEdit();
+                      }}
+                      autoFocus
+                    />
+                    <button type="button" className="cc-edit-save" onClick={() => saveEdit(msg)}>
+                      Save
+                    </button>
+                    <button type="button" className="cc-edit-cancel" onClick={cancelEdit}>
+                      Cancel
+                    </button>
+                  </div>
+                                ) : editingId === msg.id ? (
+                  <div className="cc-edit-row">
+                    <input
+                      className="cc-edit-input"
+                      value={editText}
+                      onChange={(e) => setEditText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") saveEdit(msg);
+                        if (e.key === "Escape") cancelEdit();
+                      }}
+                      autoFocus
+                    />
+                    <button type="button" className="cc-edit-save" onClick={() => saveEdit(msg)}>
+                      Save
+                    </button>
+                    <button type="button" className="cc-edit-cancel" onClick={cancelEdit}>
+                      Cancel
+                    </button>
+                  </div>
                 ) : (
-                  msg.text && <p>{renderWithMentions(msg.text, mentionable, user?.uid)}</p>
+                  msg.text && (
+                    <p className={isEmojiOnly(msg.text) ? "cc-emoji-only" : ""}>
+                      {renderWithMentions(msg.text, mentionable, user?.uid)}
+                    </p>
+                  )
                 )}
               </article>
             );
@@ -745,6 +1077,87 @@ const boardPeople = [];
             </div>
           )}
 
+
+
+                      {pickerOpen && (
+                       <div className="cc-picker" ref={pickerRef} onMouseDown={(e) => e.stopPropagation()}>
+              <div className="cc-picker-tabs">
+                <button
+                  type="button"
+                  className={pickerTab === "emoji" ? "on" : ""}
+                  onClick={() => setPickerTab("emoji")}
+                >
+                  Emoji
+                </button>
+                <button
+                  type="button"
+                  className={pickerTab === "gif" ? "on" : ""}
+                  onClick={() => setPickerTab("gif")}
+                >
+                  GIF
+                </button>
+                <button
+                  type="button"
+                  className={pickerTab === "sticker" ? "on" : ""}
+                  onClick={() => setPickerTab("sticker")}
+                >
+                  Stickers
+                </button>
+              </div>
+
+              {pickerTab === "emoji" ? (
+                               <EmojiPicker
+                  theme="auto"
+                  emojiStyle="native"
+                  width="100%"
+                  height="100%"
+                  lazyLoadEmojis
+                  onEmojiClick={(e) => setInput((v) => v + e.emoji)}
+                />
+              ) : (
+                                <div className="cc-gif-pane">
+                  <input
+                    className="cc-gif-search"
+                    value={mediaQuery}
+                    onChange={(e) => setMediaQuery(e.target.value)}
+                    placeholder={pickerTab === "sticker" ? "Search stickers…" : "Search GIFs…"}
+                  />
+                  <div className="cc-gif-categories">
+                    {GIF_CATEGORIES.map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        className={mediaQuery.toLowerCase() === cat.toLowerCase() ? "on" : ""}
+                        onClick={() => setMediaQuery(cat === "Trending" ? "" : cat)}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                  <div className={`cc-gif-grid ${pickerTab === "sticker" ? "sticker" : ""}`}>
+                    {mediaLoading && <p className="cc-muted">Loading…</p>}
+                    {!mediaLoading && mediaItems.length === 0 && (
+                      <p className="cc-muted">Nothing found.</p>
+                    )}
+                    {mediaItems.map((item) => (
+                      <button key={item.id} type="button" onClick={() => sendMedia(item, pickerTab)}>
+                        <img
+                          src={item.images.fixed_height_small.url}
+                          alt={item.title || pickerTab}
+                          loading="lazy"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                  <p className="cc-gif-credit">Powered by GIPHY</p>
+                </div>
+              )}
+            </div>
+          )}
+
+
+
+
           <form className="cc-composer" onSubmit={handleSend}>
             <input ref={photoRef} type="file" accept="image/*" hidden onChange={handleSharePhoto} />
             <button type="button" className="cc-icon-btn" onClick={() => photoRef.current?.click()} aria-label="Photo">
@@ -753,21 +1166,24 @@ const boardPeople = [];
             <input
               value={input}
                             onChange={(e) => {
-                const value = e.target.value;
-                setInput(value);
-                const m = value.match(/(?:^|\s)@([\p{L}\p{N}_.-]*)$/u);
-                setMentionQuery(m ? m[1].toLowerCase() : null);
-                if (value.trim()) pulseTyping();
-                else clearTyping();
-              }}
+  const value = e.target.value;
+  setInput(value);
+
+  const m = value.match(/(?:^|\s)@([\p{L}\p{N}_.-]*)$/u);
+  const nextQuery = m ? m[1].toLowerCase() : null;
+  setMentionQuery((prev) => (prev === nextQuery ? prev : nextQuery));
+
+  if (value.trim()) pulseTyping();
+  else clearTyping();
+}}
               placeholder={`Message ${activeBoard?.name || "board"}…`}
             />
 
-            <button
+                        <button
               type="button"
-              className="cc-icon-btn"
-              onClick={() => toast.info("Emojis coming soon")}
-              aria-label="Emoji"
+              className={`cc-icon-btn ${pickerOpen ? "on" : ""}`}
+              onClick={() => setPickerOpen((v) => !v)}
+              aria-label="Emoji and GIFs"
             >
               <IconEmoji />
             </button>

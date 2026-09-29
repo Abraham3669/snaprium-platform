@@ -18,6 +18,8 @@ import {
   ensureCommunityCode,
   listBoards,
   createBoard,
+  deleteBoard,
+  isDefaultBoard,
   reportCommunity,
   FREE_BOARD_LIMIT,
 } from "../lib/communities";
@@ -197,6 +199,25 @@ export default function CommunityDetail() {
     }
   };
 
+
+
+  const handleDeleteBoard = async (board) => {
+    if (!isAdmin || isDefaultBoard(board)) return;
+    if (!window.confirm(`Delete "${board.name}"? Messages in it will still exist but the board will be gone.`)) return;
+    setBusy(true);
+    try {
+      await deleteBoard(community.id, board);
+      setBoards(uniqueBoards(await listBoards(community.id)));
+      toast.success("Board deleted");
+    } catch (err) {
+      toast.error(err.message || "Could not delete board");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+
+
   const copyInvite = async () => {
     const link = `${window.location.origin}/community/${community.id}`;
     const text = community.code ? `${link}\nCode: ${community.code}` : link;
@@ -339,16 +360,24 @@ export default function CommunityDetail() {
       </div>
 
       <h2 className="cd-kicker" style={{ marginTop: 24 }}>Boards</h2>
-      <div className="cd-actions" style={{ flexWrap: "wrap" }}>
+            <div className="cd-actions" style={{ flexWrap: "wrap" }}>
         {boards.map((board) => (
-          <button
-            key={board.id}
-            type="button"
-            className="cd-btn"
-            onClick={() => openBoard(board)}
-          >
-            <IconChat /> {board.name}
-          </button>
+          <div key={board.id} className="cd-board-row">
+            <button type="button" className="cd-btn" onClick={() => openBoard(board)}>
+              <IconChat /> {board.name}
+            </button>
+            {isAdmin && !isDefaultBoard(board) && (
+              <button
+                type="button"
+                className="cd-board-delete"
+                disabled={busy}
+                onClick={() => handleDeleteBoard(board)}
+                aria-label={`Delete ${board.name}`}
+              >
+                ×
+              </button>
+            )}
+          </div>
         ))}
       </div>
 

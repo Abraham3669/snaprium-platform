@@ -6,6 +6,7 @@ import {
   getDoc,
   getDocs,
   updateDoc,
+  deleteDoc,
   addDoc,
   query,
   where,
@@ -30,10 +31,12 @@ export const COMMUNITY_TAGS = [
 ];
 
 export const DEFAULT_BOARDS = [
-  { slug: "general", name: "General", kind: "chat" },
-  { slug: "homework", name: "Homework", kind: "chat" },
-  { slug: "session", name: "Session", kind: "session" },
+  { slug: "general", name: "General", kind: "chat", isDefault: true },
+  { slug: "homework", name: "Homework", kind: "chat", isDefault: true },
+  { slug: "session", name: "Session", kind: "session", isDefault: true },
 ];
+
+
 
 export const FREE_BOARD_LIMIT = 5;
 export const PAID_BOARD_LIMIT = 15;
@@ -48,6 +51,18 @@ function generateCommunityCode() {
 function boardsCol(communityId) {
   return collection(db, "communities", communityId, "boards");
 }
+
+
+export function isDefaultBoard(board) {
+  // Explicit flag wins
+  if (board?.isDefault === true) return true;
+  if (board?.isDefault === false) return false;
+  // Legacy docs without the field: only protect known default slugs
+  return DEFAULT_BOARDS.some((d) => d.slug === board?.slug);
+}
+
+
+
 
 export async function seedDefaultBoards(communityId) {
   const existing = await getDocs(boardsCol(communityId));
@@ -88,12 +103,13 @@ export async function createBoard(communityId, { name, kind = "chat" }, { isPaid
   if (current.length >= cap) {
     throw new Error(isPaid ? "Board limit reached." : "Upgrade to add more boards.");
   }
-  const ref = doc(boardsCol(communityId));
+    const ref = doc(boardsCol(communityId));
   const row = {
     id: ref.id,
     slug: clean.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 32) || "board",
     name: clean.slice(0, 40),
     kind,
+    isDefault: false,
     createdAt: serverTimestamp(),
   };
   await setDoc(ref, row);
@@ -298,4 +314,32 @@ export async function sendCommunityMessage(communityId, message) {
     boardId: message.boardId || "general",
     createdAt: serverTimestamp(),
   });
+}
+
+
+
+
+
+
+export async function editCommunityMessage(communityId, messageId, text) {
+  const ref = doc(db, "communities", communityId, "messages", messageId);
+  await updateDoc(ref, {
+    text,
+    edited: true,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function deleteCommunityMessage(communityId, messageId) {
+  const ref = doc(db, "communities", communityId, "messages", messageId);
+  await deleteDoc(ref);
+}
+
+
+
+export async function deleteBoard(communityId, board) {
+  if (isDefaultBoard(board)) {
+    throw new Error("Default boards can't be deleted");
+  }
+  await deleteDoc(doc(db, "communities", communityId, "boards", board.id));
 }
