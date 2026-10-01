@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { updateProfile } from "firebase/auth";
 import { useAuth } from "../context/AuthContext";
 import { auth, db } from "../lib/firebase";
@@ -57,7 +57,7 @@ export default function Profile() {
 
   if (!user) return null;
 
-  const save = async (e) => {
+    const save = async (e) => {
     e.preventDefault();
     const clean = name.trim().slice(0, 40);
     if (!clean) {
@@ -66,16 +66,24 @@ export default function Profile() {
     }
     setSaving(true);
     try {
-      await updateDoc(doc(db, "users", user.uid), {
-        displayName: clean,
-        updatedAt: serverTimestamp(),
-      });
+      // Firestore is source of truth for the app
+      await setDoc(
+        doc(db, "users", user.uid),
+        {
+          displayName: clean,
+          email: user.email || auth.currentUser?.email || "",
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+      // Keep Auth in sync (optional but good)
       if (auth.currentUser) {
         await updateProfile(auth.currentUser, { displayName: clean });
       }
       await refreshUser?.();
       toast.success("Profile updated");
-    } catch {
+    } catch (err) {
+      console.error("[profile] save", err);
       toast.error("Could not save profile");
     } finally {
       setSaving(false);
@@ -90,10 +98,15 @@ export default function Profile() {
     try {
       const photoURL = await compressImage(file);
       setPreview(photoURL);
-      await updateDoc(doc(db, "users", user.uid), {
-        photoURL,
-        updatedAt: serverTimestamp(),
-      });
+            await setDoc(
+        doc(db, "users", user.uid),
+        {
+          photoURL,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+      // Don't push huge data: URLs into Auth updateProfile — Firestore only
       await refreshUser?.();
       toast.success("Photo updated");
     } catch (err) {
