@@ -304,6 +304,8 @@ export default function CommunityChat() {
 
 
    const [pickerOpen, setPickerOpen] = useState(false);
+     const [lightbox, setLightbox] = useState(null);
+  const [zoom, setZoom] = useState(1);
   const [pickerTab, setPickerTab] = useState("emoji");
     const [mediaQuery, setMediaQuery] = useState("");
   const [mediaItems, setMediaItems] = useState([]);
@@ -1012,18 +1014,27 @@ const pulseTyping = () => {
                     <span>{msg.replyTo.text}</span>
                   </div>
                 )}
-                                {msg.imageUrl && (
-                  <img
-                    src={msg.imageUrl}
-                    alt=""
-                    className={
-                      msg.type === "gif"
-                        ? "cc-msg-gif"
-                        : msg.type === "sticker"
-                        ? "cc-msg-sticker"
-                        : "cc-msg-photo"
-                    }
-                  />
+                               {msg.imageUrl && (
+                  <button
+                    type="button"
+                    className={`cc-media-btn ${msg.type === "sticker" ? "sticker" : ""}`}
+                    onClick={() => {
+                      setZoom(1);
+                      setLightbox(msg.imageUrl);
+                    }}
+                  >
+                    <img
+                      src={msg.imageUrl}
+                      alt=""
+                      className={
+                        msg.type === "gif"
+                          ? "cc-msg-gif"
+                          : msg.type === "sticker"
+                          ? "cc-msg-sticker"
+                          : "cc-msg-photo"
+                      }
+                    />
+                  </button>
                 )}
 {editingId === msg.id ? (
   <div className="cc-edit-row">
@@ -1238,6 +1249,31 @@ const pulseTyping = () => {
           </form>
         </div>
       </section>
+
+
+
+              {lightbox &&
+          createPortal(
+            <div className="cc-lightbox" onClick={() => setLightbox(null)}>
+              <div className="cc-lightbox-bar" onClick={(e) => e.stopPropagation()}>
+                <button type="button" onClick={() => setZoom((z) => Math.max(1, z - 0.5))}>−</button>
+                <button type="button" onClick={() => setZoom(1)}>Fit</button>
+                <button type="button" onClick={() => setZoom((z) => Math.min(4, z + 0.5))}>+</button>
+                <button type="button" onClick={() => setLightbox(null)}>Close</button>
+              </div>
+              <div
+                className="cc-lightbox-stage"
+                onClick={(e) => e.stopPropagation()}
+                onWheel={(e) => {
+                  e.preventDefault();
+                  setZoom((z) => Math.min(4, Math.max(1, z + (e.deltaY < 0 ? 0.2 : -0.2))));
+                }}
+              >
+                <img src={lightbox} alt="" style={{ transform: `scale(${zoom})` }} />
+              </div>
+            </div>,
+            document.body
+          )}
 
       {showUpgradeModal && (
         <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
