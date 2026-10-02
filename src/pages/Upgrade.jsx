@@ -115,7 +115,7 @@ export default function Upgrade() {
             <div className="popular-badge">RECOMMENDED</div>
             <h3>Unlimited</h3>
             <div className="plan-price">
-              $14.99 <span>per month</span>
+              $9.99 <span>per month</span>
             </div>
             <p className="plan-desc">For students who study every day</p>
             <ul className="plan-features">
