@@ -211,6 +211,16 @@ function uniqueBoards(rows) {
   );
 }
 
+
+function IconBoard() {
+  return (
+    <svg className="cc-board-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <rect x="4" y="4" width="16" height="16" rx="3" />
+      <path d="M8 9h8M8 12h8M8 15h5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function IconBack() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
@@ -264,6 +274,24 @@ function IconEmoji() {
     </svg>
   );
 }
+
+
+
+
+function formatMsgTime(createdAt) {
+  const d = createdAt?.toDate?.() || (createdAt ? new Date(createdAt) : null);
+  if (!d || Number.isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
+function sameRun(a, b) {
+  if (!a || !b || a.uid !== b.uid || a.isAI !== b.isAI) return false;
+  const ta = a.createdAt?.toMillis?.() || 0;
+  const tb = b.createdAt?.toMillis?.() || 0;
+  return tb && ta && tb - ta < 4 * 60 * 1000;
+}
+
+
 
 export default function CommunityChat() {
   const { communityId } = useParams();
@@ -588,10 +616,26 @@ const pulseTyping = () => {
     [activeBoardId]
   );
 
-  useEffect(() => {
+    const stickToBottom = useRef(true);
+  const [unseen, setUnseen] = useState(0);
+
+  const jumpToBottom = () => {
     const el = feedRef.current;
     if (!el) return;
     el.scrollTop = el.scrollHeight;
+    stickToBottom.current = true;
+    setUnseen(0);
+  };
+
+  useEffect(() => {
+    const el = feedRef.current;
+    if (!el) return;
+    if (stickToBottom.current) {
+      el.scrollTop = el.scrollHeight;
+      setUnseen(0);
+    } else {
+      setUnseen((n) => n + 1);
+    }
   }, [messages, askingAI]);
 
 
@@ -759,7 +803,7 @@ const pulseTyping = () => {
       const imageUrl = await compressImage(file);
       await sendCommunityMessage(communityId, {
         boardId: activeBoardId,
-        text: "Shared a photo",
+                text: "",
         imageUrl,
         type: "image",
         uid: user.uid,
@@ -861,7 +905,8 @@ const pulseTyping = () => {
             className={`cc-board-chip ${board.id === activeBoardId ? "on" : ""}`}
             onClick={() => switchBoard(board.id)}
           >
-            {board.name}
+                        <IconBoard />
+            <span>{board.name}</span>
           </button>
         ))}
       </aside>
@@ -923,42 +968,66 @@ const pulseTyping = () => {
           </div>
         )}
 
-        <div className="cc-feed" ref={feedRef}>
-          {messages.length === 0 && <p className="cc-muted">No messages in this board yet.</p>}
-          {messages.map((msg) => {
+                <div
+          className="cc-feed"
+          ref={feedRef}
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            const near = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+            stickToBottom.current = near;
+            if (near) setUnseen(0);
+          }}
+        >
+
+                  {unseen > 0 && !stickToBottom.current && (
+          <button type="button" className="cc-jump" onClick={jumpToBottom}>
+            New messages
+          </button>
+        )}
+                    {messages.length === 0 && (
+            <p className="cc-muted">Nothing here yet. Ask a question, or drop a photo of the problem.</p>
+          )}
+                    {messages.map((msg, index) => {
             const name = liveName(msg);
             const photo = livePhoto(msg);
+            const grouped = sameRun(messages[index - 1], msg);
+            const time = formatMsgTime(msg.createdAt);
             return (
-                            <article
+              <article
                 key={msg.id}
                 className={`cc-post ${msg.isAI ? "ai" : ""} ${msg.uid === user?.uid ? "mine" : ""} ${
-                  (msg.mentions || []).includes(user?.uid) ? "mentioned" : ""
-                } ${menuFor === msg.id ? "menu-open" : ""}`}
+                  grouped ? "grouped" : ""
+                } ${(msg.mentions || []).includes(user?.uid) ? "mentioned" : ""} ${
+                  menuFor === msg.id ? "menu-open" : ""
+                }`}
                 onTouchStart={() => !msg.isAI && startLongPress(msg)}
                 onTouchEnd={cancelLongPress}
                 onTouchMove={cancelLongPress}
               >
-                                <header className="cc-post-head">
-                  <button
-                    type="button"
-                    className="cc-avatar-btn"
-                    onClick={() => msg.uid === user?.uid && navigate("/profile")}
-                  >
-                    {photo ? (
-                      <img className="cc-avatar" src={photo} alt="" />
-                    ) : (
-                      <span className="cc-avatar cc-avatar-fallback">
-                        {(name || "?").slice(0, 1).toUpperCase()}
-                      </span>
-                    )}
-                  </button>
-
-                  <span>
-                    {name}
-                    {msg.isAI ? " · AI" : ""}
-                    {msg.edited ? <em className="cc-edited"> · edited</em> : ""}
-                  </span>
-
+                <header className="cc-post-head">
+                                    {!grouped && (
+                    <button
+                      type="button"
+                      className="cc-avatar-btn"
+                      onClick={() => msg.uid === user?.uid && navigate("/profile")}
+                    >
+                      {photo ? (
+                        <img className="cc-avatar" src={photo} alt="" />
+                      ) : (
+                        <span className="cc-avatar cc-avatar-fallback">
+                          {(name || "?").slice(0, 1).toUpperCase()}
+                        </span>
+                      )}
+                    </button>
+                  )}
+                  {!grouped && (
+                    <span className="cc-name-line">
+                      <strong>{name}{msg.isAI ? " · AI" : ""}</strong>
+                      {time ? <time>{time}</time> : null}
+                      {msg.edited ? <em className="cc-edited">edited</em> : null}
+                    </span>
+                  )}
+                  
                   {!msg.isAI && (
                     <div className="cc-post-menu-wrap">
                       <button
@@ -971,37 +1040,12 @@ const pulseTyping = () => {
                       </button>
                       {menuFor === msg.id && (
                         <div className="cc-post-menu" ref={menuRef}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setReplyTo(msg);
-                              setMenuFor(null);
-                            }}
-                          >
-                            Reply
-                          </button>
+                          <button type="button" onClick={() => { setReplyTo(msg); setMenuFor(null); }}>Reply</button>
                           {msg.uid === user?.uid && msg.text && !msg.imageUrl && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                startEdit(msg);
-                                setMenuFor(null);
-                              }}
-                            >
-                              Edit
-                            </button>
+                            <button type="button" onClick={() => { startEdit(msg); setMenuFor(null); }}>Edit</button>
                           )}
                           {msg.uid === user?.uid && (
-                            <button
-                              type="button"
-                              className="danger"
-                              onClick={() => {
-                                removeMessage(msg);
-                                setMenuFor(null);
-                              }}
-                            >
-                              Delete
-                            </button>
+                            <button type="button" className="danger" onClick={() => { removeMessage(msg); setMenuFor(null); }}>Delete</button>
                           )}
                         </div>
                       )}
@@ -1056,7 +1100,7 @@ const pulseTyping = () => {
     </button>
   </div>
 ) : (
-  msg.text && (
+   msg.text && msg.text !== "Shared a photo" && (
     <MessageText
       text={msg.text}
       people={mentionable}
@@ -1205,14 +1249,14 @@ const pulseTyping = () => {
   className="cc-composer-input"
   rows={1}
   value={input}
-  onChange={(e) => {
+    onChange={(e) => {
     const value = e.target.value;
     setInput(value);
-
+    e.target.style.height = "auto";
+    e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
     const m = value.match(/(?:^|\s)@([\p{L}\p{N}_.-]*)$/u);
     const nextQuery = m ? m[1].toLowerCase() : null;
     setMentionQuery((prev) => (prev === nextQuery ? prev : nextQuery));
-
     if (value.trim()) pulseTyping();
     else clearTyping();
   }}

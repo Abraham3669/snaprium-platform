@@ -954,3 +954,65 @@
   transform-origin: center;
   transition: transform 0.12s ease;
 }
+
+
+
+
+.cc-board-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cc-board-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  color: var(--text-secondary);
+}
+
+.cc-board-chip.on .cc-board-icon {
+  color: var(--accent);
+}
+
+.cc-name-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.cc-name-line strong {
+  font-size: 0.92rem;
+  font-weight: 650;
+  color: var(--text-primary);
+}
+
+.cc-name-line time,
+.cc-edited {
+  font-size: 0.72rem;
+  font-weight: 500;
+  font-style: normal;
+  color: var(--text-secondary);
+  letter-spacing: 0;
+}
+
+.cc-post.grouped {
+  padding-top: 0;
+  margin-top: -8px;
+}
+
+.cc-post.grouped .cc-post-head {
+  justify-content: flex-end;
+  min-height: 0;
+  margin: 0;
+}
+
+.cc-post.grouped .cc-media-btn,
+.cc-post.grouped .cc-md,
+.cc-post.grouped > p,
+.cc-post.grouped .cc-quote {
+  margin-left: 58px;
+}
