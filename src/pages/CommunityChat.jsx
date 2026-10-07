@@ -312,7 +312,8 @@ export default function CommunityChat() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [typingNames, setTypingNames] = useState([]);
   const [profiles, setProfiles] = useState({});
-     const [replyTo, setReplyTo] = useState(null);
+    const [replyTo, setReplyTo] = useState(null);
+const [pendingImage, setPendingImage] = useState("");
   const [mentionQuery, setMentionQuery] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState("");
@@ -328,6 +329,7 @@ export default function CommunityChat() {
   const activeBoardId = activeBoard?.id || boardId || "general";
   const liveBoard = isLiveBoard(activeBoard);
   const GIF_CATEGORIES = ["Trending", "Reactions",  "Funny", "Happy", "Sad", "Celebrate"];
+  
 
 
 
@@ -753,41 +755,44 @@ const pulseTyping = () => {
   };
 
   const handleSend = async (e) => {
-    e?.preventDefault?.();
-    const text = input.trim();
-    if (!text || !user || !isMember) return;
-    setInput("");
-    clearTyping();
-        const quoted = replyTo;
-    setReplyTo(null);
-    setMentionQuery(null);
-    const mentions = resolveMentions(text, mentionable).filter((id) => id !== user.uid);
-    try {
-      await sendCommunityMessage(communityId, {
-        boardId: activeBoardId,
-        text,
-        mentions,
-        uid: user.uid,
-        displayName: user.displayName || "Member",
-        photoURL: user.photoURL || "",
-        isAI: false,
-        type: "text",
-        replyTo: quoted
-          ? {
-              id: quoted.id,
-              displayName: liveName(quoted),
-              text: String(quoted.text || "").slice(0, 140),
-            }
-          : null,
-      });
-      if (/(^|\s)@(ai|snaprium)\b/i.test(text)) askAI(text);
-    } catch {
-      setInput(text);
-      setReplyTo(quoted);
-      toast.error("Could not send");
-    }
-  };
-
+  e?.preventDefault?.();
+  const text = input.trim();
+  const imageUrl = pendingImage;
+  if ((!text && !imageUrl) || !user || !isMember) return;
+  setInput("");
+  setPendingImage("");
+  clearTyping();
+  const quoted = replyTo;
+  setReplyTo(null);
+  setMentionQuery(null);
+  const mentions = resolveMentions(text, mentionable).filter((id) => id !== user.uid);
+  try {
+    await sendCommunityMessage(communityId, {
+      boardId: activeBoardId,
+      text,
+      mentions,
+      imageUrl,
+      type: imageUrl ? "image" : "text",
+      uid: user.uid,
+      displayName: user.displayName || "Member",
+      photoURL: user.photoURL || "",
+      isAI: false,
+      replyTo: quoted
+        ? {
+            id: quoted.id,
+            displayName: liveName(quoted),
+            text: String(quoted.text || "").slice(0, 140),
+          }
+        : null,
+    });
+    if (text && /(^|\s)@(ai|snaprium)\b/i.test(text)) askAI(text);
+  } catch {
+    setInput(text);
+    setPendingImage(imageUrl);
+    setReplyTo(quoted);
+    toast.error("Could not send");
+  }
+};
   const handleAskAI = () => {
     const text = input.trim();
     if (!text && !messages.some((m) => m.imageUrl)) return;
@@ -796,25 +801,16 @@ const pulseTyping = () => {
   };
 
   const handleSharePhoto = async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file || !isMember) return;
-    try {
-      const imageUrl = await compressImage(file);
-      await sendCommunityMessage(communityId, {
-        boardId: activeBoardId,
-                text: "",
-        imageUrl,
-        type: "image",
-        uid: user.uid,
-        displayName: user.displayName || "Member",
-        photoURL: user.photoURL || "",
-        isAI: false,
-      });
-    } catch {
-      toast.error("Could not share photo");
-    }
-  };
+  const file = e.target.files?.[0];
+  e.target.value = "";
+  if (!file || !isMember) return;
+  try {
+    const imageUrl = await compressImage(file);
+    setPendingImage(imageUrl);
+  } catch {
+    toast.error("Could not share photo");
+  }
+};
 
 
 
@@ -1133,6 +1129,18 @@ const pulseTyping = () => {
         )}
 
         <div className="cc-composer-wrap">
+
+
+{pendingImage && (
+  <div className="cc-replying">
+    <img src={pendingImage} alt="" style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 8 }} />
+    <span>Add a caption, then send</span>
+    <button type="button" onClick={() => setPendingImage("")}>×</button>
+  </div>
+)}
+
+
+
           {replyTo && (
             <div className="cc-replying">
               <span>
@@ -1287,7 +1295,7 @@ const pulseTyping = () => {
             >
               <IconAI />
             </button>
-            <button type="submit" className="cc-send" disabled={!input.trim()} aria-label="Send">
+            <button type="submit" className="cc-send" disabled={!input.trim() && !pendingImage} aria-label="Send">
               <IconSend />
             </button>
           </form>

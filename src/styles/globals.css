@@ -6538,3 +6538,59 @@ main.camera-main .study-friends-wrapper {
 }
 
 
+
+
+
+
+.hub-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.hub-card,
+.hub-card-wide {
+  width: 100%;
+  min-height: 112px;
+}
+
+@media (min-width: 900px) {
+  .hub-page {
+    width: min(1040px, calc(100% - 48px));
+  }
+
+  .hub-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+    align-items: stretch;
+  }
+
+  .hub-card-wide {
+    grid-column: auto;
+  }
+
+  .hub-card,
+  .hub-card-wide {
+    min-height: 230px;
+    padding: 32px 28px;
+  }
+
+  .hub-icon-wrap {
+    width: 68px;
+    height: 68px;
+    margin-bottom: 22px;
+  }
+
+  .hub-icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .hub-card-copy h2 {
+    font-size: 1.5rem;
+  }
+
+  .hub-card-copy p {
+    font-size: 1.05rem;
+  }
+}

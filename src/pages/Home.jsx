@@ -2,6 +2,7 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Capacitor } from "@capacitor/core";
 import { isStandaloneApp } from "../lib/firebase";
+
 const isNative = Capacitor.isNativePlatform() || isStandaloneApp();
 
 function IconSolo() {
@@ -14,6 +15,7 @@ function IconSolo() {
   );
 }
 
+/*
 function IconFriends() {
   return (
     <svg className="hub-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -24,6 +26,7 @@ function IconFriends() {
     </svg>
   );
 }
+*/
 
 function IconCommunity() {
   return (
@@ -45,26 +48,6 @@ export default function Home() {
       </header>
 
       <div className="hub-grid">
-        <button type="button" className="hub-card" onClick={() => navigate("/solo")}>
-          <span className="hub-icon-wrap">
-            <IconSolo />
-          </span>
-          <div className="hub-card-copy">
-            <h2>Solo study</h2>
-            <p>Snap. Solve. Understand.</p>
-          </div>
-        </button>
-
-        <button type="button" className="hub-card" onClick={() => navigate("/study")}>
-          <span className="hub-icon-wrap">
-            <IconFriends />
-          </span>
-          <div className="hub-card-copy">
-            <h2>Study with friends</h2>
-            <p>Private room. Invite only.</p>
-          </div>
-        </button>
-
         <button
           type="button"
           className="hub-card hub-card-wide"
@@ -78,6 +61,28 @@ export default function Home() {
             <p>Public or private groups.</p>
           </div>
         </button>
+
+        <button type="button" className="hub-card" onClick={() => navigate("/solo")}>
+          <span className="hub-icon-wrap">
+            <IconSolo />
+          </span>
+          <div className="hub-card-copy">
+            <h2>Solo study</h2>
+            <p>Snap. Solve. Understand.</p>
+          </div>
+        </button>
+
+        {/*
+        <button type="button" className="hub-card" onClick={() => navigate("/study")}>
+          <span className="hub-icon-wrap">
+            <IconFriends />
+          </span>
+          <div className="hub-card-copy">
+            <h2>Study with friends</h2>
+            <p>Private room. Invite only.</p>
+          </div>
+        </button>
+        */}
       </div>
 
       {!isNative && (
