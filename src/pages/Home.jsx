@@ -44,7 +44,7 @@ export default function Home() {
     <div className="hub-page">
       <header className="hub-top">
         <h1 className="hub-title">How do you want to study?</h1>
-        <p className="hub-sub">Snap. Solve. Study together.</p>
+        <p className="hub-sub">Get unstuck or study together.</p>
       </header>
 
       <div className="hub-grid">
@@ -58,7 +58,7 @@ export default function Home() {
           </span>
           <div className="hub-card-copy">
             <h2>Circles</h2>
-            <p>Public or private groups.</p>
+<p>Join public or private study groups.</p>
           </div>
         </button>
 
@@ -67,8 +67,8 @@ export default function Home() {
             <IconSolo />
           </span>
           <div className="hub-card-copy">
-            <h2>Solo study</h2>
-            <p>Snap. Solve. Understand.</p>
+           <h2>Solo study</h2>
+<p>Snap a question and get a step-by-step solution.</p>
           </div>
         </button>
 
