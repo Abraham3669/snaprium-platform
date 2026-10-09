@@ -1,324 +1,966 @@
-.hub-page .community-toolbar,
-.community-toolbar {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
-  margin: 0 0 16px;
-}
+/* src/styles/community.css
+   Uses your existing :root / [data-theme="dark"] tokens.
+   Only adds a few local tokens (prefixed --cx-) on top. */
 
-.community-search {
-  width: 100%;
-  height: 48px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 0 16px;
-  background: var(--surface);
+.cx-page {
+  --cx-surface-2: color-mix(in srgb, var(--surface) 92%, var(--text-primary) 8%);
+  --cx-hover: color-mix(in srgb, var(--accent) 8%, transparent);
+  --cx-ring: 0 0 0 3px var(--accent-glow);
+  --cx-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 28px 20px 96px;
   color: var(--text-primary);
-  font-size: 0.95rem;
-  box-shadow: var(--shadow-sm);
 }
 
-.community-search::placeholder {
+.cx-page *,
+.cx-page *::before,
+.cx-page *::after {
+  box-sizing: border-box;
+}
+
+.cx-page button,
+.cx-page input,
+.cx-page select {
+  font: inherit;
+  color: inherit;
+}
+
+.cx-page button:focus-visible,
+.cx-page input:focus-visible,
+.cx-page select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ───────── Header ───────── */
+.cx-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.cx-title {
+  margin: 0;
+  font-size: clamp(1.75rem, 1.4rem + 1.6vw, 2.4rem);
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.cx-sub {
+  margin: 6px 0 0;
+  max-width: 46ch;
+  font-size: 0.98rem;
+  line-height: 1.5;
   color: var(--text-secondary);
 }
 
-.community-search:focus {
-  outline: none;
-  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+.cx-header-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
-.community-create-btn,
-.community-toolbar .hub-card {
-  height: 48px;
-  min-height: 48px !important;
-  padding: 0 16px !important;
-  display: inline-flex !important;
+.cx-quota {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+/* ───────── Buttons ───────── */
+.cx-btn {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 14px;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 18px;
   border: 1px solid transparent;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.18s var(--cx-ease), border-color 0.18s var(--cx-ease),
+    box-shadow 0.18s var(--cx-ease), transform 0.12s var(--cx-ease);
+}
+
+.cx-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.cx-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cx-btn-primary {
   background: var(--accent);
   color: #fff;
-  font-weight: 650;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 6px 18px -6px var(--accent-glow);
 }
 
-.community-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 0 0 18px;
+[data-theme="dark"] .cx-btn-primary {
+  color: #06101f;
 }
 
-.community-tags .tag {
-  height: 36px;
-  padding: 0 12px;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-secondary);
-  font-size: 0.85rem;
+.cx-btn-primary:hover:not(:disabled) {
+  background: var(--accent-dark);
+  box-shadow: 0 8px 24px -6px var(--accent-glow);
+}
+
+.cx-btn-ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+
+.cx-btn-ghost:hover:not(:disabled) {
+  background: var(--cx-hover);
+  border-color: var(--accent);
+}
+
+.cx-link {
+  padding: 8px 4px;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 600;
   cursor: pointer;
 }
 
-.community-tags .tag.on {
+.cx-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ───────── Toolbar (search + invite code) ───────── */
+.cx-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 36px;
+}
+
+.cx-search {
+  position: relative;
+  flex: 1;
+  max-width: 460px;
+  display: flex;
+  align-items: center;
+}
+
+.cx-search svg {
+  position: absolute;
+  left: 14px;
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.cx-search input {
+  width: 100%;
+  height: 46px;
+  padding: 0 16px 0 42px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 0.95rem;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.cx-search input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.8;
+}
+
+.cx-search input:focus {
+  outline: none;
   border-color: var(--accent);
+  box-shadow: var(--cx-ring);
+}
+
+.cx-join-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cx-join-form input {
+  width: 150px;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.cx-join-form input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--cx-ring);
+}
+
+/* ───────── Sections ───────── */
+.cx-section {
+  margin-bottom: 44px;
+}
+
+.cx-section-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.cx-section-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.cx-section-count {
+  min-width: 24px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
   background: var(--icon-bg);
   color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: center;
 }
 
-.community-list {
-  display: grid;
-  gap: 10px;
+/* ───────── Subject tags ───────── */
+.cx-tags {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 22px;
+  padding-bottom: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 
-.community-row {
-  width: 100%;
-  text-align: left;
+.cx-tags::-webkit-scrollbar {
+  display: none;
+}
+
+.cx-tag {
+  flex-shrink: 0;
+  height: 36px;
+  padding: 0 16px;
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius-pill);
   background: var(--surface);
-  box-shadow: var(--shadow-sm);
-  color: var(--text-primary);
-  padding: 16px 18px;
-  cursor: pointer;
-}
-
-.community-row strong {
-  display: block;
-  font-size: 1.05rem;
-  letter-spacing: -0.02em;
-}
-
-.community-row p {
-  margin: 5px 0 0;
-  font-size: 0.88rem;
-  line-height: 1.4;
   color: var(--text-secondary);
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, border-color 0.18s;
 }
 
-.hub-page .study-card {
-  margin-top: 18px;
-  padding: 18px;
+.cx-tag:hover {
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+
+.cx-tag.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+[data-theme="dark"] .cx-tag.on {
+  color: #06101f;
+}
+
+/* ───────── Grid + Cards ───────── */
+.cx-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 18px;
+}
+
+.cx-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 18px;
   background: var(--surface);
-  box-shadow: var(--shadow-sm);
-}
-
-.hub-page .study-card h2 {
-  margin: 0 0 14px;
-  font-size: 1.15rem;
-}
-
-.hub-page .study-card input,
-.hub-page .study-card select {
-  width: 100%;
-  height: 46px;
-  margin: 0 0 10px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 0 12px;
-  background: var(--bg);
-  color: var(--text-primary);
-}
-
-.hub-page .study-card button {
-  height: 44px;
-  margin: 6px 8px 0 0;
-  padding: 0 16px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-primary);
+  text-align: left;
   cursor: pointer;
+  transition: transform 0.22s var(--cx-ease), border-color 0.22s var(--cx-ease),
+    box-shadow 0.22s var(--cx-ease);
 }
 
-.hub-page .study-card button[type="submit"] {
-  background: var(--accent);
-  border-color: var(--accent);
+.cx-card:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  box-shadow: var(--shadow-md);
+}
+
+.cx-card:active {
+  transform: translateY(-1px) scale(0.99);
+}
+
+/* Big square avatar, fills the top of the card */
+.cx-card-top {
+  position: relative;
+  padding: 10px 10px 0;
+}
+
+.cx-card-lock {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: rgba(8, 12, 22, 0.62);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   color: #fff;
 }
 
-@media (min-width: 740px) {
-  .community-toolbar {
-    grid-template-columns: 1fr auto;
-    align-items: center;
-  }
-
-  .community-create-btn,
-  .community-toolbar .hub-card {
-    min-width: 180px;
-  }
-}
-
-
-.community-row-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
-}
-.community-row-actions button {
-  height: 36px;
-  padding: 0 12px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--text-primary);
-  cursor: pointer;
-}
-
-
-
-
-.community-row-main {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.community-row-avatar,
-.community-photo {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  background: var(--icon-bg) center/cover no-repeat;
-  border: 0;
-}
-.community-detail {
-  width: min(880px, calc(100% - 32px));
-  margin: 0 auto 120px;
-}
-.community-banner {
-  position: relative;
-  height: 160px;
-  border-radius: 20px;
-  background: var(--icon-bg) center/cover no-repeat;
-  border: 1px solid var(--border);
-}
-.community-media-btn {
-  position: absolute;
-  right: 12px;
-  bottom: 12px;
-  height: 36px;
-  padding: 0 12px;
-  border-radius: 10px;
-  border: 0;
-  background: var(--surface);
-  color: var(--text-primary);
-  cursor: pointer;
-}
-.community-detail-body {
-  margin-top: -28px;
-  padding: 0 8px;
-}
-.community-photo {
-  width: 72px;
-  height: 72px;
-  border-radius: 20px;
-  border: 3px solid var(--bg);
-  margin-bottom: 12px;
-}
-
-
-
-
-
-.community-board {
-  margin-top: 28px;
-}
-.community-board h2 {
-  margin: 0 0 12px;
-  font-size: 1.1rem;
-}
-.community-feed {
-  display: grid;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-.community-post {
-  padding: 12px 14px;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: var(--surface);
-}
-.community-post header {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  margin-bottom: 6px;
-}
-.community-post img {
-  width: 100%;
-  max-height: 240px;
-  object-fit: cover;
-  border-radius: 12px;
-  margin-bottom: 8px;
-}
-.community-post p { margin: 0; }
-.community-composer {
-  display: grid;
-  grid-template-columns: auto 1fr auto auto;
-  gap: 8px;
-}
-.community-composer input {
-  height: 44px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  padding: 0 12px;
-  background: var(--surface);
-  color: var(--text-primary);
-}
-.community-call {
-  margin: 16px 0;
-}
-
-
-
-
-
-
-.community-section-title {
-  margin: 20px 0 10px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-}
-
-.community-list {
+.cx-card-body {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  padding: 14px 16px 16px;
 }
 
-.community-row {
+.cx-card-name {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.cx-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cx-pill {
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--icon-bg);
+  color: var(--accent);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.cx-members {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+/* ───────── Avatar (square) ───────── */
+.cx-avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background-color: var(--cx-surface-2);
+  background-image: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--accent) 38%, var(--surface)),
+    color-mix(in srgb, var(--accent-dark) 70%, var(--surface))
+  );
+  background-size: cover;
+  background-position: center;
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  user-select: none;
+}
+
+/* When a photo is set, inline style overrides background-image */
+.cx-avatar-lg {
   width: 100%;
-  text-align: left;
-  border: 1px solid var(--border);
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  font-size: clamp(2.6rem, 6vw, 3.6rem);
+}
+
+.cx-avatar-md {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  font-size: 1.4rem;
+}
+
+.cx-avatar-sm {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  font-size: 0.95rem;
+}
+
+/* ───────── Skeletons ───────── */
+.cx-skeleton {
+  pointer-events: none;
+}
+
+.cx-skeleton .cx-avatar {
+  background-image: none;
+}
+
+.cx-skeleton .cx-avatar,
+.cx-sk-line {
+  background-color: var(--cx-surface-2);
+  background-image: linear-gradient(
+    100deg,
+    transparent 30%,
+    color-mix(in srgb, var(--text-primary) 7%, transparent) 50%,
+    transparent 70%
+  );
+  background-size: 220% 100%;
+  animation: cx-shimmer 1.4s linear infinite;
+}
+
+.cx-sk-line {
+  display: block;
+  height: 12px;
+  border-radius: 6px;
+}
+
+.cx-sk-wide {
+  width: 78%;
+  height: 14px;
+}
+
+.cx-sk-short {
+  width: 45%;
+}
+
+@keyframes cx-shimmer {
+  from {
+    background-position: 160% 0;
+  }
+  to {
+    background-position: -60% 0;
+  }
+}
+
+/* ───────── Empty state ───────── */
+.cx-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 56px 24px;
+  border: 1px dashed var(--border);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+  text-align: center;
+}
+
+.cx-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 4px;
   border-radius: 16px;
+  background: var(--icon-bg);
+  color: var(--accent);
+  font-size: 1.6rem;
+}
+
+.cx-empty h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.cx-empty p {
+  margin: 0 0 8px;
+  max-width: 38ch;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ───────── Create dialog ───────── */
+.cx-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(5, 9, 18, 0.55);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  animation: cx-fade 0.18s ease-out;
+}
+
+.cx-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  max-width: 440px;
+  max-height: calc(100dvh - 40px);
+  padding: 22px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 20px;
   background: var(--surface);
-  padding: 14px;
+  box-shadow: var(--shadow-md);
+  animation: cx-pop 0.24s var(--cx-ease);
+}
+
+.cx-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cx-dialog-head h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.cx-close {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 1.5rem;
+  line-height: 1;
   cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.cx-close:hover:not(:disabled) {
+  background: var(--cx-hover);
   color: var(--text-primary);
 }
 
-.community-row-main {
+.cx-field {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.community-row-avatar {
-  width: 44px;
-  height: 44px;
-  flex: 0 0 44px;
-  border-radius: 12px;
-  background: var(--icon-bg) center/cover no-repeat;
+.cx-field > span {
+  font-size: 0.84rem;
+  font-weight: 650;
 }
 
-.community-row p {
-  margin: 4px 0 0;
+.cx-field small {
   color: var(--text-secondary);
-  font-size: 0.9rem;
+  font-size: 0.8rem;
+}
+
+.cx-field input,
+.cx-field select {
+  width: 100%;
+  height: 46px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  font-size: 1rem; /* 16px+ stops iOS zoom on focus */
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.cx-field select {
+  appearance: none;
+  padding-right: 40px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+}
+
+.cx-field input:focus,
+.cx-field select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--cx-ring);
+}
+
+/* Segmented control */
+.cx-seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+}
+
+.cx-seg button {
+  height: 38px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+}
+
+.cx-seg button:hover:not(.on) {
+  color: var(--text-primary);
+}
+
+.cx-seg button.on {
+  background: var(--surface);
+  color: var(--accent);
+  box-shadow: var(--shadow-sm), 0 0 0 1px var(--border);
+}
+
+.cx-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+@keyframes cx-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes cx-pop {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ───────── Tablet ───────── */
+@media (max-width: 900px) {
+  .cx-grid {
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 14px;
+  }
+}
+
+/* ───────── Mobile ───────── */
+@media (max-width: 640px) {
+  .cx-page {
+    padding: 20px 14px 110px;
+  }
+
+  .cx-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .cx-header-actions {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .cx-header-actions .cx-btn {
+    flex: 1;
+    max-width: 200px;
+  }
+
+  .cx-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    margin-bottom: 28px;
+  }
+
+  .cx-search {
+    max-width: none;
+  }
+
+  .cx-join {
+    align-self: flex-start;
+  }
+
+  .cx-join-form {
+    width: 100%;
+  }
+
+  .cx-join-form input {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+    font-size: 1rem;
+  }
+
+  /* Edge-to-edge scrolling chips */
+  .cx-tags {
+    margin: 0 -14px 18px;
+    padding: 0 14px 4px;
+  }
+
+  /* Two big square tiles per row */
+  .cx-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .cx-card {
+    border-radius: 16px;
+  }
+
+  .cx-card-top {
+    padding: 8px 8px 0;
+  }
+
+  .cx-card-lock {
+    top: 16px;
+    right: 16px;
+  }
+
+  .cx-card-body {
+    padding: 12px 12px 14px;
+    gap: 8px;
+  }
+
+  .cx-card-name {
+    font-size: 0.92rem;
+  }
+
+  .cx-card-meta {
+    flex-wrap: wrap;
+  }
+
+  .cx-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* Dialog becomes a bottom sheet */
+  .cx-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .cx-dialog {
+    max-width: none;
+    max-height: 92dvh;
+    padding: 20px 18px calc(20px + env(safe-area-inset-bottom));
+    border-radius: 22px 22px 0 0;
+    border-bottom: 0;
+    animation: cx-sheet 0.28s var(--cx-ease);
+  }
+
+  .cx-dialog-actions .cx-btn {
+    flex: 1;
+  }
+}
+
+@keyframes cx-sheet {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+
+/* ───────── Large screens ───────── */
+@media (min-width: 1400px) {
+  .cx-page {
+    max-width: 1320px;
+  }
+
+  .cx-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 22px;
+  }
+}
+
+/* ───────── Dark mode refinements ───────── */
+[data-theme="dark"] .cx-card {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 100%, #fff 3%), var(--surface));
+}
+
+[data-theme="dark"] .cx-card:hover {
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55), 0 0 0 1px var(--accent-glow);
+}
+
+[data-theme="dark"] .cx-search input,
+[data-theme="dark"] .cx-join-form input {
+  background: var(--surface);
+}
+
+[data-theme="dark"] .cx-seg button.on {
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+}
+
+/* ───────── Reduced motion ───────── */
+@media (prefers-reduced-motion: reduce) {
+  .cx-page *,
+  .cx-overlay,
+  .cx-dialog {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+
+
+
+
+/* ───────── community-patch.css ─────────
+   Paste at the BOTTOM of community.css so it overrides earlier rules. */
+
+/* 1. Push content below your fixed main header.
+      Change --cx-header-h to match your real header height. */
+.hub-page.cx-page {
+  --cx-header-h: 72px;
+  padding-top: calc(var(--cx-header-h) + 24px);
+}
+
+@media (max-width: 640px) {
+  .hub-page.cx-page {
+    --cx-header-h: 60px;
+    padding-top: calc(var(--cx-header-h) + 16px);
+  }
+}
+
+/* 2. White text on primary buttons and active chips (both themes).
+      In dark mode the bright light-blue accent is too pale for white text,
+      so those buttons use the deeper blue instead. */
+.cx-btn-primary,
+.cx-tag.on,
+[data-theme="dark"] .cx-btn-primary,
+[data-theme="dark"] .cx-tag.on {
+  color: #fff;
+}
+
+[data-theme="dark"] .cx-btn-primary,
+[data-theme="dark"] .cx-tag.on {
+  background: var(--accent-dark);
+  border-color: var(--accent-dark);
+}
+
+[data-theme="dark"] .cx-btn-primary:hover:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* 3. Extra polish */
+
+/* Soft glow behind the page title area */
+.cx-header {
+  position: relative;
+}
+
+.cx-header::before {
+  content: "";
+  position: absolute;
+  top: -60px;
+  left: -40px;
+  width: 340px;
+  height: 200px;
+  background: radial-gradient(closest-side, var(--accent-glow), transparent);
+  opacity: 0.35;
+  filter: blur(30px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Subtle inner edge on avatars so photos feel crisp */
+.cx-avatar-lg {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+    inset 0 -40px 40px -30px rgba(0, 0, 0, 0.25);
+}
+
+/* Avatar zooms slightly on card hover */
+.cx-card-top {
+  overflow: hidden;
+}
+
+.cx-card .cx-avatar-lg {
+  transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.cx-card:hover .cx-avatar-lg {
+  transform: scale(1.04);
+}
+
+/* Name turns accent on hover */
+.cx-card:hover .cx-card-name {
+  color: var(--accent);
+}
+
+/* Search bar sits on a soft shadow */
+.cx-search input {
+  box-shadow: var(--shadow-sm);
+}
+
+/* Primary button gets a gentle lift */
+.cx-btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+/* Cards fade in one after another on first load */
+.cx-grid > .cx-card:not(.cx-skeleton) {
+  animation: cx-rise 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+
+.cx-grid > .cx-card:nth-child(2) { animation-delay: 0.04s; }
+.cx-grid > .cx-card:nth-child(3) { animation-delay: 0.08s; }
+.cx-grid > .cx-card:nth-child(4) { animation-delay: 0.12s; }
+.cx-grid > .cx-card:nth-child(5) { animation-delay: 0.16s; }
+.cx-grid > .cx-card:nth-child(6) { animation-delay: 0.2s; }
+
+@keyframes cx-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 640px) {
+  .cx-header::before {
+    width: 220px;
+    left: -20px;
+  }
+}
+
+/* Always white text inside blue buttons */
+.cx-page .cx-btn-primary,
+.cx-page .cx-btn-primary:hover,
+.cx-page .cx-btn-primary:disabled,
+[data-theme="dark"] .cx-page .cx-btn-primary {
+  color: #fff;
+}
+
+.cx-page .cx-btn-primary svg {
+  stroke: currentColor;
+}
+
+.cx-page .cx-tag.on {
+  color: #fff;
 }

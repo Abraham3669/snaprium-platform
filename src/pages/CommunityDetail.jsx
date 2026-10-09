@@ -359,27 +359,29 @@ export default function CommunityDetail() {
         )}
       </div>
 
-      <h2 className="cd-kicker" style={{ marginTop: 24 }}>Boards</h2>
-            <div className="cd-actions" style={{ flexWrap: "wrap" }}>
-        {boards.map((board) => (
-          <div key={board.id} className="cd-board-row">
-            <button type="button" className="cd-btn" onClick={() => openBoard(board)}>
-              <IconChat /> {board.name}
-            </button>
-            {isAdmin && !isDefaultBoard(board) && (
-              <button
-                type="button"
-                className="cd-board-delete"
-                disabled={busy}
-                onClick={() => handleDeleteBoard(board)}
-                aria-label={`Delete ${board.name}`}
-              >
-                ×
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
+      <h2 className="cd-kicker" style={{ marginTop: 28 }}>Boards</h2>
+<div className="cd-board-list">
+  {boards.map((board) => (
+    <div key={board.id} className="cd-board-row">
+      <button type="button" className="cd-board" onClick={() => openBoard(board)}>
+        <span className="cd-board-mark"><IconChat /></span>
+        <span className="cd-board-name">{board.name}</span>
+        <span className="cd-board-go">Open</span>
+      </button>
+      {isAdmin && !isDefaultBoard(board) && (
+        <button
+          type="button"
+          className="cd-board-delete"
+          disabled={busy}
+          onClick={() => handleDeleteBoard(board)}
+          aria-label={`Delete ${board.name}`}
+        >
+          ×
+        </button>
+      )}
+    </div>
+  ))}
+</div>
 
       {isAdmin && (
         <form className="cd-actions" onSubmit={handleAddBoard}>

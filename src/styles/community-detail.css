@@ -233,3 +233,86 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+
+
+
+
+.cd-avatar {
+  width: 92px;
+  height: 92px;
+  margin-top: -46px;
+  border: 4px solid var(--bg, #fff);
+  border-radius: 28px;
+}
+
+.cd-board-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.cd-board-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cd-board {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.cd-board-mark {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: var(--icon-bg);
+  color: var(--accent);
+  flex: none;
+}
+
+.cd-board-mark svg {
+  width: 22px;
+  height: 22px;
+}
+
+.cd-board-name {
+  flex: 1;
+  font-size: 1.02rem;
+  font-weight: 650;
+}
+
+.cd-board-go {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.cd-board-delete {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+/* Fix: keep the profile picture above the banner */
+.cd-avatar {
+  position: relative;
+  z-index: 2;
+}

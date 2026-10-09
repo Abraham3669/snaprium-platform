@@ -785,7 +785,8 @@ const pulseTyping = () => {
           }
         : null,
     });
-    if (text && /(^|\s)@(ai|snaprium)\b/i.test(text)) askAI(text);
+   // AI off for now. Uncomment to bring back.
+// if (text && /(^|\s)@(ai|snaprium)\b/i.test(text)) askAI(text);
   } catch {
     setInput(text);
     setPendingImage(imageUrl);
@@ -1286,15 +1287,17 @@ const pulseTyping = () => {
             >
               <IconEmoji />
             </button>
-            <button
-              type="button"
-              className="cc-icon-btn"
-              disabled={askingAI || (!input.trim() && !messages.some((m) => m.imageUrl))}
-              onClick={handleAskAI}
-              aria-label="Ask AI"
-            >
-              <IconAI />
-            </button>
+            {/*
+<button
+  type="button"
+  className="cc-icon-btn"
+  disabled={askingAI || (!input.trim() && !messages.some((m) => m.imageUrl))}
+  onClick={handleAskAI}
+  aria-label="Ask AI"
+>
+  <IconAI />
+</button>
+*/}
             <button type="submit" className="cc-send" disabled={!input.trim() && !pendingImage} aria-label="Send">
               <IconSend />
             </button>
