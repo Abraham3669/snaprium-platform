@@ -430,9 +430,12 @@ export async function addQuestionReply(communityId, boardId, questionId, data) {
     uid: data.uid,
     displayName: data.displayName || "Member",
     photoURL: data.photoURL || "",
+    replyTo: data.replyTo || null,
     createdAt: serverTimestamp(),
   });
-  await updateDoc(questionRef, { replyCount: increment(1) });
+  try {
+    await updateDoc(questionRef, { replyCount: increment(1) });
+  } catch {}
 }
 
 export async function toggleQuestionLike(communityId, boardId, questionId, uid, alreadyLiked) {

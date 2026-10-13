@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
+import { collection, deleteDoc, doc, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore";
+import { db } from "../lib/firebase";
 import {
   subscribeToQuestions,
   createQuestion,
@@ -226,7 +228,7 @@ export default function QuestionBoard({ communityId, boardId, user, isMember }) 
     </div>
     {q.body && <p>{q.body}</p>}
     <span className="qb-meta">
-      {q.displayName || "Member"} · {q.replyCount || 0} replies · {q.likeCount || 0} likes
+     {q.displayName || "Member"} · {(openId === q.id ? replies.length : q.replyCount) || 0} replies · {q.likeCount || 0} likes
     </span>
   </div>
 </button>
@@ -262,9 +264,61 @@ const [replyTo, setReplyTo] = useState(null);
 const [editingReplyId, setEditingReplyId] = useState(null);
 const [editReplyText, setEditReplyText] = useState("");
 
+const [typingNames, setTypingNames] = useState([]);
+const typingTimer = useRef(null);
+const lastTypingWrite = useRef(0);
+const typingRef = user?.uid ? doc(db, "communities", communityId, "typing", user.uid) : null;
+
   useEffect(() => {
     return subscribeToReplies(communityId, boardId, question.id, setReplies);
   }, [communityId, boardId, question.id]);
+
+
+
+  const clearTyping = async () => {
+  if (!typingRef) return;
+  try { await deleteDoc(typingRef); } catch {}
+};
+
+const pulseTyping = () => {
+  if (!typingRef || !user) return;
+  clearTimeout(typingTimer.current);
+  typingTimer.current = setTimeout(clearTyping, 2500);
+  const now = Date.now();
+  if (now - lastTypingWrite.current < 2000) return;
+  lastTypingWrite.current = now;
+  setDoc(typingRef, {
+    uid: user.uid,
+    boardId,
+    questionId: question.id,
+    displayName: user.displayName || "Member",
+    at: serverTimestamp(),
+  }).catch(() => {});
+};
+
+useEffect(() => {
+  const unsub = onSnapshot(collection(db, "communities", communityId, "typing"), (snap) => {
+    const now = Date.now();
+    const names = snap.docs
+      .map((d) => ({ id: d.id, ...d.data() }))
+      .filter((row) => {
+        if (row.uid === user?.uid) return false;
+        if (row.questionId !== question.id) return false;
+        const t = row.at?.toMillis?.() || 0;
+        return !t || now - t < 4000;
+      })
+      .map((row) => row.displayName || "Someone");
+    setTypingNames(names);
+  });
+  return () => {
+    unsub();
+    clearTimeout(typingTimer.current);
+    clearTyping();
+  };
+}, [communityId, question.id, user?.uid]);
+
+
+
 
  const onReply = async (e) => {
   e.preventDefault();
@@ -422,8 +476,11 @@ const removeReply = async (replyId) => {
     <strong>{r.displayName || "Member"}</strong>
     <time>{timeLabel(r.createdAt)}{r.edited ? " · edited" : ""}</time>
     {r.replyTo && (
-      <p className="qb-quote">Replying to {r.replyTo.displayName}: {r.replyTo.text}</p>
-    )}
+  <div className="qb-quote">
+    <strong>{r.replyTo.displayName}</strong>
+    <span>{r.replyTo.text}</span>
+  </div>
+)}
     {editingReplyId === r.id ? (
       <div className="qb-edit">
         <textarea value={editReplyText} onChange={(e) => setEditReplyText(e.target.value)} rows={2} />
@@ -449,18 +506,26 @@ const removeReply = async (replyId) => {
 
       {replyTo && (
   <div className="qb-replying">
-    <span>Replying to {replyTo.displayName || "Member"}</span>
+    <span>Replying to {replyTo.displayName || "Member"}: {String(replyTo.text || "").slice(0, 80)}</span>
     <button type="button" onClick={() => setReplyTo(null)}>×</button>
   </div>
 )}
-
       <form className="qb-reply-form" onSubmit={onReply}>
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Write a reply…"
-          rows={2}
-        />
+        {typingNames.length > 0 && (
+  <p className="cc-typing-label">
+    {typingNames.slice(0, 2).join(", ")} {typingNames.length === 1 ? "is" : "are"} typing…
+  </p>
+)}
+<textarea
+  value={text}
+  onChange={(e) => {
+    setText(e.target.value);
+    if (e.target.value.trim()) pulseTyping();
+    else clearTyping();
+  }}
+  placeholder="Write a reply…"
+  rows={2}
+/>
         <button type="submit" disabled={sending || !text.trim()}>Reply</button>
       </form>
     </div>
