@@ -17,6 +17,7 @@ import {
   increment,
   arrayUnion,
   arrayRemove,
+  writeBatch,
 } from "firebase/firestore";
 import { db } from "./firebase";
 
@@ -32,10 +33,9 @@ export const COMMUNITY_TAGS = [
 
 export const DEFAULT_BOARDS = [
   { slug: "general", name: "General", kind: "chat", isDefault: true },
-  { slug: "homework", name: "Homework", kind: "chat", isDefault: true },
+  { slug: "questions", name: "Questions", kind: "questions", isDefault: true },
   { slug: "session", name: "Session", kind: "session", isDefault: true },
 ];
-
 
 
 export const FREE_BOARD_LIMIT = 5;
@@ -87,7 +87,7 @@ export async function listBoards(communityId) {
   const snap = await getDocs(boardsCol(communityId));
   const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   if (rows.length === 0) return seedDefaultBoards(communityId);
-  const order = { general: 0, homework: 1, session: 2 };
+  const order = { general: 0, questions: 1, homework: 1, session: 2 };
   return rows.sort(
     (a, b) =>
       (order[a.slug] ?? 50) - (order[b.slug] ?? 50) ||
@@ -342,4 +342,121 @@ export async function deleteBoard(communityId, board) {
     throw new Error("Default boards can't be deleted");
   }
   await deleteDoc(doc(db, "communities", communityId, "boards", board.id));
+}
+
+
+
+
+
+function isQuestionsBoardRow(board) {
+  const slug = String(board?.slug || "").toLowerCase();
+  const name = String(board?.name || "").toLowerCase();
+  return slug === "questions" || name === "questions" || board?.kind === "questions";
+}
+
+export async function ensureQuestionsBoard(communityId, boards = []) {
+  const homework = boards.find((b) => {
+    const slug = String(b.slug || "").toLowerCase();
+    const name = String(b.name || "").toLowerCase();
+    return slug === "homework" || name === "homework";
+  });
+  if (homework) {
+    await updateDoc(doc(db, "communities", communityId, "boards", homework.id), {
+      name: "Questions",
+      slug: "questions",
+      kind: "questions",
+      isDefault: true,
+    });
+    return boards.map((b) =>
+      b.id === homework.id
+        ? { ...b, name: "Questions", slug: "questions", kind: "questions", isDefault: true }
+        : b
+    );
+  }
+  if (boards.some(isQuestionsBoardRow)) return boards;
+  const ref = doc(boardsCol(communityId));
+  const row = {
+    id: ref.id,
+    slug: "questions",
+    name: "Questions",
+    kind: "questions",
+    isDefault: true,
+    createdAt: serverTimestamp(),
+  };
+  await setDoc(ref, row);
+  return [...boards, row];
+}
+
+export function subscribeToQuestions(communityId, boardId, cb) {
+  const q = query(
+    collection(db, "communities", communityId, "boards", boardId, "questions"),
+    orderBy("createdAt", "desc")
+  );
+  return onSnapshot(q, (snap) => {
+    cb(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+  });
+}
+
+export async function createQuestion(communityId, boardId, data) {
+  return addDoc(collection(db, "communities", communityId, "boards", boardId, "questions"), {
+    title: data.title,
+    body: data.body || "",
+    imageUrl: data.imageUrl || "",
+    uid: data.uid,
+    displayName: data.displayName || "Member",
+    photoURL: data.photoURL || "",
+    likedBy: [],
+    likeCount: 0,
+    replyCount: 0,
+    solved: false,
+    createdAt: serverTimestamp(),
+  });
+}
+
+export function subscribeToReplies(communityId, boardId, questionId, cb) {
+  const q = query(
+    collection(db, "communities", communityId, "boards", boardId, "questions", questionId, "replies"),
+    orderBy("createdAt", "asc")
+  );
+  return onSnapshot(q, (snap) => {
+    cb(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+  });
+}
+
+export async function addQuestionReply(communityId, boardId, questionId, data) {
+  const questionRef = doc(db, "communities", communityId, "boards", boardId, "questions", questionId);
+  await addDoc(collection(questionRef, "replies"), {
+    text: data.text,
+    uid: data.uid,
+    displayName: data.displayName || "Member",
+    photoURL: data.photoURL || "",
+    createdAt: serverTimestamp(),
+  });
+  await updateDoc(questionRef, { replyCount: increment(1) });
+}
+
+export async function toggleQuestionLike(communityId, boardId, questionId, uid, alreadyLiked) {
+  await updateDoc(doc(db, "communities", communityId, "boards", boardId, "questions", questionId), {
+    likedBy: alreadyLiked ? arrayRemove(uid) : arrayUnion(uid),
+    likeCount: increment(alreadyLiked ? -1 : 1),
+  });
+}
+
+export async function setQuestionSolved(communityId, boardId, questionId, solved) {
+  await updateDoc(doc(db, "communities", communityId, "boards", boardId, "questions", questionId), {
+    solved: !!solved,
+  });
+}
+
+export async function deleteQuestion(communityId, boardId, questionId) {
+  const questionRef = doc(db, "communities", communityId, "boards", boardId, "questions", questionId);
+  try {
+    const replies = await getDocs(collection(questionRef, "replies"));
+    if (!replies.empty) {
+      const batch = writeBatch(db);
+      replies.forEach((row) => batch.delete(row.ref));
+      await batch.commit();
+    }
+  } catch {}
+  await deleteDoc(questionRef);
 }

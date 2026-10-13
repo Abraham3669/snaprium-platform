@@ -27,7 +27,9 @@ import {
   sendCommunityMessage,
   editCommunityMessage,
   deleteCommunityMessage,
+  ensureQuestionsBoard,
 } from "../lib/communities";
+import QuestionBoard from "../components/QuestionBoard";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
@@ -204,6 +206,12 @@ function isLiveBoard(board) {
   return slug === "session" || name === "session" || name === "live";
 }
 
+function isQuestionsBoard(board) {
+  const slug = String(board?.slug || "").toLowerCase();
+  const name = String(board?.name || "").toLowerCase();
+  return slug === "questions" || name === "questions" || board?.kind === "questions";
+}
+
 function uniqueBoards(rows) {
   return (rows || []).filter(
     (b, i, arr) =>
@@ -326,8 +334,9 @@ const [pendingImage, setPendingImage] = useState("");
   const today = getToday();
   const usedRoomAI = user?.lastRoomAIDate === today ? user?.dailyRoomAI || 0 : 0;
   const activeBoard = boards.find((b) => b.id === boardId) || boards[0];
-  const activeBoardId = activeBoard?.id || boardId || "general";
-  const liveBoard = isLiveBoard(activeBoard);
+const activeBoardId = activeBoard?.id || boardId || "general";
+const liveBoard = isLiveBoard(activeBoard);
+const questionsBoard = isQuestionsBoard(activeBoard);
   const GIF_CATEGORIES = ["Trending", "Reactions",  "Funny", "Happy", "Sad", "Celebrate"];
   
 
@@ -447,7 +456,8 @@ const pulseTyping = () => {
       setCommunity(data);
       if (!data) return;
       const rows = uniqueBoards(await listBoards(data.id));
-      setBoards(rows);
+const withQuestions = await ensureQuestionsBoard(data.id, rows);
+setBoards(withQuestions);
       const fromUrl = params.get("board");
       const next =
         rows.find((b) => b.id === fromUrl) ||
@@ -582,9 +592,10 @@ const pulseTyping = () => {
   }, [liveBoard, callOpen]);
 
   useEffect(() => {
-    if (!user?.uid || !community || !activeBoardId) return;
-    if (!(community.members || []).includes(user.uid)) return;
-    const unsub = subscribeToCommunityMessages(
+  if (!user?.uid || !community || !activeBoardId) return;
+  if (!(community.members || []).includes(user.uid)) return;
+  if (isQuestionsBoard(activeBoard)) return;
+  const unsub = subscribeToCommunityMessages(
       communityId,
       setMessages,
       activeBoardId,
@@ -965,344 +976,343 @@ const pulseTyping = () => {
           </div>
         )}
 
-                <div
-          className="cc-feed"
-          ref={feedRef}
-          onScroll={(e) => {
-            const el = e.currentTarget;
-            const near = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
-            stickToBottom.current = near;
-            if (near) setUnseen(0);
-          }}
-        >
-
-                  {unseen > 0 && !stickToBottom.current && (
-          <button type="button" className="cc-jump" onClick={jumpToBottom}>
-            New messages
-          </button>
-        )}
-                    {messages.length === 0 && (
-            <p className="cc-muted">Nothing here yet. Ask a question, or drop a photo of the problem.</p>
-          )}
-                    {messages.map((msg, index) => {
-            const name = liveName(msg);
-            const photo = livePhoto(msg);
-            const grouped = sameRun(messages[index - 1], msg);
-            const time = formatMsgTime(msg.createdAt);
-            return (
-              <article
-                key={msg.id}
-                className={`cc-post ${msg.isAI ? "ai" : ""} ${msg.uid === user?.uid ? "mine" : ""} ${
-                  grouped ? "grouped" : ""
-                } ${(msg.mentions || []).includes(user?.uid) ? "mentioned" : ""} ${
-                  menuFor === msg.id ? "menu-open" : ""
-                }`}
-                onTouchStart={() => !msg.isAI && startLongPress(msg)}
-                onTouchEnd={cancelLongPress}
-                onTouchMove={cancelLongPress}
-              >
-                <header className="cc-post-head">
-                                    {!grouped && (
-                    <button
-                      type="button"
-                      className="cc-avatar-btn"
-                      onClick={() => msg.uid === user?.uid && navigate("/profile")}
-                    >
-                      {photo ? (
-                        <img className="cc-avatar" src={photo} alt="" />
-                      ) : (
-                        <span className="cc-avatar cc-avatar-fallback">
-                          {(name || "?").slice(0, 1).toUpperCase()}
-                        </span>
-                      )}
-                    </button>
-                  )}
-                  {!grouped && (
-                    <span className="cc-name-line">
-                      <strong>{name}{msg.isAI ? " · AI" : ""}</strong>
-                      {time ? <time>{time}</time> : null}
-                      {msg.edited ? <em className="cc-edited">edited</em> : null}
+                {questionsBoard ? (
+  <QuestionBoard
+    communityId={communityId}
+    boardId={activeBoardId}
+    user={user}
+    isMember={!!isMember}
+  />
+) : (
+  <>
+    <div
+      className="cc-feed"
+      ref={feedRef}
+      onScroll={(e) => {
+        const el = e.currentTarget;
+        const near = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+        stickToBottom.current = near;
+        if (near) setUnseen(0);
+      }}
+    >
+      {unseen > 0 && !stickToBottom.current && (
+        <button type="button" className="cc-jump" onClick={jumpToBottom}>
+          New messages
+        </button>
+      )}
+      {messages.length === 0 && (
+        <p className="cc-muted">Nothing here yet. Ask a question, or drop a photo of the problem.</p>
+      )}
+      {messages.map((msg, index) => {
+        const name = liveName(msg);
+        const photo = livePhoto(msg);
+        const grouped = sameRun(messages[index - 1], msg);
+        const time = formatMsgTime(msg.createdAt);
+        return (
+          <article
+            key={msg.id}
+            className={`cc-post ${msg.isAI ? "ai" : ""} ${msg.uid === user?.uid ? "mine" : ""} ${
+              grouped ? "grouped" : ""
+            } ${(msg.mentions || []).includes(user?.uid) ? "mentioned" : ""} ${
+              menuFor === msg.id ? "menu-open" : ""
+            }`}
+            onTouchStart={() => !msg.isAI && startLongPress(msg)}
+            onTouchEnd={cancelLongPress}
+            onTouchMove={cancelLongPress}
+          >
+            <header className="cc-post-head">
+              {!grouped && (
+                <button
+                  type="button"
+                  className="cc-avatar-btn"
+                  onClick={() => msg.uid === user?.uid && navigate("/profile")}
+                >
+                  {photo ? (
+                    <img className="cc-avatar" src={photo} alt="" />
+                  ) : (
+                    <span className="cc-avatar cc-avatar-fallback">
+                      {(name || "?").slice(0, 1).toUpperCase()}
                     </span>
                   )}
-                  
-                  {!msg.isAI && (
-                    <div className="cc-post-menu-wrap">
-                      <button
-                        type="button"
-                        className="cc-more-btn"
-                        onClick={() => setMenuFor(menuFor === msg.id ? null : msg.id)}
-                        aria-label="Message actions"
-                      >
-                        ⋯
-                      </button>
-                      {menuFor === msg.id && (
-                        <div className="cc-post-menu" ref={menuRef}>
-                          <button type="button" onClick={() => { setReplyTo(msg); setMenuFor(null); }}>Reply</button>
-                          {msg.uid === user?.uid && msg.text && !msg.imageUrl && (
-                            <button type="button" onClick={() => { startEdit(msg); setMenuFor(null); }}>Edit</button>
-                          )}
-                          {msg.uid === user?.uid && (
-                            <button type="button" className="danger" onClick={() => { removeMessage(msg); setMenuFor(null); }}>Delete</button>
-                          )}
-                        </div>
+                </button>
+              )}
+              {!grouped && (
+                <span className="cc-name-line">
+                  <strong>{name}{msg.isAI ? " · AI" : ""}</strong>
+                  {time ? <time>{time}</time> : null}
+                  {msg.edited ? <em className="cc-edited">edited</em> : null}
+                </span>
+              )}
+
+              {!msg.isAI && (
+                <div className="cc-post-menu-wrap">
+                  <button
+                    type="button"
+                    className="cc-more-btn"
+                    onClick={() => setMenuFor(menuFor === msg.id ? null : msg.id)}
+                    aria-label="Message actions"
+                  >
+                    ⋯
+                  </button>
+                  {menuFor === msg.id && (
+                    <div className="cc-post-menu" ref={menuRef}>
+                      <button type="button" onClick={() => { setReplyTo(msg); setMenuFor(null); }}>Reply</button>
+                      {msg.uid === user?.uid && msg.text && !msg.imageUrl && (
+                        <button type="button" onClick={() => { startEdit(msg); setMenuFor(null); }}>Edit</button>
+                      )}
+                      {msg.uid === user?.uid && (
+                        <button type="button" className="danger" onClick={() => { removeMessage(msg); setMenuFor(null); }}>Delete</button>
                       )}
                     </div>
                   )}
-                </header>
-                {msg.replyTo && (
-                  <div className="cc-quote">
-                    <strong>{msg.replyTo.displayName}</strong>
-                    <span>{msg.replyTo.text}</span>
-                  </div>
-                )}
-                               {msg.imageUrl && (
-                  <button
-                    type="button"
-                    className={`cc-media-btn ${msg.type === "sticker" ? "sticker" : ""}`}
-                    onClick={() => {
-                      setZoom(1);
-                      setLightbox(msg.imageUrl);
-                    }}
-                  >
-                    <img
-                      src={msg.imageUrl}
-                      alt=""
-                      className={
-                        msg.type === "gif"
-                          ? "cc-msg-gif"
-                          : msg.type === "sticker"
-                          ? "cc-msg-sticker"
-                          : "cc-msg-photo"
-                      }
-                    />
-                  </button>
-                )}
-{editingId === msg.id ? (
-  <div className="cc-edit-row">
-    <input
-      className="cc-edit-input"
-      value={editText}
-      onChange={(e) => setEditText(e.target.value)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") saveEdit(msg);
-        if (e.key === "Escape") cancelEdit();
-      }}
-      autoFocus
-    />
-    <button type="button" className="cc-edit-save" onClick={() => saveEdit(msg)}>
-      Save
-    </button>
-    <button type="button" className="cc-edit-cancel" onClick={cancelEdit}>
-      Cancel
-    </button>
-  </div>
-) : (
-   msg.text && msg.text !== "Shared a photo" && (
-    <MessageText
-      text={msg.text}
-      people={mentionable}
-      myUid={user?.uid}
-      isAI={!!msg.isAI}
-    />
-  )
-)}
-              </article>
-            );
-          })}
-          {askingAI && (
-            <article className="cc-post ai pending">
-              <header>Snaprium AI</header>
-              <p className="cc-typing">
-                <span />
-                <span />
-                <span />
-              </p>
-            </article>
-          )}
-        </div>
-
-
-
-        {typingNames.length > 0 && (
-          <p className="cc-typing-label">
-            {typingNames.slice(0, 2).join(", ")} {typingNames.length === 1 ? "is" : "are"} typing…
-          </p>
-        )}
-
-        <div className="cc-composer-wrap">
-
-
-{pendingImage && (
-  <div className="cc-replying">
-    <img src={pendingImage} alt="" style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 8 }} />
-    <span>Add a caption, then send</span>
-    <button type="button" onClick={() => setPendingImage("")}>×</button>
-  </div>
-)}
-
-
-
-          {replyTo && (
-            <div className="cc-replying">
-              <span>
-                Replying to {liveName(replyTo)}: {String(replyTo.text || "").slice(0, 80)}
-              </span>
-              <button type="button" onClick={() => setReplyTo(null)}>
-                ×
-              </button>
-            </div>
-                    )}
-
-          {suggestions.length > 0 && (
-            <div className="cc-mention-list">
-              {suggestions.map((p) => (
-                <button
-                  key={p.uid}
-                  type="button"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => pickMention(p)}
-                >
-                  @{handleOf(p.name)}
-                </button>
-              ))}
-            </div>
-          )}
-
-
-
-                      {pickerOpen && (
-                       <div className="cc-picker" ref={pickerRef} onMouseDown={(e) => e.stopPropagation()}>
-              <div className="cc-picker-tabs">
-                <button
-                  type="button"
-                  className={pickerTab === "emoji" ? "on" : ""}
-                  onClick={() => setPickerTab("emoji")}
-                >
-                  Emoji
-                </button>
-                <button
-                  type="button"
-                  className={pickerTab === "gif" ? "on" : ""}
-                  onClick={() => setPickerTab("gif")}
-                >
-                  GIF
-                </button>
-                <button
-                  type="button"
-                  className={pickerTab === "sticker" ? "on" : ""}
-                  onClick={() => setPickerTab("sticker")}
-                >
-                  Stickers
-                </button>
-              </div>
-
-              {pickerTab === "emoji" ? (
-                               <EmojiPicker
-                  theme="auto"
-                  emojiStyle="native"
-                  width="100%"
-                  height="100%"
-                  lazyLoadEmojis
-                  onEmojiClick={(e) => setInput((v) => v + e.emoji)}
-                />
-              ) : (
-                                <div className="cc-gif-pane">
-                  <input
-                    className="cc-gif-search"
-                    value={mediaQuery}
-                    onChange={(e) => setMediaQuery(e.target.value)}
-                    placeholder={pickerTab === "sticker" ? "Search stickers…" : "Search GIFs…"}
-                  />
-                  <div className="cc-gif-categories">
-                    {GIF_CATEGORIES.map((cat) => (
-                      <button
-                        key={cat}
-                        type="button"
-                        className={mediaQuery.toLowerCase() === cat.toLowerCase() ? "on" : ""}
-                        onClick={() => setMediaQuery(cat === "Trending" ? "" : cat)}
-                      >
-                        {cat}
-                      </button>
-                    ))}
-                  </div>
-                  <div className={`cc-gif-grid ${pickerTab === "sticker" ? "sticker" : ""}`}>
-                    {mediaLoading && <p className="cc-muted">Loading…</p>}
-                    {!mediaLoading && mediaItems.length === 0 && (
-                      <p className="cc-muted">Nothing found.</p>
-                    )}
-                    {mediaItems.map((item) => (
-                      <button key={item.id} type="button" onClick={() => sendMedia(item, pickerTab)}>
-                        <img
-                          src={item.images.fixed_height_small.url}
-                          alt={item.title || pickerTab}
-                          loading="lazy"
-                        />
-                      </button>
-                    ))}
-                  </div>
-                  <p className="cc-gif-credit">Powered by GIPHY</p>
                 </div>
               )}
+            </header>
+            {msg.replyTo && (
+              <div className="cc-quote">
+                <strong>{msg.replyTo.displayName}</strong>
+                <span>{msg.replyTo.text}</span>
+              </div>
+            )}
+            {msg.imageUrl && (
+              <button
+                type="button"
+                className={`cc-media-btn ${msg.type === "sticker" ? "sticker" : ""}`}
+                onClick={() => {
+                  setZoom(1);
+                  setLightbox(msg.imageUrl);
+                }}
+              >
+                <img
+                  src={msg.imageUrl}
+                  alt=""
+                  className={
+                    msg.type === "gif"
+                      ? "cc-msg-gif"
+                      : msg.type === "sticker"
+                      ? "cc-msg-sticker"
+                      : "cc-msg-photo"
+                  }
+                />
+              </button>
+            )}
+            {editingId === msg.id ? (
+              <div className="cc-edit-row">
+                <input
+                  className="cc-edit-input"
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveEdit(msg);
+                    if (e.key === "Escape") cancelEdit();
+                  }}
+                  autoFocus
+                />
+                <button type="button" className="cc-edit-save" onClick={() => saveEdit(msg)}>
+                  Save
+                </button>
+                <button type="button" className="cc-edit-cancel" onClick={cancelEdit}>
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              msg.text && msg.text !== "Shared a photo" && (
+                <MessageText
+                  text={msg.text}
+                  people={mentionable}
+                  myUid={user?.uid}
+                  isAI={!!msg.isAI}
+                />
+              )
+            )}
+          </article>
+        );
+      })}
+      {askingAI && (
+        <article className="cc-post ai pending">
+          <header>Snaprium AI</header>
+          <p className="cc-typing">
+            <span />
+            <span />
+            <span />
+          </p>
+        </article>
+      )}
+    </div>
+
+    {typingNames.length > 0 && (
+      <p className="cc-typing-label">
+        {typingNames.slice(0, 2).join(", ")} {typingNames.length === 1 ? "is" : "are"} typing…
+      </p>
+    )}
+
+    <div className="cc-composer-wrap">
+      {pendingImage && (
+        <div className="cc-replying">
+          <img src={pendingImage} alt="" style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 8 }} />
+          <span>Add a caption, then send</span>
+          <button type="button" onClick={() => setPendingImage("")}>×</button>
+        </div>
+      )}
+
+      {replyTo && (
+        <div className="cc-replying">
+          <span>
+            Replying to {liveName(replyTo)}: {String(replyTo.text || "").slice(0, 80)}
+          </span>
+          <button type="button" onClick={() => setReplyTo(null)}>
+            ×
+          </button>
+        </div>
+      )}
+
+      {suggestions.length > 0 && (
+        <div className="cc-mention-list">
+          {suggestions.map((p) => (
+            <button
+              key={p.uid}
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => pickMention(p)}
+            >
+              @{handleOf(p.name)}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {pickerOpen && (
+        <div className="cc-picker" ref={pickerRef} onMouseDown={(e) => e.stopPropagation()}>
+          <div className="cc-picker-tabs">
+            <button
+              type="button"
+              className={pickerTab === "emoji" ? "on" : ""}
+              onClick={() => setPickerTab("emoji")}
+            >
+              Emoji
+            </button>
+            <button
+              type="button"
+              className={pickerTab === "gif" ? "on" : ""}
+              onClick={() => setPickerTab("gif")}
+            >
+              GIF
+            </button>
+            <button
+              type="button"
+              className={pickerTab === "sticker" ? "on" : ""}
+              onClick={() => setPickerTab("sticker")}
+            >
+              Stickers
+            </button>
+          </div>
+
+          {pickerTab === "emoji" ? (
+            <EmojiPicker
+              theme="auto"
+              emojiStyle="native"
+              width="100%"
+              height="100%"
+              lazyLoadEmojis
+              onEmojiClick={(e) => setInput((v) => v + e.emoji)}
+            />
+          ) : (
+            <div className="cc-gif-pane">
+              <input
+                className="cc-gif-search"
+                value={mediaQuery}
+                onChange={(e) => setMediaQuery(e.target.value)}
+                placeholder={pickerTab === "sticker" ? "Search stickers…" : "Search GIFs…"}
+              />
+              <div className="cc-gif-categories">
+                {GIF_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    className={mediaQuery.toLowerCase() === cat.toLowerCase() ? "on" : ""}
+                    onClick={() => setMediaQuery(cat === "Trending" ? "" : cat)}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+              <div className={`cc-gif-grid ${pickerTab === "sticker" ? "sticker" : ""}`}>
+                {mediaLoading && <p className="cc-muted">Loading…</p>}
+                {!mediaLoading && mediaItems.length === 0 && (
+                  <p className="cc-muted">Nothing found.</p>
+                )}
+                {mediaItems.map((item) => (
+                  <button key={item.id} type="button" onClick={() => sendMedia(item, pickerTab)}>
+                    <img
+                      src={item.images.fixed_height_small.url}
+                      alt={item.title || pickerTab}
+                      loading="lazy"
+                    />
+                  </button>
+                ))}
+              </div>
+              <p className="cc-gif-credit">Powered by GIPHY</p>
             </div>
           )}
-
-
-
-
-          <form className="cc-composer" onSubmit={handleSend}>
-            <input ref={photoRef} type="file" accept="image/*" hidden onChange={handleSharePhoto} />
-            <button type="button" className="cc-icon-btn" onClick={() => photoRef.current?.click()} aria-label="Photo">
-              <IconPhoto />
-            </button>
-            <textarea
-  className="cc-composer-input"
-  rows={1}
-  value={input}
-    onChange={(e) => {
-    const value = e.target.value;
-    setInput(value);
-    e.target.style.height = "auto";
-    e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
-    const m = value.match(/(?:^|\s)@([\p{L}\p{N}_.-]*)$/u);
-    const nextQuery = m ? m[1].toLowerCase() : null;
-    setMentionQuery((prev) => (prev === nextQuery ? prev : nextQuery));
-    if (value.trim()) pulseTyping();
-    else clearTyping();
-  }}
-  onKeyDown={(e) => {
-    // Enter sends; Shift+Enter = new line
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend(e);
-    }
-  }}
-  placeholder={`Message ${activeBoard?.name || "board"}…`}
-/>
-
-                        <button
-              type="button"
-              className={`cc-icon-btn ${pickerOpen ? "on" : ""}`}
-              onClick={() => setPickerOpen((v) => !v)}
-              aria-label="Emoji and GIFs"
-            >
-              <IconEmoji />
-            </button>
-            {/*
-<button
-  type="button"
-  className="cc-icon-btn"
-  disabled={askingAI || (!input.trim() && !messages.some((m) => m.imageUrl))}
-  onClick={handleAskAI}
-  aria-label="Ask AI"
->
-  <IconAI />
-</button>
-*/}
-            <button type="submit" className="cc-send" disabled={!input.trim() && !pendingImage} aria-label="Send">
-              <IconSend />
-            </button>
-          </form>
         </div>
+      )}
+
+      <form className="cc-composer" onSubmit={handleSend}>
+        <input ref={photoRef} type="file" accept="image/*" hidden onChange={handleSharePhoto} />
+        <button type="button" className="cc-icon-btn" onClick={() => photoRef.current?.click()} aria-label="Photo">
+          <IconPhoto />
+        </button>
+        <textarea
+          className="cc-composer-input"
+          rows={1}
+          value={input}
+          onChange={(e) => {
+            const value = e.target.value;
+            setInput(value);
+            e.target.style.height = "auto";
+            e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
+            const m = value.match(/(?:^|\s)@([\p{L}\p{N}_.-]*)$/u);
+            const nextQuery = m ? m[1].toLowerCase() : null;
+            setMentionQuery((prev) => (prev === nextQuery ? prev : nextQuery));
+            if (value.trim()) pulseTyping();
+            else clearTyping();
+          }}
+          onKeyDown={(e) => {
+            // Enter sends; Shift+Enter = new line
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              handleSend(e);
+            }
+          }}
+          placeholder={`Message ${activeBoard?.name || "board"}…`}
+        />
+
+        <button
+          type="button"
+          className={`cc-icon-btn ${pickerOpen ? "on" : ""}`}
+          onClick={() => setPickerOpen((v) => !v)}
+          aria-label="Emoji and GIFs"
+        >
+          <IconEmoji />
+        </button>
+        {/*
+        <button
+          type="button"
+          className="cc-icon-btn"
+          disabled={askingAI || (!input.trim() && !messages.some((m) => m.imageUrl))}
+          onClick={handleAskAI}
+          aria-label="Ask AI"
+        >
+          <IconAI />
+        </button>
+        */}
+        <button type="submit" className="cc-send" disabled={!input.trim() && !pendingImage} aria-label="Send">
+          <IconSend />
+        </button>
+      </form>
+    </div>
+  </>
+)}
       </section>
 
 
