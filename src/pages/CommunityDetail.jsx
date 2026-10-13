@@ -6,6 +6,9 @@ import { useAuth } from "../context/AuthContext";
 import UpgradeModal from "../components/UpgradeModal";
 import "../styles/community-detail.css";
 
+import { collection, onSnapshot, orderBy, query, limit } from "firebase/firestore";
+import { db } from "../lib/firebase";
+
 
 
 
@@ -137,17 +140,6 @@ export default function CommunityDetail() {
 
 
 
-  useEffect(() => {
-  if (!user?.uid || !community || !(community.members || []).includes(user.uid)) return;
-  let cancelled = false;
-  (async () => {
-    const n = await countBoardUnread(community.id, user.uid);
-    if (!cancelled) setBoardUnread(n);
-  })();
-  return () => {
-    cancelled = true;
-  };
-}, [community, user?.uid]);
 
 
 

@@ -5,6 +5,8 @@ import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
 import UpgradeModal from "../components/UpgradeModal";
 import "../styles/community.css";
+import { collection, onSnapshot, orderBy, query, limit } from "firebase/firestore";
+import { db } from "../lib/firebase";
 import {
   COMMUNITY_TAGS,
   createCommunity,
@@ -117,6 +119,27 @@ if (user?.uid && own.length) {
   useEffect(() => {
     load("");
   }, [user?.uid]);
+
+
+   useEffect(() => {
+  if (!user?.uid || !mine.length) return;
+  const unsubs = mine.map((c) =>
+    onSnapshot(
+      query(collection(db, "communities", c.id, "messages"), orderBy("createdAt", "desc"), limit(1)),
+      async () => {
+        const n = await countCommunityUnread(c.id, user.uid);
+        setUnread((prev) => ({ ...prev, [c.id]: n }));
+      }
+    )
+  );
+  return () => unsubs.forEach((u) => u());
+}, [mine, user?.uid]);
+
+
+
+
+
+  
 
   // Close the create dialog with Escape and lock page scroll while it is open
   useEffect(() => {

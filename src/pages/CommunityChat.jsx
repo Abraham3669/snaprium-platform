@@ -13,6 +13,9 @@ import {
   deleteDoc,
   onSnapshot,
   collection,
+  query,
+  orderBy,
+  limit,
   serverTimestamp,
 } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
@@ -683,17 +686,30 @@ setBoards(withQuestions);
   const isMember = user && community && (community.members || []).includes(user.uid);
 
 
-  useEffect(() => {
+ useEffect(() => {
   if (!user?.uid || !communityId || !isMember) return;
-  let cancelled = false;
-  (async () => {
-    const n = await countBoardUnread(communityId, user.uid);
-    if (!cancelled) setBoardUnread(n);
-  })();
-  return () => {
-    cancelled = true;
+  const refresh = () => {
+    countBoardUnread(communityId, user.uid).then((n) => {
+      setBoardUnread((prev) => ({
+        chat: questionsBoard || liveBoard ? n.chat : 0,
+        questions: questionsBoard ? 0 : n.questions,
+      }));
+    }).catch(() => {});
   };
-}, [communityId, user?.uid, isMember, activeBoardId]);
+  refresh();
+  const unsubChat = onSnapshot(
+    query(collection(db, "communities", communityId, "messages"), orderBy("createdAt", "desc"), limit(1)),
+    refresh
+  );
+  const qBoard = boards.find((b) => isQuestionsBoard(b));
+  const unsubQuestions = qBoard
+    ? onSnapshot(collection(db, "communities", communityId, "boards", qBoard.id, "questions"), refresh)
+    : () => {};
+  return () => {
+    unsubChat();
+    unsubQuestions();
+  };
+}, [communityId, user?.uid, isMember, activeBoardId, boards, questionsBoard, liveBoard]);
 
 useEffect(() => {
   if (!user?.uid || !isMember || !activeBoard) return;
