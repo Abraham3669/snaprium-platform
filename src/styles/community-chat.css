@@ -1074,3 +1074,16 @@
 .qb-person time, .qb-reply time { color: var(--text-secondary); font-size: 12px; }
 .qb-photo { margin: 12px 0 18px; }
 .qb-actions { margin-top: 8px; }
+
+
+
+
+.qb-quote, .qb-replying {
+  margin: 6px 0; padding: 6px 8px; border-left: 3px solid var(--accent);
+  background: var(--icon-bg); border-radius: 8px; color: var(--text-secondary); font-size: 13px;
+}
+.qb-reply-actions { display: flex; gap: 10px; margin-top: 6px; }
+.qb-reply-actions button, .qb-replying button {
+  border: 0; background: none; color: var(--accent); cursor: pointer; padding: 0; font-weight: 600;
+}
+.qb-edit { display: flex; flex-direction: column; gap: 8px; }

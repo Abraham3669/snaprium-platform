@@ -8,6 +8,9 @@ import {
   toggleQuestionLike,
   setQuestionSolved,
   deleteQuestion,
+  editQuestion,
+editQuestionReply,
+deleteQuestionReply,
 } from "../lib/communities";
 
 
@@ -252,30 +255,40 @@ function QuestionDetail({ communityId, boardId, question, user, isMember, onBack
   const [sending, setSending] = useState(false);
   const liked = !!(user && (question.likedBy || []).includes(user.uid));
   const mine = user && question.uid === user.uid;
+  const [editingPost, setEditingPost] = useState(false);
+const [postTitle, setPostTitle] = useState(question.title || "");
+const [postBody, setPostBody] = useState(question.body || "");
+const [replyTo, setReplyTo] = useState(null);
+const [editingReplyId, setEditingReplyId] = useState(null);
+const [editReplyText, setEditReplyText] = useState("");
 
   useEffect(() => {
     return subscribeToReplies(communityId, boardId, question.id, setReplies);
   }, [communityId, boardId, question.id]);
 
-  const onReply = async (e) => {
-    e.preventDefault();
-    const clean = text.trim();
-    if (!clean || !user || !isMember || sending) return;
-    setSending(true);
-    try {
-      await addQuestionReply(communityId, boardId, question.id, {
-        text: clean,
-        uid: user.uid,
-        displayName: user.displayName || "Member",
-        photoURL: user.photoURL || "",
-      });
-      setText("");
-    } catch {
-      toast.error("Could not reply");
-    } finally {
-      setSending(false);
-    }
-  };
+ const onReply = async (e) => {
+  e.preventDefault();
+  const clean = text.trim();
+  if (!clean || !user || !isMember || sending) return;
+  setSending(true);
+  try {
+    await addQuestionReply(communityId, boardId, question.id, {
+      text: clean,
+      uid: user.uid,
+      displayName: user.displayName || "Member",
+      photoURL: user.photoURL || "",
+      replyTo: replyTo
+        ? { id: replyTo.id, displayName: replyTo.displayName || "Member", text: String(replyTo.text || "").slice(0, 140) }
+        : null,
+    });
+    setText("");
+    setReplyTo(null);
+  } catch {
+    toast.error("Could not reply");
+  } finally {
+    setSending(false);
+  }
+};
 
   const onLike = async () => {
     if (!user || !isMember) return;
@@ -304,6 +317,43 @@ function QuestionDetail({ communityId, boardId, question, user, isMember, onBack
     }
   };
 
+
+
+const savePost = async () => {
+  const title = postTitle.trim();
+  if (!title) return;
+  try {
+    await editQuestion(communityId, boardId, question.id, { title, body: postBody.trim() });
+    setEditingPost(false);
+  } catch {
+    toast.error("Could not edit post");
+  }
+};
+
+const saveReply = async (replyId) => {
+  const next = editReplyText.trim();
+  if (!next) return;
+  try {
+    await editQuestionReply(communityId, boardId, question.id, replyId, next);
+    setEditingReplyId(null);
+    setEditReplyText("");
+  } catch {
+    toast.error("Could not edit reply");
+  }
+};
+
+const removeReply = async (replyId) => {
+  if (!window.confirm("Delete this reply?")) return;
+  try {
+    await deleteQuestionReply(communityId, boardId, question.id, replyId);
+  } catch {
+    toast.error("Could not delete reply");
+  }
+};
+
+
+
+
   return (
     <div className="qb-detail">
       <button type="button" className="qb-back" onClick={onBack}>
@@ -318,11 +368,22 @@ function QuestionDetail({ communityId, boardId, question, user, isMember, onBack
     <time>{timeLabel(question.createdAt)}</time>
   </div>
 </div>
-<div className="qb-card-top">
-  <h2>{question.title}</h2>
-  {question.solved && <span className="qb-solved">Solved</span>}
-</div>
-{question.body && <p className="qb-copy">{question.body}</p>}
+{editingPost ? (
+  <div className="qb-edit">
+    <input className="qb-title" value={postTitle} onChange={(e) => setPostTitle(e.target.value)} />
+    <textarea className="qb-body" value={postBody} onChange={(e) => setPostBody(e.target.value)} rows={3} />
+    <button type="button" onClick={savePost}>Save</button>
+    <button type="button" className="qb-ghost" onClick={() => setEditingPost(false)}>Cancel</button>
+  </div>
+) : (
+  <>
+    <div className="qb-card-top">
+      <h2>{question.title}</h2>
+      {question.solved && <span className="qb-solved">Solved</span>}
+    </div>
+    {question.body && <p className="qb-copy">{question.body}</p>}
+  </>
+)}
 {question.imageUrl && (
   <img className="qb-photo" src={question.imageUrl} alt="" />
 )}
@@ -343,6 +404,12 @@ function QuestionDetail({ communityId, boardId, question, user, isMember, onBack
       Delete
     </button>
   )}
+
+{mine && !editingPost && (
+  <button type="button" onClick={() => setEditingPost(true)}>Edit</button>
+)}
+
+
 </div>
       </article>
 
@@ -353,12 +420,39 @@ function QuestionDetail({ communityId, boardId, question, user, isMember, onBack
   <Avatar photo={r.photoURL} name={r.displayName} />
   <div>
     <strong>{r.displayName || "Member"}</strong>
-    <time>{timeLabel(r.createdAt)}</time>
-    <p>{r.text}</p>
+    <time>{timeLabel(r.createdAt)}{r.edited ? " · edited" : ""}</time>
+    {r.replyTo && (
+      <p className="qb-quote">Replying to {r.replyTo.displayName}: {r.replyTo.text}</p>
+    )}
+    {editingReplyId === r.id ? (
+      <div className="qb-edit">
+        <textarea value={editReplyText} onChange={(e) => setEditReplyText(e.target.value)} rows={2} />
+        <button type="button" onClick={() => saveReply(r.id)}>Save</button>
+        <button type="button" className="qb-ghost" onClick={() => setEditingReplyId(null)}>Cancel</button>
+      </div>
+    ) : (
+      <p>{r.text}</p>
+    )}
+    <div className="qb-reply-actions">
+      <button type="button" onClick={() => setReplyTo(r)}>Reply</button>
+      {user?.uid === r.uid && (
+        <>
+          <button type="button" onClick={() => { setEditingReplyId(r.id); setEditReplyText(r.text || ""); }}>Edit</button>
+          <button type="button" onClick={() => removeReply(r.id)}>Delete</button>
+        </>
+      )}
+    </div>
   </div>
 </article>
         ))}
       </div>
+
+      {replyTo && (
+  <div className="qb-replying">
+    <span>Replying to {replyTo.displayName || "Member"}</span>
+    <button type="button" onClick={() => setReplyTo(null)}>×</button>
+  </div>
+)}
 
       <form className="qb-reply-form" onSubmit={onReply}>
         <textarea

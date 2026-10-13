@@ -460,3 +460,31 @@ export async function deleteQuestion(communityId, boardId, questionId) {
   } catch {}
   await deleteDoc(questionRef);
 }
+
+
+
+
+
+export async function editQuestion(communityId, boardId, questionId, fields) {
+  await updateDoc(doc(db, "communities", communityId, "boards", boardId, "questions", questionId), {
+    ...fields,
+    edited: true,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function editQuestionReply(communityId, boardId, questionId, replyId, text) {
+  await updateDoc(
+    doc(db, "communities", communityId, "boards", boardId, "questions", questionId, "replies", replyId),
+    { text, edited: true, updatedAt: serverTimestamp() }
+  );
+}
+
+export async function deleteQuestionReply(communityId, boardId, questionId, replyId) {
+  await deleteDoc(
+    doc(db, "communities", communityId, "boards", boardId, "questions", questionId, "replies", replyId)
+  );
+  await updateDoc(doc(db, "communities", communityId, "boards", boardId, "questions", questionId), {
+    replyCount: increment(-1),
+  });
+}
