@@ -13,7 +13,8 @@ import {
   deleteQuestion,
   editQuestion,
   editQuestionReply,
-  deleteQuestionReply,
+deleteQuestionReply,
+markQuestionRead,
 } from "../lib/communities";
 
 function IconPlus() {
@@ -195,11 +196,28 @@ export default function QuestionBoard({ communityId, boardId, user, isMember }) 
   const [imageUrl, setImageUrl] = useState("");
   const [posting, setPosting] = useState(false);
   const fileRef = useRef(null);
+const [seen, setSeen] = useState({});
+
+
 
   useEffect(() => {
     if (!communityId || !boardId) return;
     return subscribeToQuestions(communityId, boardId, setQuestions);
   }, [communityId, boardId]);
+
+  useEffect(() => {
+  if (!communityId || !user?.uid) return;
+  return onSnapshot(
+    collection(db, "communities", communityId, "reads", user.uid, "threads"),
+    (snap) => {
+      const next = {};
+      snap.forEach((d) => {
+        next[d.id] = d.data()?.replyCount || 0;
+      });
+      setSeen(next);
+    }
+  );
+}, [communityId, user?.uid]);
 
   const resetComposer = () => {
     setTitle("");
@@ -300,7 +318,15 @@ export default function QuestionBoard({ communityId, boardId, user, isMember }) 
           <div className="qb-list">
             {questions.map((q) => (
               <button key={q.id} type="button" className="qb-card" onClick={() => setOpenId(q.id)}>
-                {q.imageUrl && <img className="qb-thumb" src={q.imageUrl} alt="" />}
+  {(() => {
+  const count = q.replyCount || 0;
+  const seenCount = seen[q.id] || 0;
+  const mine = q.uid === user?.uid;
+  const mentioned = (q.mentions || []).includes(user?.uid);
+  const unread = count > seenCount && q.lastReplyUid !== user?.uid && (mine || mentioned || seen[q.id]);
+  return unread ? <span className="qb-badge">New</span> : null;
+})()}
+  {q.imageUrl && <img className="qb-thumb" src={q.imageUrl} alt="" />}
                 <div className="qb-card-copy">
                   <div className="qb-card-top">
                     <strong>{q.title}</strong>
@@ -352,6 +378,11 @@ function QuestionDetail({ communityId, boardId, question, user, isMember, onBack
   useEffect(() => {
     return subscribeToReplies(communityId, boardId, question.id, setReplies);
   }, [communityId, boardId, question.id]);
+
+ useEffect(() => {
+  if (!user?.uid || !question?.id) return;
+  markQuestionRead(communityId, user.uid, question.id, question.replyCount || 0).catch(() => {});
+}, [communityId, user?.uid, question?.id, question.replyCount]);
 
   const people = useMemo(() => {
     const map = new Map();

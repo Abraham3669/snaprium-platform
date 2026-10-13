@@ -140,6 +140,29 @@ export default function CommunityDetail() {
 
 
 
+  useEffect(() => {
+  if (!user?.uid || !community || !(community.members || []).includes(user.uid)) return;
+  const refresh = () => {
+    countBoardUnread(community.id, user.uid).then(setBoardUnread).catch(() => {});
+  };
+  refresh();
+  const unsubChat = onSnapshot(
+    query(collection(db, "communities", community.id, "messages"), orderBy("createdAt", "desc"), limit(1)),
+    refresh
+  );
+  const qBoard = boards.find(
+    (b) => b.slug === "questions" || b.kind === "questions" || String(b.name || "").toLowerCase() === "questions"
+  );
+  const unsubQuestions = qBoard
+    ? onSnapshot(collection(db, "communities", community.id, "boards", qBoard.id, "questions"), refresh)
+    : () => {};
+  return () => {
+    unsubChat();
+    unsubQuestions();
+  };
+}, [community, user?.uid, boards]);
+
+
 
 
 
@@ -245,17 +268,20 @@ export default function CommunityDetail() {
       <button type="button" className="cd-back" onClick={() => navigate("/community")}>← Circles</button>
 
       <button
-        type="button"
-        className="cd-banner"
-        style={community.coverUrl ? { backgroundImage: `url(${community.coverUrl})` } : undefined}
-        onClick={() => isAdmin && bannerRef.current?.click()}
-        disabled={!isAdmin || busy}
-        aria-label="Change banner"
-      >
-        {!community.coverUrl && (
-          <span className="cd-placeholder"><IconCamera /></span>
-        )}
-      </button>
+  type="button"
+  className="cd-banner"
+  style={community.coverUrl ? { backgroundImage: `url(${community.coverUrl})` } : undefined}
+  onClick={() => isAdmin && bannerRef.current?.click()}
+  disabled={!isAdmin || busy}
+  aria-label="Change banner"
+>
+  {!community.coverUrl && (
+    <span className="cd-placeholder"><IconCamera /></span>
+  )}
+  {isMember && boardUnread.questions > 0 && (
+    <span className="cd-banner-badge">{boardUnread.questions > 9 ? "9+" : boardUnread.questions}</span>
+  )}
+</button>
 
       <div className="cd-identity">
         <button

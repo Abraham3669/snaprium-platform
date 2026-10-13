@@ -385,6 +385,12 @@ export async function countBoardUnread(communityId, uid) {
     );
     for (const q of rows.docs.slice(0, 25)) {
       const data = q.data() || {};
+      if (data.uid === uid) continue;
+      const created = data.createdAt?.toMillis?.() || 0;
+      if (!created || created > questionsSince) questions += 1;
+    }
+    for (const q of rows.docs.slice(0, 25)) {
+      const data = q.data() || {};
       const replies = await getDocs(
         query(collection(q.ref, "replies"), orderBy("createdAt", "desc"), limit(20))
       );
@@ -403,6 +409,7 @@ export async function countBoardUnread(communityId, uid) {
 
   return { chat: Math.min(chat, 99), questions: Math.min(questions, 99) };
 }
+
 
 export async function countCommunityUnread(communityId, uid) {
   const n = await countBoardUnread(communityId, uid);
@@ -493,12 +500,25 @@ export async function addQuestionReply(communityId, boardId, questionId, data) {
     uid: data.uid,
     displayName: data.displayName || "Member",
     photoURL: data.photoURL || "",
+    mentions: data.mentions || [],
     replyTo: data.replyTo || null,
     createdAt: serverTimestamp(),
   });
   try {
-    await updateDoc(questionRef, { replyCount: increment(1) });
+    await updateDoc(questionRef, {
+      replyCount: increment(1),
+      lastReplyAt: serverTimestamp(),
+      lastReplyUid: data.uid || "",
+    });
   } catch {}
+}
+
+export async function markQuestionRead(communityId, uid, questionId, replyCount = 0) {
+  if (!communityId || !uid || !questionId) return;
+  await setDoc(
+    doc(db, "communities", communityId, "reads", uid, "threads", questionId),
+    { at: serverTimestamp(), replyCount: replyCount || 0 }
+  );
 }
 
 export async function toggleQuestionLike(communityId, boardId, questionId, uid, alreadyLiked) {

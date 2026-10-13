@@ -959,7 +959,13 @@ useEffect(() => {
             onClick={() => switchBoard(board.id)}
           >
                         <IconBoard />
-            <span>{board.name}</span>
+<span>{board.name}</span>
+{(() => {
+  const kind = isQuestionsBoard(board) ? "questions" : isLiveBoard(board) ? "" : "chat";
+  const n = kind ? boardUnread[kind] || 0 : 0;
+  const showing = board.id === activeBoardId ? 0 : n;
+  return showing > 0 ? <span className="cc-badge">{showing > 9 ? "9+" : showing}</span> : null;
+})()}
           </button>
         ))}
       </aside>
