@@ -1006,3 +1006,25 @@
 
 
 
+.cx-title,
+.community-title,
+h1,
+h2 {
+  color: var(--text-primary);
+}
+
+.cx-kicker,
+.community-kicker,
+.cx-meta,
+.cx-empty,
+.community-hint {
+  color: var(--text-secondary);
+}
+
+.cx-card,
+.community-card,
+.cx-circle {
+  background: var(--surface);
+  color: var(--text-primary);
+  border-color: var(--border);
+}

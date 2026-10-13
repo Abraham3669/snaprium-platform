@@ -107,6 +107,7 @@ export default function CommunityDetail() {
   const [newBoard, setNewBoard] = useState("");
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [boardUnread, setBoardUnread] = useState({ chat: 0, questions: 0 });
+  const [welcome, setWelcome] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -136,7 +137,17 @@ export default function CommunityDetail() {
         setLoading(false);
       }
     })();
-  }, [communityId, user?.uid]);
+ }, [communityId, user?.uid]);
+
+useEffect(() => {
+  if (!community?.id || !user?.uid) return;
+  if (sessionStorage.getItem(`circle-welcome:${community.id}`) === "1") {
+    setWelcome(true);
+  }
+}, [community?.id, user?.uid]);
+
+
+  
 
 
 
@@ -190,7 +201,9 @@ export default function CommunityDetail() {
     if (!user) return navigate("/login");
     if (!isMember) {
       try {
-        await joinCommunity(community.id, user.uid);
+       await joinCommunity(community.id, user.uid);
+sessionStorage.setItem(`circle-welcome:${community.id}`, "1");
+setWelcome(true);
       } catch (err) {
         toast.error(err.message || "Join first");
         return;
@@ -313,7 +326,9 @@ export default function CommunityDetail() {
             setBusy(true);
             try {
               await joinCommunity(community.id, user.uid);
-              setCommunity(await getCommunity(community.id));
+sessionStorage.setItem(`circle-welcome:${community.id}`, "1");
+setWelcome(true);
+setCommunity(await getCommunity(community.id));
             } catch (err) {
               toast.error(err.message || "Could not join");
             } finally {
@@ -448,6 +463,32 @@ export default function CommunityDetail() {
 
       <input ref={bannerRef} type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) onUpload(f, "coverUrl"); }} />
       <input ref={photoRef} type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) onUpload(f, "photoUrl"); }} />
+
+{welcome && (
+  <div className="cd-welcome" onClick={() => {
+    sessionStorage.removeItem(`circle-welcome:${community.id}`);
+    setWelcome(false);
+  }}>
+    <div className="cd-welcome-card" onClick={(e) => e.stopPropagation()}>
+      <span className="cd-welcome-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M8 12.5l2.4 2.4L16.5 9" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <p className="cd-welcome-kicker">You’re in</p>
+      <h2>Welcome to {community.name}</h2>
+      <p>General is for chat. Questions is for posts you can reply to. Session is for live study.</p>
+      <button type="button" onClick={() => {
+        sessionStorage.removeItem(`circle-welcome:${community.id}`);
+        setWelcome(false);
+      }}>Continue</button>
+    </div>
+  </div>
+)}
+
+
+
 
       {showUpgradeModal && (
         <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />

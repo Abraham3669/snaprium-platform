@@ -370,7 +370,7 @@ export async function countBoardUnread(communityId, uid) {
   );
   messages.forEach((row) => {
     const m = row.data();
-    if (!m || m.uid === uid || m.isAI) return;
+    if (!m || m.uid === uid || m.isAI || m.system || m.type === "join") return;
     if ((m.createdAt?.toMillis?.() || 0) > chatSince) chat += 1;
   });
 

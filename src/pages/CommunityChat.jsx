@@ -335,6 +335,10 @@ const [pendingImage, setPendingImage] = useState("");
   const longPressTimer = useRef(null);
   const seenRef = useRef(null);
 
+  const [welcome, setWelcome] = useState(false);
+
+  
+
   const [boardUnread, setBoardUnread] = useState({ chat: 0, questions: 0 });
 
   const isPaid = user?.plan === "unlimited" || user?.plan === "premium";
@@ -478,6 +482,14 @@ setBoards(withQuestions);
   }, [communityId]);
 
 
+  useEffect(() => {
+  if (!communityId) return;
+  if (sessionStorage.getItem(`circle-welcome:${communityId}`) === "1") {
+    setWelcome(true);
+  }
+}, [communityId]);
+
+
 
 
   
@@ -615,6 +627,8 @@ setBoards(withQuestions);
     return () => unsub && unsub();
   }, [communityId, user?.uid, community, activeBoardId]);
 
+
+  
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "communities", communityId, "typing"), (snap) => {
       const now = Date.now();
@@ -1055,8 +1069,9 @@ useEffect(() => {
         <p className="cc-muted">Nothing here yet. Ask a question, or drop a photo of the problem.</p>
       )}
       {messages.map((msg, index) => {
-        const name = liveName(msg);
-        const photo = livePhoto(msg);
+  if (msg.system || msg.type === "join" || /has joined$|joined$/i.test(msg.text || "")) return null;
+  const name = liveName(msg);
+  const photo = livePhoto(msg);
         const grouped = sameRun(messages[index - 1], msg);
         const time = formatMsgTime(msg.createdAt);
         return (
@@ -1390,6 +1405,31 @@ useEffect(() => {
             </div>,
             document.body
           )}
+
+{welcome && (
+  <div className="cd-welcome" onClick={() => {
+    sessionStorage.removeItem(`circle-welcome:${communityId}`);
+    setWelcome(false);
+  }}>
+    <div className="cd-welcome-card" onClick={(e) => e.stopPropagation()}>
+      <span className="cd-welcome-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M8 12.5l2.4 2.4L16.5 9" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </span>
+      <p className="cd-welcome-kicker">You’re in</p>
+      <h2>Welcome to {community.name}</h2>
+      <p>General is for chat. Questions is for posts you can reply to. Session is for live study.</p>
+      <button type="button" onClick={() => {
+        sessionStorage.removeItem(`circle-welcome:${communityId}`);
+        setWelcome(false);
+      }}>Continue</button>
+    </div>
+  </div>
+)}
+
+
 
       {showUpgradeModal && (
         <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />

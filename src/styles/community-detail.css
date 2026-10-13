@@ -337,3 +337,54 @@
 
 
 
+
+
+.cd-welcome {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(8, 12, 20, 0.55);
+}
+.cd-welcome-card {
+  width: min(420px, 100%);
+  padding: 28px 24px;
+  border-radius: 20px;
+  background: var(--surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  text-align: center;
+}
+.cd-welcome-mark {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 12px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--icon-bg);
+  color: var(--accent);
+}
+.cd-welcome-mark svg { width: 28px; height: 28px; }
+.cd-welcome-kicker {
+  margin: 0 0 8px;
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+.cd-welcome-card h2 { margin: 0 0 10px; color: var(--text-primary); }
+.cd-welcome-card p { margin: 0 0 18px; color: var(--text-secondary); }
+.cd-welcome-card button {
+  border: 0;
+  border-radius: var(--radius-pill);
+  padding: 10px 22px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
