@@ -1087,3 +1087,39 @@
   border: 0; background: none; color: var(--accent); cursor: pointer; padding: 0; font-weight: 600;
 }
 .qb-edit { display: flex; flex-direction: column; gap: 8px; }
+
+
+
+
+
+.qb-compose { margin-top: 12px; }
+.qb-typing {
+  margin: 0 0 6px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.2;
+}
+.qb-reply-form { display: flex; align-items: flex-end; gap: 8px; }
+.qb-send {
+  width: 44px; height: 44px; border: 0; border-radius: 14px;
+  background: var(--accent); color: #fff; display: grid; place-items: center; cursor: pointer;
+}
+.qb-send svg { width: 20px; height: 20px; }
+.qb-send:disabled { opacity: 0.45; cursor: default; }
+.qb-quote strong { display: block; }
+
+
+
+.qb-reply-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.qb-reply-form textarea {
+  margin: 0;
+  min-height: 44px;
+}
+.qb-send {
+  align-self: center;
+  flex: 0 0 44px;
+}

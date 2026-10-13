@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { collection, deleteDoc, doc, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
+import ReactMarkdown from "react-markdown";
 import {
   subscribeToQuestions,
   createQuestion,
@@ -11,12 +12,9 @@ import {
   setQuestionSolved,
   deleteQuestion,
   editQuestion,
-editQuestionReply,
-deleteQuestionReply,
+  editQuestionReply,
+  deleteQuestionReply,
 } from "../lib/communities";
-
-
-
 
 function IconPlus() {
   return (
@@ -63,16 +61,20 @@ function IconTrash() {
     </svg>
   );
 }
-
-
-
+function IconSend() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <path d="M22 2L11 13" strokeLinecap="round" />
+      <path d="M22 2l-7 20-4-9-9-4 20-7z" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 function timeLabel(createdAt) {
   const d = createdAt?.toDate?.() || (createdAt ? new Date(createdAt) : null);
   if (!d || Number.isNaN(d.getTime())) return "";
   return d.toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 }
-
 
 function Avatar({ photo, name }) {
   const letter = (name || "?").slice(0, 1).toUpperCase();
@@ -83,7 +85,85 @@ function Avatar({ photo, name }) {
   );
 }
 
+const handleOf = (name) => String(name || "").replace(/\s+/g, "");
 
+function resolveMentions(text, people) {
+  const found = new Set();
+  const re = /@([\p{L}\p{N}_.-]{2,})/gu;
+  let m;
+  while ((m = re.exec(text || ""))) {
+    const token = m[1].replace(/[.-]+$/, "").toLowerCase();
+    if (!token) continue;
+    const exact = people.filter(
+      (p) => handleOf(p.name).toLowerCase() === token || p.name.toLowerCase().split(/\s+/)[0] === token
+    );
+    if (exact.length) {
+      exact.forEach((p) => found.add(p.uid));
+      continue;
+    }
+    const prefix = people.filter((p) => handleOf(p.name).toLowerCase().startsWith(token));
+    if (prefix.length === 1) found.add(prefix[0].uid);
+  }
+  return [...found];
+}
+
+function renderWithMentions(text, people, myUid) {
+  return String(text)
+    .split(/(@[\p{L}\p{N}_.-]{2,})/gu)
+    .map((part, i) => {
+      if (!part.startsWith("@")) return part;
+      const uids = resolveMentions(part, people);
+      return (
+        <span key={i} className={`cc-mention ${uids.includes(myUid) ? "me" : ""}`}>
+          {part}
+        </span>
+      );
+    });
+}
+
+function autolinkMarkdown(text) {
+  return String(text || "").replace(
+    /(^|[\s(])((https?:\/\/|www\.)[^\s<]+[^.\s<,;:!?"')\]])/gi,
+    (_, pre, url) => {
+      const href = url.startsWith("http") ? url : `https://${url}`;
+      return `${pre}[${url}](${href})`;
+    }
+  );
+}
+
+function prepareUserMessage(text) {
+  return autolinkMarkdown(String(text || "").replace(/\n/g, "  \n"));
+}
+
+function ReplyText({ text, people, myUid }) {
+  if (!text) return null;
+  return (
+    <div className="cc-md cc-user-md">
+      <ReactMarkdown
+        components={{
+          a: ({ href, children }) => (
+            <a href={href} target="_blank" rel="noopener noreferrer" className="cc-link">
+              {children}
+            </a>
+          ),
+          p: ({ children }) => (
+            <p>
+              {Array.isArray(children)
+                ? children.map((child, i) =>
+                    typeof child === "string" ? renderWithMentions(child, people, myUid) : child
+                  )
+                : typeof children === "string"
+                ? renderWithMentions(children, people, myUid)
+                : children}
+            </p>
+          ),
+        }}
+      >
+        {prepareUserMessage(text)}
+      </ReactMarkdown>
+    </div>
+  );
+}
 
 function compressImage(file, max = 900, quality = 0.65) {
   return new Promise((resolve, reject) => {
@@ -171,9 +251,9 @@ export default function QuestionBoard({ communityId, boardId, user, isMember }) 
           <div className="qb-bar">
             <p>Ask anything. School work or not.</p>
             <button type="button" className="qb-ask" onClick={() => setComposerOpen(true)}>
-  <IconPlus />
-  Ask a question
-</button>
+              <IconPlus />
+              Ask a question
+            </button>
           </div>
 
           {composerOpen && (
@@ -194,17 +274,17 @@ export default function QuestionBoard({ communityId, boardId, user, isMember }) 
                 rows={3}
               />
               {imageUrl && (
-  <div className="qb-preview">
-    <img src={imageUrl} alt="" />
-    <button type="button" onClick={() => setImageUrl("")}>Remove</button>
-  </div>
-)}
+                <div className="qb-preview">
+                  <img src={imageUrl} alt="" />
+                  <button type="button" onClick={() => setImageUrl("")}>Remove</button>
+                </div>
+              )}
               <div className="qb-composer-actions">
                 <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPickImage} />
                 <button type="button" className="qb-ghost" onClick={() => fileRef.current?.click()}>
-  <IconPhoto />
-  Photo
-</button>
+                  <IconPhoto />
+                  Photo
+                </button>
                 <button type="button" onClick={resetComposer}>Cancel</button>
                 <button type="submit" disabled={posting || !title.trim()}>
                   {posting ? "Posting…" : "Post"}
@@ -220,18 +300,18 @@ export default function QuestionBoard({ communityId, boardId, user, isMember }) 
           <div className="qb-list">
             {questions.map((q) => (
               <button key={q.id} type="button" className="qb-card" onClick={() => setOpenId(q.id)}>
-  {q.imageUrl && <img className="qb-thumb" src={q.imageUrl} alt="" />}
-  <div className="qb-card-copy">
-    <div className="qb-card-top">
-      <strong>{q.title}</strong>
-      {q.solved && <span className="qb-solved">Solved</span>}
-    </div>
-    {q.body && <p>{q.body}</p>}
-    <span className="qb-meta">
-     {q.displayName || "Member"} · {(openId === q.id ? replies.length : q.replyCount) || 0} replies · {q.likeCount || 0} likes
-    </span>
-  </div>
-</button>
+                {q.imageUrl && <img className="qb-thumb" src={q.imageUrl} alt="" />}
+                <div className="qb-card-copy">
+                  <div className="qb-card-top">
+                    <strong>{q.title}</strong>
+                    {q.solved && <span className="qb-solved">Solved</span>}
+                  </div>
+                  {q.body && <p>{q.body}</p>}
+                  <span className="qb-meta">
+                    {q.displayName || "Member"} · {Math.max(0, q.replyCount || 0)} replies · {q.likeCount || 0} likes
+                  </span>
+                </div>
+              </button>
             ))}
           </div>
         </>
@@ -258,91 +338,118 @@ function QuestionDetail({ communityId, boardId, question, user, isMember, onBack
   const liked = !!(user && (question.likedBy || []).includes(user.uid));
   const mine = user && question.uid === user.uid;
   const [editingPost, setEditingPost] = useState(false);
-const [postTitle, setPostTitle] = useState(question.title || "");
-const [postBody, setPostBody] = useState(question.body || "");
-const [replyTo, setReplyTo] = useState(null);
-const [editingReplyId, setEditingReplyId] = useState(null);
-const [editReplyText, setEditReplyText] = useState("");
-
-const [typingNames, setTypingNames] = useState([]);
-const typingTimer = useRef(null);
-const lastTypingWrite = useRef(0);
-const typingRef = user?.uid ? doc(db, "communities", communityId, "typing", user.uid) : null;
+  const [postTitle, setPostTitle] = useState(question.title || "");
+  const [postBody, setPostBody] = useState(question.body || "");
+  const [replyTo, setReplyTo] = useState(null);
+  const [editingReplyId, setEditingReplyId] = useState(null);
+  const [editReplyText, setEditReplyText] = useState("");
+  const [typingNames, setTypingNames] = useState([]);
+  const [mentionQuery, setMentionQuery] = useState(null);
+  const typingTimer = useRef(null);
+  const lastTypingWrite = useRef(0);
+  const typingRef = user?.uid ? doc(db, "communities", communityId, "typing", user.uid) : null;
 
   useEffect(() => {
     return subscribeToReplies(communityId, boardId, question.id, setReplies);
   }, [communityId, boardId, question.id]);
 
+  const people = useMemo(() => {
+    const map = new Map();
+    if (question?.uid && question?.displayName) {
+      map.set(question.uid, { uid: question.uid, name: question.displayName });
+    }
+    for (const r of replies) {
+      if (r.uid && r.displayName) map.set(r.uid, { uid: r.uid, name: r.displayName });
+    }
+    if (user?.uid && user?.displayName) map.set(user.uid, { uid: user.uid, name: user.displayName });
+    return [...map.values()];
+  }, [question, replies, user]);
 
+  const suggestions = useMemo(() => {
+    if (mentionQuery === null) return [];
+    return people
+      .filter((p) => p.uid !== user?.uid)
+      .filter(
+        (p) =>
+          handleOf(p.name).toLowerCase().startsWith(mentionQuery) ||
+          p.name.toLowerCase().split(/\s+/).some((w) => w.startsWith(mentionQuery))
+      )
+      .slice(0, 5);
+  }, [mentionQuery, people, user?.uid]);
+
+  const pickMention = (p) => {
+    setText((prev) => prev.replace(/@([\p{L}\p{N}_.-]*)$/u, `@${handleOf(p.name)} `));
+    setMentionQuery(null);
+  };
 
   const clearTyping = async () => {
-  if (!typingRef) return;
-  try { await deleteDoc(typingRef); } catch {}
-};
-
-const pulseTyping = () => {
-  if (!typingRef || !user) return;
-  clearTimeout(typingTimer.current);
-  typingTimer.current = setTimeout(clearTyping, 2500);
-  const now = Date.now();
-  if (now - lastTypingWrite.current < 2000) return;
-  lastTypingWrite.current = now;
-  setDoc(typingRef, {
-    uid: user.uid,
-    boardId,
-    questionId: question.id,
-    displayName: user.displayName || "Member",
-    at: serverTimestamp(),
-  }).catch(() => {});
-};
-
-useEffect(() => {
-  const unsub = onSnapshot(collection(db, "communities", communityId, "typing"), (snap) => {
-    const now = Date.now();
-    const names = snap.docs
-      .map((d) => ({ id: d.id, ...d.data() }))
-      .filter((row) => {
-        if (row.uid === user?.uid) return false;
-        if (row.questionId !== question.id) return false;
-        const t = row.at?.toMillis?.() || 0;
-        return !t || now - t < 4000;
-      })
-      .map((row) => row.displayName || "Someone");
-    setTypingNames(names);
-  });
-  return () => {
-    unsub();
-    clearTimeout(typingTimer.current);
-    clearTyping();
+    if (!typingRef) return;
+    try { await deleteDoc(typingRef); } catch {}
   };
-}, [communityId, question.id, user?.uid]);
 
-
-
-
- const onReply = async (e) => {
-  e.preventDefault();
-  const clean = text.trim();
-  if (!clean || !user || !isMember || sending) return;
-  setSending(true);
-  try {
-    await addQuestionReply(communityId, boardId, question.id, {
-      text: clean,
+  const pulseTyping = () => {
+    if (!typingRef || !user) return;
+    clearTimeout(typingTimer.current);
+    typingTimer.current = setTimeout(clearTyping, 2500);
+    const now = Date.now();
+    if (now - lastTypingWrite.current < 2000) return;
+    lastTypingWrite.current = now;
+    setDoc(typingRef, {
       uid: user.uid,
+      boardId,
+      questionId: question.id,
       displayName: user.displayName || "Member",
-      photoURL: user.photoURL || "",
-      replyTo: replyTo
-        ? { id: replyTo.id, displayName: replyTo.displayName || "Member", text: String(replyTo.text || "").slice(0, 140) }
-        : null,
+      at: serverTimestamp(),
+    }).catch(() => {});
+  };
+
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, "communities", communityId, "typing"), (snap) => {
+      const now = Date.now();
+      const names = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .filter((row) => {
+          if (row.uid === user?.uid) return false;
+          if (row.questionId !== question.id) return false;
+          const t = row.at?.toMillis?.() || 0;
+          return !t || now - t < 4000;
+        })
+        .map((row) => row.displayName || "Someone");
+      setTypingNames(names);
     });
-    setText("");
-    setReplyTo(null);
-  } catch {
-    toast.error("Could not reply");
-  } finally {
-    setSending(false);
-  }
-};
+    return () => {
+      unsub();
+      clearTimeout(typingTimer.current);
+      clearTyping();
+    };
+  }, [communityId, question.id, user?.uid]);
+
+  const onReply = async (e) => {
+    e?.preventDefault?.();
+    const clean = text.trim();
+    if (!clean || !user || !isMember || sending) return;
+    setSending(true);
+    try {
+      await addQuestionReply(communityId, boardId, question.id, {
+        text: clean,
+        mentions: resolveMentions(clean, people).filter((id) => id !== user.uid),
+        uid: user.uid,
+        displayName: user.displayName || "Member",
+        photoURL: user.photoURL || "",
+        replyTo: replyTo
+          ? { id: replyTo.id, displayName: replyTo.displayName || "Member", text: String(replyTo.text || "").slice(0, 140) }
+          : null,
+      });
+      setText("");
+      setReplyTo(null);
+      setMentionQuery(null);
+      clearTyping();
+    } catch {
+      toast.error("Could not reply");
+    } finally {
+      setSending(false);
+    }
+  };
 
   const onLike = async () => {
     if (!user || !isMember) return;
@@ -371,163 +478,176 @@ useEffect(() => {
     }
   };
 
+  const savePost = async () => {
+    const title = postTitle.trim();
+    if (!title) return;
+    try {
+      await editQuestion(communityId, boardId, question.id, { title, body: postBody.trim() });
+      setEditingPost(false);
+    } catch {
+      toast.error("Could not edit post");
+    }
+  };
 
+  const saveReply = async (replyId) => {
+    const next = editReplyText.trim();
+    if (!next) return;
+    try {
+      await editQuestionReply(communityId, boardId, question.id, replyId, next);
+      setEditingReplyId(null);
+      setEditReplyText("");
+    } catch {
+      toast.error("Could not edit reply");
+    }
+  };
 
-const savePost = async () => {
-  const title = postTitle.trim();
-  if (!title) return;
-  try {
-    await editQuestion(communityId, boardId, question.id, { title, body: postBody.trim() });
-    setEditingPost(false);
-  } catch {
-    toast.error("Could not edit post");
-  }
-};
-
-const saveReply = async (replyId) => {
-  const next = editReplyText.trim();
-  if (!next) return;
-  try {
-    await editQuestionReply(communityId, boardId, question.id, replyId, next);
-    setEditingReplyId(null);
-    setEditReplyText("");
-  } catch {
-    toast.error("Could not edit reply");
-  }
-};
-
-const removeReply = async (replyId) => {
-  if (!window.confirm("Delete this reply?")) return;
-  try {
-    await deleteQuestionReply(communityId, boardId, question.id, replyId);
-  } catch {
-    toast.error("Could not delete reply");
-  }
-};
-
-
-
+  const removeReply = async (replyId) => {
+    if (!window.confirm("Delete this reply?")) return;
+    try {
+      await deleteQuestionReply(communityId, boardId, question.id, replyId);
+    } catch {
+      toast.error("Could not delete reply");
+    }
+  };
 
   return (
     <div className="qb-detail">
       <button type="button" className="qb-back" onClick={onBack}>
-  <IconBack />
-  Back to questions
-</button>
+        <IconBack />
+        Back to questions
+      </button>
       <article className="qb-question">
         <div className="qb-person">
-  <Avatar photo={question.photoURL} name={question.displayName} />
-  <div>
-    <strong>{question.displayName || "Member"}</strong>
-    <time>{timeLabel(question.createdAt)}</time>
-  </div>
-</div>
-{editingPost ? (
-  <div className="qb-edit">
-    <input className="qb-title" value={postTitle} onChange={(e) => setPostTitle(e.target.value)} />
-    <textarea className="qb-body" value={postBody} onChange={(e) => setPostBody(e.target.value)} rows={3} />
-    <button type="button" onClick={savePost}>Save</button>
-    <button type="button" className="qb-ghost" onClick={() => setEditingPost(false)}>Cancel</button>
-  </div>
-) : (
-  <>
-    <div className="qb-card-top">
-      <h2>{question.title}</h2>
-      {question.solved && <span className="qb-solved">Solved</span>}
-    </div>
-    {question.body && <p className="qb-copy">{question.body}</p>}
-  </>
-)}
-{question.imageUrl && (
-  <img className="qb-photo" src={question.imageUrl} alt="" />
-)}
-<div className="qb-actions">
-  <button type="button" className={liked ? "on" : ""} onClick={onLike}>
-    <IconLike />
-    {liked ? "Liked" : "Like"} · {question.likeCount || 0}
-  </button>
-  {mine && (
-    <button type="button" onClick={onSolve}>
-      <IconCheck />
-      {question.solved ? "Unsolve" : "Solved"}
-    </button>
-  )}
-  {mine && (
-    <button type="button" className="danger" onClick={onDelete}>
-      <IconTrash />
-      Delete
-    </button>
-  )}
-
-{mine && !editingPost && (
-  <button type="button" onClick={() => setEditingPost(true)}>Edit</button>
-)}
-
-
-</div>
+          <Avatar photo={question.photoURL} name={question.displayName} />
+          <div>
+            <strong>{question.displayName || "Member"}</strong>
+            <time>{timeLabel(question.createdAt)}</time>
+          </div>
+        </div>
+        {editingPost ? (
+          <div className="qb-edit">
+            <input className="qb-title" value={postTitle} onChange={(e) => setPostTitle(e.target.value)} />
+            <textarea className="qb-body" value={postBody} onChange={(e) => setPostBody(e.target.value)} rows={3} />
+            <button type="button" onClick={savePost}>Save</button>
+            <button type="button" className="qb-ghost" onClick={() => setEditingPost(false)}>Cancel</button>
+          </div>
+        ) : (
+          <>
+            <div className="qb-card-top">
+              <h2>{question.title}</h2>
+              {question.solved && <span className="qb-solved">Solved</span>}
+            </div>
+            {question.body && <ReplyText text={question.body} people={people} myUid={user?.uid} />}
+          </>
+        )}
+        {question.imageUrl && <img className="qb-photo" src={question.imageUrl} alt="" />}
+        <p className="qb-meta">{replies.length} replies · {question.likeCount || 0} likes</p>
+        <div className="qb-actions">
+          <button type="button" className={liked ? "on" : ""} onClick={onLike}>
+            <IconLike />
+            {liked ? "Liked" : "Like"} · {question.likeCount || 0}
+          </button>
+          {mine && (
+            <button type="button" onClick={onSolve}>
+              <IconCheck />
+              {question.solved ? "Unsolve" : "Solved"}
+            </button>
+          )}
+          {mine && !editingPost && (
+            <button type="button" onClick={() => setEditingPost(true)}>Edit</button>
+          )}
+          {mine && (
+            <button type="button" className="danger" onClick={onDelete}>
+              <IconTrash />
+              Delete
+            </button>
+          )}
+        </div>
       </article>
 
       <div className="qb-replies">
         {replies.length === 0 && <p className="cc-muted">No replies yet.</p>}
         {replies.map((r) => (
           <article key={r.id} className="qb-reply">
-  <Avatar photo={r.photoURL} name={r.displayName} />
-  <div>
-    <strong>{r.displayName || "Member"}</strong>
-    <time>{timeLabel(r.createdAt)}{r.edited ? " · edited" : ""}</time>
-    {r.replyTo && (
-  <div className="qb-quote">
-    <strong>{r.replyTo.displayName}</strong>
-    <span>{r.replyTo.text}</span>
-  </div>
-)}
-    {editingReplyId === r.id ? (
-      <div className="qb-edit">
-        <textarea value={editReplyText} onChange={(e) => setEditReplyText(e.target.value)} rows={2} />
-        <button type="button" onClick={() => saveReply(r.id)}>Save</button>
-        <button type="button" className="qb-ghost" onClick={() => setEditingReplyId(null)}>Cancel</button>
-      </div>
-    ) : (
-      <p>{r.text}</p>
-    )}
-    <div className="qb-reply-actions">
-      <button type="button" onClick={() => setReplyTo(r)}>Reply</button>
-      {user?.uid === r.uid && (
-        <>
-          <button type="button" onClick={() => { setEditingReplyId(r.id); setEditReplyText(r.text || ""); }}>Edit</button>
-          <button type="button" onClick={() => removeReply(r.id)}>Delete</button>
-        </>
-      )}
-    </div>
-  </div>
-</article>
+            <Avatar photo={r.photoURL} name={r.displayName} />
+            <div>
+              <strong>{r.displayName || "Member"}</strong>
+              <time>{timeLabel(r.createdAt)}{r.edited ? " · edited" : ""}</time>
+              {r.replyTo && (
+                <div className="qb-quote">
+                  <strong>{r.replyTo.displayName}</strong>
+                  <span>{r.replyTo.text}</span>
+                </div>
+              )}
+              {editingReplyId === r.id ? (
+                <div className="qb-edit">
+                  <textarea value={editReplyText} onChange={(e) => setEditReplyText(e.target.value)} rows={2} />
+                  <button type="button" onClick={() => saveReply(r.id)}>Save</button>
+                  <button type="button" className="qb-ghost" onClick={() => setEditingReplyId(null)}>Cancel</button>
+                </div>
+              ) : (
+                <ReplyText text={r.text} people={people} myUid={user?.uid} />
+              )}
+              <div className="qb-reply-actions">
+                <button type="button" onClick={() => setReplyTo(r)}>Reply</button>
+                {user?.uid === r.uid && (
+                  <>
+                    <button type="button" onClick={() => { setEditingReplyId(r.id); setEditReplyText(r.text || ""); }}>Edit</button>
+                    <button type="button" onClick={() => removeReply(r.id)}>Delete</button>
+                  </>
+                )}
+              </div>
+            </div>
+          </article>
         ))}
       </div>
 
-      {replyTo && (
-  <div className="qb-replying">
-    <span>Replying to {replyTo.displayName || "Member"}: {String(replyTo.text || "").slice(0, 80)}</span>
-    <button type="button" onClick={() => setReplyTo(null)}>×</button>
-  </div>
-)}
-      <form className="qb-reply-form" onSubmit={onReply}>
+      <div className="qb-compose">
         {typingNames.length > 0 && (
-  <p className="cc-typing-label">
-    {typingNames.slice(0, 2).join(", ")} {typingNames.length === 1 ? "is" : "are"} typing…
-  </p>
-)}
-<textarea
-  value={text}
-  onChange={(e) => {
-    setText(e.target.value);
-    if (e.target.value.trim()) pulseTyping();
-    else clearTyping();
-  }}
-  placeholder="Write a reply…"
-  rows={2}
-/>
-        <button type="submit" disabled={sending || !text.trim()}>Reply</button>
-      </form>
+          <p className="qb-typing">
+            {typingNames.slice(0, 2).join(", ")} {typingNames.length === 1 ? "is" : "are"} typing…
+          </p>
+        )}
+        {replyTo && (
+          <div className="qb-replying">
+            <span>Replying to {replyTo.displayName || "Member"}: {String(replyTo.text || "").slice(0, 80)}</span>
+            <button type="button" onClick={() => setReplyTo(null)}>×</button>
+          </div>
+        )}
+        {suggestions.length > 0 && (
+          <div className="cc-mention-list">
+            {suggestions.map((p) => (
+              <button key={p.uid} type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => pickMention(p)}>
+                @{handleOf(p.name)}
+              </button>
+            ))}
+          </div>
+        )}
+        <form className="qb-reply-form" onSubmit={onReply}>
+          <textarea
+            value={text}
+            onChange={(e) => {
+              const value = e.target.value;
+              setText(value);
+              const m = value.match(/(?:^|\s)@([\p{L}\p{N}_.-]*)$/u);
+              setMentionQuery(m ? m[1].toLowerCase() : null);
+              if (value.trim()) pulseTyping();
+              else clearTyping();
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                onReply(e);
+              }
+            }}
+            placeholder="Write a reply…"
+            rows={2}
+          />
+          <button type="submit" className="qb-send" disabled={sending || !text.trim()} aria-label="Send">
+            <IconSend />
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

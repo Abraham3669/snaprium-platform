@@ -484,10 +484,9 @@ export async function editQuestionReply(communityId, boardId, questionId, replyI
 }
 
 export async function deleteQuestionReply(communityId, boardId, questionId, replyId) {
-  await deleteDoc(
-    doc(db, "communities", communityId, "boards", boardId, "questions", questionId, "replies", replyId)
-  );
-  await updateDoc(doc(db, "communities", communityId, "boards", boardId, "questions", questionId), {
-    replyCount: increment(-1),
-  });
+  const questionRef = doc(db, "communities", communityId, "boards", boardId, "questions", questionId);
+  await deleteDoc(doc(questionRef, "replies", replyId));
+  const snap = await getDoc(questionRef);
+  const next = Math.max(0, (snap.data()?.replyCount || 0) - 1);
+  await updateDoc(questionRef, { replyCount: next });
 }
