@@ -11,6 +11,7 @@ import {
   listPublicCommunities,
   listMyCommunities,
   joinCommunityByCode,
+  countCommunityUnread,
 } from "../lib/communities";
 
 const isUnlimitedPlan = (plan) => plan === "unlimited" || plan === "premium";
@@ -86,6 +87,8 @@ export default function Community() {
   const [role, setRole] = useState("student");
   const [saving, setSaving] = useState(false);
 
+  const [unread, setUnread] = useState({});
+
   const load = async (selectedTag = tag) => {
     setLoading(true);
     try {
@@ -94,7 +97,15 @@ export default function Community() {
         user?.uid ? listMyCommunities(user.uid) : Promise.resolve([]),
       ]);
       setList(rows);
-      setMine(own);
+setMine(own);
+if (user?.uid && own.length) {
+  const pairs = await Promise.all(
+    own.map(async (c) => [c.id, await countCommunityUnread(c.id, user.uid)])
+  );
+  setUnread(Object.fromEntries(pairs));
+} else {
+  setUnread({});
+}
     } catch (err) {
       console.error(err);
       toast.error("Could not load circles");
@@ -194,7 +205,9 @@ export default function Community() {
     return `${n} ${n === 1 ? "member" : "members"}`;
   };
 
-  const renderCard = (c) => (
+  const renderCard = (c, showBadge = false) => {
+  const n = showBadge ? unread[c.id] || 0 : 0;
+  return (
     <button
       key={c.id}
       type="button"
@@ -203,6 +216,7 @@ export default function Community() {
     >
       <div className="cx-card-top">
         <Avatar c={c} size="lg" />
+        {n > 0 && <span className="cx-badge">{n > 9 ? "9+" : n}</span>}
         {c.visibility === "private" && (
           <span className="cx-card-lock" title="Private">
             <LockIcon />
@@ -219,8 +233,9 @@ export default function Community() {
           </span>
         </div>
       </div>
-    </button>
+     </button>
   );
+};
 
   const skeletons = Array.from({ length: 8 }, (_, i) => (
     <div key={i} className="cx-card cx-skeleton" aria-hidden="true">
@@ -304,7 +319,7 @@ export default function Community() {
             <h2 className="cx-section-title">Your circles</h2>
             <span className="cx-section-count">{mine.length}</span>
           </div>
-          <div className="cx-grid">{mine.map(renderCard)}</div>
+          <div className="cx-grid">{mine.map((c) => renderCard(c, true))}</div>
         </section>
       )}
 

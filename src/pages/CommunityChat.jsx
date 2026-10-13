@@ -27,7 +27,9 @@ import {
   sendCommunityMessage,
   editCommunityMessage,
   deleteCommunityMessage,
-  ensureQuestionsBoard,
+ ensureQuestionsBoard,
+markBoardRead,
+countBoardUnread,
 } from "../lib/communities";
 import QuestionBoard from "../components/QuestionBoard";
 import ReactMarkdown from "react-markdown";
@@ -330,6 +332,8 @@ const [pendingImage, setPendingImage] = useState("");
   const longPressTimer = useRef(null);
   const seenRef = useRef(null);
 
+  const [boardUnread, setBoardUnread] = useState({ chat: 0, questions: 0 });
+
   const isPaid = user?.plan === "unlimited" || user?.plan === "premium";
   const today = getToday();
   const usedRoomAI = user?.lastRoomAIDate === today ? user?.dailyRoomAI || 0 : 0;
@@ -470,6 +474,10 @@ setBoards(withQuestions);
     })();
   }, [communityId]);
 
+
+
+
+  
 
 
 
@@ -673,6 +681,27 @@ setBoards(withQuestions);
 
 
   const isMember = user && community && (community.members || []).includes(user.uid);
+
+
+  useEffect(() => {
+  if (!user?.uid || !communityId || !isMember) return;
+  let cancelled = false;
+  (async () => {
+    const n = await countBoardUnread(communityId, user.uid);
+    if (!cancelled) setBoardUnread(n);
+  })();
+  return () => {
+    cancelled = true;
+  };
+}, [communityId, user?.uid, isMember, activeBoardId]);
+
+useEffect(() => {
+  if (!user?.uid || !isMember || !activeBoard) return;
+  const kind = isQuestionsBoard(activeBoard) ? "questions" : isLiveBoard(activeBoard) ? "" : "chat";
+  if (!kind) return;
+  markBoardRead(communityId, user.uid, kind).catch(() => {});
+  setBoardUnread((prev) => ({ ...prev, [kind === "questions" ? "questions" : "chat"]: 0 }));
+}, [communityId, user?.uid, isMember, activeBoardId]);
 
   const switchBoard = (id) => {
     setBoardId(id);

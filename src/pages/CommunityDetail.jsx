@@ -20,8 +20,9 @@ import {
   createBoard,
   deleteBoard,
   isDefaultBoard,
-  reportCommunity,
-  FREE_BOARD_LIMIT,
+reportCommunity,
+FREE_BOARD_LIMIT,
+countBoardUnread,
 } from "../lib/communities";
 
 const isUnlimitedPlan = (plan) => plan === "unlimited" || plan === "premium";
@@ -102,6 +103,7 @@ export default function CommunityDetail() {
   const [busy, setBusy] = useState(false);
   const [newBoard, setNewBoard] = useState("");
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [boardUnread, setBoardUnread] = useState({ chat: 0, questions: 0 });
 
   useEffect(() => {
     (async () => {
@@ -132,6 +134,22 @@ export default function CommunityDetail() {
       }
     })();
   }, [communityId, user?.uid]);
+
+
+
+  useEffect(() => {
+  if (!user?.uid || !community || !(community.members || []).includes(user.uid)) return;
+  let cancelled = false;
+  (async () => {
+    const n = await countBoardUnread(community.id, user.uid);
+    if (!cancelled) setBoardUnread(n);
+  })();
+  return () => {
+    cancelled = true;
+  };
+}, [community, user?.uid]);
+
+
 
   if (loading) {
     return <div className="cd-page"><p className="cd-muted">Loading circle…</p></div>;
@@ -364,9 +382,21 @@ export default function CommunityDetail() {
   {boards.map((board) => (
     <div key={board.id} className="cd-board-row">
       <button type="button" className="cd-board" onClick={() => openBoard(board)}>
-        <span className="cd-board-mark"><IconChat /></span>
-        <span className="cd-board-name">{board.name}</span>
-        <span className="cd-board-go">Open</span>
+       <span className="cd-board-mark"><IconChat /></span>
+<span className="cd-board-name">{board.name}</span>
+{(() => {
+  const slug = String(board.slug || "").toLowerCase();
+  const name = String(board.name || "").toLowerCase();
+  const kind =
+    slug === "questions" || name === "questions" || board.kind === "questions"
+      ? "questions"
+      : slug === "session" || name === "session" || name === "live"
+      ? ""
+      : "chat";
+  const n = kind ? boardUnread[kind] || 0 : 0;
+  return n > 0 ? <span className="cd-badge">{n > 9 ? "9+" : n}</span> : null;
+})()}
+<span className="cd-board-go">Open</span>
       </button>
       {isAdmin && !isDefaultBoard(board) && (
         <button

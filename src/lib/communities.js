@@ -347,6 +347,69 @@ export async function deleteBoard(communityId, board) {
 
 
 
+export async function markBoardRead(communityId, uid, kind) {
+  if (!communityId || !uid || !kind) return;
+  const field = kind === "questions" ? "questionsAt" : "chatAt";
+  await setDoc(
+    doc(db, "communities", communityId, "reads", uid),
+    { [field]: serverTimestamp(), at: serverTimestamp() },
+    { merge: true }
+  );
+}
+
+export async function countBoardUnread(communityId, uid) {
+  if (!communityId || !uid) return { chat: 0, questions: 0 };
+  const readSnap = await getDoc(doc(db, "communities", communityId, "reads", uid));
+  const read = readSnap.exists() ? readSnap.data() || {} : {};
+  const chatSince = read.chatAt?.toMillis?.() || 0;
+  const questionsSince = read.questionsAt?.toMillis?.() || 0;
+
+  let chat = 0;
+  const messages = await getDocs(
+    query(collection(db, "communities", communityId, "messages"), orderBy("createdAt", "desc"), limit(40))
+  );
+  messages.forEach((row) => {
+    const m = row.data();
+    if (!m || m.uid === uid || m.isAI) return;
+    if ((m.createdAt?.toMillis?.() || 0) > chatSince) chat += 1;
+  });
+
+  let questions = 0;
+  const boards = await listBoards(communityId);
+  const questionsBoard = boards.find(
+    (b) => b.slug === "questions" || b.kind === "questions" || String(b.name || "").toLowerCase() === "questions"
+  );
+  if (questionsBoard) {
+    const rows = await getDocs(
+      collection(db, "communities", communityId, "boards", questionsBoard.id, "questions")
+    );
+    for (const q of rows.docs.slice(0, 25)) {
+      const data = q.data() || {};
+      const replies = await getDocs(
+        query(collection(q.ref, "replies"), orderBy("createdAt", "desc"), limit(20))
+      );
+      const involved =
+        data.uid === uid ||
+        replies.docs.some((r) => r.data()?.uid === uid) ||
+        replies.docs.some((r) => (r.data()?.mentions || []).includes(uid));
+      if (!involved) continue;
+      replies.forEach((r) => {
+        const reply = r.data() || {};
+        if (reply.uid === uid) return;
+        if ((reply.createdAt?.toMillis?.() || 0) > questionsSince) questions += 1;
+      });
+    }
+  }
+
+  return { chat: Math.min(chat, 99), questions: Math.min(questions, 99) };
+}
+
+export async function countCommunityUnread(communityId, uid) {
+  const n = await countBoardUnread(communityId, uid);
+  return Math.min(n.chat + n.questions, 99);
+}
+
+
 
 function isQuestionsBoardRow(board) {
   const slug = String(board?.slug || "").toLowerCase();
@@ -490,3 +553,5 @@ export async function deleteQuestionReply(communityId, boardId, questionId, repl
   const next = Math.max(0, (snap.data()?.replyCount || 0) - 1);
   await updateDoc(questionRef, { replyCount: next });
 }
+
+
