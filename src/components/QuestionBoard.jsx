@@ -277,7 +277,7 @@ const [seen, setSeen] = useState({});
       {!open && (
         <>
           <div className="qb-bar">
-            <p>Questions for this circle. Homework, confusion, or anything else.</p>
+            <p>Ask the circle anything.</p>
             <button type="button" className="qb-ask" onClick={() => setComposerOpen(true)}>
               <IconPlus />
               Ask a question
