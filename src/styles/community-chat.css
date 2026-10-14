@@ -1132,3 +1132,45 @@
   color: var(--text-secondary);
   font-size: 0.78rem;
 }
+
+
+
+
+
+/* Tighter spacing for back-to-back messages from the same person */
+
+/* 1. Pull grouped messages closer to the one above */
+.cc-feed .cc-post.grouped {
+  margin-top: -6px;
+  padding-top: 2px;
+}
+
+/* 2. Grouped messages still render an empty header row (the ⋯ button),
+      which takes up height. Take it out of the flow. */
+.cc-feed .cc-post.grouped {
+  position: relative;
+}
+
+.cc-feed .cc-post.grouped .cc-post-head {
+  position: absolute;
+  top: 2px;
+  right: 6px;
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+}
+
+/* 3. Paragraph margins inside message text */
+.cc-post .cc-md p {
+  margin: 0;
+}
+
+.cc-post .cc-md p + p {
+  margin-top: 4px;
+}
+
+
+
+
+
+
