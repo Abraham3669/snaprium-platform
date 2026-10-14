@@ -1173,4 +1173,36 @@
 
 
 
+/* Message avatars next to posts */
+.cc-post .cc-avatar-btn {
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
+  flex: 0 0 40px !important;
+}
 
+.cc-post .cc-avatar,
+.cc-post .cc-avatar-fallback,
+.cc-post .cc-avatar-btn img {
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
+}
+
+/* Text lined up under avatar (40px + ~8px gap) */
+.cc-post > p,
+.cc-post > .cc-md,
+.cc-post .cc-media-btn,
+.cc-post.grouped .cc-media-btn,
+.cc-post.grouped .cc-md,
+.cc-post.grouped > p,
+.cc-post.grouped .cc-quote,
+.cc-edit-row {
+  margin-left: 50px !important;
+}
+
+.cc-quote {
+  margin-left: 50px !important;
+}
