@@ -16,6 +16,8 @@ import {
 deleteQuestionReply,
 markQuestionRead,
 } from "../lib/communities";
+import "../styles/question-board.css";
+
 
 function IconPlus() {
   return (
@@ -74,7 +76,15 @@ function IconSend() {
 function timeLabel(createdAt) {
   const d = createdAt?.toDate?.() || (createdAt ? new Date(createdAt) : null);
   if (!d || Number.isNaN(d.getTime())) return "";
-  return d.toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  const diff = Date.now() - d.getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  return d.toLocaleDateString([], { month: "short", day: "numeric" });
 }
 
 function Avatar({ photo, name }) {
@@ -267,7 +277,7 @@ const [seen, setSeen] = useState({});
       {!open && (
         <>
           <div className="qb-bar">
-            <p>Ask anything. School work or not.</p>
+            <p>Questions for this circle. Homework, confusion, or anything else.</p>
             <button type="button" className="qb-ask" onClick={() => setComposerOpen(true)}>
               <IconPlus />
               Ask a question
@@ -280,7 +290,7 @@ const [seen, setSeen] = useState({});
                 className="qb-title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="What do you need?"
+                placeholder="What's your question?"
                 maxLength={140}
                 autoFocus
               />
@@ -288,7 +298,7 @@ const [seen, setSeen] = useState({});
                 className="qb-body"
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
-                placeholder="Add the details, or leave this blank and attach a photo."
+                placeholder="Add detail, or attach a photo of the problem."
                 rows={3}
               />
               {imageUrl && (
@@ -312,7 +322,7 @@ const [seen, setSeen] = useState({});
           )}
 
           {questions.length === 0 && !composerOpen && (
-            <p className="cc-muted">No questions yet. Be the first to ask.</p>
+            <p className="cc-muted">No questions yet. Post the first one for the circle.</p>
           )}
 
           <div className="qb-list">
@@ -334,8 +344,12 @@ const [seen, setSeen] = useState({});
                   </div>
                   {q.body && <p>{q.body}</p>}
                   <span className="qb-meta">
-                    {q.displayName || "Member"} · {Math.max(0, q.replyCount || 0)} replies · {q.likeCount || 0} likes
-                  </span>
+  {q.displayName || "Member"}
+  <span aria-hidden="true"> · </span>
+  {Math.max(0, q.replyCount || 0)} {q.replyCount === 1 ? "reply" : "replies"}
+  <span aria-hidden="true"> · </span>
+  {q.likeCount || 0} {(q.likeCount || 0) === 1 ? "like" : "likes"}
+</span>
                 </div>
               </button>
             ))}
@@ -573,26 +587,45 @@ function QuestionDetail({ communityId, boardId, question, user, isMember, onBack
         )}
         {question.imageUrl && <img className="qb-photo" src={question.imageUrl} alt="" />}
         <p className="qb-meta">{replies.length} replies · {question.likeCount || 0} likes</p>
-        <div className="qb-actions">
-          <button type="button" className={liked ? "on" : ""} onClick={onLike}>
+                <div className="qb-actions">
+          <button
+            type="button"
+            className={`qb-icon-btn ${liked ? "on" : ""}`}
+            onClick={onLike}
+            aria-label={liked ? "Unlike" : "Like"}
+            title={liked ? "Unlike" : "Like"}
+          >
             <IconLike />
-            {liked ? "Liked" : "Like"} · {question.likeCount || 0}
+            {(question.likeCount || 0) > 0 && (
+              <span className="qb-icon-count">{question.likeCount}</span>
+            )}
           </button>
+
           {mine && (
-            <button type="button" onClick={onSolve}>
+            <button type="button" className="qb-text-btn" onClick={onSolve}>
               <IconCheck />
-              {question.solved ? "Unsolve" : "Solved"}
+              {question.solved ? "Mark unsolved" : "Mark solved"}
             </button>
           )}
+
           {mine && !editingPost && (
-            <button type="button" onClick={() => setEditingPost(true)}>Edit</button>
-          )}
-          {mine && (
-            <button type="button" className="danger" onClick={onDelete}>
-              <IconTrash />
-              Delete
+            <button type="button" className="qb-text-btn" onClick={() => setEditingPost(true)}>
+              Edit
             </button>
           )}
+
+          {mine && (
+            <button
+              type="button"
+              className="qb-icon-btn danger"
+              onClick={onDelete}
+              aria-label="Delete question"
+              title="Delete"
+            >
+              <IconTrash />
+            </button>
+          )}
+       
         </div>
       </article>
 

@@ -1,0 +1,107 @@
+/* ── Question board actions: cleaner colors ── */
+
+.qb-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+/* Kill the old “everything is accent” look on action buttons */
+.qb-actions button {
+  background: var(--bg) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: none !important;
+}
+
+.qb-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.qb-icon-btn svg {
+  width: 18px;
+  height: 18px;
+  color: var(--text-secondary);
+}
+
+.qb-icon-btn:hover {
+  background: var(--icon-bg) !important;
+}
+
+.qb-icon-btn:hover svg {
+  color: var(--text-primary);
+}
+
+/* Liked */
+.qb-icon-btn.on {
+  background: var(--icon-bg) !important;
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border)) !important;
+  color: var(--accent) !important;
+}
+
+.qb-icon-btn.on svg {
+  color: var(--accent);
+}
+
+.qb-icon-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: inherit;
+}
+
+/* Delete — quiet until hover */
+.qb-icon-btn.danger {
+  background: var(--bg) !important;
+  border-color: var(--border) !important;
+  color: var(--text-secondary) !important;
+}
+
+.qb-icon-btn.danger svg {
+  color: var(--text-secondary);
+}
+
+.qb-icon-btn.danger:hover {
+  background: rgba(229, 72, 77, 0.1) !important;
+  border-color: rgba(229, 72, 77, 0.4) !important;
+  color: #e5484d !important;
+}
+
+.qb-icon-btn.danger:hover svg {
+  color: #e5484d;
+}
+
+/* Mark solved / Edit */
+.qb-text-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.qb-text-btn svg {
+  width: 16px;
+  height: 16px;
+  color: var(--text-secondary);
+}
+
+.qb-text-btn:hover {
+  background: var(--icon-bg) !important;
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border)) !important;
+}
