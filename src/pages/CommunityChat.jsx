@@ -665,20 +665,41 @@ setBoards(withQuestions);
     setUnseen(0);
   };
 
-  useEffect(() => {
+    useEffect(() => {
     const el = feedRef.current;
     if (!el) return;
-    if (stickToBottom.current) {
-      el.scrollTop = el.scrollHeight;
-      setUnseen(0);
-    } else {
-      setUnseen((n) => n + 1);
+
+    if (!stickToBottom.current) {
+      // Only count as "unseen" after the first load has settled
+      if (messages.length > 0) setUnseen((n) => n + 1);
+      return;
     }
-  }, [messages, askingAI]);
+
+    // Scroll after layout (and again next frame for images/markdown)
+    const pin = () => {
+      if (!feedRef.current || !stickToBottom.current) return;
+      feedRef.current.scrollTop = feedRef.current.scrollHeight;
+      setUnseen(0);
+    };
+
+    pin();
+    const id1 = requestAnimationFrame(() => {
+      pin();
+      requestAnimationFrame(pin);
+    });
+    const t = setTimeout(pin, 50);
+
+    return () => {
+      cancelAnimationFrame(id1);
+      clearTimeout(t);
+    };
+  }, [messages, askingAI, activeBoardId]);
 
 
   useEffect(() => {
-    seenRef.current = null; // new board = start fresh
+    seenRef.current = null;
+    stickToBottom.current = true;
+    setUnseen(0);
   }, [activeBoardId]);
 
   useEffect(() => {
@@ -737,6 +758,8 @@ useEffect(() => {
     setBoardId(id);
     setParams({ board: id });
     setMessages([]);
+    stickToBottom.current = true;
+    setUnseen(0);
     setCallOpen(false);
     setReplyTo(null);
     clearTyping();
