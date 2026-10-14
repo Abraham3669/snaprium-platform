@@ -92,7 +92,7 @@ export default function Upgrade() {
     <div className="upgrade-page">
       <div className="upgrade-header">
         <h2>Upgrade to Unlimited</h2>
-        <p>Solve freely. Study with friends. Keep going when it matters.</p>
+        <p>Solve freely. Build more circles. Stay in longer sessions when it matters.</p>
       </div>
 
       {!showCheckout && (
@@ -103,10 +103,10 @@ export default function Upgrade() {
               $0 <span>per month</span>
             </div>
             <p className="plan-desc">
-              <strong>5 home solves / day</strong>
+              <strong>10 solves / day</strong>
             </p>
             <p className="plan-detail">
-              Try the solver, join study rooms, and use 5 group AI asks per day.
+              Try the solver and join circles.
             </p>
             <button className="plan-cta disabled">Current Plan</button>
           </div>
@@ -119,11 +119,12 @@ export default function Upgrade() {
             </div>
             <p className="plan-desc">For students who study every day</p>
             <ul className="plan-features">
-              <li><CheckIcon /> Unlimited photo solves on the home screen</li>
+              <li><CheckIcon /> Unlimited photo solves</li>
               <li><CheckIcon /> More follow-up questions on every solution</li>
-              <li><CheckIcon /> Study rooms stay included — video, screen share, and shared questions</li>
-              <li><CheckIcon /> Communities and group AI for real study sessions</li>
-              <li><CheckIcon /> Built for exam nights and long study sessions</li>
+              <li><CheckIcon /> Create more circles</li>
+              <li><CheckIcon /> More boards in every circle you run</li>
+              <li><CheckIcon /> Long live study sessions</li>
+              <li><CheckIcon /> Built for exam nights and deep focus</li>
             </ul>
             <button
               className="plan-cta primary"
@@ -153,7 +154,9 @@ export default function Upgrade() {
                 : "Cancel anytime • Monthly subscription"}
             </p>
             {isNative && !iapConfigured() && (
-              <p className="plan-detail">Store product is not live yet. Add RevenueCat keys after the subscription exists in App Store Connect / Play.</p>
+              <p className="plan-detail">
+                Store product is not live yet. Add RevenueCat keys after the subscription exists in App Store Connect / Play.
+              </p>
             )}
           </div>
         </div>

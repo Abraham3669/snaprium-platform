@@ -45,7 +45,7 @@ import { showAppError } from "./utils/errorReporter";
 import BottomNav from "./components/BottomNav";
 
 const GUEST_SOLVE_LIMIT = 3;
-const FREE_DAILY_LIMIT = 5;
+const FREE_DAILY_LIMIT = 10;
 const getToday = () => new Date().toISOString().split("T")[0];
 
 function App() {
