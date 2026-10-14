@@ -380,6 +380,7 @@ function QuestionDetail({ communityId, boardId, question, user, isMember, onBack
   const [editingPost, setEditingPost] = useState(false);
   const [postTitle, setPostTitle] = useState(question.title || "");
   const [postBody, setPostBody] = useState(question.body || "");
+  const [lightboxUrl, setLightboxUrl] = useState("");
   const [replyTo, setReplyTo] = useState(null);
   const [editingReplyId, setEditingReplyId] = useState(null);
   const [editReplyText, setEditReplyText] = useState("");
@@ -568,6 +569,18 @@ function QuestionDetail({ communityId, boardId, question, user, isMember, onBack
             <strong>{question.displayName || "Member"}</strong>
             <time>{timeLabel(question.createdAt)}</time>
           </div>
+                {lightboxUrl && (
+        <div className="cc-lightbox" role="dialog" aria-modal="true" onClick={() => setLightboxUrl("")}>
+          <div className="cc-lightbox-bar" onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setLightboxUrl("")}>
+              Close
+            </button>
+          </div>
+          <div className="cc-lightbox-stage" onClick={(e) => e.stopPropagation()}>
+            <img src={lightboxUrl} alt="" />
+          </div>
+        </div>
+      )}
         </div>
         {editingPost ? (
           <div className="qb-edit">
@@ -585,7 +598,16 @@ function QuestionDetail({ communityId, boardId, question, user, isMember, onBack
             {question.body && <ReplyText text={question.body} people={people} myUid={user?.uid} />}
           </>
         )}
-        {question.imageUrl && <img className="qb-photo" src={question.imageUrl} alt="" />}
+               {question.imageUrl && (
+          <button
+            type="button"
+            className="qb-photo-btn"
+            onClick={() => setLightboxUrl(question.imageUrl)}
+            aria-label="View full image"
+          >
+            <img className="qb-photo" src={question.imageUrl} alt="" />
+          </button>
+        )}
         <p className="qb-meta">{replies.length} replies · {question.likeCount || 0} likes</p>
                 <div className="qb-actions">
           <button

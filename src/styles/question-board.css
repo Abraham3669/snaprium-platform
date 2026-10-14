@@ -105,3 +105,20 @@
   background: var(--icon-bg) !important;
   border-color: color-mix(in srgb, var(--accent) 35%, var(--border)) !important;
 }
+
+
+
+.qb-photo-btn {
+  display: block;
+  margin: 12px 0 18px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+  max-width: 100%;
+}
+
+.qb-photo-btn .qb-photo {
+  margin: 0;
+  pointer-events: none;
+}
