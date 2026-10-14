@@ -8,7 +8,7 @@ import { useAuth } from "../context/AuthContext";
 import { auth, db } from "../lib/firebase";
 import "../styles/profile.css";
 
-function compressImage(file, max = 240, quality = 0.55) {
+function compressImage(file, max = 400, quality = 0.7) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = reject;
@@ -27,6 +27,34 @@ function compressImage(file, max = 240, quality = 0.55) {
     };
     reader.readAsDataURL(file);
   });
+}
+
+function CameraIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 8h3l2-2h6l2 2h3v11H4V8z" />
+      <circle cx="12" cy="13" r="3.2" />
+    </svg>
+  );
+}
+
+function ChevronIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="m9 6 6 6-6 6" />
+    </svg>
+  );
+}
+
+function UsersIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
 }
 
 export default function Profile() {
@@ -49,15 +77,19 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="profile-page">
-        <p className="profile-hint">Loading profile…</p>
+      <div className="pf-page">
+        <p className="pf-loading">Loading profile…</p>
       </div>
     );
   }
 
   if (!user) return null;
 
-    const save = async (e) => {
+  const shownName = user.displayName || user.email?.split("@")[0] || "Your profile";
+  const banned = user.banned === true || user.isBanned === true;
+  const dirty = name.trim() !== (user.displayName || "");
+
+  const save = async (e) => {
     e.preventDefault();
     const clean = name.trim().slice(0, 40);
     if (!clean) {
@@ -66,7 +98,6 @@ export default function Profile() {
     }
     setSaving(true);
     try {
-      // Firestore is source of truth for the app
       await setDoc(
         doc(db, "users", user.uid),
         {
@@ -76,7 +107,6 @@ export default function Profile() {
         },
         { merge: true }
       );
-      // Keep Auth in sync (optional but good)
       if (auth.currentUser) {
         await updateProfile(auth.currentUser, { displayName: clean });
       }
@@ -98,7 +128,7 @@ export default function Profile() {
     try {
       const photoURL = await compressImage(file);
       setPreview(photoURL);
-            await setDoc(
+      await setDoc(
         doc(db, "users", user.uid),
         {
           photoURL,
@@ -106,7 +136,6 @@ export default function Profile() {
         },
         { merge: true }
       );
-      // Don't push huge data: URLs into Auth updateProfile — Firestore only
       await refreshUser?.();
       toast.success("Photo updated");
     } catch (err) {
@@ -118,48 +147,97 @@ export default function Profile() {
   };
 
   return (
-    <div className="profile-page">
-      <header className="profile-top">
-        <h1>Profile</h1>
-        <p>This name and photo show in circles and rooms.</p>
-      </header>
+    <div className="pf-page">
+      {banned && (
+        <div className="pf-banner-warn" role="alert">
+          This account is restricted. Contact support if you think this is a mistake.
+        </div>
+      )}
 
-      <button
-        type="button"
-        className="profile-avatar"
-        onClick={() => fileRef.current?.click()}
-        disabled={saving}
-        aria-label="Change photo"
-      >
-        {preview ? (
-          <img src={preview} alt="" />
-        ) : (
-          (user.displayName || "U").slice(0, 1).toUpperCase()
-        )}
-      </button>
-      <p className="profile-hint">Tap to change photo</p>
+      <section className="pf-hero">
+        {/* Decorative only — not uploadable */}
+        <div className="pf-cover" aria-hidden="true" />
+
+        <div className="pf-hero-body">
+          <button
+            type="button"
+            className="pf-avatar"
+            onClick={() => fileRef.current?.click()}
+            disabled={saving}
+            aria-label="Change photo"
+          >
+            {preview ? <img src={preview} alt="" /> : shownName.slice(0, 1).toUpperCase()}
+            <span className="pf-avatar-badge">
+              <CameraIcon />
+            </span>
+          </button>
+
+          <div className="pf-who">
+            <h1 className="pf-name">{shownName}</h1>
+            <p className="pf-email">{user.email}</p>
+            <p className="pf-signin-note">Signed in with Google</p>
+          </div>
+
+          
+        </div>
+      </section>
+
+      <div className="pf-grid">
+        <form className="pf-card" onSubmit={save}>
+          <div className="pf-card-head">
+            <h2>Account</h2>
+            <p>This name and photo show in circles and rooms.</p>
+          </div>
+
+          <label className="pf-field">
+            <span>Display name</span>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={40}
+              placeholder="Your name"
+              autoComplete="name"
+            />
+            <small>{name.length}/40</small>
+          </label>
+
+          <button
+            type="submit"
+            className="pf-btn pf-btn-primary"
+            disabled={saving || !dirty || !name.trim()}
+          >
+            {saving ? "Saving…" : "Save changes"}
+          </button>
+        </form>
+
+        <aside className="pf-side">
+          <div className="pf-card pf-links">
+            <button type="button" className="pf-link" onClick={() => navigate("/community")}>
+              <span className="pf-link-icon">
+                <UsersIcon />
+              </span>
+              <span className="pf-link-text">
+                <strong>My circles</strong>
+                <small>Study groups you've joined</small>
+              </span>
+              <ChevronIcon />
+            </button>
+          </div>
+
+          <button
+            type="button"
+            className="pf-btn pf-btn-out"
+            onClick={async () => {
+              await signOutUser();
+              navigate("/");
+            }}
+          >
+            Sign out
+          </button>
+        </aside>
+      </div>
+
       <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPhoto} />
-
-      <form className="profile-card" onSubmit={save}>
-        <label>
-          Display name
-          <input value={name} onChange={(e) => setName(e.target.value)} maxLength={40} />
-        </label>
-        <p className="profile-email">{user.email}</p>
-        <button type="submit" className="profile-save" disabled={saving}>
-          {saving ? "Saving..." : "Save"}
-        </button>
-        <button
-          type="button"
-          className="profile-out"
-          onClick={async () => {
-            await signOutUser();
-            navigate("/");
-          }}
-        >
-          Sign out
-        </button>
-      </form>
     </div>
   );
 }
