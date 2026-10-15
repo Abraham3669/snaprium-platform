@@ -483,7 +483,13 @@ function QuestionDetail({ communityId, boardId, question, user, isMember, onBack
         displayName: user.displayName || "Member",
         photoURL: user.photoURL || "",
         replyTo: replyTo
-          ? { id: replyTo.id, displayName: replyTo.displayName || "Member", text: String(replyTo.text || "").slice(0, 140) }
+          ? {
+              id: replyTo.id,
+              uid: replyTo.uid || "",
+              displayName: replyTo.displayName || "Member",
+              photoURL: replyTo.photoURL || "",
+              text: String(replyTo.text || "").slice(0, 140),
+            }
           : null,
       });
       setText("");
@@ -659,12 +665,28 @@ function QuestionDetail({ communityId, boardId, question, user, isMember, onBack
             <div>
               <strong>{r.displayName || "Member"}</strong>
               <time>{timeLabel(r.createdAt)}{r.edited ? " · edited" : ""}</time>
-              {r.replyTo && (
-                <div className="qb-quote">
-                  <strong>{r.replyTo.displayName}</strong>
-                  <span>{r.replyTo.text}</span>
-                </div>
-              )}
+              {r.replyTo && (() => {
+                const original = replies.find((x) => x.id === r.replyTo.id) || null;
+                const qName =
+                  r.replyTo.displayName || original?.displayName || "Member";
+                const qPhoto =
+                  r.replyTo.photoURL || original?.photoURL || "";
+                return (
+                  <div className="qb-quote">
+                    <span className="qb-quote-avatar" aria-hidden="true">
+                      {qPhoto ? (
+                        <img src={qPhoto} alt="" />
+                      ) : (
+                        <span>{qName.slice(0, 1).toUpperCase()}</span>
+                      )}
+                    </span>
+                    <div className="qb-quote-body">
+                      <strong>{qName}</strong>
+                      <span>{r.replyTo.text}</span>
+                    </div>
+                  </div>
+                );
+              })()}
               {editingReplyId === r.id ? (
                 <div className="qb-edit">
                   <textarea value={editReplyText} onChange={(e) => setEditReplyText(e.target.value)} rows={2} />

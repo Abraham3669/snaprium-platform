@@ -873,7 +873,9 @@ useEffect(() => {
       replyTo: quoted
         ? {
             id: quoted.id,
+            uid: quoted.uid || "",
             displayName: liveName(quoted),
+            photoURL: livePhoto(quoted) || "",
             text: String(quoted.text || "").slice(0, 140),
           }
         : null,
@@ -1157,12 +1159,35 @@ useEffect(() => {
                 </div>
               )}
             </header>
-            {msg.replyTo && (
-              <div className="cc-quote">
-                <strong>{msg.replyTo.displayName}</strong>
-                <span>{msg.replyTo.text}</span>
-              </div>
-            )}
+            {msg.replyTo && (() => {
+              const original =
+                messages.find((m) => m.id === msg.replyTo.id) || null;
+              const qUid = msg.replyTo.uid || original?.uid || "";
+              const qName =
+                msg.replyTo.displayName ||
+                (original ? liveName(original) : "") ||
+                "Member";
+              const qPhoto =
+                msg.replyTo.photoURL ||
+                (original ? livePhoto(original) : "") ||
+                (qUid && profiles[qUid]?.photoURL) ||
+                "";
+              return (
+                <div className="cc-quote">
+                  <span className="cc-quote-avatar" aria-hidden="true">
+                    {qPhoto ? (
+                      <img src={qPhoto} alt="" />
+                    ) : (
+                      <span>{qName.slice(0, 1).toUpperCase()}</span>
+                    )}
+                  </span>
+                  <div className="cc-quote-body">
+                    <strong>{qName}</strong>
+                    <span>{msg.replyTo.text}</span>
+                  </div>
+                </div>
+              );
+            })()}
             {msg.imageUrl && (
               <button
                 type="button"
