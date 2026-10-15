@@ -6801,3 +6801,50 @@ button.snaprium-brand {
 [data-theme="dark"] button.snaprium-brand {
   color: #fff;              /* dark mode: white text */
 }
+
+
+
+
+.snaprium-brand,
+button.snaprium-brand {
+  outline: none;
+}
+
+.snaprium-brand:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+/* optional: no flash on tap (mobile) */
+.snaprium-brand:focus:not(:focus-visible) {
+  outline: none;
+}
+
+
+
+/* Remove default thick focus ring on click/tap */
+button:focus,
+a:focus,
+input:focus,
+textarea:focus,
+select:focus,
+summary:focus {
+  outline: none;
+}
+
+/* Soft accent ring only for keyboard focus */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+summary:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 65%, transparent);
+  outline-offset: 2px;
+}
+
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible) {
+  outline: none;
+}

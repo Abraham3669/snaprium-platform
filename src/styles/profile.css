@@ -569,3 +569,37 @@
 
 
 
+.av-wrap {
+  position: relative;
+  display: inline-block;
+  border-radius: 50%;
+}
+
+.av-wrap.premium {
+  box-shadow: 0 0 0 3px rgba(226, 179, 64, 0.7);
+  animation: premium-glow 2.6s ease-in-out infinite;
+}
+
+@keyframes premium-glow {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(226, 179, 64, 0.5); }
+  50% { box-shadow: 0 0 0 4px rgba(226, 179, 64, 0.9), 0 0 16px rgba(226, 179, 64, 0.4); }
+}
+
+.av-crown {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #1a1a1a;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 0 0 2px var(--surface, #fff);
+  z-index: 3;
+  pointer-events: none;
+}
+
+.av-crown svg {
+  display: block;
+}
