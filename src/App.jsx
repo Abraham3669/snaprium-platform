@@ -322,47 +322,108 @@ useEffect(() => {
 ) && (
   <header className="snaprium-header">
       <div className="snaprium-header-inner">
-        <div className="snaprium-brand">
+                <button
+          type="button"
+          className="snaprium-brand"
+          onClick={() => navigate("/")}
+          aria-label="Go to home"
+        >
           <img
             src={new URL("./assets/logo.png", import.meta.url).href}
-            alt="Snaprium Logo"
+            alt=""
             className="snaprium-logo"
             width="32"
             height="32"
           />
           snaprium
-        </div>
+        </button>
 
         <div className="header-right">
-          {user && (user.plan === "unlimited" || user.plan === "premium") && (
-            <div className="plan-badge unlimited" title="Unlimited Plan Active">
-              <span className="diamond-icon">◆</span>
-              Unlimited
-            </div>
-          )}
+{user && (user.plan === "unlimited" || user.plan === "premium") && (
+  <span className="plan-crown" title="Unlimited plan" aria-label="Unlimited plan">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+      <defs>
+        <linearGradient id="crownGold" x1="3" y1="5" x2="21" y2="20" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#F8E19A" />
+          <stop offset="0.5" stopColor="#E2B340" />
+          <stop offset="1" stopColor="#B8860B" />
+        </linearGradient>
+      </defs>
+      {/* peaks */}
+      <path
+        fill="url(#crownGold)"
+        d="M4 17.5 5.2 9.2l3.9 3.3L12 6.5l2.9 6 3.9-3.3L20 17.5H4z"
+      />
+      {/* band */}
+      <rect x="4" y="17.2" width="16" height="3.2" rx="1" fill="url(#crownGold)" />
+    </svg>
+  </span>
+)}
 
           <button
-            onClick={() => setIsDashboardOpen(true)}
+            type="button"
             className="snaprium-menu-btn"
-            aria-label="Open dashboard"
+            onClick={toggleTheme}
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            title={theme === "dark" ? "Light mode" : "Dark mode"}
           >
-            <svg viewBox="0 0 24 24" fill="none">
-              <line x1="4" y1="7" x2="20" y2="7" />
-              <line x1="4" y1="12" x2="20" y2="12" />
-              <line x1="4" y1="17" x2="20" y2="17" />
-            </svg>
+            {theme === "dark" ? (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="5" />
+                <line x1="12" y1="1" x2="12" y2="3" />
+                <line x1="12" y1="21" x2="12" y2="23" />
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                <line x1="1" y1="12" x2="3" y2="12" />
+                <line x1="21" y1="12" x2="23" y2="12" />
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+              </svg>
+            )}
           </button>
+
+          {user ? (
+            <button
+              type="button"
+              className="header-avatar-btn"
+              onClick={() => navigate("/profile")}
+              aria-label="Profile"
+              title="Profile"
+            >
+              {user.photoURL ? (
+                <img src={user.photoURL} alt="" className="header-avatar-img" />
+              ) : (
+                <span className="header-avatar-fallback">
+                  {(user.displayName || user.email || "U").slice(0, 1).toUpperCase()}
+                </span>
+              )}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="header-signin-btn"
+              onClick={() => navigate("/login")}
+            >
+              Sign in
+            </button>
+          )}
         </div>
       </div>
       </header>
 )}
 
+    {/* Dashboard drawer disabled — actions live on Profile + header
     <Dashboard
       isOpen={isDashboardOpen}
       onClose={() => setIsDashboardOpen(false)}
       toggleTheme={toggleTheme}
       theme={theme}
     />
+    */}
 
     {/* Single Routes — no conflict */}
     <Routes>
@@ -396,7 +457,7 @@ useEffect(() => {
             user_type: user ? "registered" : "guest",
           });
         }}
-        onOpenDashboard={() => setIsDashboardOpen(true)}
+             onOpenDashboard={() => navigate("/profile")}
       />
 
       <CropperModal

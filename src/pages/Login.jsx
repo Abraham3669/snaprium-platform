@@ -149,6 +149,13 @@ export default function Login() {
 
   return (
     <div className="auth-container">
+      <button
+        type="button"
+        className="auth-home-link"
+        onClick={() => navigate("/")}
+      >
+        ← Home
+      </button>
       <h1>Welcome Back</h1>
       <p>Sign in to continue to Snaprium</p>
 

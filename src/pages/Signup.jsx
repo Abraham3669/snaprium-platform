@@ -197,6 +197,13 @@ export default function Signup() {
 
   return (
     <div className="auth-container">
+      <button
+        type="button"
+        className="auth-home-link"
+        onClick={() => navigate("/")}
+      >
+        ← Home
+      </button>
       <h1>Create Account</h1>
       <p>Join Snaprium</p>
 

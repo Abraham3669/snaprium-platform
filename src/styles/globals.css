@@ -6668,3 +6668,136 @@ main.camera-main .study-friends-wrapper {
   display: grid;
   place-items: center;
 }
+
+
+
+
+
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-avatar-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--icon-bg);
+  cursor: pointer;
+}
+
+.header-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.header-avatar-fallback {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.header-signin-btn {
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+
+
+
+
+
+
+.auth-home-link {
+  display: inline-block;
+  border: 0;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0 0 12px;
+  text-align: left;
+}
+.auth-home-link:hover {
+  color: var(--accent);
+}
+
+
+
+
+.snaprium-brand {
+  font-size: 1.4rem !important;
+  font-weight: 800 !important;
+}
+
+
+
+
+.plan-crown {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: color-mix(in srgb, #E2B340 16%, var(--surface));
+  border: 1px solid color-mix(in srgb, #E2B340 35%, var(--border));
+  flex: none;
+}
+
+.plan-crown svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+
+
+
+
+.snaprium-brand,
+button.snaprium-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  color: #111;              /* light mode: black text */
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.snaprium-brand .snaprium-logo {
+  width: 32px;
+  height: 32px;
+  display: block;
+  /* if logo is a colored PNG, this helps only for single-color SVGs;
+     for PNG, use a dark asset in light mode / light asset in dark mode */
+}
+
+[data-theme="dark"] .snaprium-brand,
+[data-theme="dark"] button.snaprium-brand {
+  color: #fff;              /* dark mode: white text */
+}
