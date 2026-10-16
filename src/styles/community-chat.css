@@ -1274,3 +1274,36 @@
 
 
 
+/* Questions = thread board */
+.cc-board-chip.questions .cc-board-icon {
+  color: var(--accent);
+}
+
+.cc-board-chip.questions:not(.on) {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+}
+
+.cc-board-chip.questions.on {
+  background: color-mix(in srgb, var(--accent) 14%, var(--icon-bg));
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+}
+
+/* Session = live board */
+.cc-board-chip.session .cc-board-icon {
+  color: var(--accent);
+}
+
+.cc-board-chip.session:not(.on) {
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+}
+
+.cc-board-chip.session.on {
+  background: color-mix(in srgb, var(--accent) 12%, var(--icon-bg));
+}
+
+.cc-board-icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}

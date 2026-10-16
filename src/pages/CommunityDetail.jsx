@@ -68,6 +68,24 @@ function IconChat() {
     </svg>
   );
 }
+
+function IconQuestions() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M8 5h10a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-1v2l-2.5-2H12" strokeLinejoin="round" />
+      <path d="M4 9h10a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H9l-3 2v-2H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2z" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconSession() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <rect x="2" y="6" width="13" height="12" rx="2" />
+      <path d="M15 10l7-3v10l-7-3z" strokeLinejoin="round" />
+    </svg>
+  );
+}
 function IconLink() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -415,8 +433,20 @@ setCommunity(await getCommunity(community.id));
   {boards.map((board) => (
     <div key={board.id} className="cd-board-row">
       <button type="button" className="cd-board" onClick={() => openBoard(board)}>
-       <span className="cd-board-mark"><IconChat /></span>
-<span className="cd-board-name">{board.name}</span>
+                {(() => {
+          const slug = String(board.slug || "").toLowerCase();
+          const name = String(board.name || "").toLowerCase();
+          const isQ =
+            slug === "questions" || name === "questions" || board.kind === "questions";
+          const isS =
+            slug === "session" || name === "session" || name === "live";
+          return (
+            <span className={`cd-board-mark ${isQ ? "questions" : ""} ${isS ? "session" : ""}`}>
+              {isQ ? <IconQuestions /> : isS ? <IconSession /> : <IconChat />}
+            </span>
+          );
+        })()}
+        <span className="cd-board-name">{board.name}</span>
 {(() => {
   const slug = String(board.slug || "").toLowerCase();
   const name = String(board.name || "").toLowerCase();

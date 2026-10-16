@@ -388,3 +388,18 @@
   font-weight: 700;
   cursor: pointer;
 }
+
+
+
+
+.cd-board-mark.questions,
+.cd-board-mark.session {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--icon-bg));
+}
+
+.cd-board-mark svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}

@@ -234,6 +234,24 @@ function IconBoard() {
   );
 }
 
+function IconQuestions() {
+  return (
+    <svg className="cc-board-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <path d="M8 5h10a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-1v2l-2.5-2H12" strokeLinejoin="round" />
+      <path d="M4 9h10a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H9l-3 2v-2H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2z" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconSession() {
+  return (
+    <svg className="cc-board-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <rect x="2" y="6" width="13" height="12" rx="2" />
+      <path d="M15 10l7-3v10l-7-3z" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function IconBack() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
@@ -991,14 +1009,22 @@ useEffect(() => {
       <aside className="cc-rail">
         <p className="cc-rail-label">Boards</p>
         {boards.map((board) => (
-          <button
+                    <button
             key={board.id}
             type="button"
-            className={`cc-board-chip ${board.id === activeBoardId ? "on" : ""}`}
+            className={`cc-board-chip ${board.id === activeBoardId ? "on" : ""} ${
+              isQuestionsBoard(board) ? "questions" : ""
+            } ${isLiveBoard(board) ? "session" : ""}`}
             onClick={() => switchBoard(board.id)}
           >
-                        <IconBoard />
-<span>{board.name}</span>
+            {isQuestionsBoard(board) ? (
+              <IconQuestions />
+            ) : isLiveBoard(board) ? (
+              <IconSession />
+            ) : (
+              <IconBoard />
+            )}
+            <span>{board.name}</span>
 {(() => {
   const kind = isQuestionsBoard(board) ? "questions" : isLiveBoard(board) ? "" : "chat";
   const n = kind ? boardUnread[kind] || 0 : 0;
