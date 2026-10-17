@@ -12,19 +12,28 @@ const AuthContext = createContext();
 function buildUser(firebaseUser, data = {}) {
   const plan = data.plan || "free";
   const banned = data.banned === true;
+  const hasDoc = Object.keys(data).length > 0;
+
+  const displayName = hasDoc
+    ? (data.displayName || firebaseUser.email?.split("@")[0] || "User")
+    : (firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "User");
+
+  // Once a Firestore profile exists, never fall back to Google photo
+  const photoURL = hasDoc
+    ? (data.photoURL || "")
+    : (firebaseUser.photoURL || "");
+
   return {
     uid: firebaseUser.uid,
-    email: firebaseUser.email || data.email || "",
-    displayName:
-      data.displayName ||
-      firebaseUser.displayName ||
-      firebaseUser.email?.split("@")[0] ||
-      "User",
-    photoURL: data.photoURL || firebaseUser.photoURL || "",
+    email: data.email || firebaseUser.email || "",
+    displayName,
+    photoURL,
     ...data,
     plan,
     banned,
     isBanned: banned,
+    displayName,
+    photoURL,
     subscriptionStatus: data.subscriptionStatus || "inactive",
     isUnlimited: plan === "unlimited",
     isPremium: ["premium", "unlimited"].includes(plan),

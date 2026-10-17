@@ -229,11 +229,12 @@ export default function Profile() {
       const photoURL = await compressImage(file);
       setPreview(photoURL);
       await setDoc(
-        doc(db, "users", user.uid),
-        { photoURL, updatedAt: serverTimestamp() },
-        { merge: true }
-      );
-      await refreshUser?.();
+  doc(db, "users", user.uid),
+  { photoURL, updatedAt: serverTimestamp() },
+  { merge: true }
+);
+await refreshUser?.();
+setPreview(photoURL);
       toast.success("Photo updated");
     } catch (err) {
       console.error(err);

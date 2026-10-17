@@ -32,7 +32,7 @@ export async function ensureUserDocument(firebaseUser) {
 
   try {
         const existing = await withTimeout(getDoc(userRef), 15000);
-        if (existing.exists()) {
+            if (existing.exists()) {
       const prev = existing.data() || {};
       await withTimeout(
         setDoc(
@@ -48,28 +48,34 @@ export async function ensureUserDocument(firebaseUser) {
       console.log("[userProfile] exists, not resetting limits", uid);
       return existing;
     }
-    } catch (e) {
+  } catch (e) {
     console.warn("[userProfile] getDoc failed", e.code || "", e.message || e);
-    // Don't invent "exists" and don't write — avoids clobbering a real profile
     if (e?.code === "permission-denied") throw e;
+    return null; // no write if we couldn't read
+  }
+
+  // Double-check before create (avoids race wiping a real profile)
+  try {
+    const again = await withTimeout(getDoc(userRef), 10000);
+    if (again.exists()) {
+      console.log("[userProfile] exists on recheck, skip create", uid);
+      return again;
+    }
+  } catch (e) {
+    console.warn("[userProfile] recheck failed", e.message || e);
     return null;
   }
 
-  // Brand-new user only. Never merge Google name/photo onto an existing doc.
   try {
     await withTimeout(
       setDoc(userRef, {
         uid,
         email: firebaseUser.email || auth.currentUser?.email || "",
         displayName:
-  (data.displayName && String(data.displayName).trim()) ||
-  firebaseUser.displayName ||
-  firebaseUser.email?.split("@")[0] ||
-  "User",
-photoURL:
-  (data.photoURL && String(data.photoURL).trim()) ||
-  firebaseUser.photoURL ||
-  "",
+          firebaseUser.displayName ||
+          firebaseUser.email?.split("@")[0] ||
+          "User",
+        photoURL: firebaseUser.photoURL || "",
         plan: "free",
         subscriptionStatus: "inactive",
         banned: false,
@@ -84,7 +90,6 @@ photoURL:
       }),
       10000
     );
-    
     console.log("[userProfile] created", uid);
     return true;
   } catch (e) {
