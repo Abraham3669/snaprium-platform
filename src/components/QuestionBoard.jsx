@@ -342,7 +342,11 @@ const [seen, setSeen] = useState({});
                     <strong>{q.title}</strong>
                     {q.solved && <span className="qb-solved">Solved</span>}
                   </div>
-                  {q.body && <p>{q.body}</p>}
+                                    {q.body && (
+                    <p className="qb-card-body">
+                      {q.body.length > 120 ? `${q.body.slice(0, 120).trim()}…` : q.body}
+                    </p>
+                  )}
                   <span className="qb-meta">
   {q.displayName || "Member"}
   <span aria-hidden="true"> · </span>

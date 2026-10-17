@@ -48,39 +48,43 @@ export async function ensureUserDocument(firebaseUser) {
       console.log("[userProfile] exists, not resetting limits", uid);
       return existing;
     }
-  } catch (e) {
+    } catch (e) {
     console.warn("[userProfile] getDoc failed", e.code || "", e.message || e);
-    return { exists: () => true };
+    // Don't invent "exists" and don't write — avoids clobbering a real profile
+    if (e?.code === "permission-denied") throw e;
+    return null;
   }
 
+  // Brand-new user only. Never merge Google name/photo onto an existing doc.
   try {
     await withTimeout(
-      setDoc(
-        userRef,
-        {
-          uid,
-          email: firebaseUser.email || auth.currentUser?.email || "",
-          displayName:
-            firebaseUser.displayName ||
-            firebaseUser.email?.split("@")[0] ||
-            "User",
-          photoURL: firebaseUser.photoURL || "",
-          plan: "free",
-          subscriptionStatus: "inactive",
-          banned: false,
-          uploadCount: 0,
-          solves: 0,
-          dailySolves: 0,
-          lastSolveDate: "",
-          dailyRoomAI: 0,
-          lastRoomAIDate: "",
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        },
-        { merge: true }
-      ),
+      setDoc(userRef, {
+        uid,
+        email: firebaseUser.email || auth.currentUser?.email || "",
+        displayName:
+  (data.displayName && String(data.displayName).trim()) ||
+  firebaseUser.displayName ||
+  firebaseUser.email?.split("@")[0] ||
+  "User",
+photoURL:
+  (data.photoURL && String(data.photoURL).trim()) ||
+  firebaseUser.photoURL ||
+  "",
+        plan: "free",
+        subscriptionStatus: "inactive",
+        banned: false,
+        uploadCount: 0,
+        solves: 0,
+        dailySolves: 0,
+        lastSolveDate: "",
+        dailyRoomAI: 0,
+        lastRoomAIDate: "",
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      }),
       10000
     );
+    
     console.log("[userProfile] created", uid);
     return true;
   } catch (e) {
