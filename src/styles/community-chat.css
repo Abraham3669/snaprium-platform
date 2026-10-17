@@ -1307,3 +1307,33 @@
   height: 16px;
   flex: none;
 }
+
+
+
+.qb-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+}
+
+.qb-bar p {
+  margin: 0;
+  text-align: left;
+}
+
+.qb-card-top {
+  text-align: left;
+}
+
+.qb-card-copy {
+  text-align: left;
+}
+
+.qb-card-copy strong,
+.qb-card-copy p,
+.qb-card-body,
+.qb-meta {
+  text-align: left;
+}

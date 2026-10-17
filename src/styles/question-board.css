@@ -200,3 +200,26 @@
   white-space: normal;
   word-break: break-word;
 }
+
+
+
+/* Header + list copy: left only */
+.qb-bar,
+.qb-bar p,
+.qb-card-top,
+.qb-card-copy,
+.qb-card-copy strong,
+.qb-card-copy p,
+.qb-card-body,
+.qb-meta,
+.qb-question .qb-card-top,
+.qb-question h2 {
+  text-align: left !important;
+}
+
+.qb-bar {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}

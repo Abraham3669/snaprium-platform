@@ -1033,3 +1033,22 @@ h2 {
 
 
 
+/* Mobile only: one card per row (same layout, larger tiles) */
+@media (max-width: 640px) {
+  .cx-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .cx-card-top {
+    padding: 12px 12px 0 !important;
+  }
+
+  .cx-card-body {
+    padding: 14px 14px 16px !important;
+  }
+
+  .cx-card-name {
+    font-size: 1.05rem !important;
+  }
+}
