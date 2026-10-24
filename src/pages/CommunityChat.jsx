@@ -488,10 +488,11 @@ const pulseTyping = () => {
 const withQuestions = await ensureQuestionsBoard(data.id, rows);
 setBoards(withQuestions);
       const fromUrl = params.get("board");
-      const next =
-        rows.find((b) => b.id === fromUrl) ||
-        rows.find((b) => b.slug === "general") ||
-        rows[0];
+const next =
+  rows.find((b) => b.id === fromUrl) ||
+  withQuestions.find((b) => b.slug === "questions" || b.kind === "questions") ||
+  withQuestions.find((b) => b.slug === "general") ||
+  withQuestions[0];
       if (next) {
         setBoardId(next.id);
         if (fromUrl !== next.id) setParams({ board: next.id }, { replace: true });

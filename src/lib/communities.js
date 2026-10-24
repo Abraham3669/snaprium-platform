@@ -32,8 +32,8 @@ export const COMMUNITY_TAGS = [
 ];
 
 export const DEFAULT_BOARDS = [
-  { slug: "general", name: "General", kind: "chat", isDefault: true },
   { slug: "questions", name: "Questions", kind: "questions", isDefault: true },
+  { slug: "general", name: "General", kind: "chat", isDefault: true },
   { slug: "session", name: "Session", kind: "session", isDefault: true },
 ];
 
@@ -87,7 +87,7 @@ export async function listBoards(communityId) {
   const snap = await getDocs(boardsCol(communityId));
   const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   if (rows.length === 0) return seedDefaultBoards(communityId);
-  const order = { general: 0, questions: 1, homework: 1, session: 2 };
+ const order = { questions: 0, general: 1, homework: 1, session: 2 };
   return rows.sort(
     (a, b) =>
       (order[a.slug] ?? 50) - (order[b.slug] ?? 50) ||

@@ -1337,3 +1337,17 @@
 .qb-meta {
   text-align: left;
 }
+
+
+
+
+.cc-board-chip .cc-board-icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.cc-board-chip.questions .cc-board-icon {
+  width: 24px;
+  height: 24px;
+}

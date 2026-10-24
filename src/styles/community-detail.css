@@ -403,3 +403,15 @@
   height: 18px;
   display: block;
 }
+
+
+
+.cd-board-mark svg {
+  width: 22px;
+  height: 22px;
+}
+
+.cd-board-mark.questions svg {
+  width: 24px;
+  height: 24px;
+}
