@@ -14,6 +14,28 @@ import { FirebaseAuthentication } from "@capacitor-firebase/authentication";
 import { useAuth } from "../context/AuthContext";
 import { ensureUserDocument } from "../lib/userProfile";
 
+
+function isPackagedOrStandaloneWeb() {
+  if (typeof window === "undefined") return false;
+  if (Capacitor.isNativePlatform()) return false;
+
+  const ref = document.referrer || "";
+  const ua = navigator.userAgent || "";
+
+  const standalone =
+    isStandaloneApp() ||
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.matchMedia("(display-mode: windows-app)").matches ||
+    window.matchMedia("(display-mode: minimal-ui)").matches ||
+    window.navigator.standalone === true;
+
+  const msStore = /app-info:\/\/platform\/microsoft-store/i.test(ref);
+  const windows = /Windows|Win64|Win32/i.test(ua);
+
+  return standalone || msStore || (windows && standalone);
+}
+
+
 export default function Login() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -26,39 +48,38 @@ export default function Login() {
     let cancelled = false;
     let unsub = null;
 
+
+   
     async function handleRedirect() {
-      try {
-        // Classic redirect result
-        const result = await getRedirectResult(auth);
-
-        if (result?.user) {
-          await ensureUserDocument(result.user);
-          if (!cancelled) {
-            navigate("/", { replace: true });
-          }
-          return;
-        }
-
-        // Sometimes getRedirectResult is null but auth.currentUser is already set
-        // (very common in packaged PWAs / Edge WebView2)
-        if (auth.currentUser) {
-          await ensureUserDocument(auth.currentUser);
-          if (!cancelled) {
-            navigate("/", { replace: true });
-          }
-          return;
-        }
-      } catch (err) {
-        console.error("Redirect sign-in error", err.code, err.message);
-        if (!cancelled) {
-          setError(err.message || "Sign-in failed after redirect");
-        }
-      } finally {
-        if (!cancelled) {
-          setCheckingRedirect(false);
-        }
-      }
+  try {
+    if (auth.authStateReady) {
+      await auth.authStateReady();
     }
+
+    // Must run once on every load after Google redirect
+    const result = await getRedirectResult(auth);
+    const firebaseUser = result?.user || auth.currentUser;
+
+    if (firebaseUser) {
+      await ensureUserDocument(firebaseUser);
+      // Force token so AuthContext / Firestore see a real session
+      await firebaseUser.getIdToken(true);
+      if (!cancelled) {
+        navigate("/", { replace: true });
+      }
+      return;
+    }
+  } catch (err) {
+    console.error("Redirect sign-in error", err?.code, err?.message);
+    if (!cancelled) {
+      setError(err?.message || "Sign-in failed after Google redirect");
+    }
+  } finally {
+    if (!cancelled) {
+      setCheckingRedirect(false);
+    }
+  }
+}
 
     handleRedirect();
 
@@ -111,10 +132,71 @@ const isWindowsPackage =
   !Capacitor.isNativePlatform();
 
 // Packaged Windows: skip popup (it can hang with no window). Use redirect.
-if (isWindowsPackage) {
-  await signInWithRedirect(auth, googleProvider);
-  return; // page leaves; getRedirectResult / onAuthStateChanged handle return
-}
+const handleGoogleSignIn = async () => {
+  setLoading(true);
+  setError("");
+
+  let usedRedirect = false;
+
+  try {
+    // Capacitor native (iOS / Android)
+    if (Capacitor.isNativePlatform()) {
+      const result = await FirebaseAuthentication.signInWithGoogle();
+      const idToken = result.credential?.idToken;
+      if (!idToken) throw new Error("No Google idToken from native sign-in");
+      const credential = GoogleAuthProvider.credential(idToken);
+      const userCredential = await signInWithCredential(auth, credential);
+      await ensureUserDocument(userCredential.user);
+      await userCredential.user.getIdToken(true);
+      navigate("/", { replace: true });
+      return;
+    }
+
+    // Installed PWA / Edge app / Microsoft Store package → never use popup
+    if (isPackagedOrStandaloneWeb()) {
+      usedRedirect = true;
+      await signInWithRedirect(auth, googleProvider);
+      return; // page is navigating away
+    }
+
+    // Normal browser tab – try popup first, fall back to redirect
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      if (!result?.user) {
+        throw new Error("Google popup closed without a user session");
+      }
+      await ensureUserDocument(result.user);
+      await result.user.getIdToken(true);
+      navigate("/", { replace: true });
+      return;
+    } catch (popupErr) {
+      console.warn("Popup failed, using redirect", popupErr?.code, popupErr?.message);
+
+      const shouldFallback =
+        popupErr?.code === "auth/popup-blocked" ||
+        popupErr?.code === "auth/popup-closed-by-user" ||
+        popupErr?.code === "auth/operation-not-supported-in-this-environment" ||
+        popupErr?.code === "auth/cancelled-popup-request" ||
+        /getContext|popup|blocked|closed|opener|COOP|storage|timeout/i.test(
+          popupErr?.message || ""
+        );
+
+      if (shouldFallback) {
+        usedRedirect = true;
+        await signInWithRedirect(auth, googleProvider);
+        return;
+      }
+      throw popupErr;
+    }
+  } catch (err) {
+    console.error("Google sign-in", err?.code, err?.message);
+    setError(err?.message || "Google sign-in failed");
+  } finally {
+    if (!usedRedirect) {
+      setLoading(false);
+    }
+  }
+};
 
 // Normal browser: popup, with a hard timeout so we never hang on "Connecting..."
 const popupPromise = signInWithPopup(auth, googleProvider);
