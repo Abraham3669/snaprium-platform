@@ -103,33 +103,50 @@ export default function Login() {
         return;
       }
 
-      // Web + Microsoft Store packaged PWA path
-      // Prefer popup first – works better in Edge WebView2 / MSIX
-      try {
-        const result = await signInWithPopup(auth, googleProvider);
-        await ensureUserDocument(result.user);
-        navigate("/", { replace: true });
-        return;
-      } catch (popupErr) {
-        console.warn("Popup failed, falling back to redirect", popupErr?.code, popupErr?.message);
+      // Web + Microsoft Store packaged PWA
+const standalone = isStandaloneApp();
+const isWindowsPackage =
+  standalone &&
+  /Windows|Win64|Win32/i.test(navigator.userAgent || "") &&
+  !Capacitor.isNativePlatform();
 
-        const shouldFallback =
-          popupErr?.code === "auth/popup-blocked" ||
-          popupErr?.code === "auth/popup-closed-by-user" ||
-          popupErr?.code === "auth/operation-not-supported-in-this-environment" ||
-          popupErr?.code === "auth/cancelled-popup-request" ||
-          /getContext|popup|blocked|closed|opener|COOP|storage/i.test(
-            popupErr?.message || ""
-          );
+// Packaged Windows: skip popup (it can hang with no window). Use redirect.
+if (isWindowsPackage) {
+  await signInWithRedirect(auth, googleProvider);
+  return; // page leaves; getRedirectResult / onAuthStateChanged handle return
+}
 
-        if (shouldFallback) {
-          // Full page redirect – getRedirectResult + onAuthStateChanged will pick it up
-          await signInWithRedirect(auth, googleProvider);
-          return; // page navigates away
-        }
+// Normal browser: popup, with a hard timeout so we never hang on "Connecting..."
+const popupPromise = signInWithPopup(auth, googleProvider);
+const timeoutPromise = new Promise((_, reject) =>
+  setTimeout(() => reject(Object.assign(new Error("popup-timeout"), { code: "auth/popup-blocked" })), 12000)
+);
 
-        throw popupErr;
-      }
+try {
+  const result = await Promise.race([popupPromise, timeoutPromise]);
+  await ensureUserDocument(result.user);
+  navigate("/", { replace: true });
+  return;
+} catch (popupErr) {
+  console.warn("Popup failed, falling back to redirect", popupErr?.code, popupErr?.message);
+
+  const shouldFallback =
+    popupErr?.code === "auth/popup-blocked" ||
+    popupErr?.code === "auth/popup-closed-by-user" ||
+    popupErr?.code === "auth/operation-not-supported-in-this-environment" ||
+    popupErr?.code === "auth/cancelled-popup-request" ||
+    popupErr?.message === "popup-timeout" ||
+    /getContext|popup|blocked|closed|opener|COOP|storage|timeout/i.test(
+      popupErr?.message || ""
+    );
+
+  if (shouldFallback) {
+    await signInWithRedirect(auth, googleProvider);
+    return;
+  }
+
+  throw popupErr;
+}
     } catch (err) {
       console.error("Google sign-in", err.code, err.message);
       setError(err.message || "Google sign-in failed");
