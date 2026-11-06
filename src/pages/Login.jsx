@@ -124,15 +124,8 @@ export default function Login() {
         return;
       }
 
-      // Installed PWA / Edge app / Microsoft Store package → never use popup
-      // Popup can complete Google and still leave this window unsigned-in
-      if (isPackagedOrStandaloneWeb()) {
-        usedRedirect = true;
-        await signInWithRedirect(auth, googleProvider);
-        return; // full navigation away
-      }
-
-      // Normal browser tab only
+      // Try popup first (works better under Edge Tracking Prevention / Store)
+      // Fall back to redirect only when popup is blocked or unsupported
       try {
         const result = await signInWithPopup(auth, googleProvider);
         if (!result?.user) {
@@ -165,7 +158,6 @@ export default function Login() {
       console.error("Google sign-in", err?.code, err?.message);
       setError(err?.message || "Google sign-in failed");
     } finally {
-      // If we redirected, the page is unloading — still safe
       if (!usedRedirect) {
         setLoading(false);
       }
