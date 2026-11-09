@@ -453,3 +453,191 @@
 .sc-root.is-focus .sc-main {
   padding-top: max(12px, env(safe-area-inset-top, 0px));
 }
+
+
+/* ==========================================================
+   Screen share, Zoom-style: viewer tools, hide people,
+   sharer bar, native full screen
+   ========================================================== */
+
+/* the shared screen is clickable (click to enlarge) */
+.sc-screen video {
+  cursor: zoom-in;
+}
+.sc-main.theater .sc-screen video {
+  cursor: zoom-out;
+}
+.sc-screen video.fill {
+  object-fit: cover;
+}
+
+/* small toolbar, top right of the shared screen */
+.sc-screen-tools {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 12px;
+  background: rgba(10, 11, 16, 0.68);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.sc-screen:hover .sc-screen-tools,
+.sc-screen:focus-within .sc-screen-tools {
+  opacity: 1;
+}
+
+.sc-screen-tools button {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.sc-screen-tools button:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+/* touch screens have no hover: keep the tools visible */
+@media (hover: none) {
+  .sc-screen-tools {
+    opacity: 1;
+  }
+}
+
+/* hide people: the shared screen takes the whole stage */
+.sc-main.has-screen.theater .sc-grid {
+  display: none;
+}
+
+/* native full screen of the shared screen */
+.sc-screen:fullscreen,
+.sc-screen:-webkit-full-screen {
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+  background: #000;
+}
+.sc-screen:fullscreen .sc-screen-tools,
+.sc-screen:-webkit-full-screen .sc-screen-tools {
+  top: 16px;
+  right: 16px;
+}
+
+/* sharer: floating status bar (replaces seeing your own screen inside the call) */
+.sc-sharing-bar {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100% - 24px);
+  padding: 6px 6px 6px 14px;
+  border-radius: 999px;
+  background: rgba(10, 11, 16, 0.82);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.sc-sharing-bar span:nth-child(2) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sc-sharing-dot {
+  flex: 0 0 9px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.6);
+  animation: sc-pulse 1.8s ease-out infinite;
+}
+
+.sc-sharing-bar button {
+  height: 32px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: #e5484d;
+  color: #fff;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.sc-sharing-bar button:hover {
+  background: #ef5a5f;
+}
+
+@keyframes sc-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.55); }
+  70%  { box-shadow: 0 0 0 8px rgba(52, 211, 153, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
+}
+
+/* Full screen (the whole call) on PC: roomier people column + padding */
+.sc-root.is-focus .sc-main.has-screen .sc-grid {
+  flex-basis: clamp(190px, 16vw, 280px);
+}
+
+@media (min-width: 701px) and (orientation: landscape) {
+  .sc-root.is-focus .sc-main.has-screen {
+    padding: 16px;
+    gap: 14px;
+  }
+  .sc-root.is-focus .sc-main.has-screen .sc-grid {
+    gap: 12px;
+  }
+}
+
+/* phones: smaller toolbar, sharer bar stays on one line */
+@media (max-width: 700px) {
+  .sc-screen-tools {
+    top: 8px;
+    right: 8px;
+  }
+  .sc-screen-tools button {
+    width: 32px;
+    height: 32px;
+  }
+  .sc-sharing-bar {
+    top: 10px;
+    font-size: 0.78rem;
+    gap: 8px;
+    padding-left: 12px;
+  }
+  .sc-sharing-bar button {
+    height: 30px;
+    padding: 0 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sc-sharing-dot {
+    animation: none;
+  }
+}

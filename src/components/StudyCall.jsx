@@ -38,6 +38,9 @@ export default function StudyCall({ roomId, user, onClose, focus = false, onTogg
   const [sharing, setSharing] = useState(false);
   const [participants, setParticipants] = useState([]);
   const [activeScreenId, setActiveScreenId] = useState(null);
+  const [theater, setTheater] = useState(false); // hide the people strip, shared screen fills the stage
+  const [fit, setFit] = useState(true); // true = show the whole screen, false = fill the area
+  const screenBoxRef = useRef(null);
 
   const isPaid = user?.plan === "unlimited" || user?.plan === "premium";
 
@@ -110,6 +113,8 @@ export default function StudyCall({ roomId, user, onClose, focus = false, onTogg
         call.on("participant-left", sync);
         call.on("track-started", sync);
         call.on("track-stopped", sync);
+        call.on("local-screen-share-started", () => setSharing(true));
+        call.on("local-screen-share-stopped", () => setSharing(false));
         call.on("camera-error", (e) => {
           console.error("[Daily camera]", e);
           setCamOn(false);
@@ -231,9 +236,24 @@ export default function StudyCall({ roomId, user, onClose, focus = false, onTogg
     onCloseRef.current?.();
   };
 
-  const screens = participants.filter((p) => getTrack(p, "screenVideo"));
+  const viewScreens = participants.filter((p) => !p.local && getTrack(p, "screenVideo"));
   const activeScreen =
-    screens.find((p) => p.session_id === activeScreenId) || screens[0] || null;
+    viewScreens.find((p) => p.session_id === activeScreenId) || viewScreens[0] || null;
+
+  // native browser full screen for just the shared screen
+  const toggleScreenFullscreen = async () => {
+    const el = screenBoxRef.current;
+    if (!el) return;
+    try {
+      if (document.fullscreenElement || document.webkitFullscreenElement) {
+        await (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      } else {
+        await (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   // local person first, then everyone else
   const ordered = [...participants].sort((a, b) => Number(!!b.local) - Number(!!a.local));
@@ -241,22 +261,51 @@ export default function StudyCall({ roomId, user, onClose, focus = false, onTogg
 
   return (
     <div className={`sc-root ${focus ? "is-focus" : ""}`}>
-      <div className={`sc-main ${activeScreen ? "has-screen" : ""}`}>
+      <div className={`sc-main ${activeScreen ? "has-screen" : ""} ${activeScreen && theater ? "theater" : ""}`}>
         {activeScreen && (
-          <div className="sc-screen">
+          <div className="sc-screen" ref={screenBoxRef}>
             <video
               key={`screen-${activeScreen.session_id}`}
               data-daily-screen={activeScreen.session_id}
               autoPlay
               playsInline
               muted
+              className={fit ? "" : "fill"}
+              onClick={() => setTheater((v) => !v)}
+              title={theater ? "Click to show people" : "Click to enlarge"}
             />
             <span className="sc-screen-label">
-              {activeScreen.local ? "You are sharing your screen" : `${activeScreen.user_name || "Student"}'s screen`}
+              {`${activeScreen.user_name || "Student"}'s screen`}
             </span>
-            {screens.length > 1 && (
+            <div className="sc-screen-tools">
+              <button
+                type="button"
+                onClick={() => setTheater((v) => !v)}
+                title={theater ? "Show people" : "Hide people"}
+                aria-label={theater ? "Show people" : "Hide people"}
+              >
+                <PeopleIcon />
+              </button>
+              <button
+                type="button"
+                onClick={() => setFit((v) => !v)}
+                title={fit ? "Fill the area" : "Fit whole screen"}
+                aria-label={fit ? "Fill the area" : "Fit whole screen"}
+              >
+                <FitIcon />
+              </button>
+              <button
+                type="button"
+                onClick={toggleScreenFullscreen}
+                title="Full screen"
+                aria-label="Full screen"
+              >
+                <ExpandIcon size={18} />
+              </button>
+            </div>
+            {viewScreens.length > 1 && (
               <div className="sc-screen-switch">
-                {screens.map((p) => (
+                {viewScreens.map((p) => (
                   <button
                     key={`pick-${p.session_id}`}
                     type="button"
@@ -300,6 +349,14 @@ export default function StudyCall({ roomId, user, onClose, focus = false, onTogg
         {(joining || error) && (
           <div className="sc-status" role="status">
             {error || "Joining call…"}
+          </div>
+        )}
+
+        {sharing && (
+          <div className="sc-sharing-bar" role="status">
+            <span className="sc-sharing-dot" aria-hidden="true" />
+            <span>You are sharing your screen</span>
+            <button type="button" onClick={toggleShare}>Stop sharing</button>
           </div>
         )}
       </div>
@@ -451,6 +508,24 @@ function LeaveCallIcon({ size = 20 }) {
       <path d="M10 5H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h5" />
       <polyline points="16 17 21 12 16 7" />
       <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  );
+}
+
+function PeopleIcon({ size = 18 }) {
+  return (
+    <svg {...svgProps(size)}>
+      <circle cx="9" cy="8" r="3.2" />
+      <path d="M3 20a6 6 0 0 1 12 0" />
+      <path d="M16 5.2a3.2 3.2 0 0 1 0 5.6M18 14.5a6 6 0 0 1 3 5.5" />
+    </svg>
+  );
+}
+function FitIcon({ size = 18 }) {
+  return (
+    <svg {...svgProps(size)}>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M8 12h8M10 10l-2 2 2 2M14 10l2 2-2 2" />
     </svg>
   );
 }
