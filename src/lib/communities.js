@@ -235,7 +235,7 @@ export async function joinCommunity(id, uid) {
 export async function joinCommunityByCode(code, uid) {
   const clean = String(code || "").trim().toUpperCase();
   if (!clean) throw new Error("Enter an invite code");
-  const q = query(collection(db, "communities"), where("code", "==", clean));
+  const q = query(collection(db, "communities"), where("code", "==", clean), limit(1));
   const snap = await getDocs(q);
   if (snap.empty) throw new Error("Circle not found. Check the code.");
   return joinCommunity(snap.docs[0].id, uid);
@@ -573,5 +573,3 @@ export async function deleteQuestionReply(communityId, boardId, questionId, repl
   const next = Math.max(0, (snap.data()?.replyCount || 0) - 1);
   await updateDoc(questionRef, { replyCount: next });
 }
-
-
