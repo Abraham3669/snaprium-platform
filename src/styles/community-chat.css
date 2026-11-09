@@ -2197,3 +2197,938 @@
   border-color: var(--accent);
   color: var(--accent);
 }
+
+
+
+/* =====================================================================
+   Chat polish (appended). Messages stay left-aligned on purpose.
+   ===================================================================== */
+
+/* ---- Readable width on big screens ---- */
+.cc-feed > .cc-post,
+.cc-feed > .cc-date-divider,
+.cc-feed > .cc-empty {
+  width: 100%;
+  max-width: 880px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ---- Message rows: hover highlight, room to breathe ---- */
+.cc-feed .cc-post:not(.ai) {
+  padding-left: 8px;
+  padding-right: 8px;
+  border-radius: 10px;
+  transition: background-color 0.12s;
+}
+
+.cc-feed .cc-post:not(.ai):hover,
+.cc-feed .cc-post.menu-open {
+  background: color-mix(in srgb, var(--text-primary) 4%, transparent);
+}
+
+/* jump-to-original flash */
+.cc-feed .cc-post.flash {
+  animation: cc-flash 1.4s ease-out;
+}
+
+@keyframes cc-flash {
+  0%, 35% { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+  100%    { background: transparent; }
+}
+
+/* avatar edge so white or light photos don't look cut off */
+.cc-post .cc-avatar,
+.cc-post .cc-avatar-btn img {
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+/* time for follow-up messages, shown on hover in the gutter */
+.cc-post .cc-hover-time {
+  position: absolute;
+  left: 8px;
+  top: 5px;
+  width: 40px;
+  text-align: center;
+  font-size: 0.66rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s;
+}
+
+.cc-post.grouped:hover .cc-hover-time {
+  opacity: 1;
+}
+
+.cc-feed .cc-post.grouped {
+  position: relative;
+}
+
+/* ---- Date dividers ---- */
+.cc-date-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 10px auto 2px;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.cc-date-divider::before,
+.cc-date-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.cc-date-divider span {
+  flex: 0 0 auto;
+  padding: 3px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+/* ---- Quotes are clickable ---- */
+.cc-post .cc-quote {
+  cursor: pointer;
+  transition: background-color 0.12s;
+}
+
+.cc-post .cc-quote:hover {
+  background: color-mix(in srgb, var(--accent) 14%, var(--icon-bg));
+}
+
+/* ---- Empty state ---- */
+.cc-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 56px 20px;
+  text-align: center;
+}
+
+.cc-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 6px;
+  border-radius: 16px;
+  background: var(--icon-bg);
+  color: var(--accent);
+}
+
+.cc-empty-icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.cc-empty strong {
+  font-size: 1.05rem;
+  color: var(--text-primary);
+}
+
+.cc-empty p {
+  margin: 0;
+  max-width: 34ch;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+/* ---- "New messages" pill: floats at the bottom of the feed ---- */
+.cc-feed .cc-jump {
+  order: 999;
+  position: sticky;
+  bottom: 10px;
+  align-self: center;
+  z-index: 3;
+  height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 650;
+  cursor: pointer;
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+/* ---- Delete confirmation ---- */
+.cc-confirm {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(5, 9, 18, 0.55);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.cc-confirm-card {
+  width: 100%;
+  max-width: 340px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+  color: var(--text-primary);
+}
+
+.cc-confirm-card h3 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+}
+
+.cc-confirm-card p {
+  margin: 0 0 18px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.cc-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.cc-confirm-actions button {
+  height: 40px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 12px;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.cc-confirm-cancel {
+  background: var(--icon-bg);
+  color: var(--text-primary);
+}
+
+.cc-confirm-delete {
+  background: #e5484d;
+  color: #fff;
+}
+
+/* ---- Mention suggestions: a proper list ---- */
+.cc-mention-list {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: 2px;
+  margin-bottom: 8px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+
+.cc-mention-list button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 40px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.cc-mention-list button:hover,
+.cc-mention-list button:active {
+  background: var(--icon-bg);
+  border: 0;
+}
+
+.cc-mention-av {
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--icon-bg);
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.cc-mention-av img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---- Composer ---- */
+.cc-composer-input {
+  border-radius: 14px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.cc-composer-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.cc-send {
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.cc-send:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.cc-send:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ---- Faces row (top right) ---- */
+.cc-faces {
+  padding-right: 6px;
+}
+
+.cc-face {
+  margin-left: -8px;
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.cc-face:first-child {
+  margin-left: 0;
+}
+
+.cc-face-more {
+  width: auto;
+  min-width: 28px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--icon-bg);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* ---- Boards sidebar on desktop: flat list, like Slack / Discord ---- */
+@media (min-width: 960px) {
+  .cc-rail {
+    gap: 2px;
+  }
+
+  .cc-rail .cc-board-chip,
+  .cc-rail .cc-board-chip.questions:not(.on),
+  .cc-rail .cc-board-chip.session:not(.on) {
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: background-color 0.12s, color 0.12s;
+  }
+
+  .cc-rail .cc-board-chip:hover:not(.on) {
+    background: var(--icon-bg);
+    color: var(--text-primary);
+  }
+
+  .cc-rail .cc-board-chip.on,
+  .cc-rail .cc-board-chip.questions.on,
+  .cc-rail .cc-board-chip.session.on {
+    border-color: transparent;
+    background: var(--icon-bg);
+    color: var(--accent);
+  }
+
+  .cc-rail .cc-board-chip .cc-board-icon,
+  .cc-rail .cc-board-chip.questions .cc-board-icon {
+    width: 20px;
+    height: 20px;
+    flex-basis: 20px;
+    color: currentColor;
+  }
+}
+
+/* ---- Phones: slightly smaller message text so more fits ---- */
+@media (max-width: 700px) {
+  .cc-post > p,
+  .cc-post .cc-md,
+  .cc-post .cc-md p {
+    font-size: 0.95rem;
+    line-height: 1.45;
+  }
+
+  .cc-face {
+    width: 26px;
+    height: 26px;
+  }
+
+  .cc-feed {
+    padding: 10px 10px;
+    gap: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cc-feed .cc-post.flash {
+    animation: none;
+  }
+}
+
+
+
+/* =====================================================================
+   Chat: closer to the left wall (Discord style) + solid phone layout
+   ===================================================================== */
+
+/* ---- Messages hug the left edge again: full width, no centering ---- */
+.cc-feed > .cc-post,
+.cc-feed > .cc-date-divider,
+.cc-feed > .cc-empty {
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.cc-feed > .cc-empty {
+  align-items: flex-start;
+  text-align: left;
+  padding-left: 8px;
+}
+
+/* less empty space between the sidebar and the avatars */
+@media (min-width: 960px) {
+  .cc-feed {
+    padding: 14px 16px 14px 10px;
+  }
+}
+
+.cc-feed .cc-post:not(.ai) {
+  padding-left: 6px;
+  padding-right: 10px;
+}
+
+/* ---- Phones: a layout that holds together ---- */
+@media (max-width: 700px) {
+
+  /* top: board chips scroll smoothly, notch-safe */
+  .cc-rail {
+    padding: calc(8px + env(safe-area-inset-top, 0px)) 10px 8px;
+    gap: 6px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+  }
+
+  .cc-rail::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cc-board-chip {
+    height: 38px;
+    padding: 0 14px;
+    scroll-snap-align: start;
+    white-space: nowrap;
+  }
+
+  .cc-board-chip .cc-board-icon,
+  .cc-board-chip.questions .cc-board-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* header: back, title, faces on one tidy row */
+  .cc-top {
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 8px 10px;
+  }
+
+  .cc-top .cc-back {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+  }
+
+  .cc-top-copy h1 {
+    font-size: 1rem;
+  }
+
+  .cc-faces {
+    flex-shrink: 0;
+    padding-right: 2px;
+  }
+
+  .cc-face {
+    width: 24px;
+    height: 24px;
+    margin-left: -7px;
+    font-size: 10px;
+  }
+
+  .cc-face-more {
+    min-width: 24px;
+    font-size: 10px;
+  }
+
+  /* messages: more width for text, smaller avatar */
+  .cc-feed {
+    padding: 8px 8px 8px 6px;
+    gap: 8px;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .cc-feed .cc-post:not(.ai) {
+    padding-left: 4px;
+    padding-right: 6px;
+  }
+
+  .cc-post .cc-avatar-btn {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    flex: 0 0 36px !important;
+  }
+
+  .cc-post .cc-avatar,
+  .cc-post .cc-avatar-fallback,
+  .cc-post .cc-avatar-btn img {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+  }
+
+  .cc-post > p,
+  .cc-post > .cc-md,
+  .cc-post .cc-media-btn,
+  .cc-post.grouped .cc-media-btn,
+  .cc-post.grouped .cc-md,
+  .cc-post.grouped > p,
+  .cc-post.grouped .cc-quote,
+  .cc-quote,
+  .cc-edit-row {
+    margin-left: 44px !important;
+  }
+
+  .cc-post .cc-md {
+    padding-right: 30px;
+  }
+
+  .cc-quote {
+    margin-right: 0;
+    max-width: calc(100% - 44px);
+  }
+
+  .cc-media-btn {
+    max-width: calc(100% - 44px);
+  }
+
+  .cc-post .cc-hover-time {
+    display: none;
+  }
+
+  /* the "…" button stays reachable and inside the row */
+  .cc-post .cc-more-btn,
+  .cc-feed .cc-post .cc-more-btn {
+    width: 30px;
+    height: 30px;
+  }
+
+  .cc-date-divider {
+    margin: 8px 0 0;
+  }
+
+  /* composer: compact buttons so the text box keeps room */
+  .cc-composer-wrap {
+    padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .cc-composer {
+    gap: 6px;
+  }
+
+  .cc-composer .cc-icon-btn,
+  .cc-composer .cc-send {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    flex: 0 0 40px;
+  }
+
+  .cc-composer-input {
+    min-height: 40px;
+    padding: 9px 12px;
+    font-size: 16px;               /* 16px stops iOS from zooming in on focus */
+  }
+
+  .cc-typing-label {
+    padding: 0 12px 4px;
+  }
+
+  /* emoji / GIF panel never taller than the screen, even with the keyboard open */
+  .cc-picker {
+    left: 8px;
+    right: 8px;
+    max-width: none;
+    height: min(360px, 55dvh);
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* mention list: full width above the composer */
+  .cc-mention-list {
+    max-height: 40dvh;
+    overflow-y: auto;
+  }
+
+  /* delete popup and welcome card fit narrow screens */
+  .cc-confirm-card {
+    max-width: none;
+  }
+}
+
+/* very small phones */
+@media (max-width: 380px) {
+  .cc-top-copy h1 {
+    font-size: 0.95rem;
+  }
+
+  .cc-post > p,
+  .cc-post .cc-md,
+  .cc-post .cc-md p {
+    font-size: 0.92rem;
+  }
+
+  .cc-face:nth-child(n+5):not(.cc-face-more) {
+    display: none;
+  }
+}
+
+/* landscape phones: keep the header slim so messages get the height */
+@media (max-height: 480px) and (orientation: landscape) {
+  .cc-rail {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+
+  .cc-board-chip {
+    height: 32px;
+  }
+
+  .cc-top {
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+}
+
+
+
+
+/* src/styles/mobile-fit.css
+   Makes Snaprium fit any phone width (320px and up) without overflowing.
+   Import it LAST, after your other stylesheets, e.g. in main.jsx:
+     import "./styles/mobile-fit.css";
+   Uses only your existing classes and tokens, so light and dark mode both work. */
+
+/* ---------- 1. Global safety net ---------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  overflow-x: clip;          /* nothing can create a sideways scrollbar */
+}
+
+img,
+video,
+canvas,
+svg,
+iframe {
+  max-width: 100%;
+}
+
+/* long words, links, code and math wrap instead of stretching the page */
+p,
+h1,
+h2,
+h3,
+li,
+a,
+span,
+strong {
+  overflow-wrap: anywhere;
+}
+
+pre,
+code {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* flex and grid children are allowed to shrink (the usual cause of overflow) */
+.cc-main,
+.cc-feed,
+.cc-post,
+.cc-top-copy,
+.cx-page,
+.cx-card,
+.cx-card-body,
+.cd-page,
+.cd-board-text,
+.hub-page,
+.hub-card-copy,
+.qb-wrap,
+.qb-card-copy,
+.sc-main,
+.sc-screen,
+.sc-tile {
+  min-width: 0;
+}
+
+/* ---------- 2. Phones ---------- */
+
+@media (max-width: 700px) {
+
+  /* Chat page fills the real visible height (address bar and keyboard safe) */
+  .cc-frame {
+    height: 100vh;
+    height: 100dvh;
+    width: 100%;
+    max-width: 100vw;
+    overflow: hidden;
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+
+  .cc-main,
+  .cc-feed,
+  .cc-composer-wrap,
+  .cc-top {
+    max-width: 100%;
+  }
+
+  .cc-feed {
+    overflow-x: hidden;
+  }
+
+  /* titles and names never push the header wider than the screen */
+  .cc-top-copy h1,
+  .cc-top-copy p,
+  .cc-name-line strong {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cc-name-line {
+    flex-wrap: wrap;
+    row-gap: 0;
+  }
+
+  /* photos, GIFs and quotes scale down with the screen */
+  .cc-post .cc-msg-photo,
+  .cc-post .cc-msg-gif {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .cc-media-btn {
+    max-width: calc(100% - 44px);
+  }
+
+  .cc-quote {
+    max-width: calc(100% - 44px);
+  }
+
+  .cc-quote-body span {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* wide math or code scrolls inside its own box */
+  .cc-md .katex-display,
+  .cc-md pre {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  /* Circles list */
+  .cx-page {
+    padding-left: max(14px, env(safe-area-inset-left, 0px));
+    padding-right: max(14px, env(safe-area-inset-right, 0px));
+  }
+
+  .cx-search input,
+  .cx-join-form input {
+    font-size: 16px;           /* no zoom-in on iPhone */
+  }
+
+  .cx-join-form {
+    flex-wrap: wrap;
+  }
+
+  /* Circle detail */
+  .cd-page {
+    padding-left: max(14px, env(safe-area-inset-left, 0px));
+    padding-right: max(14px, env(safe-area-inset-right, 0px));
+  }
+
+  .cd-page .cd-title {
+    font-size: clamp(1.3rem, 6.4vw, 1.7rem);
+  }
+
+  .cd-page .cd-menu {
+    max-width: calc(100vw - 28px);
+  }
+
+  .cd-page .cd-addboard {
+    flex-wrap: wrap;
+  }
+
+  /* Home cards */
+  .hub-page {
+    padding-left: max(14px, env(safe-area-inset-left, 0px));
+    padding-right: max(14px, env(safe-area-inset-right, 0px));
+  }
+
+  .hub-page .hub-title {
+    font-size: clamp(1.6rem, 8vw, 2.2rem);
+    line-height: 1.12;
+  }
+
+  /* Live session */
+  .sc-root {
+    max-width: 100vw;
+  }
+
+  .sc-controls {
+    flex-wrap: wrap;
+    row-gap: 8px;
+    padding-left: max(10px, env(safe-area-inset-left, 0px));
+    padding-right: max(10px, env(safe-area-inset-right, 0px));
+  }
+
+  .sc-sharing-bar {
+    max-width: calc(100vw - 20px);
+  }
+
+  /* Questions board */
+  .qb-wrap {
+    padding: 12px 12px 20px;
+  }
+
+  .qb-bar {
+    flex-wrap: wrap;
+  }
+
+  .qb-card {
+    flex-wrap: wrap;
+  }
+
+  .qb-photo,
+  .qb-thumb {
+    max-width: 100%;
+  }
+
+  /* Popups and sheets never wider than the screen */
+  .cx-dialog,
+  .cc-confirm-card,
+  .cd-welcome-card,
+  .cc-picker {
+    max-width: calc(100vw - 16px);
+  }
+}
+
+/* ---------- 3. Fluid grids for every width in between ---------- */
+
+/* cards wrap by available space, never forcing a column too narrow */
+@media (min-width: 641px) {
+  .cx-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+  }
+}
+
+/* ---------- 4. Small phones (320 to 380px) ---------- */
+
+@media (max-width: 380px) {
+  .cx-page,
+  .cd-page,
+  .hub-page {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .cc-top {
+    gap: 6px;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .cc-session-actions {
+    margin-right: 0;
+    gap: 6px;
+  }
+
+  .cc-session-actions .cc-session-btn {
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .sc-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .sc-controls {
+    gap: 6px;
+  }
+}
+
+/* ---------- 5. Short screens (landscape phones, keyboard open) ---------- */
+
+@media (max-height: 520px) {
+  .cc-picker {
+    height: min(300px, 70dvh);
+    bottom: 56px;
+  }
+
+  .cx-page,
+  .cd-page,
+  .hub-page {
+    padding-top: 12px;
+  }
+}

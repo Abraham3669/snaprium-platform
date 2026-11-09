@@ -1,5 +1,5 @@
 // src/pages/CommunityChat.jsx
-import { useEffect, useRef, useState, useMemo } from "react";
+import { Fragment, useEffect, useRef, useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -315,6 +315,32 @@ function formatMsgTime(createdAt) {
   return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
+function msgDate(createdAt) {
+  const d = createdAt?.toDate?.() || (createdAt ? new Date(createdAt) : null);
+  return d && !Number.isNaN(d.getTime()) ? d : null;
+}
+
+function dayKey(createdAt) {
+  const d = msgDate(createdAt);
+  return d ? `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}` : "";
+}
+
+function dayLabel(createdAt) {
+  const d = msgDate(createdAt);
+  if (!d) return "";
+  const now = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(now.getDate() - 1);
+  if (dayKey(d) === dayKey(now)) return "Today";
+  if (dayKey(d) === dayKey(yesterday)) return "Yesterday";
+  return d.toLocaleDateString([], {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    ...(d.getFullYear() !== now.getFullYear() ? { year: "numeric" } : {}),
+  });
+}
+
 function sameRun(a, b) {
   if (!a || !b || a.uid !== b.uid || a.isAI !== b.isAI) return false;
   const ta = a.createdAt?.toMillis?.() || 0;
@@ -350,6 +376,7 @@ const [pendingImage, setPendingImage] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState("");
   const [menuFor, setMenuFor] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
   const menuRef = useRef(null);
   const longPressTimer = useRef(null);
   const seenRef = useRef(null);
@@ -1016,13 +1043,29 @@ useEffect(() => {
     }
   };
 
-  const removeMessage = async (msg) => {
-    if (!window.confirm("Delete this message?")) return;
+  const removeMessage = (msg) => {
+    setConfirmDelete(msg);
+  };
+
+  const confirmRemove = async () => {
+    const msg = confirmDelete;
+    setConfirmDelete(null);
+    if (!msg) return;
     try {
       await deleteCommunityMessage(communityId, msg.id);
     } catch {
       toast.error("Could not delete message");
     }
+  };
+
+  // click a quoted reply to jump to the original message
+  const jumpToMessage = (id) => {
+    if (!id) return;
+    const el = document.querySelector(`[data-mid="${id}"]`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.classList.add("flash");
+    setTimeout(() => el.classList.remove("flash"), 1400);
   };
 
 
@@ -1232,7 +1275,11 @@ useEffect(() => {
         </button>
       )}
       {messages.length === 0 && (
-        <p className="cc-muted">Nothing here yet. Ask a question, or drop a photo of the problem.</p>
+        <div className="cc-empty">
+          <span className="cc-empty-icon" aria-hidden="true"><IconBoard /></span>
+          <strong>Nothing here yet</strong>
+          <p>Say hi, ask a question, or drop a photo of the problem.</p>
+        </div>
       )}
       {messages.map((msg, index) => {
   if (msg.system || msg.type === "join" || /has joined$|joined$/i.test(msg.text || "")) return null;
@@ -1240,9 +1287,17 @@ useEffect(() => {
   const photo = livePhoto(msg);
         const grouped = sameRun(messages[index - 1], msg);
         const time = formatMsgTime(msg.createdAt);
+        const prevMsg = messages[index - 1];
+        const dayChanged = !prevMsg || dayKey(prevMsg.createdAt) !== dayKey(msg.createdAt);
         return (
+          <Fragment key={msg.id}>
+          {dayChanged && dayKey(msg.createdAt) ? (
+            <div className="cc-date-divider" role="separator">
+              <span>{dayLabel(msg.createdAt)}</span>
+            </div>
+          ) : null}
           <article
-            key={msg.id}
+            data-mid={msg.id}
             className={`cc-post ${msg.isAI ? "ai" : ""} ${msg.uid === user?.uid ? "mine" : ""} ${
               grouped ? "grouped" : ""
             } ${(msg.mentions || []).includes(user?.uid) ? "mentioned" : ""} ${
@@ -1300,6 +1355,7 @@ useEffect(() => {
                 </div>
               )}
             </header>
+            {grouped && time ? <time className="cc-hover-time">{time}</time> : null}
             {msg.replyTo && (() => {
               const original =
                 messages.find((m) => m.id === msg.replyTo.id) || null;
@@ -1314,7 +1370,7 @@ useEffect(() => {
                 (qUid && profiles[qUid]?.photoURL) ||
                 "";
               return (
-                <div className="cc-quote">
+                <div className="cc-quote" role="button" tabIndex={0} onClick={() => jumpToMessage(msg.replyTo.id)} onKeyDown={(e) => e.key === "Enter" && jumpToMessage(msg.replyTo.id)}>
                   <span className="cc-quote-avatar" aria-hidden="true">
                     {qPhoto ? (
                       <img src={qPhoto} alt="" />
@@ -1381,6 +1437,7 @@ useEffect(() => {
               )
             )}
           </article>
+          </Fragment>
         );
       })}
       {askingAI && (
@@ -1430,7 +1487,14 @@ useEffect(() => {
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => pickMention(p)}
             >
-              @{handleOf(p.name)}
+              <span className="cc-mention-av" aria-hidden="true">
+                {profiles[p.uid]?.photoURL ? (
+                  <img src={profiles[p.uid].photoURL} alt="" />
+                ) : (
+                  (p.name || "?").slice(0, 1).toUpperCase()
+                )}
+              </span>
+              <span>@{handleOf(p.name)}</span>
             </button>
           ))}
         </div>
@@ -1594,6 +1658,19 @@ useEffect(() => {
             </div>,
             document.body
           )}
+
+{confirmDelete && (
+  <div className="cc-confirm" onClick={() => setConfirmDelete(null)}>
+    <div className="cc-confirm-card" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+      <h3>Delete this message?</h3>
+      <p>This can't be undone.</p>
+      <div className="cc-confirm-actions">
+        <button type="button" className="cc-confirm-cancel" onClick={() => setConfirmDelete(null)}>Cancel</button>
+        <button type="button" className="cc-confirm-delete" onClick={confirmRemove} autoFocus>Delete</button>
+      </div>
+    </div>
+  </div>
+)}
 
 {welcome && (
   <div className="cd-welcome" onClick={() => {
