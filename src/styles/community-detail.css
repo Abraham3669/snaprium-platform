@@ -633,3 +633,41 @@
 
 .cd-page .cd-action svg { width: 18px; height: 18px; flex: 0 0 18px; }
 .cd-page .cd-action.icon svg { width: 20px; height: 20px; flex-basis: 20px; }
+
+
+
+
+/* Loading circle: centered in the middle of the screen */
+.cd-page:has(> .cd-muted:only-child) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  min-height: 60dvh;
+  margin-bottom: 0;
+}
+
+.cd-page > .cd-muted:only-child {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.cd-page > .cd-muted:only-child::before {
+  content: "";
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: cd-spin 0.7s linear infinite;
+}
+
+@keyframes cd-spin {
+  to { transform: rotate(360deg); }
+}

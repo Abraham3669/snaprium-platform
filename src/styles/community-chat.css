@@ -3132,3 +3132,49 @@ code {
     padding-top: 12px;
   }
 }
+
+
+/* "+2" pill at the end of the faces row: never clipped to a bare "+" */
+.cc-faces .cc-face.cc-face-more {
+  width: auto;
+  min-width: 28px;
+  padding: 0 7px;
+  white-space: nowrap;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+@media (max-width: 700px) {
+  .cc-faces .cc-face.cc-face-more {
+    min-width: 24px;
+    padding: 0 6px;
+  }
+}
+
+
+
+
+
+/* Chat: "Opening board…" centered with a small spinner
+   (paste at the end of community-chat.css) */
+.cc-frame > .cc-muted:only-child {
+  margin: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.95rem;
+}
+
+.cc-frame > .cc-muted:only-child::before {
+  content: "";
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: cc-spin 0.7s linear infinite;
+}
+
+@keyframes cc-spin {
+  to { transform: rotate(360deg); }
+}
