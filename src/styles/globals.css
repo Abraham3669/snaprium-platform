@@ -6848,3 +6848,163 @@ button:focus:not(:focus-visible),
 a:focus:not(:focus-visible) {
   outline: none;
 }
+
+
+
+
+
+
+/* ==========================================================
+   Home ("How do you want to study?") - paste at the END of
+   the CSS file that holds your .hub-* rules
+   ========================================================== */
+
+.hub-page .hub-top {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.hub-page .hub-title {
+  letter-spacing: -0.03em;
+}
+.hub-page .hub-sub {
+  color: var(--text-secondary);
+}
+
+/* cards */
+.hub-page .hub-card {
+  position: relative;
+  text-align: left;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.hub-page .hub-card:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  box-shadow: var(--shadow-md);
+}
+.hub-page .hub-card:active {
+  transform: translateY(-1px) scale(0.99);
+}
+.hub-page .hub-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* the main card (Circles) gets a soft accent wash so it reads as the primary choice */
+.hub-page .hub-card-wide {
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--accent) 9%, var(--surface)),
+    var(--surface) 60%
+  );
+}
+
+/* icon tile */
+.hub-page .hub-icon-wrap {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+  transition: background 0.2s, color 0.2s;
+}
+.hub-page .hub-card:hover .hub-icon-wrap {
+  background: var(--accent);
+  color: #fff;
+}
+.hub-page .hub-icon {
+  width: 28px;
+  height: 28px;
+}
+
+/* text */
+.hub-page .hub-card-copy h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  text-align: left;
+}
+.hub-page .hub-card-copy p {
+  margin: 6px 0 0;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  text-align: left;
+}
+
+/* feature labels */
+.hub-page .hub-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+}
+.hub-page .hub-tag {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--icon-bg);
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+/* arrow, top right */
+.hub-page .hub-go {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.2s;
+}
+.hub-page .hub-go .hub-go-icon {
+  width: 18px;
+  height: 18px;
+}
+.hub-page .hub-card:hover .hub-go {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  transform: translateX(2px);
+}
+
+/* footer links */
+.hub-page .hub-legal {
+  margin-top: 36px;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+.hub-page .hub-legal a {
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-decoration: none;
+}
+.hub-page .hub-legal a:hover {
+  color: var(--accent);
+}
+.hub-page .hub-legal span {
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+/* phone */
+@media (max-width: 640px) {
+  .hub-page .hub-top { margin-bottom: 22px; }
+  .hub-page .hub-card:hover { transform: none; box-shadow: var(--shadow-sm); }
+  .hub-page .hub-icon-wrap { width: 48px; height: 48px; border-radius: 14px; }
+  .hub-page .hub-icon { width: 24px; height: 24px; }
+  .hub-page .hub-go { top: 16px; right: 16px; width: 32px; height: 32px; }
+}

@@ -37,6 +37,14 @@ function IconCommunity() {
   );
 }
 
+function IconArrow() {
+  return (
+    <svg className="hub-go-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M5 12h14M13 6l6 6-6 6" />
+    </svg>
+  );
+}
+
 export default function Home() {
   const navigate = useNavigate();
 
@@ -58,8 +66,16 @@ export default function Home() {
           </span>
           <div className="hub-card-copy">
             <h2>Circles</h2>
-<p>Join public or private study groups.</p>
+            <p>Join public or private study groups.</p>
+            <span className="hub-tags">
+              <span className="hub-tag">Group chat</span>
+              <span className="hub-tag">Live video</span>
+              <span className="hub-tag">Q&amp;A boards</span>
+            </span>
           </div>
+          <span className="hub-go" aria-hidden="true">
+            <IconArrow />
+          </span>
         </button>
 
         <button type="button" className="hub-card" onClick={() => navigate("/solo")}>
@@ -67,9 +83,16 @@ export default function Home() {
             <IconSolo />
           </span>
           <div className="hub-card-copy">
-           <h2>Solo study</h2>
-<p>Snap a question and get a step-by-step solution.</p>
+            <h2>Solo study</h2>
+            <p>Snap a question and get a step-by-step solution.</p>
+            <span className="hub-tags">
+              <span className="hub-tag">Photo solver</span>
+              <span className="hub-tag">Step by step</span>
+            </span>
           </div>
+          <span className="hub-go" aria-hidden="true">
+            <IconArrow />
+          </span>
         </button>
 
         {/*

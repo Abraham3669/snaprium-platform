@@ -111,6 +111,62 @@ function IconCamera() {
   );
 }
 
+function IconChevron() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M9 6l6 6-6 6" />
+    </svg>
+  );
+}
+function IconMore() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <circle cx="5" cy="12" r="1.8" />
+      <circle cx="12" cy="12" r="1.8" />
+      <circle cx="19" cy="12" r="1.8" />
+    </svg>
+  );
+}
+function IconLock() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="4" y="11" width="16" height="10" rx="2" />
+      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+    </svg>
+  );
+}
+function IconUsers() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="9" cy="8" r="3.2" />
+      <path d="M3 20a6 6 0 0 1 12 0" />
+      <path d="M16 5.2a3.2 3.2 0 0 1 0 5.6M18 14.5a6 6 0 0 1 3 5.5" />
+    </svg>
+  );
+}
+function IconCopy() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="9" y="9" width="11" height="11" rx="2" />
+      <path d="M5 15V6a2 2 0 0 1 2-2h9" />
+    </svg>
+  );
+}
+
+// one-line description under each board name
+function boardBlurb(board) {
+  const slug = String(board.slug || "").toLowerCase();
+  const name = String(board.name || "").toLowerCase();
+  if (slug === "questions" || name === "questions" || board.kind === "questions") {
+    return "Post a problem and get help";
+  }
+  if (slug === "session" || name === "session" || name === "live") {
+    return "Live study with video";
+  }
+  if (slug === "general" || name === "general") return "Chat with the circle";
+  return "";
+}
+
 export default function CommunityDetail() {
   const { communityId } = useParams();
   const { user } = useAuth();
@@ -126,6 +182,8 @@ export default function CommunityDetail() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [boardUnread, setBoardUnread] = useState({ chat: 0, questions: 0 });
   const [welcome, setWelcome] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
 
   useEffect(() => {
     (async () => {
@@ -194,6 +252,25 @@ useEffect(() => {
 
 
 
+
+  // close the "more" menu on outside click or Escape
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const onDown = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+    };
+    const onKey = (e) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("touchstart", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("touchstart", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
 
   if (loading) {
     return <div className="cd-page"><p className="cd-muted">Loading circle…</p></div>;
@@ -282,6 +359,15 @@ setWelcome(true);
 
 
 
+  const copyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(community.code);
+      toast.success(`Code ${community.code} copied`);
+    } catch {
+      window.prompt("Copy code", community.code);
+    }
+  };
+
   const copyInvite = async () => {
     const link = `${window.location.origin}/community/${community.id}`;
     const text = community.code ? `${link}\nCode: ${community.code}` : link;
@@ -300,14 +386,16 @@ setWelcome(true);
 
       <button
   type="button"
-  className="cd-banner"
+  className={`cd-banner ${community.coverUrl ? "" : "empty"}`}
   style={community.coverUrl ? { backgroundImage: `url(${community.coverUrl})` } : undefined}
   onClick={() => isAdmin && bannerRef.current?.click()}
   disabled={!isAdmin || busy}
   aria-label="Change banner"
 >
-  {!community.coverUrl && (
-    <span className="cd-placeholder"><IconCamera /></span>
+  {isAdmin && (
+    <span className="cd-banner-edit">
+      <IconCamera /> {community.coverUrl ? "Change cover" : "Add cover"}
+    </span>
   )}
   {isMember && boardUnread.questions > 0 && (
     <span className="cd-banner-badge">{boardUnread.questions > 9 ? "9+" : boardUnread.questions}</span>
@@ -323,23 +411,32 @@ setWelcome(true);
           disabled={!isAdmin || busy}
           aria-label="Change photo"
         >
-          {!community.photoUrl && <IconCommunityMark />}
+          {!community.photoUrl && (community.name?.trim()?.[0]?.toUpperCase() || <IconCommunityMark />)}
+          {isAdmin && <span className="cd-avatar-edit"><IconCamera /></span>}
         </button>
         <div className="cd-identity-text">
-          <p className="cd-kicker">{community.tag}</p>
           <h1 className="cd-title">{community.name}</h1>
-          <p className="cd-meta">
-            {community.memberCount || 1} members
-            {community.role === "tutor" ? " · Tutor" : ""}
-            {community.visibility === "private" ? " · Private" : " · Public"}
-            {community.code ? ` · Code ${community.code}` : ""}
-          </p>
+          <div className="cd-meta-row">
+            {community.tag && <span className="cd-chip accent">{community.tag}</span>}
+            <span className="cd-chip">
+              <IconUsers /> {community.memberCount || 1} {(community.memberCount || 1) === 1 ? "member" : "members"}
+            </span>
+            {community.role === "tutor" && <span className="cd-chip">Tutor</span>}
+            <span className="cd-chip">
+              {community.visibility === "private" ? <><IconLock /> Private</> : "Public"}
+            </span>
+            {community.code && (
+              <button type="button" className="cd-chip code" onClick={copyCode} title="Copy code">
+                Code {community.code} <IconCopy />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
       <div className="cd-actions">
         {!isMember && (
-          <button type="button" className="cd-btn" disabled={busy} onClick={async () => {
+          <button type="button" className="cd-action primary" disabled={busy} onClick={async () => {
             if (!user) return navigate("/login");
             setBusy(true);
             try {
@@ -354,7 +451,7 @@ setCommunity(await getCommunity(community.id));
             }
           }}>Join</button>
         )}
-        <button type="button" className="cd-btn ghost" onClick={copyInvite}>
+        <button type="button" className="cd-action" onClick={copyInvite}>
           <IconLink /> Invite
         </button>
 
@@ -362,9 +459,23 @@ setCommunity(await getCommunity(community.id));
        
      
              {user && (
+          <div className="cd-menu-wrap" ref={menuRef}>
+            <button
+              type="button"
+              className="cd-action icon"
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-label="More options"
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+            >
+              <IconMore />
+            </button>
+            {menuOpen && (
+              <div className="cd-menu" role="menu" onClick={() => setMenuOpen(false)}>
+        {user && (
           <button
             type="button"
-            className="cd-text-btn"
+            className="cd-menu-item"
             disabled={busy}
             onClick={async () => {
               const reason = window.prompt("Why are you reporting this circle?");
@@ -396,7 +507,7 @@ setCommunity(await getCommunity(community.id));
         {isMember && !isAdmin && (
           <button
             type="button"
-            className="cd-text-btn"
+            className="cd-menu-item"
             onClick={async () => {
               try {
                 await leaveCommunity(community.id, user.uid);
@@ -412,7 +523,7 @@ setCommunity(await getCommunity(community.id));
         {isAdmin && (
           <button
             type="button"
-            className="cd-text-btn danger"
+            className="cd-menu-item danger"
             onClick={async () => {
               if (!window.confirm("Remove this circle for everyone?")) return;
               try {
@@ -426,9 +537,13 @@ setCommunity(await getCommunity(community.id));
             Delete circle
           </button>
         )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      <h2 className="cd-kicker" style={{ marginTop: 28 }}>Boards</h2>
+      <h2 className="cd-section-title">Boards</h2>
 <div className="cd-board-list">
   {boards.map((board) => (
     <div key={board.id} className="cd-board-row">
@@ -446,7 +561,10 @@ setCommunity(await getCommunity(community.id));
             </span>
           );
         })()}
-        <span className="cd-board-name">{board.name}</span>
+        <span className="cd-board-text">
+          <span className="cd-board-name">{board.name}</span>
+          {boardBlurb(board) && <span className="cd-board-blurb">{boardBlurb(board)}</span>}
+        </span>
 {(() => {
   const slug = String(board.slug || "").toLowerCase();
   const name = String(board.name || "").toLowerCase();
@@ -459,7 +577,7 @@ setCommunity(await getCommunity(community.id));
   const n = kind ? boardUnread[kind] || 0 : 0;
   return n > 0 ? <span className="cd-badge">{n > 9 ? "9+" : n}</span> : null;
 })()}
-<span className="cd-board-go">Open</span>
+<span className="cd-board-go"><IconChevron /></span>
       </button>
       {isAdmin && !isDefaultBoard(board) && (
         <button
@@ -477,15 +595,15 @@ setCommunity(await getCommunity(community.id));
 </div>
 
       {isAdmin && (
-        <form className="cd-actions" onSubmit={handleAddBoard}>
+        <form className="cd-addboard" onSubmit={handleAddBoard}>
           <input
             value={newBoard}
             onChange={(e) => setNewBoard(e.target.value)}
             placeholder="New board name"
             maxLength={40}
-            className="community-search"
+            className="cd-input"
           />
-          <button type="submit" className="cd-btn" disabled={busy || !newBoard.trim()}>
+          <button type="submit" className="cd-action primary" disabled={busy || !newBoard.trim()}>
             Add board
           </button>
         </form>

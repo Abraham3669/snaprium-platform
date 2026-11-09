@@ -1351,3 +1351,820 @@
   width: 24px;
   height: 24px;
 }
+
+
+
+
+
+/* =====================================================================
+   Session full screen
+   Paste this into src/styles/community-chat.css.
+   Delete your old blocks:
+     "Full screen: hide chat only"
+     "Full screen: session fills viewport"
+     ".cc-reveal-chat" (all of its rules)
+   Keep the "Session header actions" block above them as it is.
+
+   How it works: the JSX adds .is-call-focus to the page frame (.cc-frame),
+   which is already a portal on <body>, so nothing can trap it. The frame
+   covers the whole screen, the boards rail, header and chat are hidden, and
+   the session takes all the space. "Show chat" floats on top.
+   ===================================================================== */
+
+/* 1. The frame becomes the full-screen stage */
+.cc-frame.is-call-focus {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  border: 0;
+  display: block;                 /* drop any rail + main grid or flex layout */
+  grid-template-columns: 1fr !important;
+  background: #0a0b10;
+  overflow: hidden;
+}
+
+/* 2. Hide everything that is not the call */
+.cc-frame.is-call-focus .cc-rail,
+.cc-main.call-focus .cc-top,
+.cc-main.call-focus .cc-feed,
+.cc-main.call-focus .cc-composer-wrap,
+.cc-main.call-focus .cc-typing-label,
+.cc-main.call-focus .cc-jump {
+  display: none !important;
+}
+
+.cc-frame.is-call-focus .cc-main {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+}
+
+/* 3. The session fills the stage */
+.cc-session.is-focus {
+  position: relative;
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: #0a0b10;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* StudyCall's own root grows to fill the stage (keeps its controls at the bottom) */
+.cc-session.is-focus > *:not(.cc-reveal-chat) {
+  flex: 1 1 auto;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+}
+
+/* Video area and tile grid: use all the room, give small gaps */
+.cc-session.is-focus [class*="grid" i],
+.cc-session.is-focus [class*="stage" i],
+.cc-session.is-focus [class*="videos" i],
+.cc-session.is-focus [class*="tiles" i],
+.cc-session.is-focus [class*="participants" i] {
+  flex: 1 1 auto;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: none !important;
+}
+
+/* Faces fill their tile, shared screens are never cropped */
+.cc-session.is-focus video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cc-session.is-focus [class*="screen" i] video,
+.cc-session.is-focus video[class*="screen" i] {
+  object-fit: contain;
+  background: #000;
+}
+
+/* 4. Show chat: floating pill, top right, clear of the call controls at the bottom */
+.cc-reveal-chat {
+  position: absolute;
+  top: max(14px, env(safe-area-inset-top));
+  right: max(14px, env(safe-area-inset-right));
+  z-index: 2100;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 18px 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(18, 20, 28, 0.72);
+  color: #fff;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  backdrop-filter: blur(14px) saturate(1.4);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  transition: background-color 0.15s, transform 0.1s;
+}
+
+.cc-reveal-chat:hover {
+  background: rgba(34, 37, 50, 0.9);
+}
+
+.cc-reveal-chat:active {
+  transform: scale(0.97);
+}
+
+.cc-reveal-chat:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+/* Phones: icon only, so it never covers a participant's name */
+@media (max-width: 560px) {
+  .cc-reveal-chat {
+    width: 44px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .cc-reveal-chat span {
+    display: none;
+  }
+}
+
+/* 5. Entering full screen: a short fade, not a jump */
+.cc-frame.is-call-focus {
+  animation: cc-focus-in 0.18s ease-out;
+}
+
+@keyframes cc-focus-in {
+  from {
+    opacity: 0.4;
+    transform: scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cc-frame.is-call-focus {
+    animation: none;
+  }
+}
+
+
+
+
+
+
+/* =====================================================================
+   Session full screen   (paste into src/styles/community-chat.css)
+
+   Delete your older full screen blocks first:
+     "Full screen: hide chat only"
+     "Full screen: session fills viewport"
+     every .cc-reveal-chat rule
+   and anything from my earlier version of this file (including the wildcard
+   [class*="grid"] / video rules, they are not needed any more).
+   Keep the "Session header actions" block.
+   The call layout itself now lives in src/styles/study-call.css.
+   ===================================================================== */
+
+/* 1. The page frame becomes the stage (it is already a portal on <body>) */
+.cc-frame.is-call-focus {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2000;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  display: block !important;
+  grid-template-columns: 1fr !important;
+  background: #0a0b10 !important;
+  overflow: hidden !important;
+  animation: cc-focus-in 0.18s ease-out;
+}
+
+/* 2. Hide everything except the call */
+.cc-frame.is-call-focus .cc-rail,
+.cc-main.call-focus .cc-top,
+.cc-main.call-focus .cc-feed,
+.cc-main.call-focus .cc-composer-wrap,
+.cc-main.call-focus .cc-typing-label,
+.cc-main.call-focus .cc-jump {
+  display: none !important;
+}
+
+.cc-frame.is-call-focus .cc-main {
+  position: relative;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column;
+  background: transparent !important;
+}
+
+/* 3. The session box fills the stage (beats the small fixed size it has normally) */
+.cc-main.call-focus .cc-session.is-focus {
+  position: relative;
+  flex: 1 1 auto;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: #0a0b10 !important;
+  overflow: hidden !important;
+  display: flex;
+  flex-direction: column;
+}
+
+.cc-session.is-focus > .sc-root {
+  flex: 1 1 auto;
+  height: 100%;
+}
+
+/* 4. Normal (not full screen) session: a comfortable fixed height */
+.cc-main .cc-session:not(.is-focus) {
+  height: clamp(320px, 52vh, 520px);
+  max-height: none;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+/* 5. Show chat: floating pill, top right */
+.cc-reveal-chat {
+  position: absolute;
+  top: max(14px, env(safe-area-inset-top));
+  right: max(14px, env(safe-area-inset-right));
+  z-index: 2100;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 18px 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(18, 20, 28, 0.72);
+  color: #fff;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 650;
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  backdrop-filter: blur(14px) saturate(1.4);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  transition: background-color 0.15s, transform 0.1s;
+}
+
+.cc-reveal-chat:hover {
+  background: rgba(34, 37, 50, 0.9);
+}
+
+.cc-reveal-chat:active {
+  transform: scale(0.97);
+}
+
+.cc-reveal-chat:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+@media (max-width: 560px) {
+  .cc-reveal-chat {
+    width: 44px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .cc-reveal-chat span {
+    display: none;
+  }
+}
+
+@keyframes cc-focus-in {
+  from {
+    opacity: 0.4;
+    transform: scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cc-frame.is-call-focus {
+    animation: none;
+  }
+}
+
+
+
+
+
+
+/* =====================================================================
+   Session screen, before full screen
+   Paste into src/styles/community-chat.css.
+
+   Delete first:
+     1. the whole "Session header actions" block (.cc-session-actions,
+        .cc-session-btn.ghost, and the "Light theme safety" rules)
+     2. "4. Normal (not full screen) session" from community-chat-fullscreen.css
+   Everything below uses your tokens, so light and dark mode both work.
+   ===================================================================== */
+
+/* ---------- Header buttons: End + Full screen ---------- */
+
+.cc-session-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-right: 12px;              /* keeps Full screen off the window edge */
+}
+
+.cc-session-actions .cc-session-btn {
+  height: 40px;
+}
+
+.cc-session-btn.ghost {
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.cc-session-btn.ghost:hover {
+  background: var(--icon-bg);
+}
+
+.cc-session-btn.ghost.on {
+  border-color: var(--accent);
+  background: var(--icon-bg);
+  color: var(--accent);
+}
+
+/* ---------- The call panel inside the page ---------- */
+
+.cc-main .cc-session:not(.is-focus) {
+  margin: 10px 12px 0;
+  padding: 0;
+  height: clamp(200px, 32dvh, 300px);  
+   height: clamp(200px, 32vh, 300px);          /* phones: video on top, chat keeps room */
+  max-height: none;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: #0a0b10;                          /* call stage stays dark in light and dark mode */
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.cc-session:not(.is-focus) > .sc-root {
+  height: 100%;
+  min-height: 0;
+  border-radius: 0;
+}
+
+@media (min-width: 700px) {
+  .cc-main .cc-session:not(.is-focus) {
+    height: clamp(300px, 46vh, 460px);
+  }
+}
+
+/* ---------- Desktop: call on the left, chat as a side panel ---------- */
+
+@media (min-width: 1000px), (orientation: landscape) and (min-width: 640px) and (max-height: 560px) {
+  .cc-main.with-call {
+    display: grid !important;
+       grid-template-columns: minmax(0, 1fr) clamp(280px, 38vw, 380px);
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .cc-main.with-call > .cc-top {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .cc-main.with-call > .cc-session {
+    grid-column: 1;
+    grid-row: 2 / 5;
+    height: auto !important;
+    margin: 12px;
+    min-height: 0;
+  }
+
+  .cc-main.with-call > .cc-feed {
+    grid-column: 2;
+    grid-row: 2;
+    min-height: 0;
+    overflow-y: auto;
+    border-left: 1px solid var(--border);
+  }
+
+  .cc-main.with-call > .cc-typing-label {
+    grid-column: 2;
+    grid-row: 3;
+    border-left: 1px solid var(--border);
+  }
+
+  .cc-main.with-call > .cc-composer-wrap {
+    grid-column: 2;
+    grid-row: 4;
+    border-left: 1px solid var(--border);
+  }
+}
+
+
+
+
+
+/* =====================================================================
+   Session full screen   (paste into src/styles/community-chat.css)
+
+   Delete your older full screen blocks first:
+     "Full screen: hide chat only"
+     "Full screen: session fills viewport"
+     every .cc-reveal-chat rule
+   and anything from my earlier version of this file (including the wildcard
+   [class*="grid"] / video rules, they are not needed any more).
+   Keep the "Session header actions" block.
+   The call layout itself now lives in src/styles/study-call.css.
+   ===================================================================== */
+
+/* 1. The page frame becomes the stage (it is already a portal on <body>) */
+.cc-frame.is-call-focus {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2000;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  display: block !important;
+  grid-template-columns: 1fr !important;
+  background: #0a0b10 !important;
+  overflow: hidden !important;
+  animation: cc-focus-in 0.18s ease-out;
+}
+
+/* 2. Hide everything except the call */
+.cc-frame.is-call-focus .cc-rail,
+.cc-main.call-focus .cc-top,
+.cc-main.call-focus .cc-feed,
+.cc-main.call-focus .cc-composer-wrap,
+.cc-main.call-focus .cc-typing-label,
+.cc-main.call-focus .cc-jump {
+  display: none !important;
+}
+
+.cc-frame.is-call-focus .cc-main {
+  position: relative;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column;
+  background: transparent !important;
+}
+
+/* 3. The session box fills the stage (beats the small fixed size it has normally) */
+.cc-main.call-focus .cc-session.is-focus {
+  position: relative;
+  flex: 1 1 auto;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: #0a0b10 !important;
+  overflow: hidden !important;
+  display: flex;
+  flex-direction: column;
+}
+
+.cc-session.is-focus > .sc-root {
+  flex: 1 1 auto;
+  height: 100%;
+}
+
+/* 4. Show chat: floating pill, top right */
+.cc-reveal-chat {
+  position: absolute;
+  top: max(14px, env(safe-area-inset-top));
+  right: max(14px, env(safe-area-inset-right));
+  z-index: 2100;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 18px 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(18, 20, 28, 0.72);
+  color: #fff;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 650;
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  backdrop-filter: blur(14px) saturate(1.4);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  transition: background-color 0.15s, transform 0.1s;
+}
+
+.cc-reveal-chat:hover {
+  background: rgba(34, 37, 50, 0.9);
+}
+
+.cc-reveal-chat:active {
+  transform: scale(0.97);
+}
+
+.cc-reveal-chat:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+@media (max-width: 560px) {
+  .cc-reveal-chat {
+    width: 44px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .cc-reveal-chat span {
+    display: none;
+  }
+}
+
+@keyframes cc-focus-in {
+  from {
+    opacity: 0.4;
+    transform: scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cc-frame.is-call-focus {
+    animation: none;
+  }
+}
+
+
+
+
+/* message "…" button: small, quiet, shows on hover */
+.cc-post .cc-more-btn {
+  width: 28px;
+  height: 28px;
+  min-width: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background-color 0.15s;
+}
+
+.cc-post:hover .cc-more-btn,
+.cc-post.menu-open .cc-more-btn,
+.cc-post .cc-more-btn:focus-visible {
+  opacity: 1;
+}
+
+.cc-post .cc-more-btn:hover {
+  background: var(--icon-bg);
+}
+
+/* phones have no hover, so keep it faintly visible */
+@media (hover: none) {
+  .cc-post .cc-more-btn {
+    opacity: 0.55;
+  }
+}
+
+/* long words wrap instead of running under the button */
+.cc-post .cc-md,
+.cc-post .cc-md p {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.cc-post .cc-md {
+  padding-right: 36px;
+}
+
+
+
+
+
+
+/* Phones: tighter call panel so chat gets the room */
+@media (max-width: 700px) {
+  .cc-session:not(.is-focus) .sc-main {
+    padding: 8px 8px 0;
+  }
+
+  .cc-session:not(.is-focus) .sc-controls {
+    padding-top: 4px;
+    padding-bottom: 10px;
+  }
+}
+
+
+
+
+/* =====================================================================
+   Phone call: chat bottom sheet
+   Paste at the END of community-chat.css
+   ===================================================================== */
+
+/* Layout: the call fills the screen, chat sits over its lower part */
+.cc-frame.is-call-focus .cc-main.sheet-open {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 26% auto minmax(0, 1fr) auto auto;
+}
+
+.cc-frame.is-call-focus .cc-main.sheet-open > .cc-session {
+  grid-column: 1;
+  grid-row: 1 / -1;
+}
+
+/* Sheet header: grab bar, title, close button */
+.cc-frame.is-call-focus .cc-main.sheet-open > .cc-sheet-bar {
+  grid-column: 1;
+  grid-row: 2;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 16px 10px;
+  border-radius: 22px 22px 0 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-primary);
+  box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.cc-sheet-grab {
+  position: absolute;
+  top: 7px;
+  left: 50%;
+  width: 40px;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--border);
+  transform: translateX(-50%);
+}
+
+.cc-sheet-bar strong {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.cc-sheet-bar button {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: var(--icon-bg);
+  color: var(--text-primary);
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* Messages, typing label and composer: show them again (beats the old hide rule) */
+.cc-frame.is-call-focus .cc-main.call-focus.sheet-open > .cc-feed {
+  display: block !important;
+  grid-column: 1;
+  grid-row: 3;
+  position: relative;
+  z-index: 2;
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--surface);
+}
+
+.cc-frame.is-call-focus .cc-main.call-focus.sheet-open > .cc-typing-label {
+  display: block !important;
+  grid-column: 1;
+  grid-row: 4;
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  padding: 4px 16px;
+  background: var(--surface);
+}
+
+.cc-frame.is-call-focus .cc-main.call-focus.sheet-open > .cc-composer-wrap {
+  display: block !important;
+  grid-column: 1;
+  grid-row: 5;
+  position: relative;
+  z-index: 2;
+  background: var(--surface);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.cc-frame.is-call-focus .cc-main.call-focus.sheet-open > .cc-feed .cc-jump {
+  display: block !important;
+}
+
+
+
+/* square close button on the phone chat sheet */
+.cc-frame.is-call-focus .cc-main.sheet-open > .cc-sheet-bar button {
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0;
+}
+
+/* no scrollbar arrows on the message box unless the text is long */
+.cc-composer-input {
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.cc-feed {
+  scrollbar-width: thin;
+}

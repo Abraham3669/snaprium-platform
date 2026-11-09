@@ -1052,3 +1052,109 @@ h2 {
     font-size: 1.05rem !important;
   }
 }
+
+
+
+/* ==========================================================
+   Circles list - layout polish (appended)
+   ========================================================== */
+
+/* Home button */
+.cx-page .cx-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 14px -8px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.cx-page .cx-back:hover {
+  background: var(--icon-bg);
+  color: var(--text-primary);
+}
+
+/* Heading: everything left-aligned (global h1 centering was leaking in) */
+.cx-page .cx-header-copy,
+.cx-page .cx-title,
+.cx-page .cx-sub {
+  text-align: left;
+}
+.cx-page .cx-header-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Invite code link: accent colour + icon (button colour was inherited) */
+.cx-page .cx-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 12px;
+  color: var(--accent);
+  font-weight: 650;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.cx-page .cx-link:hover {
+  background: var(--cx-hover);
+  text-decoration: none;
+}
+.cx-page .cx-link svg {
+  flex: 0 0 16px;
+}
+
+/* Search + invite code sit together on one row */
+.cx-page .cx-toolbar {
+  justify-content: flex-start;
+  gap: 12px;
+}
+.cx-page .cx-search {
+  max-width: 520px;
+}
+
+/* Section titles a touch stronger */
+.cx-page .cx-section-title {
+  font-size: 1.2rem;
+}
+
+/* Phone */
+@media (max-width: 640px) {
+  .cx-page .cx-back {
+    margin-bottom: 8px;
+  }
+
+  /* compact Create button instead of a full-width block */
+  .cx-page .cx-header {
+    gap: 14px;
+  }
+  .cx-page .cx-header-actions {
+    justify-content: flex-start;
+    gap: 12px;
+  }
+  .cx-page .cx-header-actions .cx-btn {
+    flex: 0 0 auto;
+    max-width: none;
+    min-height: 40px;
+    padding: 0 16px;
+  }
+
+  .cx-page .cx-toolbar {
+    gap: 4px;
+  }
+  .cx-page .cx-join {
+    align-self: flex-start;
+  }
+  .cx-page .cx-link {
+    height: 38px;
+    padding: 0 6px;
+  }
+}

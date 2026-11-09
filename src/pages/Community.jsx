@@ -55,6 +55,23 @@ function UsersIcon() {
   );
 }
 
+function KeyIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="8" cy="15" r="4" />
+      <path d="M10.8 12.2 20 3M16 7l3 3" />
+    </svg>
+  );
+}
+
+function BackIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M15 6l-6 6 6 6" />
+    </svg>
+  );
+}
+
 function Avatar({ c, size = "md" }) {
   const initial = (c.name || "?").trim().charAt(0).toUpperCase();
   return (
@@ -276,6 +293,9 @@ if (user?.uid && own.length) {
 
   return (
     <div className="hub-page cx-page">
+      <button type="button" className="cx-back" onClick={() => navigate("/")}>
+        <BackIcon /> Home
+      </button>
       <header className="cx-header">
         <div className="cx-header-copy">
           <h1 className="cx-title">Circles</h1>
@@ -306,7 +326,7 @@ if (user?.uid && own.length) {
         <div className="cx-join">
           {!showJoin ? (
             <button type="button" className="cx-link" onClick={() => setShowJoin(true)}>
-              Have an invite code?
+              <KeyIcon /> Have an invite code?
             </button>
           ) : (
             <form className="cx-join-form" onSubmit={handleJoinCode}>

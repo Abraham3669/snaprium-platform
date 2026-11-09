@@ -339,6 +339,7 @@ export default function CommunityChat() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [callOpen, setCallOpen] = useState(false);
+const [callFocus, setCallFocus] = useState(false);
   const [askingAI, setAskingAI] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [typingNames, setTypingNames] = useState([]);
@@ -355,6 +356,12 @@ const [pendingImage, setPendingImage] = useState("");
 
   const [welcome, setWelcome] = useState(false);
 
+    const [isPhone, setIsPhone] = useState(
+    () => window.matchMedia?.("(max-width: 700px)").matches ?? false
+  );
+  const [chatSheet, setChatSheet] = useState(false);
+  const [callUnread, setCallUnread] = useState(0);
+  const knownIds = useRef(new Set());
   
 
   const [boardUnread, setBoardUnread] = useState({ chat: 0, questions: 0 });
@@ -365,6 +372,8 @@ const [pendingImage, setPendingImage] = useState("");
   const activeBoard = boards.find((b) => b.id === boardId) || boards[0];
 const activeBoardId = activeBoard?.id || boardId || "general";
 const liveBoard = isLiveBoard(activeBoard);
+const phoneCall = isPhone && liveBoard && callOpen;
+const focusMode = liveBoard && callOpen && (callFocus || isPhone);
 const questionsBoard = isQuestionsBoard(activeBoard);
   const GIF_CATEGORIES = ["Trending", "Reactions",  "Funny", "Happy", "Sad", "Celebrate"];
   
@@ -633,6 +642,60 @@ const next =
     if (!liveBoard && callOpen) setCallOpen(false);
   }, [liveBoard, callOpen]);
 
+  // Never stay in full screen once the session is gone
+  useEffect(() => {
+    if (callFocus && (!callOpen || !liveBoard)) setCallFocus(false);
+  }, [callFocus, callOpen, liveBoard]);
+
+  // Esc leaves full screen and brings the chat back
+  useEffect(() => {
+    if (!focusMode) return undefined;
+    const onKey = (e) => {
+      if (e.key === "Escape") setCallFocus(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [focusMode]);
+
+  // Detect phone width
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 700px)");
+    const onChange = (e) => setIsPhone(e.matches);
+    mq.addEventListener?.("change", onChange);
+    return () => mq.removeEventListener?.("change", onChange);
+  }, []);
+
+  // Close the chat sheet when the call ends or we leave the phone layout
+  useEffect(() => {
+    if (!phoneCall) setChatSheet(false);
+  }, [phoneCall]);
+
+  // Count new messages while the chat sheet is closed
+  useEffect(() => {
+    if (!phoneCall || chatSheet) {
+      knownIds.current = new Set(messages.map((m) => m.id));
+      setCallUnread(0);
+      return;
+    }
+    let add = 0;
+    messages.forEach((m) => {
+      if (knownIds.current.has(m.id)) return;
+      knownIds.current.add(m.id);
+      if (m.uid !== user?.uid) add += 1;
+    });
+    if (add) setCallUnread((n) => n + add);
+  }, [messages, phoneCall, chatSheet]);
+
+  // Scroll chat to the newest message when the sheet opens
+  useEffect(() => {
+    if (!chatSheet) return undefined;
+    const t = setTimeout(() => {
+      const el = feedRef.current;
+      if (el) el.scrollTop = el.scrollHeight;
+    }, 60);
+    return () => clearTimeout(t);
+  }, [chatSheet]);
+
   useEffect(() => {
   if (!user?.uid || !community || !activeBoardId) return;
   if (!(community.members || []).includes(user.uid)) return;
@@ -779,7 +842,9 @@ useEffect(() => {
     setMessages([]);
     stickToBottom.current = true;
     setUnseen(0);
-    setCallOpen(false);
+      setCallOpen(false);
+        setCallFocus(false);
+    setChatSheet(false);
     setReplyTo(null);
     clearTyping();
   };
@@ -988,7 +1053,11 @@ useEffect(() => {
 
 
 
-  const frame = (inner) => createPortal(<div className="cc-frame">{inner}</div>, document.body);
+  const frame = (inner) =>
+    createPortal(
+      <div className={`cc-frame ${focusMode ? "is-call-focus" : ""}`}>{inner}</div>,
+      document.body
+    );
 
   if (!community) {
     return frame(<p className="cc-muted">Opening board…</p>);
@@ -1035,8 +1104,7 @@ useEffect(() => {
           </button>
         ))}
       </aside>
-
-      <section className="cc-main">
+           <section className={`cc-main ${focusMode ? "call-focus" : ""} ${liveBoard && callOpen && !focusMode ? "with-call" : ""} ${phoneCall && chatSheet ? "sheet-open" : ""}`}>
         <header className="cc-top">
           <button
             type="button"
@@ -1050,15 +1118,31 @@ useEffect(() => {
             <h1>{community.name}</h1>
             <p>{activeBoard?.name || "Board"}</p>
           </div>
-          {liveBoard ? (
-            <button
-              type="button"
-              className={`cc-session-btn ${callOpen ? "on" : ""}`}
-              onClick={() => setCallOpen((v) => !v)}
-            >
-              <IconVideo />
-              {callOpen ? "End" : "Session"}
-            </button>
+                   {liveBoard ? (
+            <div className="cc-session-actions">
+              <button
+                type="button"
+                className={`cc-session-btn ${callOpen ? "on" : ""}`}
+                onClick={() => {
+                  setCallOpen((v) => {
+                    if (v) setCallFocus(false);
+                    return !v;
+                  });
+                }}
+              >
+                <IconVideo />
+                {callOpen ? "End" : "Session"}
+              </button>
+              {callOpen && (
+                <button
+                  type="button"
+                  className={`cc-session-btn ghost ${callFocus ? "on" : ""}`}
+                  onClick={() => setCallFocus((v) => !v)}
+                >
+                  {callFocus ? "Show chat" : "Full screen"}
+                </button>
+              )}
+            </div>
           ) : (
                                                 <div className="cc-faces">
               {boardPeople.slice(0, 6).map((p) => (
@@ -1083,17 +1167,47 @@ useEffect(() => {
           )}
         </header>
 
-        {liveBoard && callOpen && (
-          <div className="cc-session">
-            <StudyCall
+               {liveBoard && callOpen && (
+                    <div className={`cc-session ${focusMode ? "is-focus" : ""}`}>
+                       <StudyCall
               roomId={`community-${community.id}-session`}
               user={user}
-              onClose={() => setCallOpen(false)}
+                            focus={focusMode}
+              onToggleFocus={isPhone ? undefined : () => setCallFocus((v) => !v)}
+              onOpenChat={isPhone ? () => setChatSheet(true) : undefined}
+              chatBadge={callUnread}
+              onClose={() => {
+                setCallOpen(false);
+                setCallFocus(false);
+                setChatSheet(false);
+              }}
             />
+            {focusMode && !isPhone && (
+              <button
+                type="button"
+                className="cc-reveal-chat"
+                onClick={() => setCallFocus(false)}
+                aria-label="Show chat"
+                title="Show chat (Esc)"
+              >
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" />
+                </svg>
+                <span>Show chat</span>
+              </button>
+            )}
           </div>
         )}
 
-                {questionsBoard ? (
+                {phoneCall && chatSheet && (
+          <div className="cc-sheet-bar">
+            <span className="cc-sheet-grab" aria-hidden="true" />
+            <strong>Chat</strong>
+            <button type="button" onClick={() => setChatSheet(false)} aria-label="Close chat">×</button>
+          </div>
+        )}
+
+        {questionsBoard ? (
   <QuestionBoard
     communityId={communityId}
     boardId={activeBoardId}

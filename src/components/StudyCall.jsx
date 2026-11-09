@@ -6,6 +6,7 @@ import { db } from "../lib/firebase";
 import { postAPI } from "../utils/apiClient";
 import { toast } from "react-toastify";
 import UpgradeModal from "./UpgradeModal";
+import "../styles/study-call.css";
 
 const FREE_SESSION_MIN = 45;
 const FREE_SESSIONS_PER_DAY = 2;
@@ -15,7 +16,19 @@ function getTrack(p, kind) {
   return p?.tracks?.[kind]?.persistentTrack || p?.tracks?.[kind]?.track || null;
 }
 
-export default function StudyCall({ roomId, user, onClose }) {
+// camera is showing video only when Daily says the track is playable
+function hasCamera(p) {
+  const state = p?.tracks?.video?.state;
+  return state ? state === "playable" : !!p?.video;
+}
+
+function hasMic(p) {
+  const state = p?.tracks?.audio?.state;
+  return state ? state === "playable" : !!p?.audio;
+}
+
+// focus + onToggleFocus are optional. Pass them to show the full screen button in the control bar.
+export default function StudyCall({ roomId, user, onClose, focus = false, onToggleFocus, onOpenChat, chatBadge = 0 }) {
   const callRef = useRef(null);
   const onCloseRef = useRef(onClose);
   const [joining, setJoining] = useState(true);
@@ -28,7 +41,7 @@ export default function StudyCall({ roomId, user, onClose }) {
 
   const isPaid = user?.plan === "unlimited" || user?.plan === "premium";
 
-const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -46,8 +59,8 @@ const [showUpgradeModal, setShowUpgradeModal] = useState(false);
         if (!isPaid && user?.uid) {
           const today = getToday();
           const used = user.lastLiveSessionDate === today ? user.dailyLiveSessions || 0 : 0;
-                    if (used >= FREE_SESSIONS_PER_DAY) {
-                        toast.info("Free session limit reached (45 minutes).");
+          if (used >= FREE_SESSIONS_PER_DAY) {
+            toast.info("Free session limit reached (45 minutes).");
             setShowUpgradeModal(true);
             try {
               await callRef.current?.leave();
@@ -70,6 +83,17 @@ const [showUpgradeModal, setShowUpgradeModal] = useState(false);
         if (cancelled) return;
         if (!data?.url) throw new Error(data?.error || "No Daily room URL returned");
 
+        if (!window.isSecureContext) {
+          throw new Error(
+            "Live sessions need a secure connection. Open the app over https (or localhost)."
+          );
+        }
+        if (!window.RTCPeerConnection || !navigator.mediaDevices?.getUserMedia) {
+          throw new Error(
+            "This browser or app has WebRTC turned off. Try Chrome or Safari, or turn off any WebRTC blocking."
+          );
+        }
+
         const call = DailyIframe.createCallObject();
         callRef.current = call;
 
@@ -86,6 +110,14 @@ const [showUpgradeModal, setShowUpgradeModal] = useState(false);
         call.on("participant-left", sync);
         call.on("track-started", sync);
         call.on("track-stopped", sync);
+        call.on("camera-error", (e) => {
+          console.error("[Daily camera]", e);
+          setCamOn(false);
+          setMicOn(false);
+          toast.error(
+            "Camera or mic is blocked. Allow access in your device and browser settings, then try again."
+          );
+        });
         call.on("error", (e) => {
           console.error("[Daily]", e);
           setError(e?.errorMsg || "Call error");
@@ -153,18 +185,28 @@ const [showUpgradeModal, setShowUpgradeModal] = useState(false);
         audioEl.play?.().catch(() => {});
       }
     });
-  }, [participants]);
+  }, [participants, activeScreenId]);
 
   const toggleCam = async () => {
     const next = !camOn;
-    await callRef.current?.setLocalVideo(next);
-    setCamOn(next);
+    try {
+      await callRef.current?.setLocalVideo(next);
+      setCamOn(next);
+    } catch (err) {
+      console.error(err);
+      toast.error("Could not turn the camera on. Check your camera permissions.");
+    }
   };
 
   const toggleMic = async () => {
     const next = !micOn;
-    await callRef.current?.setLocalAudio(next);
-    setMicOn(next);
+    try {
+      await callRef.current?.setLocalAudio(next);
+      setMicOn(next);
+    } catch (err) {
+      console.error(err);
+      toast.error("Could not turn the mic on. Check your microphone permissions.");
+    }
   };
 
   const toggleShare = async () => {
@@ -193,25 +235,15 @@ const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const activeScreen =
     screens.find((p) => p.session_id === activeScreenId) || screens[0] || null;
 
+  // local person first, then everyone else
+  const ordered = [...participants].sort((a, b) => Number(!!b.local) - Number(!!a.local));
+  const count = Math.min(Math.max(ordered.length, 1), 10);
+
   return (
-    <div className="study-call">
-      {screens.length > 0 && (
-        <div className="study-call-stage">
-          {screens.length > 1 && (
-            <div className="study-call-screen-switch">
-              {screens.map((p) => (
-                <button
-                  key={`pick-${p.session_id}`}
-                  type="button"
-                  className={activeScreen?.session_id === p.session_id ? "active" : ""}
-                  onClick={() => setActiveScreenId(p.session_id)}
-                >
-                  {p.local ? "Your screen" : `${p.user_name || "Student"}'s screen`}
-                </button>
-              ))}
-            </div>
-          )}
-          {activeScreen && (
+    <div className={`sc-root ${focus ? "is-focus" : ""}`}>
+      <div className={`sc-main ${activeScreen ? "has-screen" : ""}`}>
+        {activeScreen && (
+          <div className="sc-screen">
             <video
               key={`screen-${activeScreen.session_id}`}
               data-daily-screen={activeScreen.session_id}
@@ -219,36 +251,105 @@ const [showUpgradeModal, setShowUpgradeModal] = useState(false);
               playsInline
               muted
             />
-          )}
-        </div>
-      )}
-
-      <div className="study-call-strip">
-        {joining && <div className="study-call-status">Joining call...</div>}
-        {error && <div className="study-call-status">{error}</div>}
-        {participants.map((p) => (
-          <div key={p.session_id} className="study-call-tile">
-            <video data-daily-video={p.session_id} autoPlay playsInline muted={!!p.local} />
-            {!p.local && <audio data-daily-audio={p.session_id} autoPlay />}
-            <div className="study-call-name">{p.local ? "You" : p.user_name || "Student"}</div>
+            <span className="sc-screen-label">
+              {activeScreen.local ? "You are sharing your screen" : `${activeScreen.user_name || "Student"}'s screen`}
+            </span>
+            {screens.length > 1 && (
+              <div className="sc-screen-switch">
+                {screens.map((p) => (
+                  <button
+                    key={`pick-${p.session_id}`}
+                    type="button"
+                    className={activeScreen.session_id === p.session_id ? "active" : ""}
+                    onClick={() => setActiveScreenId(p.session_id)}
+                  >
+                    {p.local ? "Your screen" : `${p.user_name || "Student"}'s screen`}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-        ))}
+        )}
+
+        <div className="sc-grid" data-count={count}>
+          {ordered.map((p) => {
+            const name = p.local ? "You" : p.user_name || "Student";
+            const camera = hasCamera(p);
+            const mic = p.local ? micOn : hasMic(p);
+            return (
+              <div
+                key={p.session_id}
+                className={`sc-tile ${p.local ? "local" : ""} ${camera ? "" : "cam-off"}`}
+              >
+                <video data-daily-video={p.session_id} autoPlay playsInline muted={!!p.local} />
+                {!p.local && <audio data-daily-audio={p.session_id} autoPlay />}
+                {!camera && (
+                  <div className="sc-avatar" aria-hidden="true">
+                    <span>{(p.user_name || (p.local ? user?.displayName : "") || name).slice(0, 1).toUpperCase()}</span>
+                  </div>
+                )}
+                <div className="sc-name">
+                  {!mic && <MicOffIcon size={14} />}
+                  <span>{name}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {(joining || error) && (
+          <div className="sc-status" role="status">
+            {error || "Joining call…"}
+          </div>
+        )}
       </div>
 
-      <div className="study-call-controls">
-        <button type="button" onClick={toggleMic} title={micOn ? "Mute" : "Unmute"}>
+      <div className="sc-controls">
+        <button
+          type="button"
+          className={`sc-btn ${micOn ? "" : "off"}`}
+          onClick={toggleMic}
+          title={micOn ? "Mute" : "Unmute"}
+          aria-label={micOn ? "Mute" : "Unmute"}
+        >
           {micOn ? <MicOnIcon /> : <MicOffIcon />}
-          <span>{micOn ? "Mute" : "Unmute"}</span>
         </button>
-        <button type="button" onClick={toggleCam} title={camOn ? "Camera off" : "Camera on"}>
+        <button
+          type="button"
+          className={`sc-btn ${camOn ? "" : "off"}`}
+          onClick={toggleCam}
+          title={camOn ? "Turn camera off" : "Turn camera on"}
+          aria-label={camOn ? "Turn camera off" : "Turn camera on"}
+        >
           {camOn ? <CamOnIcon /> : <CamOffIcon />}
-          <span>{camOn ? "Camera off" : "Camera on"}</span>
         </button>
-        <button type="button" onClick={toggleShare} title={sharing ? "Stop share" : "Share screen"}>
+        <button
+          type="button"
+          className={`sc-btn ${sharing ? "active" : ""}`}
+          onClick={toggleShare}
+          title={sharing ? "Stop sharing" : "Share screen"}
+          aria-label={sharing ? "Stop sharing" : "Share screen"}
+        >
           <ShareIcon />
-          <span>{sharing ? "Stop share" : "Share"}</span>
         </button>
-               <button type="button" className="study-call-leave" onClick={leave} title="Leave call">
+        {onOpenChat && (
+          <button type="button" className="sc-btn" onClick={onOpenChat} title="Chat" aria-label="Open chat">
+            <ChatIcon />
+            {chatBadge > 0 && <span className="sc-badge">{chatBadge > 9 ? "9+" : chatBadge}</span>}
+          </button>
+        )}
+        {onToggleFocus && (
+          <button
+            type="button"
+            className="sc-btn"
+            onClick={onToggleFocus}
+            title={focus ? "Exit full screen" : "Full screen"}
+            aria-label={focus ? "Exit full screen" : "Full screen"}
+          >
+            {focus ? <CollapseIcon /> : <ExpandIcon />}
+          </button>
+        )}
+        <button type="button" className="sc-btn sc-leave" onClick={leave} title="Leave call" aria-label="Leave call">
           <LeaveCallIcon />
           <span>Leave</span>
         </button>
@@ -266,53 +367,87 @@ const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   );
 }
 
-function MicOnIcon() {
+const svgProps = (size) => ({
+  width: size,
+  height: size,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 2,
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+  "aria-hidden": true,
+});
+
+function MicOnIcon({ size = 22 }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg {...svgProps(size)}>
       <rect x="9" y="2" width="6" height="11" rx="3" />
       <path d="M5 11a7 7 0 0 0 14 0" />
       <line x1="12" y1="18" x2="12" y2="22" />
     </svg>
   );
 }
-function MicOffIcon() {
+function MicOffIcon({ size = 22 }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg {...svgProps(size)}>
       <rect x="9" y="2" width="6" height="11" rx="3" />
       <path d="M5 11a7 7 0 0 0 14 0" />
+      <line x1="12" y1="18" x2="12" y2="22" />
       <line x1="4" y1="4" x2="20" y2="20" />
     </svg>
   );
 }
-function CamOnIcon() {
+function CamOnIcon({ size = 22 }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg {...svgProps(size)}>
       <path d="M23 7l-7 5 7 5V7z" />
       <rect x="1" y="5" width="15" height="14" rx="2" />
     </svg>
   );
 }
-function CamOffIcon() {
+function CamOffIcon({ size = 22 }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg {...svgProps(size)}>
       <path d="M23 7l-7 5 7 5V7z" />
       <rect x="1" y="5" width="15" height="14" rx="2" />
       <line x1="2" y1="2" x2="22" y2="22" />
     </svg>
   );
 }
-function ShareIcon() {
+function ShareIcon({ size = 22 }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg {...svgProps(size)}>
       <rect x="2" y="3" width="20" height="14" rx="2" />
       <path d="M8 21h8" />
       <path d="M12 17v4" />
     </svg>
   );
 }
-function LeaveCallIcon() {
+function ExpandIcon({ size = 22 }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg {...svgProps(size)}>
+      <path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3" />
+    </svg>
+  );
+}
+function CollapseIcon({ size = 22 }) {
+  return (
+    <svg {...svgProps(size)}>
+      <path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M16 21v-3a2 2 0 0 1 2-2h3" />
+    </svg>
+  );
+}
+function ChatIcon({ size = 22 }) {
+  return (
+    <svg {...svgProps(size)}>
+      <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" />
+    </svg>
+  );
+}
+function LeaveCallIcon({ size = 20 }) {
+  return (
+    <svg {...svgProps(size)}>
       <path d="M10 5H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h5" />
       <polyline points="16 17 21 12 16 7" />
       <line x1="21" y1="12" x2="9" y2="12" />

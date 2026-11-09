@@ -1,0 +1,819 @@
+/* src/styles/study-call.css
+   Layout for the live session (StudyCall). All classes start with "sc-" so
+   no older CSS can fight with it. The tile grid changes with the number of people
+   through data-count on .sc-grid. Colors use --accent from your app. */
+
+.sc-root {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 340px;
+  background: #0a0b10;
+  color: #fff;
+  border-radius: 18px;
+  overflow: hidden;
+  font: inherit;
+}
+
+.sc-root *,
+.sc-root *::before,
+.sc-root *::after {
+  box-sizing: border-box;
+}
+
+.sc-root.is-focus {
+  border-radius: 0;
+  min-height: 0;
+}
+
+/* ---------- Stage ---------- */
+
+.sc-main {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+}
+
+.sc-root.is-focus .sc-main {
+  padding: 12px;
+}
+
+.sc-grid {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+
+/* Wide screens: layout by number of people */
+.sc-grid[data-count="2"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.sc-grid[data-count="3"],
+.sc-grid[data-count="4"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+.sc-grid[data-count="3"] .sc-tile:nth-child(3) {
+  grid-column: 1 / -1;
+}
+
+.sc-grid[data-count="5"],
+.sc-grid[data-count="6"] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+.sc-grid[data-count="7"],
+.sc-grid[data-count="8"],
+.sc-grid[data-count="9"] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+}
+
+.sc-grid[data-count="10"] {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: minmax(140px, 1fr);
+  grid-template-rows: none;
+  overflow-y: auto;
+}
+
+/* Phones and tall windows: stack instead of side by side */
+@media (max-width: 700px), (orientation: portrait) {
+  .sc-grid[data-count="2"] {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+  }
+
+  .sc-grid[data-count="5"],
+  .sc-grid[data-count="6"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+  }
+
+  .sc-grid[data-count="7"],
+  .sc-grid[data-count="8"],
+  .sc-grid[data-count="9"],
+  .sc-grid[data-count="10"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: none;
+    grid-auto-rows: minmax(150px, 1fr);
+    overflow-y: auto;
+  }
+}
+
+/* ---------- Tiles ---------- */
+
+.sc-tile {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #161a26;
+}
+
+.sc-tile video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #161a26;
+}
+
+.sc-tile.local video {
+  transform: scaleX(-1);          /* mirror your own camera */
+}
+
+.sc-tile.cam-off video {
+  opacity: 0;
+}
+
+.sc-avatar {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(
+    150deg,
+    color-mix(in srgb, var(--accent, #4f46e5) 28%, #161a26),
+    #161a26 70%
+  );
+}
+
+.sc-avatar span {
+  width: clamp(56px, 30%, 128px);
+  max-height: 60%;
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+  border-radius: 22%;
+  background: color-mix(in srgb, var(--accent, #4f46e5) 55%, #0a0b10);
+  color: #fff;
+  font-size: clamp(1.5rem, 5vw, 3rem);
+  font-weight: 800;
+}
+
+.sc-name {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  max-width: calc(100% - 20px);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 9px;
+  background: rgba(10, 11, 16, 0.62);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.sc-name svg {
+  flex: none;
+  color: #ff8d98;
+}
+
+.sc-name span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Screen share: big screen + a strip of people ---------- */
+
+.sc-screen {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #000;
+}
+
+.sc-screen video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+}
+
+.sc-screen-label {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  padding: 5px 10px;
+  border-radius: 9px;
+  background: rgba(10, 11, 16, 0.62);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.sc-screen-switch {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sc-screen-switch button {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  background: rgba(10, 11, 16, 0.7);
+  color: #fff;
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.sc-screen-switch button.active {
+  background: var(--accent, #4f46e5);
+  border-color: transparent;
+}
+
+.sc-main.has-screen .sc-grid {
+  flex: 0 0 clamp(150px, 18vw, 240px);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.sc-main.has-screen .sc-tile {
+  flex: 0 0 auto;
+  aspect-ratio: 16 / 10;
+  grid-column: auto !important;
+}
+
+@media (max-width: 700px), (orientation: portrait) {
+  .sc-main.has-screen {
+    flex-direction: column;
+  }
+
+  .sc-main.has-screen .sc-grid {
+    flex: 0 0 96px;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .sc-main.has-screen .sc-tile {
+    flex: 0 0 130px;
+    height: 100%;
+    aspect-ratio: auto;
+  }
+
+  .sc-main.has-screen .sc-name {
+    left: 6px;
+    bottom: 6px;
+    padding: 3px 7px;
+    font-size: 0.7rem;
+  }
+}
+
+/* ---------- Joining / error message ---------- */
+
+.sc-status {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  max-width: min(86%, 360px);
+  padding: 12px 18px;
+  border-radius: 14px;
+  background: rgba(10, 11, 16, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  text-align: center;
+  font-size: 0.92rem;
+  pointer-events: none;
+}
+
+/* ---------- Control bar ---------- */
+
+.sc-controls {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 12px calc(14px + env(safe-area-inset-bottom, 0px));
+}
+
+.sc-btn {
+  width: 52px;
+  height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 50%;
+  background: #262b3a;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s, transform 0.1s;
+}
+
+.sc-btn:hover {
+  background: #323849;
+}
+
+.sc-btn:active {
+  transform: scale(0.94);
+}
+
+.sc-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.sc-btn.off {
+  background: #e5484d;
+}
+
+.sc-btn.off:hover {
+  background: #ef5a5f;
+}
+
+.sc-btn.active {
+  background: var(--accent, #4f46e5);
+}
+
+.sc-leave {
+  width: auto;
+  padding: 0 22px;
+  border-radius: 26px;
+  background: #e5484d;
+  font-size: 0.92rem;
+  font-weight: 650;
+}
+
+.sc-leave:hover {
+  background: #ef5a5f;
+}
+
+@media (max-width: 420px) {
+  .sc-controls {
+    gap: 8px;
+  }
+
+  .sc-btn {
+    width: 48px;
+    height: 48px;
+  }
+
+  .sc-leave {
+    width: 48px;
+    padding: 0;
+    border-radius: 50%;
+  }
+
+  .sc-leave span {
+    display: none;
+  }
+}
+
+
+
+
+/* src/styles/study-call.css
+   Layout for the live session (StudyCall). All classes start with "sc-" so
+   no older CSS can fight with it. The tile grid changes with the number of people
+   through data-count on .sc-grid. Colors use --accent from your app. */
+
+.sc-root {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 340px;
+  background: #0a0b10;
+  color: #fff;
+  border-radius: 18px;
+  overflow: hidden;
+  font: inherit;
+}
+
+.sc-root *,
+.sc-root *::before,
+.sc-root *::after {
+  box-sizing: border-box;
+}
+
+.sc-root.is-focus {
+  border-radius: 0;
+  min-height: 0;
+}
+
+/* ---------- Stage ---------- */
+
+.sc-main {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+}
+
+.sc-root.is-focus .sc-main {
+  padding: 12px;
+}
+
+.sc-grid {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+
+/* Wide screens: layout by number of people */
+.sc-grid[data-count="2"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.sc-grid[data-count="3"],
+.sc-grid[data-count="4"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+.sc-grid[data-count="3"] .sc-tile:nth-child(3) {
+  grid-column: 1 / -1;
+}
+
+.sc-grid[data-count="5"],
+.sc-grid[data-count="6"] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+.sc-grid[data-count="7"],
+.sc-grid[data-count="8"],
+.sc-grid[data-count="9"] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+}
+
+.sc-grid[data-count="10"] {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: minmax(140px, 1fr);
+  grid-template-rows: none;
+  overflow-y: auto;
+}
+
+/* Phones and tall windows: stack instead of side by side */
+@media (max-width: 700px), (orientation: portrait) {
+  .sc-grid[data-count="2"] {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+  }
+
+  .sc-grid[data-count="5"],
+  .sc-grid[data-count="6"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+  }
+
+  .sc-grid[data-count="7"],
+  .sc-grid[data-count="8"],
+  .sc-grid[data-count="9"],
+  .sc-grid[data-count="10"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: none;
+    grid-auto-rows: minmax(150px, 1fr);
+    overflow-y: auto;
+  }
+}
+
+/* ---------- Tiles ---------- */
+
+.sc-tile {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #161a26;
+}
+
+.sc-tile video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #161a26;
+}
+
+.sc-tile.local video {
+  transform: scaleX(-1);          /* mirror your own camera */
+}
+
+.sc-tile.cam-off video {
+  opacity: 0;
+}
+
+.sc-avatar {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(
+    150deg,
+    color-mix(in srgb, var(--accent, #4f46e5) 28%, #161a26),
+    #161a26 70%
+  );
+}
+
+.sc-avatar span {
+  width: clamp(56px, 30%, 128px);
+  max-height: 60%;
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+  border-radius: 22%;
+  background: color-mix(in srgb, var(--accent, #4f46e5) 55%, #0a0b10);
+  color: #fff;
+  font-size: clamp(1.5rem, 5vw, 3rem);
+  font-weight: 800;
+}
+
+.sc-name {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  max-width: calc(100% - 20px);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 9px;
+  background: rgba(10, 11, 16, 0.62);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.sc-name svg {
+  flex: none;
+  color: #ff8d98;
+}
+
+.sc-name span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Screen share: big screen + a strip of people ---------- */
+
+.sc-screen {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #000;
+}
+
+.sc-screen video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+}
+
+.sc-screen-label {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  padding: 5px 10px;
+  border-radius: 9px;
+  background: rgba(10, 11, 16, 0.62);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.sc-screen-switch {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sc-screen-switch button {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  background: rgba(10, 11, 16, 0.7);
+  color: #fff;
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.sc-screen-switch button.active {
+  background: var(--accent, #4f46e5);
+  border-color: transparent;
+}
+
+.sc-main.has-screen .sc-grid {
+  flex: 0 0 clamp(150px, 18vw, 240px);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.sc-main.has-screen .sc-tile {
+  flex: 0 0 auto;
+  aspect-ratio: 16 / 10;
+  grid-column: auto !important;
+}
+
+@media (max-width: 700px), (orientation: portrait) {
+  .sc-main.has-screen {
+    flex-direction: column;
+  }
+
+  .sc-main.has-screen .sc-grid {
+    flex: 0 0 96px;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .sc-main.has-screen .sc-tile {
+    flex: 0 0 130px;
+    height: 100%;
+    aspect-ratio: auto;
+  }
+
+  .sc-main.has-screen .sc-name {
+    left: 6px;
+    bottom: 6px;
+    padding: 3px 7px;
+    font-size: 0.7rem;
+  }
+}
+
+/* ---------- Joining / error message ---------- */
+
+.sc-status {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  max-width: min(86%, 360px);
+  padding: 12px 18px;
+  border-radius: 14px;
+  background: rgba(10, 11, 16, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  text-align: center;
+  font-size: 0.92rem;
+  pointer-events: none;
+}
+
+/* ---------- Control bar ---------- */
+
+.sc-controls {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 12px calc(14px + env(safe-area-inset-bottom, 0px));
+}
+
+.sc-btn {
+  width: 52px;
+  height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 50%;
+  background: #262b3a;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s, transform 0.1s;
+}
+
+.sc-btn:hover {
+  background: #323849;
+}
+
+.sc-btn:active {
+  transform: scale(0.94);
+}
+
+.sc-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.sc-btn.off {
+  background: #e5484d;
+}
+
+.sc-btn.off:hover {
+  background: #ef5a5f;
+}
+
+.sc-btn.active {
+  background: var(--accent, #4f46e5);
+}
+
+.sc-leave {
+  width: auto;
+  padding: 0 22px;
+  border-radius: 26px;
+  background: #e5484d;
+  font-size: 0.92rem;
+  font-weight: 650;
+}
+
+.sc-leave:hover {
+  background: #ef5a5f;
+}
+
+@media (max-width: 420px) {
+  .sc-controls {
+    gap: 8px;
+  }
+
+  .sc-btn {
+    width: 48px;
+    height: 48px;
+  }
+
+  .sc-leave {
+    width: 48px;
+    padding: 0;
+    border-radius: 50%;
+  }
+
+  .sc-leave span {
+    display: none;
+  }
+}
+
+/* ---------- Chat button badge + phone safe area ---------- */
+
+.sc-btn {
+  position: relative;
+}
+
+.sc-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  display: grid;
+  place-items: center;
+  border: 2px solid #0a0b10;
+  border-radius: 999px;
+  background: var(--accent, #3b82f6);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.sc-root.is-focus .sc-main {
+  padding-top: max(12px, env(safe-area-inset-top, 0px));
+}
