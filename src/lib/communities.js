@@ -20,6 +20,7 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { track } from "./track";
 
 export const COMMUNITY_TAGS = [
   "Math",
@@ -185,6 +186,7 @@ export async function createCommunity({
 
   await setDoc(ref, data);
   await seedDefaultBoards(ref.id);
+  track("circle_create", { circleId: ref.id });
   return data;
 }
 
@@ -229,6 +231,7 @@ export async function joinCommunity(id, uid) {
     updatedAt: serverTimestamp(),
   });
 
+  track("circle_join", { circleId: id });
   return { id, ...data, memberCount: (data.memberCount || 0) + 1 };
 }
 
@@ -314,6 +317,9 @@ export async function sendCommunityMessage(communityId, message) {
     boardId: message.boardId || "general",
     createdAt: serverTimestamp(),
   });
+  if (message?.uid !== "snaprium-ai" && !message?.isAI && !message?.system && message?.type !== "join") {
+    track("chat_message", { circleId: communityId }, { throttleMs: 5 * 60 * 1000 });
+  }
 }
 
 
@@ -468,7 +474,7 @@ export function subscribeToQuestions(communityId, boardId, cb) {
 }
 
 export async function createQuestion(communityId, boardId, data) {
-  return addDoc(collection(db, "communities", communityId, "boards", boardId, "questions"), {
+  const created = await addDoc(collection(db, "communities", communityId, "boards", boardId, "questions"), {
     title: data.title,
     body: data.body || "",
     imageUrl: data.imageUrl || "",
@@ -481,6 +487,8 @@ export async function createQuestion(communityId, boardId, data) {
     solved: false,
     createdAt: serverTimestamp(),
   });
+  track("question_post", { circleId: communityId });
+  return created;
 }
 
 export function subscribeToReplies(communityId, boardId, questionId, cb) {
@@ -504,6 +512,7 @@ export async function addQuestionReply(communityId, boardId, questionId, data) {
     replyTo: data.replyTo || null,
     createdAt: serverTimestamp(),
   });
+  track("reply_post", { circleId: communityId });
   try {
     await updateDoc(questionRef, {
       replyCount: increment(1),

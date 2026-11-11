@@ -6,6 +6,7 @@ import {
   getRedirectResult,
   signInWithCredential,
   GoogleAuthProvider,
+  OAuthProvider,
   onAuthStateChanged,
 } from "firebase/auth";
 import { auth, googleProvider, isStandaloneApp } from "../lib/firebase";
@@ -13,6 +14,8 @@ import { Capacitor } from "@capacitor/core";
 import { FirebaseAuthentication } from "@capacitor-firebase/authentication";
 import { useAuth } from "../context/AuthContext";
 import { ensureUserDocument } from "../lib/userProfile";
+
+const appleProvider = new OAuthProvider("apple.com");
 
 function isPackagedOrStandaloneWeb() {
   if (typeof window === "undefined") return false;
@@ -164,6 +167,31 @@ export default function Login() {
     }
   };
 
+  // Sign in with Apple (iOS app only)
+  const handleAppleSignIn = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const result = await FirebaseAuthentication.signInWithApple();
+      const idToken = result.credential?.idToken;
+      const rawNonce = result.credential?.nonce;
+      if (!idToken) throw new Error("No Apple idToken from native sign-in");
+      const credential = appleProvider.credential({ idToken, rawNonce });
+      const userCredential = await signInWithCredential(auth, credential);
+      await ensureUserDocument(userCredential.user);
+      await userCredential.user.getIdToken(true);
+      navigate("/", { replace: true });
+    } catch (err) {
+      const text = `${err?.code || ""} ${err?.message || ""}`;
+      // User closed the Apple sheet: not an error worth showing
+      if (/cancel/i.test(text)) return;
+      console.error("Apple sign-in", err?.code, err?.message);
+      setError(err?.message || "Apple sign-in failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Show loading while we check for a pending redirect result
   if (authLoading || checkingRedirect) {
     return (
@@ -217,7 +245,38 @@ export default function Login() {
         )}
       </button>
 
-      {/* Apple login still commented out for Store certification */}
+      {Capacitor.getPlatform() === "ios" && (
+        <button
+          type="button"
+          onClick={handleAppleSignIn}
+          disabled={loading}
+          className="btn-apple"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 10,
+            width: "100%",
+            marginTop: 12,
+            background: "#000",
+            color: "#fff",
+            borderRadius: 8,
+            padding: "12px 16px",
+            border: "1px solid var(--border)",
+            cursor: "pointer",
+            fontSize: "1rem",
+          }}
+        >
+          {loading ? "Connecting..." : (
+            <>
+              <svg width="18" height="18" viewBox="0 0 384 512" fill="#fff" aria-hidden="true">
+                <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/>
+              </svg>
+              <span>Continue with Apple</span>
+            </>
+          )}
+        </button>
+      )}
 
       {error && <p className="error-message">{error}</p>}
 

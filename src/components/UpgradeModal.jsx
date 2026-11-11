@@ -42,8 +42,8 @@ export default function UpgradeModal({
         <div className="upgrade-body">
           <p className="upgrade-main-text">
             Unlimited keeps your own solves and group AI, and lets you
-            <strong> host more private rooms and communities</strong>.
-            Members you invite do not get your plan.
+            <strong> host longer live sessions with more people</strong>, plus more boards.
+            Everyone in a session you host gets the longer time, even on the free plan.
           </p>
           {user?.email && (
             <p className="upgrade-subtitle" style={{ marginTop: 10 }}>

@@ -3,8 +3,9 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { usePaddle } from "../context/PaddleContext";
 import { Capacitor } from "@capacitor/core";
+import { Browser } from "@capacitor/browser";
 import { analytics, logEvent } from "../lib/firebase";
-import { iapConfigured, purchaseUnlimited, restoreUnlimited } from "../lib/iap";
+import { iapConfigured, purchaseUnlimited, restoreUnlimited, getUnlimitedPrice } from "../lib/iap";
 
 export default function Upgrade() {
   const { user, loading: authLoading, refreshUser } = useAuth();
@@ -13,15 +14,39 @@ export default function Upgrade() {
   const [upgrading, setUpgrading] = useState(false);
   const [error, setError] = useState("");
   const [showCheckout, setShowCheckout] = useState(false);
+  const [storePrice, setStorePrice] = useState("");
 
   const UNLIMITED_PRICE_ID = "pri_01ktdn3fppsgkgjhm8xm5ha015";
   const isNative = Capacitor.isNativePlatform();
+  const TERMS_URL = "https://snaprium.com/terms";
+  const PRIVACY_URL = "https://snaprium.com/privacy";
+
+  // inside the app, open links in the in-app browser
+  const openLink = (e, url) => {
+    if (!isNative) return;
+    e.preventDefault();
+    Browser.open({ url }).catch(() => {});
+  };
 
   useEffect(() => {
     logEvent(analytics, "upgrade_page_opened", {
       plan: user?.plan || "free",
     });
   }, [user]);
+
+  // in the app, show the price the store charges (local currency)
+  useEffect(() => {
+    if (!isNative || !user?.uid) return undefined;
+    let cancelled = false;
+    getUnlimitedPrice(user.uid)
+      .then((price) => {
+        if (!cancelled && price) setStorePrice(price);
+      })
+      .catch((err) => console.error("Could not load store price", err));
+    return () => {
+      cancelled = true;
+    };
+  }, [isNative, user?.uid]);
 
   const handleUpgrade = async () => {
     if (authLoading) {
@@ -115,7 +140,7 @@ export default function Upgrade() {
             <div className="popular-badge">RECOMMENDED</div>
             <h3>Unlimited</h3>
             <div className="plan-price">
-              $9.99 <span>per month</span>
+              {isNative && storePrice ? storePrice : "$9.99"} <span>per month</span>
             </div>
             <p className="plan-desc">For students who study every day</p>
             <ul className="plan-features">
@@ -150,12 +175,42 @@ export default function Upgrade() {
             )}
             <p className="billed-text">
               {isNative
-                ? "Billed by Apple or Google • Cancel anytime"
+                ? Capacitor.getPlatform() === "ios"
+                  ? "Billed to your Apple ID • Cancel anytime"
+                  : "Billed by Google Play • Cancel anytime"
                 : "Cancel anytime • Monthly subscription"}
             </p>
             {isNative && !iapConfigured() && (
               <p className="plan-detail">
-                Store product is not live yet. Add RevenueCat keys after the subscription exists in App Store Connect / Play.
+                Purchases are not available right now. Please try again later.
+              </p>
+            )}
+            {isNative && (
+              <p className="plan-detail" style={{ fontSize: 12, lineHeight: 1.5, marginTop: 10 }}>
+                Snaprium Unlimited is a monthly subscription. It renews automatically each month
+                unless you cancel at least 24 hours before the end of the current period. You can
+                manage or cancel it anytime in{" "}
+                {Capacitor.getPlatform() === "ios"
+                  ? "Settings › Apple ID › Subscriptions"
+                  : "Google Play › Subscriptions"}
+                .{" "}
+                <a
+                  href={TERMS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => openLink(e, TERMS_URL)}
+                >
+                  Terms of Use
+                </a>
+                {" · "}
+                <a
+                  href={PRIVACY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => openLink(e, PRIVACY_URL)}
+                >
+                  Privacy Policy
+                </a>
               </p>
             )}
           </div>

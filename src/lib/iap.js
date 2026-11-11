@@ -81,3 +81,16 @@ export async function restoreUnlimited(uid) {
   await activateUnlimited(uid);
   return true;
 }
+
+// Price of the Unlimited plan exactly as the store shows it (local currency), e.g. "$9.99"
+export async function getUnlimitedPrice(uid) {
+  if (!uid || !iapConfigured()) return "";
+  await initIAP(uid);
+  const Purchases = await getPurchases();
+  const offerings = await Purchases.getOfferings();
+  const pkg =
+    offerings.current?.availablePackages?.find((p) =>
+      (p.product?.identifier || "").includes("unlimited")
+    ) || offerings.current?.monthly || offerings.current?.availablePackages?.[0];
+  return pkg?.product?.priceString || "";
+}

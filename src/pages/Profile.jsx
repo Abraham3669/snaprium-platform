@@ -121,6 +121,9 @@ export default function Profile() {
   const [preview, setPreview] = useState("");
   const [theme, setTheme] = useState(readTheme);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [delOpen, setDelOpen] = useState(false);
+  const [delText, setDelText] = useState("");
+  const [deleting, setDeleting] = useState(false);
   const isApp = Capacitor.isNativePlatform();
 
   useEffect(() => {
@@ -152,6 +155,56 @@ export default function Profile() {
     user.plan === "unlimited" ||
     user.plan === "premium" ||
     user.subscriptionStatus === "active";
+
+  const providerId = auth.currentUser?.providerData?.[0]?.providerId || "";
+  const signInLabel =
+    providerId === "apple.com"
+      ? "Apple"
+      : providerId === "google.com"
+      ? "Google"
+      : providerId === "password"
+      ? "email"
+      : "";
+
+  const closeDelete = () => {
+    if (deleting) return;
+    setDelOpen(false);
+    setDelText("");
+  };
+
+  const handleDelete = async () => {
+    if (delText.trim().toUpperCase() !== "DELETE" || deleting) return;
+    setDeleting(true);
+    try {
+      const idToken = await auth.currentUser?.getIdToken(true);
+      if (!idToken) throw new Error("not signed in");
+      const apiBase = (import.meta.env.VITE_API_URL || "https://snaprium.com").replace(/\/$/, "");
+      const response = await fetch(`${apiBase}/api/delete-account`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({}),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.ok === false) {
+        toast.error(data.error || "Could not delete your account. Please try again.");
+        return;
+      }
+      setDelOpen(false);
+      toast.success("Your account was deleted");
+      try {
+        await signOutUser();
+      } catch {}
+      navigate("/", { replace: true });
+    } catch (err) {
+      console.error("[profile] delete account", err);
+      toast.error("Could not delete your account. Please try again.");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const toggleThemeLocal = () => {
     const next = theme === "dark" ? "light" : "dark";
@@ -270,7 +323,7 @@ setPreview(photoURL);
           <div className="pf-who">
             <h1 className="pf-name">{shownName}</h1>
             <p className="pf-email">{user.email}</p>
-            <p className="pf-signin-note">Signed in with Google</p>
+            {signInLabel && <p className="pf-signin-note">Signed in with {signInLabel}</p>}
           </div>
         </div>
       </section>
@@ -379,10 +432,65 @@ setPreview(photoURL);
           >
             Sign out
           </button>
+
+          <button type="button" className="pf-delete" onClick={() => setDelOpen(true)}>
+            Delete account
+          </button>
         </aside>
       </div>
 
       <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPhoto} />
+
+      {delOpen && (
+        <div className="pf-modal" onClick={closeDelete}>
+          <div
+            className="pf-modal-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pf-del-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="pf-del-title">Delete your account?</h2>
+            <p>
+              This permanently deletes your profile, your messages and questions, and removes you
+              from your circles. It can't be undone.
+            </p>
+            {isSubscribed && (
+              <p className="pf-modal-note">
+                Deleting your account does not cancel your subscription. Cancel it first
+                {Capacitor.getPlatform() === "ios"
+                  ? " in Settings > your name > Subscriptions."
+                  : " from Manage subscription."}
+              </p>
+            )}
+            <label className="pf-field">
+              <span>Type DELETE to confirm</span>
+              <input
+                value={delText}
+                onChange={(e) => setDelText(e.target.value)}
+                placeholder="DELETE"
+                autoCapitalize="characters"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+              />
+            </label>
+            <div className="pf-modal-actions">
+              <button type="button" className="pf-btn pf-btn-out" onClick={closeDelete} disabled={deleting}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="pf-btn pf-btn-danger"
+                onClick={handleDelete}
+                disabled={deleting || delText.trim().toUpperCase() !== "DELETE"}
+              >
+                {deleting ? "Deleting…" : "Delete forever"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

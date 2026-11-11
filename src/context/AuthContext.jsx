@@ -6,8 +6,72 @@ import { showAppError } from "../utils/errorReporter";
 import { Capacitor } from "@capacitor/core";
 import { App as CapApp } from "@capacitor/app";
 import { ensureUserDocument } from "../lib/userProfile";
+import { trackAppOpen } from "../lib/track";
 
 const AuthContext = createContext();
+
+// Owner accounts are never locked out by the ban screen
+const OWNER_UIDS = ["Lk4u7TOvblTYl1NAxtOAeYBHRHu1"];
+
+// Shown instead of the whole app when an admin has banned this account
+function BannedScreen({ onSignOut }) {
+  return (
+    <div
+      style={{
+        minHeight: "100dvh",
+        display: "grid",
+        placeItems: "center",
+        padding: 24,
+        background: "var(--bg, #fff)",
+        color: "var(--text-primary, #111827)",
+      }}
+    >
+      <div
+        role="alert"
+        style={{
+          width: "100%",
+          maxWidth: 420,
+          textAlign: "center",
+          padding: 28,
+          borderRadius: 20,
+          border: "1px solid var(--border, #e5e7eb)",
+          background: "var(--surface, #fff)",
+          boxShadow: "var(--shadow-md, 0 10px 30px rgba(0,0,0,0.08))",
+        }}
+      >
+        <h1 style={{ margin: "0 0 8px", fontSize: "1.4rem" }}>Account suspended</h1>
+        <p style={{ margin: "0 0 20px", color: "var(--text-secondary, #6b7280)", lineHeight: 1.5 }}>
+          This account can't use Snaprium right now. If you think this is a mistake, please
+          contact the Snaprium team at{" "}
+          <a
+            href="mailto:support@snaprium.com"
+            style={{ color: "var(--accent, #4f46e5)", fontWeight: 600 }}
+          >
+            support@snaprium.com
+          </a>
+          .
+        </p>
+        <button
+          type="button"
+          onClick={onSignOut}
+          style={{
+            minHeight: 44,
+            padding: "0 22px",
+            borderRadius: 12,
+            border: "1px solid var(--border, #e5e7eb)",
+            background: "var(--surface, #fff)",
+            color: "var(--text-primary, #111827)",
+            fontSize: "1rem",
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
+          Sign out
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function buildUser(firebaseUser, data = {}) {
   const plan = data.plan || "free";
@@ -143,6 +207,19 @@ export function AuthProvider({ children }) {
     return () => handle?.remove?.();
   }, [refreshUser]);
 
+  // analytics: note when a signed-in person opens the app (at most once every 30 minutes)
+  useEffect(() => {
+    if (!user?.uid || user.banned) return undefined;
+    const open = () => trackAppOpen(firebaseUserRef.current || auth.currentUser, user);
+    open();
+    const onVisible = () => {
+      if (document.visibilityState === "visible") open();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid, user?.banned]);
+
   const signOutUser = async () => {
     try {
       await auth.signOut();
@@ -157,9 +234,11 @@ export function AuthProvider({ children }) {
 
 
 
+  const blocked = Boolean(user?.banned) && !OWNER_UIDS.includes(user.uid);
+
   return (
     <AuthContext.Provider value={{ user, loading, signOutUser, refreshUser }}>
-      {children}
+      {blocked ? <BannedScreen onSignOut={signOutUser} /> : children}
     </AuthContext.Provider>
   );
 }

@@ -603,3 +603,93 @@
 .av-crown svg {
   display: block;
 }
+
+
+
+
+
+
+
+/* ===== Paste at the END of profile.css ===== */
+
+.pf-page .pf-delete {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.86rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: color 0.18s;
+}
+
+.pf-page .pf-delete:hover {
+  color: #ef4444;
+}
+
+.pf-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.pf-modal-card {
+  width: min(420px, 100%);
+  padding: 22px 20px 18px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.pf-modal-card h2 {
+  margin: 0 0 8px;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.pf-modal-card p {
+  margin: 0 0 12px;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.pf-modal-card .pf-modal-note {
+  padding: 10px 12px;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 12px;
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.pf-modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.pf-modal-actions .pf-btn {
+  flex: 1;
+}
+
+.pf-page .pf-btn-danger,
+.pf-modal .pf-btn-danger {
+  border-color: transparent;
+  background: #ef4444;
+  color: #fff;
+}
+
+.pf-page .pf-btn-danger:hover:not(:disabled),
+.pf-modal .pf-btn-danger:hover:not(:disabled) {
+  background: #dc2626;
+}

@@ -6,6 +6,7 @@ import {
   getRedirectResult,
   signInWithCredential,
   GoogleAuthProvider,
+  OAuthProvider,
   onAuthStateChanged,
 } from "firebase/auth";
 import { auth, googleProvider, isStandaloneApp } from "../lib/firebase";
@@ -14,7 +15,7 @@ import { FirebaseAuthentication } from "@capacitor-firebase/authentication";
 import { useAuth } from "../context/AuthContext";
 import { ensureUserDocument } from "../lib/userProfile";
 
-// const appleProvider = new OAuthProvider("apple.com"); // temporarily disabled for Store certification
+const appleProvider = new OAuthProvider("apple.com");
 
 function isPackagedOrStandaloneWeb() {
   if (typeof window === "undefined") return false;
@@ -166,54 +167,30 @@ export default function Signup() {
     }
   };
 
-  /*
-  // ===== APPLE LOGIN TEMPORARILY DISABLED FOR MICROSOFT STORE CERTIFICATION =====
-  // Re-enable later once Google is fully approved
+  // Sign in with Apple (iOS app only)
   const handleAppleSignUp = async () => {
     setLoading(true);
     setError("");
     try {
-      let firebaseUser;
-
-      if (Capacitor.isNativePlatform()) {
-        const result = await FirebaseAuthentication.signInWithApple();
-        const idToken = result.credential?.idToken;
-        const rawNonce = result.credential?.nonce;
-        if (!idToken) throw new Error("No Apple idToken from native sign-in");
-        const credential = appleProvider.credential({
-          idToken,
-          rawNonce,
-        });
-        const userCredential = await signInWithCredential(auth, credential);
-        firebaseUser = userCredential.user;
-      } else {
-        try {
-          const result = await signInWithPopup(auth, appleProvider);
-          firebaseUser = result.user;
-        } catch (popupErr) {
-          if (
-            popupErr?.code === "auth/popup-blocked" ||
-            popupErr?.code === "auth/popup-closed-by-user" ||
-            popupErr?.code === "auth/operation-not-supported-in-this-environment" ||
-            /getContext|popup/i.test(popupErr?.message || "")
-          ) {
-            await signInWithRedirect(auth, appleProvider);
-            return;
-          }
-          throw popupErr;
-        }
-      }
-
-      await ensureUserDocument(firebaseUser);
+      const result = await FirebaseAuthentication.signInWithApple();
+      const idToken = result.credential?.idToken;
+      const rawNonce = result.credential?.nonce;
+      if (!idToken) throw new Error("No Apple idToken from native sign-in");
+      const credential = appleProvider.credential({ idToken, rawNonce });
+      const userCredential = await signInWithCredential(auth, credential);
+      await ensureUserDocument(userCredential.user);
+      await userCredential.user.getIdToken(true);
+      navigate("/", { replace: true });
     } catch (err) {
-      console.error("Apple sign-up", err.code, err.message);
-      setError(err.message || "Failed to sign up with Apple.");
+      const text = `${err?.code || ""} ${err?.message || ""}`;
+      // User closed the Apple sheet: not an error worth showing
+      if (/cancel/i.test(text)) return;
+      console.error("Apple sign-up", err?.code, err?.message);
+      setError(err?.message || "Failed to sign up with Apple.");
     } finally {
       setLoading(false);
     }
   };
-  // ===== END APPLE LOGIN =====
-  */
 
   // Show loading while we check for a pending redirect result
   if (authLoading || checkingRedirect) {
@@ -269,13 +246,9 @@ export default function Signup() {
         )}
       </button>
 
-      {/*
-        Apple Sign-up button temporarily disabled for Microsoft Store certification.
-        Uncomment the whole block below when ready to re-enable.
-      */}
-      {/*
-      {(Capacitor.getPlatform() !== "android") && (
+      {Capacitor.getPlatform() === "ios" && (
         <button
+          type="button"
           onClick={handleAppleSignUp}
           disabled={loading}
           className="btn-apple"
@@ -285,12 +258,14 @@ export default function Signup() {
             justifyContent: "center",
             gap: 10,
             width: "100%",
-            marginBottom: "24px",
+            marginBottom: 24,
             background: "#000",
             color: "#fff",
             borderRadius: 8,
             padding: "12px 16px",
-            border: "none",
+            border: "1px solid var(--border)",
+            cursor: "pointer",
+            fontSize: "1rem",
           }}
         >
           {loading ? "Connecting..." : (
@@ -303,7 +278,6 @@ export default function Signup() {
           )}
         </button>
       )}
-      */}
 
       {error && <p className="error-message">{error}</p>}
 
