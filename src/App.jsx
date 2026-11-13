@@ -43,9 +43,12 @@ import { useAuth } from "./context/AuthContext";
 import ErrorBanner from "./components/ErrorBanner";
 import { showAppError } from "./utils/errorReporter";
 import BottomNav from "./components/BottomNav";
+import { Capacitor } from "@capacitor/core";
+import { StatusBar, Style } from "@capacitor/status-bar";
 
 const GUEST_SOLVE_LIMIT = 3;
 const FREE_DAILY_LIMIT = 10;
+const isNativeApp = Capacitor.isNativePlatform();
 const getToday = () => new Date().toISOString().split("T")[0];
 
 function App() {
@@ -57,6 +60,10 @@ function App() {
 
 useEffect(() => {
   document.documentElement.setAttribute("data-theme", theme);
+  if (isNativeApp) {
+    document.documentElement.classList.add("native-app");
+    StatusBar.setStyle({ style: theme === "dark" ? Style.Dark : Style.Light }).catch(() => {});
+  }
 }, [theme]);
 
   const [file, setFile] = useState(null);
@@ -360,6 +367,7 @@ useEffect(() => {
   </span>
 )}
 
+          {!isNativeApp && (
           <button
             type="button"
             className="snaprium-menu-btn"
@@ -385,6 +393,7 @@ useEffect(() => {
               </svg>
             )}
           </button>
+          )}
 
           {user ? (
             <button
