@@ -160,13 +160,59 @@ export default async function handler(req, res) {
 
     let room = await loadRoom();
 
+    const isUsable = (r) => {
+      const c = r?.config || {};
+      return r?.privacy === "private" && !!c.max_participants && c.exp > nowSec();
+    };
+
+    // Who is in the room right now? null = Daily didn't tell us (never block anyone because of that).
+    const getPresence = async () => {
+      try {
+        const pr = await daily(`/rooms/${name}/presence`);
+        if (!pr.ok) return null;
+        const p = await pr.json();
+        return {
+          count: p.total_count || 0,
+          ids: (p.data || []).map((x) => x.userId || x.user_id).filter(Boolean),
+        };
+      } catch {
+        return null;
+      }
+    };
+
+    // Read-only check for the "Live now" banner. It never creates, changes or counts anything.
+    if (body.action === "status") {
+      if (!room || !isUsable(room)) return res.status(200).json({ ok: true, live: false });
+      const presence = await getPresence();
+      const max = room.config.max_participants;
+      const tier = max >= LIMITS.paid.max ? "paid" : "free";
+      return res.status(200).json({
+        ok: true,
+        live: !!presence && presence.count > 0,
+        count: presence ? presence.count : null,
+        max,
+        tier,
+        minutes: LIMITS[tier].minutes,
+        expiresAt: room.config.exp,
+      });
+    }
+
     // Rooms made by the old version of this file were public and had no size limit. Replace them.
+    if (room && !isUsable(room)) {
+      await daily(`/rooms/${name}`, { method: "DELETE" }).catch(() => {});
+      room = null;
+    }
+
+    // An empty leftover room keeps the old host's clock. Once it has been empty (and older than
+    // 2 minutes, so a room that is just being opened is never touched) the next person starts fresh.
+    let presence = null;
     if (room) {
-      const cfg = room.config || {};
-      const stale = room.privacy !== "private" || !cfg.max_participants || !(cfg.exp > nowSec());
-      if (stale) {
+      presence = await getPresence();
+      const ageSec = room.created_at ? (Date.now() - Date.parse(room.created_at)) / 1000 : 0;
+      if (presence && presence.count === 0 && ageSec > 120) {
         await daily(`/rooms/${name}`, { method: "DELETE" }).catch(() => {});
         room = null;
+        presence = null;
       }
     }
 
@@ -234,21 +280,12 @@ export default async function handler(req, res) {
     const roomTier = max >= LIMITS.paid.max ? "paid" : "free";
 
     // 6. Full? (Daily also blocks this on its side; this just gives a clear message.)
-    try {
-      const pr = await daily(`/rooms/${name}/presence`);
-      if (pr.ok) {
-        const presence = await pr.json();
-        const inside = (presence.data || []).some((p) => (p.userId || p.user_id) === uid);
-        if (!inside && (presence.total_count || 0) >= max) {
-          return refuse(
-            res,
-            "full",
-            `This session is full (${max} people). Try again when someone leaves.`
-          );
-        }
-      }
-    } catch {
-      // presence is only a courtesy check
+    if (presence && !presence.ids.includes(uid) && presence.count >= max) {
+      return refuse(
+        res,
+        "full",
+        `This session is full (${max} people). Try again when someone leaves.`
+      );
     }
 
     // 7. A personal entry pass that stops working when the room ends

@@ -22,6 +22,7 @@ import { useAuth } from "../context/AuthContext";
 import { db } from "../lib/firebase";
 import StudyCall from "../components/StudyCall";
 import UpgradeModal from "../components/UpgradeModal";
+import useSessionStatus, { sessionLabel } from "../lib/useSessionStatus";
 import "../styles/community-chat.css";
 import {
   getCommunity,
@@ -829,6 +830,17 @@ const next =
 
   const isMember = user && community && (community.members || []).includes(user.uid);
 
+  // is a session running in this circle right now? (look only, never starts one)
+  const { status: sessionStatus, refresh: refreshSession } = useSessionStatus(
+    isMember && liveBoard ? communityId : null
+  );
+  const sessionFull = !!(
+    sessionStatus?.live &&
+    typeof sessionStatus.count === "number" &&
+    sessionStatus.max &&
+    sessionStatus.count >= sessionStatus.max
+  );
+
 
  useEffect(() => {
   if (!user?.uid || !communityId || !isMember) return;
@@ -1166,6 +1178,7 @@ useEffect(() => {
               <button
                 type="button"
                 className={`cc-session-btn ${callOpen ? "on" : ""}`}
+                disabled={!callOpen && sessionFull}
                 onClick={() => {
                   setCallOpen((v) => {
                     if (v) setCallFocus(false);
@@ -1174,7 +1187,7 @@ useEffect(() => {
                 }}
               >
                 <IconVideo />
-                {callOpen ? "End" : "Session"}
+                {callOpen ? "Leave" : sessionStatus?.live ? (sessionFull ? "Full" : "Join") : "Start"}
               </button>
               {callOpen && (
                 <button
@@ -1210,6 +1223,21 @@ useEffect(() => {
           )}
         </header>
 
+        {liveBoard && !callOpen && sessionStatus && (
+          <div className={`cc-live ${sessionStatus.live ? "on" : ""}`} role="status">
+            <span className="cc-live-dot" aria-hidden="true" />
+            {sessionStatus.live ? (
+              <span>
+                <strong>Live now</strong>
+                {sessionLabel(sessionStatus) ? ` · ${sessionLabel(sessionStatus)}` : ""}
+                {sessionFull ? ". This session is full." : ""}
+              </span>
+            ) : (
+              <span>No session running. Press Start to open one for this circle.</span>
+            )}
+          </div>
+        )}
+
                {liveBoard && callOpen && (
                     <div className={`cc-session ${focusMode ? "is-focus" : ""}`}>
                        <StudyCall
@@ -1223,6 +1251,7 @@ useEffect(() => {
                 setCallOpen(false);
                 setCallFocus(false);
                 setChatSheet(false);
+                refreshSession();
               }}
             />
             {focusMode && !isPhone && (

@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
 import UpgradeModal from "../components/UpgradeModal";
+import useSessionStatus, { sessionLabel } from "../lib/useSessionStatus";
 import "../styles/community-detail.css";
 
 import { collection, onSnapshot, orderBy, query, limit } from "firebase/firestore";
@@ -167,6 +168,12 @@ function boardBlurb(board) {
   return "";
 }
 
+function isSessionBoard(board) {
+  const slug = String(board.slug || "").toLowerCase();
+  const name = String(board.name || "").toLowerCase();
+  return slug === "session" || name === "session" || name === "live";
+}
+
 export default function CommunityDetail() {
   const { communityId } = useParams();
   const { user } = useAuth();
@@ -271,6 +278,13 @@ useEffect(() => {
       document.removeEventListener("keydown", onKey);
     };
   }, [menuOpen]);
+
+  // "Live now" on the Session board (members only; it only looks, it never starts a session)
+  const { status: sessionStatus } = useSessionStatus(
+    user && community && !community.deleted && (community.members || []).includes(user.uid)
+      ? communityId
+      : null
+  );
 
   if (loading) {
     return <div className="cd-page"><p className="cd-muted">Loading circle…</p></div>;
@@ -563,7 +577,16 @@ setCommunity(await getCommunity(community.id));
         })()}
         <span className="cd-board-text">
           <span className="cd-board-name">{board.name}</span>
-          {boardBlurb(board) && <span className="cd-board-blurb">{boardBlurb(board)}</span>}
+          {isSessionBoard(board) && sessionStatus?.live ? (
+            <span className="cd-board-blurb">
+              <span className="cd-live-text">
+                <i className="cd-live-dot" aria-hidden="true" />
+                Live now{sessionLabel(sessionStatus) ? ` · ${sessionLabel(sessionStatus)}` : ""}
+              </span>
+            </span>
+          ) : (
+            boardBlurb(board) && <span className="cd-board-blurb">{boardBlurb(board)}</span>
+          )}
         </span>
 {(() => {
   const slug = String(board.slug || "").toLowerCase();
