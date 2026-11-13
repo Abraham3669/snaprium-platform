@@ -7037,3 +7037,40 @@ html.native-app[data-theme="dark"],
 html.native-app[data-theme="dark"] body {
   background-color: #0b0b0f;
 }
+
+
+
+
+
+
+
+
+
+
+/* ===== Native fixes, part 2 (paste at the END of your main CSS, below part 1) ===== */
+
+/* Home: stop centering the page in the middle; start right under the header */
+html.native-app .hub-page {
+  min-height: 0 !important;
+  justify-content: flex-start !important;
+  padding-top: 12px !important;
+}
+
+/* Bottom nav icons: always visible, stacked above the label */
+html.native-app .bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+html.native-app .bottom-nav-item .bottom-nav-icon {
+  width: 24px;
+  height: 24px;
+  display: block;
+  flex-shrink: 0;
+}
+html.native-app .bottom-nav-item span {
+  font-size: 0.68rem;
+  line-height: 1;
+}
