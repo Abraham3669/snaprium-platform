@@ -11,7 +11,7 @@ import { trackAppOpen } from "../lib/track";
 const AuthContext = createContext();
 
 // Owner accounts are never locked out by the ban screen
-const OWNER_UIDS = ["Lk4u7TOvblTYl1NAxtOAeYBHRHu1"];
+const OWNER_UIDS = ["csFXC9p3lLcmzmyP2YjFT42yMSw1"];
 
 // Shown instead of the whole app when an admin has banned this account
 function BannedScreen({ onSignOut }) {

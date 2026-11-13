@@ -32,7 +32,7 @@ import { useAuth } from "../context/AuthContext";
 import { toast } from "react-toastify";
 import "../styles/admin.css";
 
-const ADMIN_UIDS = ["Lk4u7TOvblTYl1NAxtOAeYBHRHu1"];
+const ADMIN_UIDS = ["csFXC9p3lLcmzmyP2YjFT42yMSw1"];
 const LIST_LIMIT = 100;
 const REPORT_LIMIT = 50;
 const EVENT_DAYS = 30;
