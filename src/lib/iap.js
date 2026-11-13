@@ -34,21 +34,33 @@ const STORE_TIMEOUT_MESSAGE =
   "The App Store did not answer. Check your connection, then try again.";
 
 let configuredUid = null;
+let initPromise = null;
+let initPromiseUid = null;
 
-export async function initIAP(uid) {
-  if (!iapConfigured() || !uid) return false;
-  if (configuredUid === uid) return true;
-  const Purchases = await getPurchases();
-  if (configuredUid === null) {
-    await Purchases.configure({
-      apiKey: nativeKey(),
-      appUserID: uid,
-    });
-  } else {
-    await Purchases.logIn({ appUserID: uid });
-  }
-  configuredUid = uid;
-  return true;
+// Safe to call many times at once: the store is set up only once per user
+export function initIAP(uid) {
+  if (!iapConfigured() || !uid) return Promise.resolve(false);
+  if (configuredUid === uid) return Promise.resolve(true);
+  if (initPromise && initPromiseUid === uid) return initPromise;
+
+  initPromiseUid = uid;
+  initPromise = (async () => {
+    const Purchases = await getPurchases();
+    if (configuredUid === null) {
+      await Purchases.configure({
+        apiKey: nativeKey(),
+        appUserID: uid,
+      });
+    } else {
+      await Purchases.logIn({ appUserID: uid });
+    }
+    configuredUid = uid;
+    return true;
+  })().finally(() => {
+    initPromise = null;
+    initPromiseUid = null;
+  });
+  return initPromise;
 }
 
 async function activateUnlimited(uid) {

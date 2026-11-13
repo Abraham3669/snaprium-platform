@@ -8,7 +8,7 @@ export default function UpgradeModal({
   isOpen,
   onClose,
   title = "Limit reached",
-  subtitle = "Free accounts have daily and hosting limits. Upgrade to keep going.",
+  subtitle = "You've reached the limit on the free plan. Upgrade to keep going.",
 }) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -41,9 +41,9 @@ export default function UpgradeModal({
 
         <div className="upgrade-body">
           <p className="upgrade-main-text">
-            Unlimited keeps your own solves and group AI, and lets you
-            <strong> host longer live sessions with more people</strong>, plus more boards.
-            Everyone in a session you host gets the longer time, even on the free plan.
+            Unlimited gives you <strong>unlimited photo solves</strong>,{" "}
+            <strong>longer live sessions with more people</strong>, and more boards and
+            circles to run. Everyone in a session you host gets the longer time too.
           </p>
           {user?.email && (
             <p className="upgrade-subtitle" style={{ marginTop: 10 }}>
