@@ -1,5 +1,6 @@
 // src/lib/iap.js
 import { Capacitor } from "@capacitor/core";
+import { Purchases } from "@revenuecat/purchases-capacitor";
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "./firebase";
 
@@ -18,8 +19,14 @@ export function iapConfigured() {
 }
 
 async function getPurchases() {
-  const mod = await import("@revenuecat/purchases-capacitor");
-  return mod.Purchases;
+  // Static import above (RevenueCat recommends it). If the native plugin was not
+  // built into the app, say so clearly instead of hanging.
+  if (!Capacitor.isPluginAvailable("Purchases")) {
+    throw new Error(
+      "Store plugin is missing from this build (step 1 of 3: native RevenueCat code was not included). Run npx cap sync ios and rebuild."
+    );
+  }
+  return Purchases;
 }
 
 function withTimeout(promise, ms, message) {
