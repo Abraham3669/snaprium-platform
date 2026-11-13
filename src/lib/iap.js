@@ -37,12 +37,24 @@ function withTimeout(promise, ms, message) {
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
 
-const SETUP_TIMEOUT_MESSAGE =
-  "Store setup timed out (step 1 of 3: RevenueCat did not start). Check the RevenueCat key in the build.";
+function setupTimeoutMessage() {
+  const k = nativeKey();
+  let plugin = "?";
+  try {
+    plugin = String(Capacitor.isPluginAvailable("Purchases"));
+  } catch (e) {
+    plugin = "err";
+  }
+  return (
+    "Store setup timed out (step 1 of 3: RevenueCat did not start). Check the RevenueCat key in the build. " +
+    "[v4 plugin=" + plugin + " key=" + k.slice(0, 5) + " len=" + k.length + "]"
+  );
+}
 const OFFERINGS_TIMEOUT_MESSAGE =
   "Store products timed out (step 2 of 3: the App Store did not return the subscription). Check the product and the RevenueCat offering.";
 
 let configuredUid = null;
+let sdkStarted = false;
 let initPromise = null;
 let initPromiseUid = null;
 
@@ -55,14 +67,12 @@ export function initIAP(uid) {
   initPromiseUid = uid;
   initPromise = (async () => {
     const Purchases = await getPurchases();
-    if (configuredUid === null) {
-      await Purchases.configure({
-        apiKey: nativeKey(),
-        appUserID: uid,
-      });
-    } else {
-      await Purchases.logIn({ appUserID: uid });
+    if (!sdkStarted) {
+      // Start with the key only (RevenueCat's documented flow), then log the user in
+      await Purchases.configure({ apiKey: nativeKey() });
+      sdkStarted = true;
     }
+    await Purchases.logIn({ appUserID: uid });
     configuredUid = uid;
     return true;
   })().finally(() => {
@@ -91,7 +101,7 @@ export async function purchaseUnlimited(uid) {
     throw new Error("Store billing is not configured yet. Add RevenueCat keys.");
   }
 
-  await withTimeout(initIAP(uid), 15000, SETUP_TIMEOUT_MESSAGE);
+  await withTimeout(initIAP(uid), 15000, setupTimeoutMessage());
   const Purchases = await getPurchases();
   const offerings = await withTimeout(Purchases.getOfferings(), 20000, OFFERINGS_TIMEOUT_MESSAGE);
   const pkg =
@@ -132,7 +142,7 @@ export async function restoreUnlimited(uid) {
 // Price of the Unlimited plan exactly as the store shows it (local currency), e.g. "$9.99"
 export async function getUnlimitedPrice(uid) {
   if (!uid || !iapConfigured()) return "";
-  await withTimeout(initIAP(uid), 15000, SETUP_TIMEOUT_MESSAGE);
+  await withTimeout(initIAP(uid), 15000, setupTimeoutMessage());
   const Purchases = await getPurchases();
   const offerings = await withTimeout(Purchases.getOfferings(), 20000, OFFERINGS_TIMEOUT_MESSAGE);
   const pkg =
