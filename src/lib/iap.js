@@ -30,8 +30,10 @@ function withTimeout(promise, ms, message) {
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
 
-const STORE_TIMEOUT_MESSAGE =
-  "The App Store did not answer. Check your connection, then try again.";
+const SETUP_TIMEOUT_MESSAGE =
+  "Store setup timed out (step 1 of 3: RevenueCat did not start). Check the RevenueCat key in the build.";
+const OFFERINGS_TIMEOUT_MESSAGE =
+  "Store products timed out (step 2 of 3: the App Store did not return the subscription). Check the product and the RevenueCat offering.";
 
 let configuredUid = null;
 let initPromise = null;
@@ -82,9 +84,9 @@ export async function purchaseUnlimited(uid) {
     throw new Error("Store billing is not configured yet. Add RevenueCat keys.");
   }
 
-  await initIAP(uid);
+  await withTimeout(initIAP(uid), 15000, SETUP_TIMEOUT_MESSAGE);
   const Purchases = await getPurchases();
-  const offerings = await withTimeout(Purchases.getOfferings(), 20000, STORE_TIMEOUT_MESSAGE);
+  const offerings = await withTimeout(Purchases.getOfferings(), 20000, OFFERINGS_TIMEOUT_MESSAGE);
   const pkg =
     offerings.current?.availablePackages?.find((p) =>
       (p.product?.identifier || "").includes("unlimited")
@@ -98,7 +100,7 @@ export async function purchaseUnlimited(uid) {
   } catch (err) {
     // The person closed the Apple payment sheet: not an error
     if (err?.userCancelled) return false;
-    throw err;
+    throw new Error(`Purchase failed (step 3 of 3): ${err?.message || err}`);
   }
   if (!hasUnlimited(customerInfo)) {
     throw new Error("Purchase finished but Unlimited is not active yet.");
@@ -123,9 +125,9 @@ export async function restoreUnlimited(uid) {
 // Price of the Unlimited plan exactly as the store shows it (local currency), e.g. "$9.99"
 export async function getUnlimitedPrice(uid) {
   if (!uid || !iapConfigured()) return "";
-  await initIAP(uid);
+  await withTimeout(initIAP(uid), 15000, SETUP_TIMEOUT_MESSAGE);
   const Purchases = await getPurchases();
-  const offerings = await withTimeout(Purchases.getOfferings(), 20000, STORE_TIMEOUT_MESSAGE);
+  const offerings = await withTimeout(Purchases.getOfferings(), 20000, OFFERINGS_TIMEOUT_MESSAGE);
   const pkg =
     offerings.current?.availablePackages?.find((p) =>
       (p.product?.identifier || "").includes("unlimited")
