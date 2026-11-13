@@ -7074,3 +7074,38 @@ html.native-app .bottom-nav-item span {
   font-size: 0.68rem;
   line-height: 1;
 }
+
+
+
+
+/* ===== Native fixes, part 3: bottom nav spacing (paste at the END of your main CSS) ===== */
+html.native-app .bottom-nav {
+  box-sizing: border-box;
+  height: auto !important;
+  min-height: 0 !important;
+  align-items: flex-start !important;
+  padding: 10px 8px calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+}
+html.native-app .bottom-nav-item {
+  height: auto !important;
+  padding: 0 !important;
+  justify-content: flex-start !important;
+  gap: 4px;
+}
+html.native-app .bottom-nav-item .bottom-nav-icon {
+  width: 22px;
+  height: 22px;
+}
+
+
+
+
+/* ===== Native fixes, part 4: Solution panel below the notch ===== */
+html.native-app .result-panel-header {
+  box-sizing: border-box;
+  height: auto;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
+}
+html.native-app .result-panel-content {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+}

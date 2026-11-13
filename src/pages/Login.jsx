@@ -49,7 +49,12 @@ export default function Login() {
     let cancelled = false;
     let unsub = null;
 
-    async function handleRedirect() {
+       async function handleRedirect() {
+      // The iPhone app never uses redirect sign-in, so skip the check there
+      if (Capacitor.isNativePlatform()) {
+        if (!cancelled) setCheckingRedirect(false);
+        return;
+      }
       try {
         if (auth.authStateReady) {
           await auth.authStateReady();
