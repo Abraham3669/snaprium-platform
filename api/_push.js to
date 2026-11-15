@@ -1,14 +1,16 @@
-// api/push.js
+// api/_push.js   (the underscore keeps Vercel from counting it as its own function)
+//
+// Called from api/daily-room.js whenever the request body has action "push:notify" or "push:session".
 //
 // Sends iPhone push notifications straight through Apple's push service (APNs).
 //
 // Two actions, both need a signed-in person (Firebase ID token in the
 // Authorization header). The server never trusts text from the app:
 //
-//   { action: "notify",  to, id }       push for an in-app notification that already exists in
+//   { action: "push:notify",  to, id }       push for an in-app notification that already exists in
 //                                       users/{to}/notifications/{id}. The caller must be the
 //                                       person who created it (fromUid), and it only goes out once.
-//   { action: "session", communityId }  a live session just started: write a notification for every
+//   { action: "push:session", communityId }  a live session just started: write a notification for every
 //                                       other member and push it. The caller must be a member.
 //                                       At most one per circle every 30 minutes.
 //
@@ -320,7 +322,7 @@ async function deliver(db, notes) {
 /* handler                                                             */
 /* ------------------------------------------------------------------ */
 
-export default async function handler(req, res) {
+export async function handlePush(req, res) {
   setCors(req, res);
   if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST") return res.status(405).json({ ok: false, error: "Method not allowed" });
@@ -343,7 +345,9 @@ export default async function handler(req, res) {
     const safe = (v) => typeof v === "string" && v.length > 0 && v.length < 200 && !v.includes("/");
 
     /* ---------- an in-app notification that already exists ---------- */
-    if (body.action === "notify") {
+    const action = String(body.action || "").replace(/^push:/, "");
+
+    if (action === "notify") {
       if (!safe(body.to) || !safe(body.id)) return res.status(400).json({ ok: false, error: "Bad request" });
 
       const ref = db.collection("users").doc(body.to).collection("notifications").doc(body.id);
@@ -368,7 +372,7 @@ export default async function handler(req, res) {
     }
 
     /* ---------- live session started in a circle ---------- */
-    if (body.action === "session") {
+    if (action === "session") {
       if (!safe(body.communityId)) return res.status(400).json({ ok: false, error: "Bad request" });
 
       const cref = db.collection("communities").doc(body.communityId);

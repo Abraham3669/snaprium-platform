@@ -10,6 +10,7 @@
 import { initializeApp, getApps, cert, applicationDefault } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
+import { handlePush } from "./_push.js";
 
 const DAILY = "https://api.daily.co/v1";
 
@@ -94,6 +95,11 @@ export default async function handler(req, res) {
         ok: true,
         message: "daily-room API is live. Use POST to start a call.",
       });
+    }
+
+    // Push notifications share this endpoint (api/_push.js) so the project stays under Vercel's function limit.
+    if (req.body && String(req.body.action || "").startsWith("push:")) {
+      return handlePush(req, res);
     }
 
     const body = req.body || {};

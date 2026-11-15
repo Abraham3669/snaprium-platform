@@ -7,7 +7,7 @@
 //  - The id is built from the event, so the same person doing the same thing
 //    twice (e.g. Spark, un-Spark, Spark again) can never notify twice.
 //  - Only the owner can read, mark read, or delete.
-//  - After the document exists we ask /api/push to deliver the iPhone alert.
+//  - After the document exists we ask the push handler (reached through /api/daily-room) to deliver the iPhone alert.
 //    If that call fails the in-app notification still exists.
 
 import {
@@ -54,7 +54,7 @@ async function callPushApi(body) {
     const user = auth.currentUser;
     if (!user) return;
     const idToken = await user.getIdToken();
-    await fetch(`${apiBase()}/api/push`, {
+    await fetch(`${apiBase()}/api/daily-room`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
       body: JSON.stringify(body),
@@ -113,13 +113,13 @@ export async function notifyUser({
     // Already sent before, or the person left the circle. Nothing to do.
     return;
   }
-  callPushApi({ action: "notify", to, id });
+  callPushApi({ action: "push:notify", to, id });
 }
 
 /** Tell the circle a live session just started (server fans it out). */
 export function notifyCircleSession(communityId, boardId = "") {
   if (!communityId) return;
-  callPushApi({ action: "session", communityId, boardId });
+  callPushApi({ action: "push:session", communityId, boardId });
 }
 
 export function subscribeToNotifications(uid, cb) {
