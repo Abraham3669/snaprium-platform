@@ -25,9 +25,8 @@ function getPurchases() {
   // Static import above (RevenueCat recommends it). If the native plugin was not
   // built into the app, say so clearly instead of hanging.
   if (!Capacitor.isPluginAvailable("Purchases")) {
-    throw new Error(
-      "Store plugin is missing from this build (step 1 of 3: native RevenueCat code was not included). Run npx cap sync ios and rebuild."
-    );
+    console.error("[iap] RevenueCat native plugin is not available in this build");
+    throw new Error("Purchases are not available right now. Please try again later.");
   }
   return Purchases;
 }
@@ -40,28 +39,11 @@ function withTimeout(promise, ms, message) {
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
 
-function setupTimeoutMessage() {
-  const k = nativeKey();
-  let plugin = "?";
-  try {
-    plugin = String(Capacitor.isPluginAvailable("Purchases"));
-  } catch (e) {
-    plugin = "err";
-  }
-  return (
-    "Store setup timed out (step 1 of 3: RevenueCat did not start). Check the RevenueCat key in the build. " +
-    "[v4 plugin=" + plugin + " key=" + k.slice(0, 5) + " len=" + k.length + "]"
-  );
-}
-const OFFERINGS_TIMEOUT_MESSAGE =
-  "Store products timed out (step 2 of 3: the App Store did not return the subscription). Check the product and the RevenueCat offering.";
-function offeringsTimeoutMessage() {
-  return OFFERINGS_TIMEOUT_MESSAGE + " [v6 " + loginNote + "]";
-}
+const STORE_TIMEOUT_MESSAGE =
+  "The store is taking too long to respond. Please check your connection and try again.";
 
 let configuredUid = null;
 let sdkStarted = false;
-let loginNote = "login=not-run";
 let initPromise = null;
 let initPromiseUid = null;
 
@@ -79,7 +61,7 @@ export function initIAP(uid) {
       await withTimeout(
         Purchases.configure({ apiKey: nativeKey() }),
         8000,
-        "Store setup timed out (step 1 of 3: configure did not return). [v6 configure]"
+        STORE_TIMEOUT_MESSAGE
       );
       sdkStarted = true;
     }
@@ -87,12 +69,11 @@ export function initIAP(uid) {
       await withTimeout(
         Purchases.logIn({ appUserID: uid }),
         8000,
-        "logIn did not return"
+        STORE_TIMEOUT_MESSAGE
       );
-      loginNote = "login=ok";
     } catch (e) {
       // Not fatal: continue so the next step can show its own error
-      loginNote = "login=" + String(e?.message || e).slice(0, 60);
+      console.warn("[iap] logIn did not complete", e);
     }
     configuredUid = uid;
     return true;
@@ -117,20 +98,20 @@ function hasUnlimited(customerInfo) {
 }
 
 export async function purchaseUnlimited(uid) {
-  if (!uid) throw new Error("Sign in first");
+  if (!uid) throw new Error("Please sign in first.");
   if (!iapConfigured()) {
-    throw new Error("Store billing is not configured yet. Add RevenueCat keys.");
+    throw new Error("Purchases are not available right now. Please try again later.");
   }
 
-  await withTimeout(initIAP(uid), 15000, setupTimeoutMessage());
+  await withTimeout(initIAP(uid), 15000, STORE_TIMEOUT_MESSAGE);
   const Purchases = getPurchases();
-  const offerings = await withTimeout(Purchases.getOfferings(), 20000, offeringsTimeoutMessage());
+  const offerings = await withTimeout(Purchases.getOfferings(), 20000, STORE_TIMEOUT_MESSAGE);
   const pkg =
     offerings.current?.availablePackages?.find((p) =>
       (p.product?.identifier || "").includes("unlimited")
     ) || offerings.current?.monthly || offerings.current?.availablePackages?.[0];
 
-  if (!pkg) throw new Error("No store product found. Create the subscription in App Store / Play.");
+  if (!pkg) throw new Error("The subscription is not available right now. Please try again later.");
 
   let customerInfo;
   try {
@@ -138,23 +119,28 @@ export async function purchaseUnlimited(uid) {
   } catch (err) {
     // The person closed the Apple payment sheet: not an error
     if (err?.userCancelled) return false;
-    throw new Error(`Purchase failed (step 3 of 3): ${err?.message || err}`);
+    console.error("[iap] purchase failed", err);
+    throw new Error("The purchase could not be completed. Please try again.");
   }
   if (!hasUnlimited(customerInfo)) {
-    throw new Error("Purchase finished but Unlimited is not active yet.");
+    throw new Error("Your purchase went through, but your plan is still updating. Please wait a moment, then tap Restore purchases.");
   }
   await activateUnlimited(uid);
   return true;
 }
 
 export async function restoreUnlimited(uid) {
-  if (!uid) throw new Error("Sign in first");
-  if (!iapConfigured()) throw new Error("Store billing is not configured yet.");
+  if (!uid) throw new Error("Please sign in first.");
+  if (!iapConfigured()) throw new Error("Purchases are not available right now. Please try again later.");
   await initIAP(uid);
   const Purchases = getPurchases();
   const { customerInfo } = await Purchases.restorePurchases();
   if (!hasUnlimited(customerInfo)) {
-    throw new Error("No active store subscription found for this Apple / Google account.");
+    throw new Error(
+      Capacitor.getPlatform() === "ios"
+        ? "No active subscription was found for this Apple ID."
+        : "No active subscription was found for this Google account."
+    );
   }
   await activateUnlimited(uid);
   return true;
@@ -163,9 +149,9 @@ export async function restoreUnlimited(uid) {
 // Price of the Unlimited plan exactly as the store shows it (local currency), e.g. "$9.99"
 export async function getUnlimitedPrice(uid) {
   if (!uid || !iapConfigured()) return "";
-  await withTimeout(initIAP(uid), 15000, setupTimeoutMessage());
+  await withTimeout(initIAP(uid), 15000, STORE_TIMEOUT_MESSAGE);
   const Purchases = getPurchases();
-  const offerings = await withTimeout(Purchases.getOfferings(), 20000, offeringsTimeoutMessage());
+  const offerings = await withTimeout(Purchases.getOfferings(), 20000, STORE_TIMEOUT_MESSAGE);
   const pkg =
     offerings.current?.availablePackages?.find((p) =>
       (p.product?.identifier || "").includes("unlimited")

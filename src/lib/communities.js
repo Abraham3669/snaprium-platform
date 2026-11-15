@@ -312,7 +312,7 @@ export async function reportCommunity({ communityId, communityName, reporterId, 
 }
 
 export async function sendCommunityMessage(communityId, message) {
-  await addDoc(collection(db, "communities", communityId, "messages"), {
+  const created = await addDoc(collection(db, "communities", communityId, "messages"), {
     ...message,
     boardId: message.boardId || "general",
     createdAt: serverTimestamp(),
@@ -320,6 +320,14 @@ export async function sendCommunityMessage(communityId, message) {
   if (message?.uid !== "snaprium-ai" && !message?.isAI && !message?.system && message?.type !== "join") {
     track("chat_message", { circleId: communityId }, { throttleMs: 5 * 60 * 1000 });
   }
+  return created.id;
+}
+
+// Emoji reaction on a chat message. Stored as messages/{id}.reactions = { "👍": [uid, ...] }
+export async function toggleMessageReaction(communityId, messageId, emoji, uid, alreadyReacted) {
+  await updateDoc(doc(db, "communities", communityId, "messages", messageId), {
+    [`reactions.${emoji}`]: alreadyReacted ? arrayRemove(uid) : arrayUnion(uid),
+  });
 }
 
 
@@ -503,13 +511,15 @@ export function subscribeToReplies(communityId, boardId, questionId, cb) {
 
 export async function addQuestionReply(communityId, boardId, questionId, data) {
   const questionRef = doc(db, "communities", communityId, "boards", boardId, "questions", questionId);
-  await addDoc(collection(questionRef, "replies"), {
+  const created = await addDoc(collection(questionRef, "replies"), {
     text: data.text,
     uid: data.uid,
     displayName: data.displayName || "Member",
     photoURL: data.photoURL || "",
     mentions: data.mentions || [],
     replyTo: data.replyTo || null,
+    sparkedBy: [],
+    sparkCount: 0,
     createdAt: serverTimestamp(),
   });
   track("reply_post", { circleId: communityId });
@@ -520,6 +530,18 @@ export async function addQuestionReply(communityId, boardId, questionId, data) {
       lastReplyUid: data.uid || "",
     });
   } catch {}
+  return created.id;
+}
+
+// Spark = "this answer helped". Counts only, never a downvote.
+export async function toggleReplySpark(communityId, boardId, questionId, replyId, uid, alreadySparked) {
+  await updateDoc(
+    doc(db, "communities", communityId, "boards", boardId, "questions", questionId, "replies", replyId),
+    {
+      sparkedBy: alreadySparked ? arrayRemove(uid) : arrayUnion(uid),
+      sparkCount: increment(alreadySparked ? -1 : 1),
+    }
+  );
 }
 
 export async function markQuestionRead(communityId, uid, questionId, replyCount = 0) {

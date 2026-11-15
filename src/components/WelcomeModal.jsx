@@ -22,7 +22,7 @@ export default function WelcomeModal({ plan, onClose }) {
     return () => window.removeEventListener('resize', handleResize);
   }, [handleResize]);
 
-  // Auto-close after 8 seconds
+  // Auto-close after 60 seconds
   useEffect(() => {
     const timer = setTimeout(onClose, 60000);
     return () => clearTimeout(timer);
@@ -48,18 +48,18 @@ export default function WelcomeModal({ plan, onClose }) {
        {/* Checkmark Circle SVG */}
 <div className="welcome-icon">
   <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle 
-      cx="12" 
-      cy="12" 
-      r="10" 
-      fill="url(#checkGradient)" 
+    <circle
+      cx="12"
+      cy="12"
+      r="10"
+      fill="url(#checkGradient)"
     />
-    <path 
-      d="M9 12.5l2 2 4-4" 
-      stroke="white" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round" 
+    <path
+      d="M9 12.5l2 2 4-4"
+      stroke="white"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
     />
     <defs>
       <linearGradient id="checkGradient" x1="2" y1="12" x2="22" y2="12" gradientUnits="userSpaceOnUse">
@@ -70,14 +70,15 @@ export default function WelcomeModal({ plan, onClose }) {
   </svg>
 </div>
 
-<h2>Congratulations!</h2>
+<h2>Welcome to Unlimited</h2>
 
 <p className="welcome-text">
-  You’re now an <strong>Unlimited</strong> member — enjoy solving math & physics problems anytime.
+  Your subscription is active. You now have <strong>unlimited photo solves</strong>,{' '}
+  <strong>longer live study sessions</strong>, and more room to run your circles and boards.
 </p>
 
 <button className="welcome-cta" onClick={onClose}>
-  Start Solving Now
+  Start studying
 </button>
 
       </div>

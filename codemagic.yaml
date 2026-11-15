@@ -29,6 +29,42 @@ workflows:
       - name: Sync Capacitor iOS
         script: npx cap sync ios
 
+      - name: Enable push notifications (entitlement + AppDelegate)
+        script: |
+          set -e
+          ENT="ios/App/App/App.entitlements"
+          [ -f "$ENT" ] || ENT=$(find ios/App -name "*.entitlements" | head -1)
+          echo "Entitlements file: $ENT"
+          /usr/libexec/PlistBuddy -c "Print :aps-environment" "$ENT" >/dev/null 2>&1 \
+            || /usr/libexec/PlistBuddy -c "Add :aps-environment string production" "$ENT"
+          /usr/libexec/PlistBuddy -c "Print :aps-environment" "$ENT"
+
+          python3 - <<'PY'
+          import re
+          path = "ios/App/App/AppDelegate.swift"
+          src = open(path).read()
+          if "didRegisterForRemoteNotificationsWithDeviceToken" in src:
+              print("AppDelegate already forwards push tokens")
+          else:
+              add = (
+                  "    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {\n"
+                  "        NotificationCenter.default.post(name: .capacitorDidRegisterForRemoteNotifications, object: deviceToken)\n"
+                  "    }\n\n"
+                  "    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {\n"
+                  "        NotificationCenter.default.post(name: .capacitorDidFailToRegisterForRemoteNotifications, object: error)\n"
+                  "    }\n\n"
+              )
+              m = re.search(r"^[ \t]*func application\(", src, re.M)
+              if m:
+                  src = src[:m.start()] + add + src[m.start():]
+              else:
+                  i = src.rstrip().rfind("}")
+                  src = src[:i] + "\n" + add + src[i:]
+              open(path, "w").write(src)
+              print("Added push token forwarding to AppDelegate")
+          PY
+          grep -n "RemoteNotifications" ios/App/App/AppDelegate.swift
+
       - name: Set up keychain
         script: keychain initialize
 

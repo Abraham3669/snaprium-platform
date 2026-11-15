@@ -8,6 +8,7 @@ import { Capacitor } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
 import { useAuth } from "../context/AuthContext";
 import { auth, db } from "../lib/firebase";
+import { restoreUnlimited } from "../lib/iap";
 import "../styles/profile.css";
 
 function compressImage(file, max = 400, quality = 0.7) {
@@ -104,6 +105,34 @@ function InfoIcon() {
   );
 }
 
+function FileIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="8" y1="13" x2="16" y2="13" />
+      <line x1="8" y1="17" x2="16" y2="17" />
+    </svg>
+  );
+}
+
+function ShieldIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  );
+}
+
+function MailIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="2" y="4" width="20" height="16" rx="2" />
+      <path d="m22 7-10 6L2 7" />
+    </svg>
+  );
+}
+
 function readTheme() {
   return (
     localStorage.getItem("theme") ||
@@ -124,7 +153,9 @@ export default function Profile() {
   const [delOpen, setDelOpen] = useState(false);
   const [delText, setDelText] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [restoring, setRestoring] = useState(false);
   const isApp = Capacitor.isNativePlatform();
+  const isIosApp = Capacitor.getPlatform() === "ios";
 
   useEffect(() => {
     if (loading) return;
@@ -216,6 +247,16 @@ export default function Profile() {
   };
 
   const handleManageSubscription = async () => {
+    // iPhone app: subscriptions are managed by Apple, not the web billing portal
+    if (isIosApp) {
+      try {
+        await Browser.open({ url: "https://apps.apple.com/account/subscriptions" });
+      } catch (error) {
+        console.error("Error opening Apple subscriptions:", error);
+        toast.error("Open Settings > your name > Subscriptions to manage your plan.");
+      }
+      return;
+    }
     setPortalLoading(true);
     try {
       const apiBase = (import.meta.env.VITE_API_URL || "https://snaprium.com").replace(/\/$/, "");
@@ -240,6 +281,41 @@ export default function Profile() {
     } finally {
       setPortalLoading(false);
     }
+  };
+
+  const handleRestore = async () => {
+    if (restoring) return;
+    setRestoring(true);
+    try {
+      await restoreUnlimited(user.uid);
+      await refreshUser?.();
+      toast.success("Your Unlimited plan is restored");
+    } catch (err) {
+      toast.error(err?.message || "Could not restore purchases. Please try again.");
+    } finally {
+      setRestoring(false);
+    }
+  };
+
+  const openLegal = (path) => {
+    if (isApp) {
+      Browser.open({ url: `https://snaprium.com${path}` }).catch(() => {});
+    } else {
+      navigate(path);
+    }
+  };
+
+  const handleRefund = async () => {
+    // iPhone app: Apple handles refunds for App Store purchases
+    if (isIosApp) {
+      try {
+        await Browser.open({ url: "https://reportaproblem.apple.com" });
+      } catch {
+        navigate("/refunds");
+      }
+      return;
+    }
+    navigate("/refunds");
   };
 
   const save = async (e) => {
@@ -323,7 +399,12 @@ setPreview(photoURL);
           <div className="pf-who">
             <h1 className="pf-name">{shownName}</h1>
             <p className="pf-email">{user.email}</p>
-            {signInLabel && <p className="pf-signin-note">Signed in with {signInLabel}</p>}
+            <div className="pf-chips">
+              <span className={isSubscribed ? "pf-chip pf-chip-pro" : "pf-chip"}>
+                {isSubscribed ? "Unlimited plan" : "Free plan"}
+              </span>
+              {signInLabel && <span className="pf-chip">Signed in with {signInLabel}</span>}
+            </div>
           </div>
         </div>
       </section>
@@ -410,16 +491,65 @@ setPreview(photoURL);
               </button>
             )}
 
-            {isSubscribed && (
-              <button type="button" className="pf-link" onClick={() => navigate("/refunds")}>
-                <span className="pf-link-icon"><InfoIcon /></span>
+            {isIosApp && (
+              <button
+                type="button"
+                className="pf-link"
+                onClick={handleRestore}
+                disabled={restoring}
+              >
+                <span className="pf-link-icon"><CardIcon /></span>
                 <span className="pf-link-text">
-                  <strong>Request refund</strong>
-                  <small>Billing help</small>
+                  <strong>{restoring ? "Restoring…" : "Restore purchases"}</strong>
+                  <small>Already subscribed? Get your plan back</small>
                 </span>
                 <ChevronIcon />
               </button>
             )}
+
+            {isSubscribed && (
+              <button type="button" className="pf-link" onClick={handleRefund}>
+                <span className="pf-link-icon"><InfoIcon /></span>
+                <span className="pf-link-text">
+                  <strong>Request refund</strong>
+                  <small>{isIosApp ? "Handled by Apple" : "Billing help"}</small>
+                </span>
+                <ChevronIcon />
+              </button>
+            )}
+          </div>
+
+          <div className="pf-card pf-links">
+            <button type="button" className="pf-link" onClick={() => openLegal("/terms")}>
+              <span className="pf-link-icon"><FileIcon /></span>
+              <span className="pf-link-text">
+                <strong>Terms of Use</strong>
+                <small>The rules for using Snaprium</small>
+              </span>
+              <ChevronIcon />
+            </button>
+            <button type="button" className="pf-link" onClick={() => openLegal("/privacy")}>
+              <span className="pf-link-icon"><ShieldIcon /></span>
+              <span className="pf-link-text">
+                <strong>Privacy Policy</strong>
+                <small>How we handle your data</small>
+              </span>
+              <ChevronIcon />
+            </button>
+            <button
+              type="button"
+              className="pf-link"
+              onClick={() => {
+                window.location.href = "mailto:support@snaprium.com";
+              }}
+            >
+              <span className="pf-link-icon"><MailIcon /></span>
+              <span className="pf-link-text">
+                <strong>Contact support</strong>
+                <small>support@snaprium.com</small>
+              </span>
+              <ChevronIcon />
+            </button>
           </div>
 
           <button

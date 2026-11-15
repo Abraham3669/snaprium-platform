@@ -15,6 +15,7 @@ import WelcomeModal from "./components/WelcomeModal";
 import CommunityDetail from "./pages/CommunityDetail";
 import CommunityChat from "./pages/CommunityChat";
 import Profile from "./pages/Profile";
+import Notifications from "./pages/Notifications";
 
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -45,6 +46,9 @@ import { showAppError } from "./utils/errorReporter";
 import BottomNav from "./components/BottomNav";
 import { Capacitor } from "@capacitor/core";
 import { StatusBar, Style } from "@capacitor/status-bar";
+import useNotifications from "./lib/useNotifications";
+import { syncPush, clearDeliveredPush } from "./lib/push";
+import "./styles/social.css";
 
 const GUEST_SOLVE_LIMIT = 3;
 const FREE_DAILY_LIMIT = 10;
@@ -57,6 +61,32 @@ function App() {
   const location = useLocation();
 
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
+
+  // Notifications (bell + page) and iPhone push
+  const notifications = useNotifications(user?.uid);
+
+  useEffect(() => {
+    syncPush(user?.uid, (url) => navigate(url));
+  }, [user?.uid]);
+
+  // Profile's theme switch tells the app, so toasts and the status bar follow it
+  useEffect(() => {
+    const onTheme = (e) => {
+      if (e?.detail === "dark" || e?.detail === "light") setTheme(e.detail);
+    };
+    window.addEventListener("snaprium-theme", onTheme);
+    return () => window.removeEventListener("snaprium-theme", onTheme);
+  }, []);
+
+  // Coming back to the app clears old alerts from the lock screen and resets the badge.
+  useEffect(() => {
+    if (!isNativeApp) return undefined;
+    const onVisible = () => {
+      if (document.visibilityState === "visible") clearDeliveredPush();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, []);
 
 useEffect(() => {
   document.documentElement.setAttribute("data-theme", theme);
@@ -367,7 +397,7 @@ useEffect(() => {
   </span>
 )}
 
-          {!isNativeApp && (
+          {!isNativeApp && !user && (
           <button
             type="button"
             className="snaprium-menu-btn"
@@ -393,6 +423,30 @@ useEffect(() => {
               </svg>
             )}
           </button>
+          )}
+
+          {user && (
+            <button
+              type="button"
+              className="snaprium-menu-btn header-bell-btn"
+              onClick={() => navigate("/notifications")}
+              aria-label={
+                notifications.unread > 0
+                  ? `Notifications, ${notifications.unread} new`
+                  : "Notifications"
+              }
+              title="Notifications"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+              </svg>
+              {notifications.unread > 0 && (
+                <span className="header-bell-badge">
+                  {notifications.unread > 9 ? "9+" : notifications.unread}
+                </span>
+              )}
+            </button>
           )}
 
           {user ? (
@@ -514,6 +568,18 @@ useEffect(() => {
 <Route path="/community/:communityId" element={<CommunityDetail />} />
 <Route path="/community/:communityId/chat" element={<CommunityChat />} />
 <Route path="/profile" element={<Profile />} />
+<Route
+  path="/notifications"
+  element={
+    <Notifications
+      items={notifications.items}
+      loading={notifications.loading}
+      unread={notifications.unread}
+      markRead={notifications.markRead}
+      markAllRead={notifications.markAllRead}
+    />
+  }
+/>
             </Routes>
           </main>
         }

@@ -34,7 +34,9 @@ import {
  ensureQuestionsBoard,
 markBoardRead,
 countBoardUnread,
+  toggleMessageReaction,
 } from "../lib/communities";
+import { notifyUser, notifyCircleSession } from "../lib/notifications";
 import QuestionBoard from "../components/QuestionBoard";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
@@ -42,6 +44,15 @@ import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
 
  
+
+const QUICK_REACTIONS = ["👍", "❤️", "😂", "🔥", "🙏", "🎉"];
+
+// [["👍", [uid, ...]], ...] with empty ones removed
+function reactionList(msg) {
+  return Object.entries(msg?.reactions || {}).filter(
+    ([, people]) => Array.isArray(people) && people.length > 0
+  );
+}
 
 const FREE_ROOM_AI_LIMIT = 5;
 const PAID_ROOM_AI_LIMIT = 40;
@@ -381,6 +392,8 @@ const [pendingImage, setPendingImage] = useState("");
   const menuRef = useRef(null);
   const longPressTimer = useRef(null);
   const seenRef = useRef(null);
+  const jumpedRef = useRef("");
+  const freshStartRef = useRef(false);
 
   const [welcome, setWelcome] = useState(false);
 
@@ -830,6 +843,33 @@ const next =
 
   const isMember = user && community && (community.members || []).includes(user.uid);
 
+  // Opened from a notification: scroll to that message once it has loaded.
+  useEffect(() => {
+    const target = params.get("m");
+    if (!target || jumpedRef.current === target) return undefined;
+    if (!messages.some((m) => m.id === target)) return undefined;
+    jumpedRef.current = target;
+    const t = setTimeout(() => jumpToMessage(target), 350);
+    return () => clearTimeout(t);
+  }, [messages, params]);
+
+  // Someone just STARTED a session (nobody was live): after a few seconds, if they
+  // are still in it, tell the circle. The server sends at most one every 30 minutes.
+  useEffect(() => {
+    if (!callOpen) {
+      freshStartRef.current = false;
+      return undefined;
+    }
+    if (!freshStartRef.current) return undefined;
+    const t = setTimeout(() => {
+      if (freshStartRef.current) {
+        freshStartRef.current = false;
+        notifyCircleSession(communityId, activeBoardId);
+      }
+    }, 6000);
+    return () => clearTimeout(t);
+  }, [callOpen, communityId, activeBoardId]);
+
   // is a session running in this circle right now? (look only, never starts one)
   const { status: sessionStatus, refresh: refreshSession } = useSessionStatus(
     isMember && liveBoard ? communityId : null
@@ -970,6 +1010,36 @@ useEffect(() => {
     }
   };
 
+  const me = user
+    ? { uid: user.uid, displayName: user.displayName || "Member", photoURL: user.photoURL || "" }
+    : null;
+  const circle = { id: communityId, name: community?.name || "" };
+
+  const onReact = async (msg, emoji) => {
+    if (!user || !isMember) return;
+    setMenuFor(null);
+    const has = (msg.reactions?.[emoji] || []).includes(user.uid);
+    try {
+      await toggleMessageReaction(communityId, msg.id, emoji, user.uid, has);
+      if (!has && msg.uid && msg.uid !== user.uid && !msg.isAI) {
+        notifyUser({
+          to: msg.uid,
+          type: "reaction",
+          from: me,
+          community: circle,
+          boardId: msg.boardId || activeBoardId,
+          targetId: msg.id,
+          emoji,
+          preview: msg.text || (msg.imageUrl ? "your photo" : ""),
+          key: msg.id,
+          url: `/community/${communityId}/chat?board=${msg.boardId || activeBoardId}&m=${msg.id}`,
+        });
+      }
+    } catch {
+      toast.error("Could not react");
+    }
+  };
+
   const handleSend = async (e) => {
   e?.preventDefault?.();
   const text = input.trim();
@@ -983,7 +1053,7 @@ useEffect(() => {
   setMentionQuery(null);
   const mentions = resolveMentions(text, mentionable).filter((id) => id !== user.uid);
   try {
-    await sendCommunityMessage(communityId, {
+    const sentId = await sendCommunityMessage(communityId, {
       boardId: activeBoardId,
       text,
       mentions,
@@ -1002,6 +1072,23 @@ useEffect(() => {
             text: String(quoted.text || "").slice(0, 140),
           }
         : null,
+    });
+    // Tell the people who were mentioned, and the person being replied to.
+    const targets = new Map();
+    if (quoted?.uid && !quoted.isAI) targets.set(quoted.uid, "reply");
+    mentions.forEach((id) => targets.set(id, "mention"));
+    targets.forEach((type, to) => {
+      notifyUser({
+        to,
+        type,
+        from: me,
+        community: circle,
+        boardId: activeBoardId,
+        targetId: sentId,
+        preview: text || "sent a photo",
+        key: sentId,
+        url: `/community/${communityId}/chat?board=${activeBoardId}&m=${sentId}`,
+      });
     });
    // AI off for now. Uncomment to bring back.
 // if (text && /(^|\s)@(ai|snaprium)\b/i.test(text)) askAI(text);
@@ -1180,6 +1267,7 @@ useEffect(() => {
                 className={`cc-session-btn ${callOpen ? "on" : ""}`}
                 disabled={!callOpen && sessionFull}
                 onClick={() => {
+                  if (!callOpen && !sessionStatus?.live) freshStartRef.current = true;
                   setCallOpen((v) => {
                     if (v) setCallFocus(false);
                     return !v;
@@ -1285,6 +1373,8 @@ useEffect(() => {
     boardId={activeBoardId}
     user={user}
     isMember={!!isMember}
+    communityName={community?.name || ""}
+    initialQuestionId={params.get("q") || ""}
   />
 ) : (
   <>
@@ -1336,6 +1426,21 @@ useEffect(() => {
             onTouchEnd={cancelLongPress}
             onTouchMove={cancelLongPress}
           >
+            {!msg.isAI && (
+              <div className="cc-rx-hover" role="toolbar" aria-label="React to message">
+                {QUICK_REACTIONS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    className={(msg.reactions?.[emoji] || []).includes(user?.uid) ? "on" : ""}
+                    onClick={() => onReact(msg, emoji)}
+                    aria-label={`React ${emoji}`}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            )}
             <header className="cc-post-head">
               {!grouped && (
                 <button
@@ -1372,6 +1477,19 @@ useEffect(() => {
                   </button>
                   {menuFor === msg.id && (
                     <div className="cc-post-menu" ref={menuRef}>
+                      <div className="cc-rx-menu">
+                        {QUICK_REACTIONS.map((emoji) => (
+                          <button
+                            key={emoji}
+                            type="button"
+                            className={(msg.reactions?.[emoji] || []).includes(user?.uid) ? "on" : ""}
+                            onClick={() => onReact(msg, emoji)}
+                            aria-label={`React ${emoji}`}
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
                       <button type="button" onClick={() => { setReplyTo(msg); setMenuFor(null); }}>Reply</button>
                       {msg.uid === user?.uid && msg.text && !msg.imageUrl && (
                         <button type="button" onClick={() => { startEdit(msg); setMenuFor(null); }}>Edit</button>
@@ -1464,6 +1582,26 @@ useEffect(() => {
                   isAI={!!msg.isAI}
                 />
               )
+            )}
+            {reactionList(msg).length > 0 && (
+              <div className="cc-rx-row">
+                {reactionList(msg).map(([emoji, people]) => {
+                  const mine = people.includes(user?.uid);
+                  return (
+                    <button
+                      key={emoji}
+                      type="button"
+                      className={`cc-rx-chip ${mine ? "on" : ""}`}
+                      onClick={() => onReact(msg, emoji)}
+                      aria-pressed={mine}
+                      aria-label={`${emoji} ${people.length}`}
+                    >
+                      <span>{emoji}</span>
+                      <span className="cc-rx-count">{people.length}</span>
+                    </button>
+                  );
+                })}
+              </div>
             )}
           </article>
           </Fragment>

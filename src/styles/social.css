@@ -1,0 +1,429 @@
+/* src/styles/social.css
+   Reactions (chat), Spark (question board), notification bell + Notifications page.
+   Imported once, last, in App.jsx. Uses your tokens so light and dark both work. */
+
+/* ---------------------------------------------------------------
+   Chat reactions
+   --------------------------------------------------------------- */
+
+.cc-post { position: relative; }
+
+/* Hover bar (computers). Phones use long-press, which has the same six emojis. */
+.cc-rx-hover {
+  display: none;
+  position: absolute;
+  top: -16px;
+  right: 40px;
+  z-index: 15;
+  gap: 2px;
+  padding: 3px 4px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
+}
+
+@media (hover: hover) {
+  .cc-post:hover > .cc-rx-hover,
+  .cc-post:focus-within > .cc-rx-hover { display: flex; }
+}
+
+.cc-rx-hover button,
+.cc-rx-menu button {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 0.12s ease, background-color 0.12s ease;
+}
+
+.cc-rx-hover button:hover,
+.cc-rx-menu button:hover { background: var(--icon-bg); transform: scale(1.15); }
+.cc-rx-hover button.on,
+.cc-rx-menu button.on { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+
+/* Row inside the message menu */
+.cc-post-menu .cc-rx-menu {
+  display: flex;
+  gap: 2px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cc-post-menu .cc-rx-menu button { width: 34px; height: 34px; text-align: center; padding: 0; }
+
+/* Chips under a message, lined up with the message text */
+.cc-rx-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0 0 50px;
+}
+
+.cc-rx-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+
+.cc-rx-chip .cc-rx-count { font-size: 12px; font-weight: 650; color: var(--text-secondary); }
+
+.cc-rx-chip.on {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+}
+
+.cc-rx-chip.on .cc-rx-count { color: var(--accent); }
+
+/* ---------------------------------------------------------------
+   Spark (question board)
+   --------------------------------------------------------------- */
+
+.qb-reply-actions { align-items: center; flex-wrap: wrap; }
+
+.qb-reply-actions button.qb-spark {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+
+.qb-spark svg,
+.qb-spark-static svg { width: 14px; height: 14px; }
+
+.qb-reply-actions button.qb-spark:hover {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+}
+
+.qb-reply-actions button.qb-spark.on {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+}
+
+.qb-reply-actions button.qb-spark.on svg { fill: currentColor; }
+
+.qb-spark-count { font-weight: 700; }
+
+.qb-spark-static {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--icon-bg);
+  color: var(--accent);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+/* ---------------------------------------------------------------
+   Header bell
+   --------------------------------------------------------------- */
+
+.header-bell-btn { position: relative; }
+
+.header-bell-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #e5484d;
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 17px;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--bg);
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------
+   Notifications page
+   --------------------------------------------------------------- */
+
+.nt-page {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 20px 16px 120px;
+  color: var(--text-primary);
+}
+
+.nt-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.nt-head h1 { margin: 0; font-size: 1.5rem; line-height: 1.15; }
+.nt-head p { margin: 4px 0 0; font-size: 0.85rem; color: var(--text-secondary); }
+
+.nt-link {
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 650;
+  cursor: pointer;
+  padding: 6px 0;
+}
+
+.nt-btn {
+  flex: 0 0 auto;
+  height: 38px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.nt-btn:disabled { opacity: 0.6; cursor: default; }
+
+.nt-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+}
+
+.nt-banner strong { display: block; font-size: 0.95rem; }
+.nt-banner p { margin: 3px 0 0; font-size: 0.82rem; line-height: 1.4; color: var(--text-secondary); }
+.nt-banner.muted { border-color: var(--border); background: var(--surface); }
+.nt-banner.muted p { margin: 0; }
+
+.nt-section {
+  margin: 18px 0 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.nt-list {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.nt-row {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 14px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.nt-row:last-child { border-bottom: 0; }
+.nt-row:hover { background: var(--icon-bg); }
+.nt-row.unread { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+
+.nt-avatar-wrap { position: relative; flex: 0 0 42px; width: 42px; height: 42px; }
+
+.nt-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.nt-avatar-fallback {
+  display: grid;
+  place-items: center;
+  background: var(--icon-bg);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.nt-type {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+.nt-type svg { width: 11px; height: 11px; }
+
+.nt-copy { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.nt-copy strong { font-size: 0.92rem; font-weight: 650; line-height: 1.3; }
+
+.nt-preview {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.nt-meta { font-size: 0.75rem; color: var(--text-secondary); }
+
+.nt-dot {
+  flex: 0 0 9px;
+  width: 9px;
+  height: 9px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.nt-empty { padding: 56px 20px; text-align: center; }
+.nt-empty strong { display: block; font-size: 1.05rem; }
+.nt-empty p { margin: 6px 0 16px; color: var(--text-secondary); font-size: 0.9rem; }
+.nt-muted { color: var(--text-secondary); text-align: center; padding: 30px 0; }
+
+/* One emoji row at a time:
+   computers = hover bar only (hidden while the ⋯ menu is open), phones = menu row only */
+.cc-post.menu-open > .cc-rx-hover { display: none !important; }
+
+@media (hover: hover) {
+  .cc-post-menu .cc-rx-menu { display: none; }
+}
+
+/* Spark on the question itself: same look as on answers, a little roomier */
+.qb-actions button.qb-spark-lg {
+  background: var(--surface);
+  color: var(--text-secondary);
+  height: 36px;
+  padding: 0 14px;
+  font-size: 13.5px;
+}
+.qb-actions button.qb-spark-lg.on {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+}
+.qb-spark-lg svg { width: 16px; height: 16px; }
+
+/* ⋯ menu for Edit / Delete on questions and answers */
+.qb-menu-wrap { position: relative; display: inline-block; }
+
+.qb-menu-wrap .qb-more {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.qb-actions .qb-menu-wrap .qb-more { height: 36px; width: 38px; background: var(--surface); color: var(--text-primary); }
+.qb-menu-wrap .qb-more:hover { background: var(--icon-bg); color: var(--text-primary); }
+
+.qb-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 30;
+  min-width: 130px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.qb-menu-wrap .qb-menu button {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.qb-menu-wrap .qb-menu button:hover { background: var(--icon-bg); }
+.qb-menu-wrap .qb-menu button.qb-menu-danger { color: #e5484d; }
+
+/* ⋯ sits at the far right of the row, menu opens toward the left so it never runs off screen */
+.qb-actions .qb-menu-wrap,
+.qb-reply-actions .qb-menu-wrap { margin-left: auto; }
+
+.qb-menu { left: auto; right: 0; }
+
+/* Answers: let the text column fill the card so the ⋯ can reach the right edge */
+.qb-reply > div:last-child { flex: 1 1 auto; min-width: 0; }
+.qb-reply-actions { width: 100%; }
+
+/* "Back to questions": quieter link-style button with breathing room below */
+.qb-detail .qb-back {
+  margin: 0 0 14px;
+  padding: 7px 12px 7px 8px;
+  border: 1px solid var(--border) !important;
+  background: var(--surface) !important;
+  color: var(--accent) !important;
+  font-size: 13.5px;
+  font-weight: 650;
+}
+.qb-detail .qb-back:hover { background: var(--icon-bg) !important; }
+.qb-detail .qb-back svg { width: 16px; height: 16px; }

@@ -693,3 +693,27 @@
 .pf-modal .pf-btn-danger:hover:not(:disabled) {
   background: #dc2626;
 }
+
+
+
+
+/* ===== Paste at the END of profile.css ===== */
+
+/* Chips (plan + sign-in) can wrap on small phones */
+.pf-chips {
+  flex-wrap: wrap;
+}
+
+/* Desktop: Account card is only as tall as its content */
+@media (min-width: 900px) {
+  .pf-grid {
+    align-items: start;
+  }
+}
+
+/* Phone: remove the extra space under the header (main already pads for it) */
+@media (max-width: 899px) {
+  .pf-page {
+    padding-top: 16px;
+  }
+}

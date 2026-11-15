@@ -15,7 +15,9 @@ import {
   editQuestionReply,
 deleteQuestionReply,
 markQuestionRead,
+  toggleReplySpark,
 } from "../lib/communities";
+import { notifyUser } from "../lib/notifications";
 import "../styles/question-board.css";
 
 
@@ -46,6 +48,13 @@ function IconLike() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
       <path d="M7 11v9H4v-9h3zM7 20h9.2a2 2 0 0 0 2-1.7l1.2-7A2 2 0 0 0 17.4 9H14V6.2A2.2 2.2 0 0 0 11.8 4L9 9v2" strokeLinejoin="round" />
+    </svg>
+  );
+}
+function IconSpark() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <path d="M13 2L4.5 13.5H11L10 22l8.5-11.5H13L13 2z" strokeLinejoin="round" strokeLinecap="round" />
     </svg>
   );
 }
@@ -197,7 +206,7 @@ function compressImage(file, max = 900, quality = 0.65) {
   });
 }
 
-export default function QuestionBoard({ communityId, boardId, user, isMember }) {
+export default function QuestionBoard({ communityId, boardId, user, isMember, communityName = "", initialQuestionId = "" }) {
   const [questions, setQuestions] = useState([]);
   const [openId, setOpenId] = useState(null);
   const [composerOpen, setComposerOpen] = useState(false);
@@ -214,6 +223,16 @@ const [seen, setSeen] = useState({});
     if (!communityId || !boardId) return;
     return subscribeToQuestions(communityId, boardId, setQuestions);
   }, [communityId, boardId]);
+
+  // Opened from a notification: jump straight into that question (once).
+  const openedFromLink = useRef("");
+  useEffect(() => {
+    if (!initialQuestionId || openedFromLink.current === initialQuestionId) return;
+    if (questions.some((q) => q.id === initialQuestionId)) {
+      openedFromLink.current = initialQuestionId;
+      setOpenId(initialQuestionId);
+    }
+  }, [initialQuestionId, questions]);
 
   useEffect(() => {
   if (!communityId || !user?.uid) return;
@@ -352,7 +371,7 @@ const [seen, setSeen] = useState({});
   <span aria-hidden="true"> · </span>
   {Math.max(0, q.replyCount || 0)} {q.replyCount === 1 ? "reply" : "replies"}
   <span aria-hidden="true"> · </span>
-  {q.likeCount || 0} {(q.likeCount || 0) === 1 ? "like" : "likes"}
+  {q.likeCount || 0} {(q.likeCount || 0) === 1 ? "spark" : "sparks"}
 </span>
                 </div>
               </button>
@@ -364,6 +383,7 @@ const [seen, setSeen] = useState({});
       {open && (
         <QuestionDetail
           communityId={communityId}
+          communityName={communityName}
           boardId={boardId}
           question={open}
           user={user}
@@ -375,7 +395,7 @@ const [seen, setSeen] = useState({});
   );
 }
 
-function QuestionDetail({ communityId, boardId, question, user, isMember, onBack }) {
+function QuestionDetail({ communityId, communityName = "", boardId, question, user, isMember, onBack }) {
   const [replies, setReplies] = useState([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
@@ -390,6 +410,7 @@ function QuestionDetail({ communityId, boardId, question, user, isMember, onBack
   const [editReplyText, setEditReplyText] = useState("");
   const [typingNames, setTypingNames] = useState([]);
   const [mentionQuery, setMentionQuery] = useState(null);
+  const [menuId, setMenuId] = useState(null);
   const typingTimer = useRef(null);
   const lastTypingWrite = useRef(0);
   const typingRef = user?.uid ? doc(db, "communities", communityId, "typing", user.uid) : null;
@@ -402,6 +423,20 @@ function QuestionDetail({ communityId, boardId, question, user, isMember, onBack
   if (!user?.uid || !question?.id) return;
   markQuestionRead(communityId, user.uid, question.id, question.replyCount || 0).catch(() => {});
 }, [communityId, user?.uid, question?.id, question.replyCount]);
+
+  // Close the ⋯ menu when you tap anywhere else
+  useEffect(() => {
+    if (!menuId) return undefined;
+    const close = (e) => {
+      if (!e.target.closest?.(".qb-menu-wrap")) setMenuId(null);
+    };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("touchstart", close);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("touchstart", close);
+    };
+  }, [menuId]);
 
   const people = useMemo(() => {
     const map = new Map();
@@ -480,9 +515,10 @@ function QuestionDetail({ communityId, boardId, question, user, isMember, onBack
     if (!clean || !user || !isMember || sending) return;
     setSending(true);
     try {
-      await addQuestionReply(communityId, boardId, question.id, {
+      const mentionIds = resolveMentions(clean, people).filter((id) => id !== user.uid);
+      const replyId = await addQuestionReply(communityId, boardId, question.id, {
         text: clean,
-        mentions: resolveMentions(clean, people).filter((id) => id !== user.uid),
+        mentions: mentionIds,
         uid: user.uid,
         displayName: user.displayName || "Member",
         photoURL: user.photoURL || "",
@@ -495,6 +531,25 @@ function QuestionDetail({ communityId, boardId, question, user, isMember, onBack
               text: String(replyTo.text || "").slice(0, 140),
             }
           : null,
+      });
+      // Who hears about it. Later entries win: a mention beats a reply beats an answer.
+      const targets = new Map();
+      if (question.uid) targets.set(question.uid, "answer");
+      if (replyTo?.uid) targets.set(replyTo.uid, "reply");
+      mentionIds.forEach((id) => targets.set(id, "mention"));
+      const from = { uid: user.uid, displayName: user.displayName || "Member", photoURL: user.photoURL || "" };
+      targets.forEach((type, to) => {
+        notifyUser({
+          to,
+          type,
+          from,
+          community: { id: communityId, name: communityName },
+          boardId,
+          targetId: replyId,
+          preview: clean,
+          key: replyId,
+          url: `/community/${communityId}/chat?board=${boardId}&q=${question.id}`,
+        });
       });
       setText("");
       setReplyTo(null);
@@ -509,10 +564,48 @@ function QuestionDetail({ communityId, boardId, question, user, isMember, onBack
 
   const onLike = async () => {
     if (!user || !isMember) return;
+    if (mine) return;
     try {
       await toggleQuestionLike(communityId, boardId, question.id, user.uid, liked);
+      if (!liked) {
+        notifyUser({
+          to: question.uid,
+          type: "spark",
+          emoji: "question",
+          from: { uid: user.uid, displayName: user.displayName || "Member", photoURL: user.photoURL || "" },
+          community: { id: communityId, name: communityName },
+          boardId,
+          targetId: question.id,
+          preview: question.title,
+          key: question.id,
+          url: `/community/${communityId}/chat?board=${boardId}&q=${question.id}`,
+        });
+      }
     } catch {
-      toast.error("Could not update like");
+      toast.error("Could not update Spark");
+    }
+  };
+
+  const onSpark = async (reply) => {
+    if (!user || !isMember || reply.uid === user.uid) return;
+    const sparked = (reply.sparkedBy || []).includes(user.uid);
+    try {
+      await toggleReplySpark(communityId, boardId, question.id, reply.id, user.uid, sparked);
+      if (!sparked) {
+        notifyUser({
+          to: reply.uid,
+          type: "spark",
+          from: { uid: user.uid, displayName: user.displayName || "Member", photoURL: user.photoURL || "" },
+          community: { id: communityId, name: communityName },
+          boardId,
+          targetId: reply.id,
+          preview: reply.text,
+          key: reply.id,
+          url: `/community/${communityId}/chat?board=${boardId}&q=${question.id}`,
+        });
+      }
+    } catch {
+      toast.error("Could not update Spark");
     }
   };
 
@@ -618,20 +711,30 @@ function QuestionDetail({ communityId, boardId, question, user, isMember, onBack
             <img className="qb-photo" src={question.imageUrl} alt="" />
           </button>
         )}
-        <p className="qb-meta">{replies.length} replies · {question.likeCount || 0} likes</p>
+        <p className="qb-meta">{replies.length} {replies.length === 1 ? "reply" : "replies"} · {question.likeCount || 0} {(question.likeCount || 0) === 1 ? "spark" : "sparks"}</p>
                 <div className="qb-actions">
-          <button
-            type="button"
-            className={`qb-icon-btn ${liked ? "on" : ""}`}
-            onClick={onLike}
-            aria-label={liked ? "Unlike" : "Like"}
-            title={liked ? "Unlike" : "Like"}
-          >
-            <IconLike />
-            {(question.likeCount || 0) > 0 && (
-              <span className="qb-icon-count">{question.likeCount}</span>
-            )}
-          </button>
+          {mine ? (
+            (question.likeCount || 0) > 0 && (
+              <span className="qb-spark-static" title="People this helped">
+                <IconSpark />
+                {question.likeCount}
+              </span>
+            )
+          ) : (
+            <button
+              type="button"
+              className={`qb-spark qb-spark-lg ${liked ? "on" : ""}`}
+              onClick={onLike}
+              aria-pressed={liked}
+              title={liked ? "Remove Spark" : "Spark this question"}
+            >
+              <IconSpark />
+              <span>{liked ? "Sparked" : "Spark"}</span>
+              {(question.likeCount || 0) > 0 && (
+                <span className="qb-spark-count">{question.likeCount}</span>
+              )}
+            </button>
+          )}
 
           {mine && (
             <button type="button" className="qb-text-btn" onClick={onSolve}>
@@ -641,21 +744,27 @@ function QuestionDetail({ communityId, boardId, question, user, isMember, onBack
           )}
 
           {mine && !editingPost && (
-            <button type="button" className="qb-text-btn" onClick={() => setEditingPost(true)}>
-              Edit
-            </button>
-          )}
-
-          {mine && (
-            <button
-              type="button"
-              className="qb-icon-btn danger"
-              onClick={onDelete}
-              aria-label="Delete question"
-              title="Delete"
-            >
-              <IconTrash />
-            </button>
+            <div className="qb-menu-wrap">
+              <button
+                type="button"
+                className="qb-more"
+                onClick={() => setMenuId(menuId === "question" ? null : "question")}
+                aria-label="More actions"
+                aria-expanded={menuId === "question"}
+              >
+                ⋯
+              </button>
+              {menuId === "question" && (
+                <div className="qb-menu" role="menu">
+                  <button type="button" role="menuitem" onClick={() => { setMenuId(null); setEditingPost(true); }}>
+                    Edit
+                  </button>
+                  <button type="button" role="menuitem" className="qb-menu-danger" onClick={() => { setMenuId(null); onDelete(); }}>
+                    Delete
+                  </button>
+                </div>
+              )}
+            </div>
           )}
        
         </div>
@@ -701,12 +810,54 @@ function QuestionDetail({ communityId, boardId, question, user, isMember, onBack
                 <ReplyText text={r.text} people={people} myUid={user?.uid} />
               )}
               <div className="qb-reply-actions">
+                {(() => {
+                  const count = Math.max(0, r.sparkCount || (r.sparkedBy || []).length || 0);
+                  const sparked = !!user && (r.sparkedBy || []).includes(user.uid);
+                  if (user?.uid === r.uid) {
+                    return count > 0 ? (
+                      <span className="qb-spark-static" title="People this helped">
+                        <IconSpark />
+                        {count}
+                      </span>
+                    ) : null;
+                  }
+                  return (
+                    <button
+                      type="button"
+                      className={`qb-spark ${sparked ? "on" : ""}`}
+                      onClick={() => onSpark(r)}
+                      aria-pressed={sparked}
+                      title={sparked ? "Remove Spark" : "This helped"}
+                    >
+                      <IconSpark />
+                      <span>{sparked ? "Sparked" : "Spark"}</span>
+                      {count > 0 && <span className="qb-spark-count">{count}</span>}
+                    </button>
+                  );
+                })()}
                 <button type="button" onClick={() => setReplyTo(r)}>Reply</button>
                 {user?.uid === r.uid && (
-                  <>
-                    <button type="button" onClick={() => { setEditingReplyId(r.id); setEditReplyText(r.text || ""); }}>Edit</button>
-                    <button type="button" onClick={() => removeReply(r.id)}>Delete</button>
-                  </>
+                  <div className="qb-menu-wrap">
+                    <button
+                      type="button"
+                      className="qb-more"
+                      onClick={() => setMenuId(menuId === r.id ? null : r.id)}
+                      aria-label="More actions"
+                      aria-expanded={menuId === r.id}
+                    >
+                      ⋯
+                    </button>
+                    {menuId === r.id && (
+                      <div className="qb-menu" role="menu">
+                        <button type="button" role="menuitem" onClick={() => { setMenuId(null); setEditingReplyId(r.id); setEditReplyText(r.text || ""); }}>
+                          Edit
+                        </button>
+                        <button type="button" role="menuitem" className="qb-menu-danger" onClick={() => { setMenuId(null); removeReply(r.id); }}>
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

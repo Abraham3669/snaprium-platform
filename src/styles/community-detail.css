@@ -671,3 +671,17 @@
 @keyframes cd-spin {
   to { transform: rotate(360deg); }
 }
+
+
+
+
+/* ===== Paste at the END of the circle-detail CSS (iPhone app only) ===== */
+html.native-app .cd-page {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+html.native-app .cd-page .cd-back {
+  margin: 0 0 8px !important;
+  padding: 4px 8px !important;
+}
