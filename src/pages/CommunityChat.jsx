@@ -530,12 +530,37 @@ const pulseTyping = () => {
 };
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
-      const data = await getCommunity(communityId);
+      // One quiet retry: right after the app wakes up the connection is sometimes not ready yet.
+      let data = null;
+      for (let attempt = 0; attempt < 2 && !data; attempt += 1) {
+        try {
+          data = await getCommunity(communityId);
+          break;
+        } catch (err) {
+          console.warn("[circle] load failed", err?.message || err);
+          if (attempt === 0) await new Promise((r) => setTimeout(r, 700));
+        }
+      }
+      if (cancelled) return;
       setCommunity(data);
       if (!data) return;
-      const rows = uniqueBoards(await listBoards(data.id));
-const withQuestions = await ensureQuestionsBoard(data.id, rows);
+      let rows = [];
+      try {
+        rows = uniqueBoards(await listBoards(data.id));
+      } catch (err) {
+        console.warn("[circle] boards failed", err?.message || err);
+        return;
+      }
+      // Tidying the Questions board is a bonus; never let it stop the circle from opening.
+      let withQuestions = rows;
+      try {
+        withQuestions = await ensureQuestionsBoard(data.id, rows);
+      } catch (err) {
+        console.warn("[circle] questions board", err?.message || err);
+      }
+      if (cancelled) return;
 setBoards(withQuestions);
       const fromUrl = params.get("board");
 const next =
@@ -548,6 +573,9 @@ const next =
         if (fromUrl !== next.id) setParams({ board: next.id }, { replace: true });
       }
     })();
+    return () => {
+      cancelled = true;
+    };
   }, [communityId]);
 
 
@@ -652,7 +680,7 @@ const next =
       await Promise.all(
         ids.slice(0, 40).map(async (uid) => {
           try {
-            const snap = await getDoc(doc(db, "users", uid));
+            const snap = await getDoc(doc(db, "publicProfiles", uid));
             if (snap.exists()) {
               const d = snap.data();
               next[uid] = { displayName: d.displayName || "", photoURL: d.photoURL || "" };

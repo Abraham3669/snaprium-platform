@@ -1,9 +1,11 @@
 // src/pages/Notifications.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../lib/firebase";
 import { useNavigate } from "react-router-dom";
 import { Capacitor } from "@capacitor/core";
 import { useAuth } from "../context/AuthContext";
-import { describeNotification, notificationTime } from "../lib/notifications";
+import { describeNotification, notificationTime, sendTestPush } from "../lib/notifications";
 import { enablePush, getPushState, clearDeliveredPush } from "../lib/push";
 
 function TypeIcon({ type }) {
@@ -42,6 +44,15 @@ function TypeIcon({ type }) {
   );
 }
 
+function BellIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M6 9a6 6 0 1 1 12 0c0 4 1.5 5.5 2 6.5H4c.5-1 2-2.5 2-6.5z" />
+      <path d="M10 19a2 2 0 0 0 4 0" />
+    </svg>
+  );
+}
+
 function Row({ n, onOpen }) {
   const letter = (n.fromName || "?").slice(0, 1).toUpperCase();
   return (
@@ -75,6 +86,8 @@ export default function Notifications({ items, loading, unread, markRead, markAl
   const navigate = useNavigate();
   const [pushState, setPushState] = useState("unsupported");
   const [asking, setAsking] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testMsg, setTestMsg] = useState("");
   const isNative = Capacitor.isNativePlatform();
 
   useEffect(() => {
@@ -93,6 +106,50 @@ export default function Notifications({ items, loading, unread, markRead, markAl
     setAsking(false);
   };
 
+  const runTest = async () => {
+    setTesting(true);
+    setTestMsg("");
+    const r = await sendTestPush();
+    setTesting(false);
+    if (r.ok) setTestMsg("Sent. It should reach your phone in a few seconds.");
+    else setTestMsg(r.error || `Could not send (${r.http || "no reply"})`);
+  };
+
+  // A notification stores the sender's name from the moment it was sent. Look up their
+  // current name and photo so a renamed person shows up under the new name.
+  const [live, setLive] = useState({});
+  const senderKey = useMemo(
+    () => [...new Set(items.map((n) => n.fromUid).filter(Boolean))].sort().join(","),
+    [items]
+  );
+  useEffect(() => {
+    const uids = senderKey ? senderKey.split(",") : [];
+    if (!uids.length) return undefined;
+    let cancelled = false;
+    (async () => {
+      const next = {};
+      await Promise.all(
+        uids.slice(0, 40).map(async (uid) => {
+          try {
+            const snap = await getDoc(doc(db, "publicProfiles", uid));
+            if (snap.exists()) {
+              const d = snap.data();
+              next[uid] = { name: d.displayName || "", photo: d.photoURL || "" };
+            }
+          } catch {}
+        })
+      );
+      if (!cancelled) setLive((prev) => ({ ...prev, ...next }));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [senderKey]);
+  const withLive = (n) => {
+    const p = live[n.fromUid];
+    return p ? { ...n, fromName: p.name || n.fromName, fromPhoto: p.photo || n.fromPhoto } : n;
+  };
+
   const openItem = (n) => {
     if (!n.read) markRead(n.id);
     if (typeof n.url === "string" && n.url.startsWith("/community/")) navigate(n.url);
@@ -102,6 +159,7 @@ export default function Notifications({ items, loading, unread, markRead, markAl
     return (
       <div className="nt-page">
         <div className="nt-empty">
+          <span className="nt-empty-icon"><BellIcon /></span>
           <strong>Sign in to see your notifications</strong>
           <p>Replies, mentions and Sparks show up here.</p>
           <button type="button" className="nt-btn" onClick={() => navigate("/login")}>
@@ -112,8 +170,8 @@ export default function Notifications({ items, loading, unread, markRead, markAl
     );
   }
 
-  const fresh = items.filter((n) => !n.read);
-  const earlier = items.filter((n) => n.read);
+  const fresh = items.filter((n) => !n.read).map(withLive);
+  const earlier = items.filter((n) => n.read).map(withLive);
 
   return (
     <div className="nt-page">
@@ -150,6 +208,7 @@ export default function Notifications({ items, loading, unread, markRead, markAl
         <p className="nt-muted">Loading…</p>
       ) : items.length === 0 ? (
         <div className="nt-empty">
+          <span className="nt-empty-icon"><BellIcon /></span>
           <strong>Nothing yet</strong>
           <p>When someone replies, mentions you or sparks your answer, you'll see it here.</p>
         </div>
@@ -176,6 +235,15 @@ export default function Notifications({ items, loading, unread, markRead, markAl
             </section>
           )}
         </>
+      )}
+
+      {isNative && pushState !== "prompt" && (
+        <div className="nt-test">
+          <span>{testMsg || (pushState === "granted" ? "Phone alerts are on." : `Phone alerts: ${pushState}`)}</span>
+          <button type="button" className="nt-link" onClick={runTest} disabled={testing}>
+            {testing ? "Sending…" : "Send test"}
+          </button>
+        </div>
       )}
     </div>
   );

@@ -47,6 +47,7 @@ import BottomNav from "./components/BottomNav";
 import { Capacitor } from "@capacitor/core";
 import { StatusBar, Style } from "@capacitor/status-bar";
 import useNotifications from "./lib/useNotifications";
+import PushPrompt from "./components/PushPrompt";
 import { syncPush, clearDeliveredPush } from "./lib/push";
 import "./styles/social.css";
 
@@ -68,6 +69,20 @@ function App() {
   useEffect(() => {
     syncPush(user?.uid, (url) => navigate(url));
   }, [user?.uid]);
+
+  // Public name + photo card (publicProfiles/{uid}). Other people read this to show your CURRENT
+  // name in notifications and chat, so renaming yourself updates everywhere.
+  useEffect(() => {
+    if (!user?.uid) return;
+    const name = String(user.displayName || "").trim().slice(0, 80);
+    const photo = typeof user.photoURL === "string" && user.photoURL.length < 1000 ? user.photoURL : "";
+    if (!name && !photo) return;
+    setDoc(
+      doc(db, "publicProfiles", user.uid),
+      { displayName: name, photoURL: photo, updatedAt: serverTimestamp() },
+      { merge: true }
+    ).catch(() => {});
+  }, [user?.uid, user?.displayName, user?.photoURL]);
 
   // Profile's theme switch tells the app, so toasts and the status bar follow it
   useEffect(() => {
@@ -338,6 +353,7 @@ useEffect(() => {
   return (
   <div className="App min-h-screen">
     <ErrorBanner />
+    <PushPrompt user={user} />
     <ToastContainer
       position="bottom-center"
       autoClose={5000}

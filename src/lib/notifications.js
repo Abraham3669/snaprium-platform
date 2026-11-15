@@ -65,6 +65,24 @@ async function callPushApi(body) {
   }
 }
 
+// Asks the server to push a test alert to this person's own phone(s) and says what happened.
+export async function sendTestPush() {
+  try {
+    const user = auth.currentUser;
+    if (!user) return { ok: false, error: "Sign in first" };
+    const idToken = await user.getIdToken();
+    const res = await fetch(`${apiBase()}/api/daily-room`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({ action: "push:test" }),
+    });
+    const json = await res.json().catch(() => ({}));
+    return { ...json, http: res.status };
+  } catch (err) {
+    return { ok: false, error: err?.message || "Network error" };
+  }
+}
+
 /**
  * Notify one person.
  *   to        uid of the person to notify
