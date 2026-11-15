@@ -36,9 +36,10 @@ markBoardRead,
 countBoardUnread,
   toggleMessageReaction,
 } from "../lib/communities";
-import { notifyUser, notifyCircleSession } from "../lib/notifications";
+import { notifyUser, notifyCircleSession, notifyEveryone } from "../lib/notifications";
 import QuestionBoard from "../components/QuestionBoard";
 import { tinyPhoto } from "../lib/publicProfile";
+import { handleOf, resolveMentions, mentionSuggestions, hasEveryone, EVERYONE_ENTRY } from "../lib/mentions";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
@@ -86,32 +87,6 @@ function fixCommonMathGlue(text) {
 }
 
 
-const handleOf = (name) => String(name || "").replace(/\s+/g, "");
-const RESERVED = /^(ai|snaprium)$/i;
-
-// returns uids of people mentioned in text, e.g. "@abraham hi" -> [uid]
-function resolveMentions(text, people) {
-  const found = new Set();
-  const re = /@([\p{L}\p{N}_.-]{2,})/gu;
-  let m;
-  while ((m = re.exec(text || ""))) {
-    const token = m[1].replace(/[.-]+$/, "").toLowerCase();
-    if (!token || RESERVED.test(token)) continue;
-    const exact = people.filter(
-      (p) =>
-        handleOf(p.name).toLowerCase() === token ||
-        p.name.toLowerCase().split(/\s+/)[0] === token
-    );
-    if (exact.length) {
-      exact.forEach((p) => found.add(p.uid));
-      continue;
-    }
-    const prefix = people.filter((p) => handleOf(p.name).toLowerCase().startsWith(token));
-    if (prefix.length === 1) found.add(prefix[0].uid);
-  }
-  return [...found];
-}
-
 
 const EMOJI_ONLY_RE = /^(\p{Extended_Pictographic}|\u200d|\ufe0f|\s){1,12}$/u;
 function isEmojiOnly(text) {
@@ -127,9 +102,15 @@ function renderWithMentions(text, people, myUid) {
     .split(/(@[\p{L}\p{N}_.-]{2,})/gu)
     .map((part, i) => {
       if (!part.startsWith("@")) return part;
-      const token = part.slice(1).replace(/[.-]+$/, "");
+      if (/^@(everyone|all)$/i.test(part)) {
+        return (
+          <span key={i} className="cc-mention me">
+            {part}
+          </span>
+        );
+      }
       const uids = resolveMentions(part, people);
-      if (!RESERVED.test(token) && !uids.length) return part;
+      if (!uids.length) return part;
       return (
         <span key={i} className={`cc-mention ${uids.includes(myUid) ? "me" : ""}`}>
           {part}
@@ -480,22 +461,30 @@ const mentionable = useMemo(() => {
     const name = profiles[uid]?.displayName;
     if (name) map.set(uid, { uid, name });
   }
-  return [...map.values()].filter((p) => p.name && p.name !== "Member");
+  return [...map.values()].filter((p) => p.name && p.name !== "Member" && handleOf(p.name));
 }, [boardPeople, community?.members, profiles]);
 
+// People who spoke most recently come first in the list.
+const recentRank = useMemo(() => {
+  const rank = {};
+  messages.forEach((m, i) => {
+    if (m.uid && !m.isAI) rank[m.uid] = i + 1;
+  });
+  return rank;
+}, [messages]);
+
+const canMentionEveryone = !!user?.uid && (community?.admins || []).includes(user.uid);
+
 const suggestions = useMemo(() => {
-  if (mentionQuery === null) return [];
-  return [{ uid: "__ai", name: "AI" }, ...mentionable.filter((p) => p.uid !== user?.uid)]
-    .filter(
-      (p) =>
-        handleOf(p.name).toLowerCase().startsWith(mentionQuery) ||
-        p.name.toLowerCase().split(/\s+/).some((w) => w.startsWith(mentionQuery))
-    )
-    .slice(0, 5);
-}, [mentionQuery, mentionable, user?.uid]);
+  const list = mentionSuggestions(mentionQuery, mentionable, user?.uid, recentRank);
+  if (canMentionEveryone && mentionQuery !== null && "everyone".startsWith(String(mentionQuery).toLowerCase())) {
+    return [EVERYONE_ENTRY, ...list];
+  }
+  return list;
+}, [mentionQuery, mentionable, user?.uid, recentRank, canMentionEveryone]);
 
   const pickMention = (p) => {
-    setInput((prev) => prev.replace(/@([\p{L}\p{N}_.-]*)$/u, `@${handleOf(p.name)} `));
+    setInput((prev) => prev.replace(/@([\p{L}\p{N}_.-]*)$/u, `@${p.special ? p.name : handleOf(p.name)} `));
     setMentionQuery(null);
   };
 
@@ -1106,6 +1095,15 @@ useEffect(() => {
     const targets = new Map();
     if (quoted?.uid && !quoted.isAI) targets.set(quoted.uid, "reply");
     mentions.forEach((id) => targets.set(id, "mention"));
+    if (canMentionEveryone && hasEveryone(text)) {
+      notifyEveryone({
+        communityId,
+        boardId: activeBoardId,
+        messageId: sentId,
+        preview: text,
+        url: `/community/${communityId}/chat?board=${activeBoardId}&m=${sentId}`,
+      });
+    }
     targets.forEach((type, to) => {
       notifyUser({
         to,
@@ -1119,8 +1117,6 @@ useEffect(() => {
         url: `/community/${communityId}/chat?board=${activeBoardId}&m=${sentId}`,
       });
     });
-   // AI off for now. Uncomment to bring back.
-// if (text && /(^|\s)@(ai|snaprium)\b/i.test(text)) askAI(text);
   } catch {
     setInput(text);
     setPendingImage(imageUrl);
@@ -1404,6 +1400,7 @@ useEffect(() => {
     isMember={!!isMember}
     communityName={community?.name || ""}
     initialQuestionId={params.get("q") || ""}
+    circlePeople={mentionable}
   />
 ) : (
   <>
@@ -1690,7 +1687,7 @@ useEffect(() => {
                   (p.name || "?").slice(0, 1).toUpperCase()
                 )}
               </span>
-              <span>@{handleOf(p.name)}</span>
+              <span>@{p.special ? p.name : handleOf(p.name)}</span>
             </button>
           ))}
         </div>

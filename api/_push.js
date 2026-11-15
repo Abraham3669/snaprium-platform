@@ -35,6 +35,8 @@ const APNS_HOST =
 const MAX_NOTIFY_AGE_MS = 10 * 60 * 1000;
 const SESSION_COOLDOWN_MS = 30 * 60 * 1000;
 const SESSION_MAX_MEMBERS = 200;
+const EVERYONE_COOLDOWN_MS = 2 * 60 * 1000;
+const EVERYONE_MAX_MEMBERS = 500;
 
 function setCors(req, res) {
   const origin = req.headers.origin || "*";
@@ -227,6 +229,8 @@ function headline(n, communityName) {
       return { title: `${who} sparked your ${n.emoji === "question" ? "question" : "answer"}`, body: n.preview || `in ${communityName}` };
     case "reaction":
       return { title: `${who} reacted ${n.emoji || ""} to your message`.replace("  ", " "), body: n.preview || `in ${communityName}` };
+    case "everyone":
+      return { title: `${who} mentioned everyone in ${communityName}`, body: n.preview || "Tap to read" };
     case "session":
       return { title: `Live session in ${communityName}`, body: `${who} started a session. Tap to join.` };
     default:
@@ -447,6 +451,78 @@ export async function handlePush(req, res) {
           boardId,
           targetId: "",
           preview: "",
+          emoji: "",
+          url,
+          read: false,
+          pushed: true,
+          createdAt: FieldValue.serverTimestamp(),
+        };
+        batch.set(db.collection("users").doc(to).collection("notifications").doc(id), data);
+        notes.push({ uid: to, id, data });
+        inBatch += 1;
+        if (inBatch >= 400) {
+          await batch.commit();
+          batch = db.batch();
+          inBatch = 0;
+        }
+      }
+      if (inBatch) await batch.commit();
+
+      const out = await deliver(db, notes);
+      return res.status(200).json({ ok: true, members: targets.length, ...out });
+    }
+
+    /* ---------- "@everyone": circle admins ping the whole circle ---------- */
+    if (action === "everyone") {
+      if (!safe(body.communityId) || !safe(body.messageId)) return res.status(400).json({ ok: false, error: "Bad request" });
+
+      const cref = db.collection("communities").doc(body.communityId);
+      const csnap = await cref.get();
+      if (!csnap.exists) return res.status(404).json({ ok: false, error: "Not found" });
+      const community = csnap.data();
+      if (community.deleted === true) return res.status(404).json({ ok: false, error: "Not found" });
+
+      const members = Array.isArray(community.members) ? community.members : [];
+      const admins = Array.isArray(community.admins) ? community.admins : [];
+      if (!members.includes(uid) || !(admins.includes(uid) || community.createdBy === uid)) {
+        return res.status(403).json({ ok: false, error: "Not allowed" });
+      }
+
+      // The message must really exist, be the sender's, and mention everyone (stops forged pings).
+      const boardId = typeof body.boardId === "string" && safe(body.boardId) ? body.boardId : "";
+      const msgSnap = await cref.collection("messages").doc(body.messageId).get();
+      const msg = msgSnap.exists ? msgSnap.data() : null;
+      if (!msg || msg.uid !== uid || !/(^|\s)@(everyone|all)(?![\p{L}\p{N}_])/iu.test(String(msg.text || ""))) {
+        return res.status(403).json({ ok: false, error: "Not allowed" });
+      }
+
+      const last = community.lastEveryoneAt?.toMillis?.() || 0;
+      if (Date.now() - last < EVERYONE_COOLDOWN_MS) return res.status(200).json({ ok: true, skipped: "cooldown" });
+      await cref.update({ lastEveryoneAt: Timestamp.now() });
+
+      const userSnap = await db.collection("users").doc(uid).get();
+      const profile = userSnap.exists ? userSnap.data() : {};
+      const fromName = String(profile.displayName || decoded.name || "Someone").slice(0, 60);
+      const fromPhoto = String(profile.photoURL || "").slice(0, 390);
+      const url = `/community/${body.communityId}/chat?board=${boardId}&m=${body.messageId}`;
+      const preview = String(msg.text || "").replace(/\s+/g, " ").trim().slice(0, 140);
+
+      const targets = members.filter((m) => m !== uid).slice(0, EVERYONE_MAX_MEMBERS);
+      const notes = [];
+      let batch = db.batch();
+      let inBatch = 0;
+      for (const to of targets) {
+        const id = `everyone_${body.messageId}`;
+        const data = {
+          type: "everyone",
+          fromUid: uid,
+          fromName,
+          fromPhoto,
+          communityId: body.communityId,
+          communityName: String(community.name || "Circle").slice(0, 60),
+          boardId,
+          targetId: body.messageId,
+          preview,
           emoji: "",
           url,
           read: false,

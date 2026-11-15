@@ -19,6 +19,7 @@ markQuestionRead,
 } from "../lib/communities";
 import { notifyUser } from "../lib/notifications";
 import { tinyPhoto, useLiveProfiles } from "../lib/publicProfile";
+import { handleOf, resolveMentions, mentionSuggestions } from "../lib/mentions";
 import "../styles/question-board.css";
 
 
@@ -106,34 +107,13 @@ function Avatar({ photo, name }) {
   );
 }
 
-const handleOf = (name) => String(name || "").replace(/\s+/g, "");
-
-function resolveMentions(text, people) {
-  const found = new Set();
-  const re = /@([\p{L}\p{N}_.-]{2,})/gu;
-  let m;
-  while ((m = re.exec(text || ""))) {
-    const token = m[1].replace(/[.-]+$/, "").toLowerCase();
-    if (!token) continue;
-    const exact = people.filter(
-      (p) => handleOf(p.name).toLowerCase() === token || p.name.toLowerCase().split(/\s+/)[0] === token
-    );
-    if (exact.length) {
-      exact.forEach((p) => found.add(p.uid));
-      continue;
-    }
-    const prefix = people.filter((p) => handleOf(p.name).toLowerCase().startsWith(token));
-    if (prefix.length === 1) found.add(prefix[0].uid);
-  }
-  return [...found];
-}
-
 function renderWithMentions(text, people, myUid) {
   return String(text)
     .split(/(@[\p{L}\p{N}_.-]{2,})/gu)
     .map((part, i) => {
       if (!part.startsWith("@")) return part;
       const uids = resolveMentions(part, people);
+      if (!uids.length) return part;
       return (
         <span key={i} className={`cc-mention ${uids.includes(myUid) ? "me" : ""}`}>
           {part}
@@ -207,7 +187,7 @@ function compressImage(file, max = 900, quality = 0.65) {
   });
 }
 
-export default function QuestionBoard({ communityId, boardId, user, isMember, communityName = "", initialQuestionId = "" }) {
+export default function QuestionBoard({ communityId, boardId, user, isMember, communityName = "", initialQuestionId = "", circlePeople = [] }) {
   const [questions, setQuestions] = useState([]);
   const questionUids = useMemo(() => questions.map((x) => x.uid), [questions]);
   const liveAuthors = useLiveProfiles(questionUids);
@@ -391,6 +371,7 @@ const [seen, setSeen] = useState({});
           question={open}
           user={user}
           isMember={isMember}
+          circlePeople={circlePeople}
           onBack={() => setOpenId(null)}
         />
       )}
@@ -398,7 +379,7 @@ const [seen, setSeen] = useState({});
   );
 }
 
-function QuestionDetail({ communityId, communityName = "", boardId, question, user, isMember, onBack }) {
+function QuestionDetail({ communityId, communityName = "", boardId, question, user, isMember, onBack, circlePeople = [] }) {
   const [replies, setReplies] = useState([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
@@ -409,6 +390,16 @@ function QuestionDetail({ communityId, communityName = "", boardId, question, us
   const [postBody, setPostBody] = useState(question.body || "");
   const [lightboxUrl, setLightboxUrl] = useState("");
   const [replyTo, setReplyTo] = useState(null);
+  const composeRef = useRef(null);
+  const replyInputRef = useRef(null);
+  // Tapping Reply on a long thread: bring the reply box into view and put the cursor in it.
+  const startReply = (r) => {
+    setReplyTo(r);
+    requestAnimationFrame(() => {
+      composeRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+      replyInputRef.current?.focus();
+    });
+  };
   const [editingReplyId, setEditingReplyId] = useState(null);
   const [editReplyText, setEditReplyText] = useState("");
   const [typingNames, setTypingNames] = useState([]);
@@ -454,6 +445,10 @@ function QuestionDetail({ communityId, communityName = "", boardId, question, us
 
   const people = useMemo(() => {
     const map = new Map();
+    // Anyone in the circle can be mentioned, not only the people already in this thread.
+    for (const p of circlePeople) {
+      if (p.uid && p.name) map.set(p.uid, { uid: p.uid, name: p.name });
+    }
     if (question?.uid && question?.displayName) {
       map.set(question.uid, { uid: question.uid, name: nameFor(question.uid, question.displayName) });
     }
@@ -463,19 +458,12 @@ function QuestionDetail({ communityId, communityName = "", boardId, question, us
     if (user?.uid && user?.displayName) map.set(user.uid, { uid: user.uid, name: user.displayName });
     return [...map.values()];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [question, replies, user, live]);
+  }, [question, replies, user, live, circlePeople]);
 
-  const suggestions = useMemo(() => {
-    if (mentionQuery === null) return [];
-    return people
-      .filter((p) => p.uid !== user?.uid)
-      .filter(
-        (p) =>
-          handleOf(p.name).toLowerCase().startsWith(mentionQuery) ||
-          p.name.toLowerCase().split(/\s+/).some((w) => w.startsWith(mentionQuery))
-      )
-      .slice(0, 5);
-  }, [mentionQuery, people, user?.uid]);
+  const suggestions = useMemo(
+    () => mentionSuggestions(mentionQuery, people, user?.uid),
+    [mentionQuery, people, user?.uid]
+  );
 
   const pickMention = (p) => {
     setText((prev) => prev.replace(/@([\p{L}\p{N}_.-]*)$/u, `@${handleOf(p.name)} `));
@@ -849,7 +837,7 @@ function QuestionDetail({ communityId, communityName = "", boardId, question, us
                     </button>
                   );
                 })()}
-                <button type="button" onClick={() => setReplyTo(r)}>Reply</button>
+                <button type="button" onClick={() => startReply(r)}>Reply</button>
                 {user?.uid === r.uid && (
                   <div className="qb-menu-wrap">
                     <button
@@ -879,7 +867,7 @@ function QuestionDetail({ communityId, communityName = "", boardId, question, us
         ))}
       </div>
 
-      <div className="qb-compose">
+      <div className="qb-compose" ref={composeRef}>
         {typingNames.length > 0 && (
           <p className="qb-typing">
             {typingNames.slice(0, 2).join(", ")} {typingNames.length === 1 ? "is" : "are"} typing…
@@ -902,6 +890,7 @@ function QuestionDetail({ communityId, communityName = "", boardId, question, us
         )}
         <form className="qb-reply-form" onSubmit={onReply}>
           <textarea
+            ref={replyInputRef}
             value={text}
             onChange={(e) => {
               const value = e.target.value;

@@ -140,6 +140,12 @@ export function notifyCircleSession(communityId, boardId = "") {
   callPushApi({ action: "push:session", communityId, boardId });
 }
 
+/** Tell the whole circle (admins only; the server checks). */
+export function notifyEveryone({ communityId, boardId = "", messageId, preview = "", url }) {
+  if (!communityId || !messageId || !url) return;
+  callPushApi({ action: "push:everyone", communityId, boardId, messageId, preview: clean(preview, 140), url });
+}
+
 export function subscribeToNotifications(uid, cb) {
   if (!uid) return () => {};
   const q = query(
@@ -188,6 +194,8 @@ export function describeNotification(n) {
       return `${who} reacted ${n.emoji || ""} to your message`.replace("  ", " ");
     case "session":
       return `${who} started a live session`;
+    case "everyone":
+      return `${who} mentioned everyone`;
     default:
       return `${who} sent you an update`;
   }

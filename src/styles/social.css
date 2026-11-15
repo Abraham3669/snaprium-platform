@@ -597,3 +597,80 @@ html:not(.native-app) .nt-page {
 html.native-app .nt-page {
   padding-top: 20px;
 }
+
+/* ================= Notifications page: polished list =================
+   Only touches the notifications page (.nt-page). Shared look first, then one block per
+   platform so a change for one never affects the other. */
+
+/* SHARED: roomier rows, inset dividers, clear unread state, readable text */
+.nt-page .nt-list {
+  border-radius: 18px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+}
+
+.nt-page .nt-row {
+  gap: 14px;
+  padding: 16px 16px;
+  border-bottom: 0;
+  transition: background 0.15s ease;
+}
+
+/* divider starts under the text, not under the avatar */
+.nt-page .nt-row + .nt-row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 72px;
+  right: 0;
+  height: 1px;
+  background: color-mix(in srgb, var(--border) 80%, transparent);
+}
+
+.nt-page .nt-row.unread {
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.nt-page .nt-copy { gap: 3px; }
+.nt-page .nt-copy strong { font-size: 0.95rem; line-height: 1.32; }
+.nt-page .nt-row:not(.unread) .nt-copy strong { font-weight: 600; }
+
+.nt-page .nt-preview {
+  font-size: 0.88rem;
+  line-height: 1.38;
+  color: color-mix(in srgb, var(--text-primary) 74%, transparent);
+}
+
+.nt-page .nt-meta {
+  margin-top: 1px;
+  font-size: 0.76rem;
+  color: color-mix(in srgb, var(--text-primary) 58%, transparent);
+}
+
+.nt-page .nt-dot {
+  margin-top: 7px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.nt-page .nt-section { margin: 22px 0 10px; padding-left: 6px; }
+
+/* BROWSER (phone or computer): hover on devices with a mouse, press feedback on touch */
+html:not(.native-app) .nt-page .nt-row:active {
+  background: color-mix(in srgb, var(--text-primary) 8%, transparent);
+}
+@media (hover: hover) {
+  html:not(.native-app) .nt-page .nt-row:hover {
+    background: color-mix(in srgb, var(--text-primary) 5%, transparent);
+  }
+  html:not(.native-app) .nt-page .nt-row.unread:hover {
+    background: color-mix(in srgb, var(--accent) 13%, transparent);
+  }
+}
+
+/* iPHONE APP: touch only, so no hover; big tap target and a quick press highlight */
+html.native-app .nt-page .nt-row { min-height: 72px; -webkit-tap-highlight-color: transparent; }
+html.native-app .nt-page .nt-row:hover { background: transparent; }
+html.native-app .nt-page .nt-row.unread:hover { background: color-mix(in srgb, var(--accent) 9%, transparent); }
+html.native-app .nt-page .nt-row:active {
+  background: color-mix(in srgb, var(--text-primary) 10%, transparent);
+}

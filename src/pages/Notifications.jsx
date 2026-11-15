@@ -16,7 +16,7 @@ function TypeIcon({ type }) {
         <path d="M13 2L4.5 13.5H11L10 22l8.5-11.5H13L13 2z" strokeLinejoin="round" strokeLinecap="round" />
       </svg>
     );
-  if (type === "mention")
+  if (type === "mention" || type === "everyone")
     return (
       <svg {...common}>
         <circle cx="12" cy="12" r="4" />
@@ -53,6 +53,66 @@ function BellIcon() {
   );
 }
 
+// Several replies / answers / Sparks on the same question become one row.
+const GROUPABLE = new Set(["reply", "answer", "spark", "reaction"]);
+
+function groupKey(n) {
+  if (!GROUPABLE.has(n.type)) return "";
+  const q = /[?&]q=([^&]+)/.exec(String(n.url || ""));
+  if (!q) return "";
+  return `${n.type}|${n.communityId || ""}|${n.boardId || ""}|${q[1]}|${n.emoji === "question" ? "q" : "a"}`;
+}
+
+function groupItems(list) {
+  const out = [];
+  const byKey = new Map();
+  for (const n of list) {
+    const key = groupKey(n);
+    if (!key) {
+      out.push({ ...n, ids: [n.id], senders: [n.fromName || "Someone"], count: 1 });
+      continue;
+    }
+    const hit = byKey.get(key);
+    if (hit) {
+      hit.ids.push(n.id);
+      hit.count += 1;
+      const name = n.fromName || "Someone";
+      if (!hit.senders.includes(name)) hit.senders.push(name);
+    } else {
+      const g = { ...n, ids: [n.id], senders: [n.fromName || "Someone"], count: 1 };
+      byKey.set(key, g);
+      out.push(g);
+    }
+  }
+  return out; // items arrive newest first, so each group shows its newest message
+}
+
+function groupNoun(type) {
+  if (type === "spark") return "Sparks";
+  if (type === "reaction") return "reactions";
+  if (type === "answer") return "answers";
+  return "replies";
+}
+
+function groupTitle(g) {
+  if (g.count < 2) return describeNotification(g);
+  const [a, b] = g.senders;
+  const who =
+    g.senders.length === 1 ? a : g.senders.length === 2 ? `${a} and ${b}` : `${a} and ${g.senders.length - 1} others`;
+  switch (g.type) {
+    case "answer":
+      return `${who} answered your question`;
+    case "reply":
+      return `${who} replied`;
+    case "spark":
+      return g.emoji === "question" ? `${who} sparked your question` : `${who} sparked your answer`;
+    case "reaction":
+      return `${who} reacted to your message`;
+    default:
+      return describeNotification(g);
+  }
+}
+
 function Row({ n, onOpen }) {
   const letter = (n.fromName || "?").slice(0, 1).toUpperCase();
   return (
@@ -68,8 +128,8 @@ function Row({ n, onOpen }) {
         </span>
       </span>
       <span className="nt-copy">
-        <strong>{describeNotification(n)}</strong>
-        {n.preview ? <span className="nt-preview">{n.preview}</span> : null}
+        <strong>{groupTitle(n)}</strong>
+        {n.count > 1 ? <span className="nt-preview">{n.count} {groupNoun(n.type)}{n.preview ? ` · latest: ${n.preview}` : ""}</span> : n.preview ? <span className="nt-preview">{n.preview}</span> : null}
         <span className="nt-meta">
           {n.communityName || "Circle"}
           <span aria-hidden="true"> · </span>
@@ -140,7 +200,7 @@ export default function Notifications({ items, loading, unread, markRead, markAl
   };
 
   const openItem = (n) => {
-    if (!n.read) markRead(n.id);
+    if (!n.read) (n.ids || [n.id]).forEach((id) => markRead(id));
     if (typeof n.url === "string" && n.url.startsWith("/community/")) navigate(n.url);
   };
 
@@ -159,8 +219,8 @@ export default function Notifications({ items, loading, unread, markRead, markAl
     );
   }
 
-  const fresh = items.filter((n) => !n.read).map(withLive);
-  const earlier = items.filter((n) => n.read).map(withLive);
+  const fresh = groupItems(items.filter((n) => !n.read).map(withLive));
+  const earlier = groupItems(items.filter((n) => n.read).map(withLive));
 
   return (
     <div className="nt-page">
