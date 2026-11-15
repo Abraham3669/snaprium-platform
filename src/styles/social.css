@@ -566,8 +566,11 @@
 @keyframes pp-fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes pp-rise { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
 
-/* ---- Content starts below the real header height (set by App.jsx) ---- */
-html main.pt-16,
-html.native-app main.pt-16 {
-  padding-top: var(--snaprium-header-h, 4rem) !important;
+/* ---- Profile page, phone browser only: never start under a taller header ----
+   (main already pads 4rem; --snaprium-header-h is the real header height, set by App.jsx).
+   Computers, the iPhone app and every other page are not touched. */
+@media (max-width: 899px) {
+  html:not(.native-app) .pf-page {
+    padding-top: max(16px, calc(var(--snaprium-header-h, 0px) - 56px));
+  }
 }
