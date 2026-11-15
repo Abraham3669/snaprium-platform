@@ -25,6 +25,7 @@ const supported =
   Capacitor.getPlatform() === "ios" &&
   Capacitor.isPluginAvailable("PushNotifications");
 
+let registeredThisRun = false;
 let currentUid = null;
 let navigateTo = null;
 let listenersReady = false;
@@ -47,6 +48,35 @@ async function saveToken(token) {
   }
 }
 
+// A one-line report of how push setup went on this phone. Open Firestore > pushDiag > your user id to read it
+// (there is no Mac console here, so this is how a registration problem becomes visible).
+async function logDiag(fields) {
+  if (!currentUid) return;
+  try {
+    await setDoc(
+      doc(db, "pushDiag", currentUid),
+      { platform: "ios", at: serverTimestamp(), ...fields },
+      { merge: true }
+    );
+  } catch {}
+}
+
+// Ask iOS for this phone's token, and report it if iOS never answers (usually a signing/entitlement problem).
+function registerWithWatch() {
+  registeredThisRun = false;
+  PushNotifications.register().catch((e) =>
+    logDiag({ ok: false, error: `register() failed: ${String(e?.message || e).slice(0, 200)}` })
+  );
+  setTimeout(() => {
+    if (!registeredThisRun) {
+      logDiag({
+        ok: false,
+        error: "iOS gave no answer after 20 seconds. The app was probably built without the push entitlement, or AppDelegate is not passing the token on.",
+      });
+    }
+  }, 20000);
+}
+
 async function dropToken() {
   let token = "";
   try {
@@ -63,10 +93,14 @@ function ensureListeners() {
   listenersReady = true;
   try {
     PushNotifications.addListener("registration", (t) => {
+      registeredThisRun = true;
       saveToken(t?.value);
+      logDiag({ ok: true, error: "", tokenTail: String(t?.value || "").slice(-8), permission: "granted" });
     });
     PushNotifications.addListener("registrationError", (e) => {
+      registeredThisRun = true;
       console.warn("[push] registration failed", e?.error || e);
+      logDiag({ ok: false, error: String(e?.error || e?.message || e).slice(0, 300) });
     });
     PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
       const url = action?.notification?.data?.url;
@@ -109,9 +143,10 @@ export async function enablePush() {
   try {
     const res = await PushNotifications.requestPermissions();
     if (res.receive === "granted") {
-      await PushNotifications.register();
+      registerWithWatch();
       return "granted";
     }
+    logDiag({ ok: false, permission: String(res.receive || "prompt"), error: "Permission not granted" });
     return res.receive === "denied" ? "denied" : "prompt";
   } catch (err) {
     console.warn("[push] enable", err?.message || err);
@@ -129,7 +164,7 @@ export function syncPush(uid, navigate) {
   getPushState().then((state) => {
     // Already allowed: register again so Apple's token stays fresh.
     if (state === "granted" && currentUid === uid) {
-      PushNotifications.register().catch(() => {});
+      registerWithWatch();
     }
   });
 }

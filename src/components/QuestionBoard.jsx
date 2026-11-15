@@ -18,6 +18,7 @@ markQuestionRead,
   toggleReplySpark,
 } from "../lib/communities";
 import { notifyUser } from "../lib/notifications";
+import { tinyPhoto, useLiveProfiles } from "../lib/publicProfile";
 import "../styles/question-board.css";
 
 
@@ -208,6 +209,8 @@ function compressImage(file, max = 900, quality = 0.65) {
 
 export default function QuestionBoard({ communityId, boardId, user, isMember, communityName = "", initialQuestionId = "" }) {
   const [questions, setQuestions] = useState([]);
+  const questionUids = useMemo(() => questions.map((x) => x.uid), [questions]);
+  const liveAuthors = useLiveProfiles(questionUids);
   const [openId, setOpenId] = useState(null);
   const [composerOpen, setComposerOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -279,7 +282,7 @@ const [seen, setSeen] = useState({});
         imageUrl,
         uid: user.uid,
         displayName: user.displayName || "Member",
-        photoURL: user.photoURL || "",
+        photoURL: tinyPhoto(user.photoURL),
       });
       resetComposer();
     } catch {
@@ -367,7 +370,7 @@ const [seen, setSeen] = useState({});
                     </p>
                   )}
                   <span className="qb-meta">
-  {q.displayName || "Member"}
+  {(q.uid === user?.uid ? user?.displayName : liveAuthors[q.uid]?.displayName) || q.displayName || "Member"}
   <span aria-hidden="true"> · </span>
   {Math.max(0, q.replyCount || 0)} {q.replyCount === 1 ? "reply" : "replies"}
   <span aria-hidden="true"> · </span>
@@ -438,17 +441,29 @@ function QuestionDetail({ communityId, communityName = "", boardId, question, us
     };
   }, [menuId]);
 
+  // Current name and photo of everyone on this question (the copy saved inside each post can be old).
+  const detailUids = useMemo(
+    () => [question?.uid, ...replies.map((x) => x.uid), ...replies.map((x) => x.replyTo?.uid)],
+    [question?.uid, replies]
+  );
+  const live = useLiveProfiles(detailUids);
+  const nameFor = (uid, stored) =>
+    (uid && uid === user?.uid ? user.displayName : live[uid]?.displayName) || stored || "Member";
+  const photoFor = (uid, stored) =>
+    (uid && uid === user?.uid ? user.photoURL : live[uid]?.photoURL) || stored || "";
+
   const people = useMemo(() => {
     const map = new Map();
     if (question?.uid && question?.displayName) {
-      map.set(question.uid, { uid: question.uid, name: question.displayName });
+      map.set(question.uid, { uid: question.uid, name: nameFor(question.uid, question.displayName) });
     }
     for (const r of replies) {
-      if (r.uid && r.displayName) map.set(r.uid, { uid: r.uid, name: r.displayName });
+      if (r.uid && r.displayName) map.set(r.uid, { uid: r.uid, name: nameFor(r.uid, r.displayName) });
     }
     if (user?.uid && user?.displayName) map.set(user.uid, { uid: user.uid, name: user.displayName });
     return [...map.values()];
-  }, [question, replies, user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [question, replies, user, live]);
 
   const suggestions = useMemo(() => {
     if (mentionQuery === null) return [];
@@ -521,13 +536,13 @@ function QuestionDetail({ communityId, communityName = "", boardId, question, us
         mentions: mentionIds,
         uid: user.uid,
         displayName: user.displayName || "Member",
-        photoURL: user.photoURL || "",
+        photoURL: tinyPhoto(user.photoURL),
         replyTo: replyTo
           ? {
               id: replyTo.id,
               uid: replyTo.uid || "",
               displayName: replyTo.displayName || "Member",
-              photoURL: replyTo.photoURL || "",
+              photoURL: tinyPhoto(replyTo.photoURL),
               text: String(replyTo.text || "").slice(0, 140),
             }
           : null,
@@ -667,9 +682,9 @@ function QuestionDetail({ communityId, communityName = "", boardId, question, us
       </button>
       <article className="qb-question">
         <div className="qb-person">
-          <Avatar photo={question.photoURL} name={question.displayName} />
+          <Avatar photo={photoFor(question.uid, question.photoURL)} name={nameFor(question.uid, question.displayName)} />
           <div>
-            <strong>{question.displayName || "Member"}</strong>
+            <strong>{nameFor(question.uid, question.displayName)}</strong>
             <time>{timeLabel(question.createdAt)}</time>
           </div>
                 {lightboxUrl && (
@@ -774,16 +789,15 @@ function QuestionDetail({ communityId, communityName = "", boardId, question, us
         {replies.length === 0 && <p className="cc-muted">No replies yet.</p>}
         {replies.map((r) => (
           <article key={r.id} className="qb-reply">
-            <Avatar photo={r.photoURL} name={r.displayName} />
+            <Avatar photo={photoFor(r.uid, r.photoURL)} name={nameFor(r.uid, r.displayName)} />
             <div>
-              <strong>{r.displayName || "Member"}</strong>
+              <strong>{nameFor(r.uid, r.displayName)}</strong>
               <time>{timeLabel(r.createdAt)}{r.edited ? " · edited" : ""}</time>
               {r.replyTo && (() => {
                 const original = replies.find((x) => x.id === r.replyTo.id) || null;
-                const qName =
-                  r.replyTo.displayName || original?.displayName || "Member";
-                const qPhoto =
-                  r.replyTo.photoURL || original?.photoURL || "";
+                const qUid = r.replyTo.uid || original?.uid || "";
+                const qName = nameFor(qUid, r.replyTo.displayName || original?.displayName);
+                const qPhoto = photoFor(qUid, r.replyTo.photoURL || original?.photoURL);
                 return (
                   <div className="qb-quote">
                     <span className="qb-quote-avatar" aria-hidden="true">
@@ -873,7 +887,7 @@ function QuestionDetail({ communityId, communityName = "", boardId, question, us
         )}
         {replyTo && (
           <div className="qb-replying">
-            <span>Replying to {replyTo.displayName || "Member"}: {String(replyTo.text || "").slice(0, 80)}</span>
+            <span>Replying to {nameFor(replyTo.uid, replyTo.displayName)}: {String(replyTo.text || "").slice(0, 80)}</span>
             <button type="button" onClick={() => setReplyTo(null)}>×</button>
           </div>
         )}

@@ -6,6 +6,8 @@
 //  - the Daily room is PRIVATE, so nobody can join with just the URL; each person gets a personal token
 //  - the person who OPENS the room is the host. The host's plan sets the size and length for everyone
 //  - Daily itself enforces max_participants and ends the room at its expiry time
+//  - Video is the expensive part, so it is metered: each paid host has a monthly video allowance and all
+//    free hosts share a daily video budget. When it runs out, sessions carry on as audio-only.
 
 import { initializeApp, getApps, cert, applicationDefault } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
@@ -15,12 +17,21 @@ const DAILY = "https://api.daily.co/v1";
 
 // Change these numbers to change the limits.
 const LIMITS = {
-  free: { max: 5, minutes: 45, perDay: 2 }, // perDay = sessions a free person can OPEN per day
-  paid: { max: 10, minutes: 180, perDay: null },
+  free: { max: 5, minutes: 40, perDay: 2 }, // perDay = sessions a person can OPEN per day
+  paid: { max: 10, minutes: 120, perDay: 4 },
+};
+
+// Daily bills every person in a room at the video rate (about 4x audio) once anyone shares a camera or screen.
+// One unit below = one person in a room for one minute.
+const VIDEO = {
+  paidMonthlyMinutes: 600, // video minutes each paid host gets per month
+  paidMinToStart: 60, // a paid host needs at least this much left to open a room with video
+  freeDailyMinutesAllApp: 400, // video minutes ALL free hosts share per day
 };
 
 const PAID_PLANS = ["unlimited", "premium"];
 const todayKey = () => new Date().toISOString().split("T")[0];
+const monthKey = () => new Date().toISOString().slice(0, 7);
 
 function setCors(req, res) {
   const origin = req.headers.origin || "*";
@@ -80,6 +91,58 @@ const daily = (path, options = {}) =>
 // Expected problems (full, not a member, daily limit...) come back as 200 with ok:false and a code,
 // so the app can show a clear message instead of a generic network error.
 const refuse = (res, code, error) => res.status(200).json({ ok: false, code, error });
+
+// ---- Video metering -------------------------------------------------------------------------
+// Daily does not tell us when someone leaves, so every time anybody asks about a room we add
+// (time since the last look) x (people who were in the room) to the host's tally. When a room
+// ends, the next look closes it out. Tallies live in videoUsage/{id}; room state in liveRooms/{name}.
+const usageRef = (db, id) => db.doc(`videoUsage/${id}`);
+const hostMonthId = (uid) => `${uid}_${monthKey()}`;
+const freeDayId = () => `free_${todayKey()}`;
+
+// Video minutes still available to this host (paid: this month; free: the shared budget for today).
+async function videoLeft(db, tier, hostUid) {
+  try {
+    const snap = await usageRef(db, tier === "paid" ? hostMonthId(hostUid) : freeDayId()).get();
+    const used = snap.exists ? Number(snap.data().minutes) || 0 : 0;
+    return (tier === "paid" ? VIDEO.paidMonthlyMinutes : VIDEO.freeDailyMinutesAllApp) - used;
+  } catch (err) {
+    console.error("[daily-room] could not read video usage", err);
+    return 0;
+  }
+}
+
+// count = people in the room right now (null = unknown, keep the last number).
+async function meterRoom(db, name, count) {
+  const ref = db.doc(`liveRooms/${name}`);
+  const now = Date.now();
+  try {
+    return await db.runTransaction(async (t) => {
+      const snap = await t.get(ref);
+      if (!snap.exists) return null;
+      const r = snap.data();
+      const expMs = (r.exp || 0) * 1000;
+      const people = r.lastCount || 0;
+      const expired = now >= expMs;
+      // Many people can ask at once; skip the write when nothing changed in the last 20 seconds.
+      if (!expired && (count == null || count === people) && now - (r.lastTick || 0) < 20000) return r;
+      const end = Math.min(now, expMs);
+      const minutes = r.video && end > (r.lastTick || 0) ? ((end - r.lastTick) / 60000) * people : 0;
+      if (minutes > 0) {
+        t.set(
+          usageRef(db, r.hostTier === "paid" ? hostMonthId(r.hostUid) : freeDayId()),
+          { minutes: FieldValue.increment(minutes), updatedAt: FieldValue.serverTimestamp() },
+          { merge: true }
+        );
+      }
+      t.update(ref, { lastTick: now, lastCount: expired ? 0 : count == null ? people : count });
+      return r;
+    });
+  } catch (err) {
+    console.error("[daily-room] metering failed", err);
+    return null;
+  }
+}
 
 export default async function handler(req, res) {
   try {
@@ -145,7 +208,7 @@ export default async function handler(req, res) {
     if (userData.banned === true) {
       return refuse(res, "banned", "This account is suspended.");
     }
-    const myTier = PAID_PLANS.includes(userData.plan) ? "paid" : "free";
+    const myTier = PAID_PLANS.includes(userData.plan) || userData.isUnlimited === true ? "paid" : "free";
 
     // 3. Circle sessions: only members of that circle may join
     const circle = /^community-([A-Za-z0-9_-]+)-session$/.exec(String(roomId));
@@ -192,10 +255,14 @@ export default async function handler(req, res) {
       }
     };
 
-    // Read-only check for the "Live now" banner. It never creates, changes or counts anything.
+    // Check for the "Live now" banner. It never creates a room or changes one; it only keeps the video tally up to date.
     if (body.action === "status") {
-      if (!room || !isUsable(room)) return res.status(200).json({ ok: true, live: false });
+      if (!room || !isUsable(room)) {
+        await meterRoom(db, name, 0);
+        return res.status(200).json({ ok: true, live: false });
+      }
       const presence = await getPresence();
+      await meterRoom(db, name, presence ? presence.count : null);
       const max = room.config.max_participants;
       const tier = max >= LIMITS.paid.max ? "paid" : "free";
       return res.status(200).json({
@@ -211,6 +278,7 @@ export default async function handler(req, res) {
 
     // Rooms made by the old version of this file were public and had no size limit. Replace them.
     if (room && !isUsable(room)) {
+      await meterRoom(db, name, 0);
       await daily(`/rooms/${name}`, { method: "DELETE" }).catch(() => {});
       room = null;
     }
@@ -222,6 +290,7 @@ export default async function handler(req, res) {
       presence = await getPresence();
       const ageSec = room.created_at ? (Date.now() - Date.parse(room.created_at)) / 1000 : 0;
       if (presence && presence.count === 0 && ageSec > 120) {
+        await meterRoom(db, name, 0);
         await daily(`/rooms/${name}`, { method: "DELETE" }).catch(() => {});
         room = null;
         presence = null;
@@ -229,7 +298,9 @@ export default async function handler(req, res) {
     }
 
     // 5. No room yet: this person becomes the host and their plan sets the limits.
+    let createdNow = false;
     if (!room) {
+      await meterRoom(db, name, 0); // close out any earlier room with this name
       const limit = LIMITS[myTier];
       const today = todayKey();
       const used = userData.lastLiveSessionDate === today ? userData.dailyLiveSessions || 0 : 0;
@@ -238,9 +309,15 @@ export default async function handler(req, res) {
         return refuse(
           res,
           "daily_limit",
-          `Free accounts can start ${limit.perDay} sessions a day. You can still join sessions that others start.`
+          myTier === "paid"
+            ? `You can start ${limit.perDay} sessions a day. You can still join sessions that others start.`
+            : `Free accounts can start ${limit.perDay} sessions a day. You can still join sessions that others start. Unlimited allows more.`
         );
       }
+
+      // Video only if the host's allowance (paid) or today's shared budget (free) has room for it.
+      const left = await videoLeft(db, myTier, uid);
+      const video = myTier === "paid" ? left >= VIDEO.paidMinToStart : left > 0;
 
       const exp = nowSec() + limit.minutes * 60;
       const createRes = await daily("/rooms", {
@@ -254,7 +331,7 @@ export default async function handler(req, res) {
             eject_at_room_exp: true,
             start_video_off: true,
             start_audio_off: true,
-            enable_screenshare: true,
+            enable_screenshare: video,
             enable_chat: false,
           },
         }),
@@ -267,15 +344,29 @@ export default async function handler(req, res) {
       ) {
         // Two people pressed Session at the same moment. The other one is the host.
         data = await loadRoom();
-      } else if (data?.url && limit.perDay) {
-        await userRef.set(
-          {
-            dailyLiveSessions: used + 1,
-            lastLiveSessionDate: today,
-            updatedAt: FieldValue.serverTimestamp(),
-          },
-          { merge: true }
-        );
+      } else if (data?.url) {
+        createdNow = true;
+        if (limit.perDay) {
+          await userRef.set(
+            {
+              dailyLiveSessions: used + 1,
+              lastLiveSessionDate: today,
+              updatedAt: FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+        }
+        // Remember who hosts, whether this room has video, and start the video clock.
+        await db.doc(`liveRooms/${name}`).set({
+          hostUid: uid,
+          hostTier: myTier,
+          video,
+          offReason: video ? null : myTier === "paid" ? "allowance" : "budget",
+          exp,
+          lastTick: Date.now(),
+          lastCount: 0,
+          createdAt: FieldValue.serverTimestamp(),
+        });
       }
 
       room = data?.url ? data : null;
@@ -300,7 +391,19 @@ export default async function handler(req, res) {
       );
     }
 
-    // 7. A personal entry pass that stops working when the room ends
+    // 7. Video or audio-only? Rooms keep the mode their host started with, and drop to audio-only
+    //    for new arrivals once the host's allowance (or today's free budget) has run out.
+    let people = presence ? presence.count : 0;
+    if (!presence || !presence.ids.includes(uid)) people += 1;
+    const meta = await meterRoom(db, name, presence || createdNow ? people : null);
+    let audioOnly = !(meta && meta.video === true);
+    let audioOnlyReason = audioOnly ? (meta && meta.offReason) || "off" : null;
+    if (!audioOnly && meta.hostUid && (await videoLeft(db, meta.hostTier, meta.hostUid)) <= 0) {
+      audioOnly = true;
+      audioOnlyReason = meta.hostTier === "paid" ? "allowance" : "budget";
+    }
+
+    // 8. A personal entry pass that stops working when the room ends
     const tokenRes = await daily("/meeting-tokens", {
       method: "POST",
       body: JSON.stringify({
@@ -310,6 +413,8 @@ export default async function handler(req, res) {
           user_id: uid,
           exp: roomExp,
           is_owner: false,
+          // audio-only: no camera, no screen share (this is what keeps the Daily bill at the cheap rate)
+          ...(audioOnly ? { enable_screenshare: false, permissions: { canSend: ["audio"] } } : {}),
         },
       }),
     });
@@ -329,6 +434,8 @@ export default async function handler(req, res) {
       tier: roomTier,
       minutes: LIMITS[roomTier].minutes,
       expiresAt: roomExp,
+      video: !audioOnly,
+      audioOnlyReason, // "allowance" | "budget" | "off" | null
     });
   } catch (err) {
     console.error("[daily-room] crash", err);

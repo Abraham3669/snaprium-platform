@@ -82,10 +82,10 @@ function buildUser(firebaseUser, data = {}) {
     ? (data.displayName || firebaseUser.email?.split("@")[0] || "User")
     : (firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "User");
 
-  // Once a Firestore profile exists, never fall back to Google photo
-  const photoURL = hasDoc
-    ? (data.photoURL || "")
-    : (firebaseUser.photoURL || "");
+  // Your own profile is the only source of your photo. Google's picture is copied in once, when the
+  // account is created (lib/userProfile.js). While your profile is still loading we show no photo rather
+  // than Google's, so Google's picture can never flash up or be saved over the one you chose.
+  const photoURL = hasDoc ? (data.photoURL || "") : "";
 
   return {
     uid: firebaseUser.uid,
@@ -93,6 +93,7 @@ function buildUser(firebaseUser, data = {}) {
     displayName,
     photoURL,
     ...data,
+    profileLoaded: hasDoc, // false = your own profile has not loaded yet
     plan,
     banned,
     isBanned: banned,

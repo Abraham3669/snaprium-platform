@@ -49,6 +49,7 @@ import { StatusBar, Style } from "@capacitor/status-bar";
 import useNotifications from "./lib/useNotifications";
 import PushPrompt from "./components/PushPrompt";
 import { syncPush, clearDeliveredPush } from "./lib/push";
+import { publishPublicProfile } from "./lib/publicProfile";
 import "./styles/social.css";
 
 const GUEST_SOLVE_LIMIT = 3;
@@ -100,19 +101,11 @@ function App() {
     };
   }, [location.pathname, user?.uid]);
 
-  // Public name + photo card (publicProfiles/{uid}). Other people read this to show your CURRENT
-  // name in notifications and chat, so renaming yourself updates everywhere.
+  // Public name + photo card (publicProfiles/{uid}). Other people read it to show your CURRENT name and
+  // photo in chat, questions and notifications, so changing your profile updates it everywhere.
   useEffect(() => {
-    if (!user?.uid) return;
-    const name = String(user.displayName || "").trim().slice(0, 80);
-    const photo = typeof user.photoURL === "string" && user.photoURL.length < 1000 ? user.photoURL : "";
-    if (!name && !photo) return;
-    setDoc(
-      doc(db, "publicProfiles", user.uid),
-      { displayName: name, photoURL: photo, updatedAt: serverTimestamp() },
-      { merge: true }
-    ).catch(() => {});
-  }, [user?.uid, user?.displayName, user?.photoURL]);
+    publishPublicProfile(user).catch(() => {});
+  }, [user?.uid, user?.displayName, user?.photoURL, user?.profileLoaded]);
 
   // Profile's theme switch tells the app, so toasts and the status bar follow it
   useEffect(() => {

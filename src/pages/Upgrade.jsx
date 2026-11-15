@@ -131,7 +131,7 @@ export default function Upgrade() {
               <strong>10 solves / day</strong>
             </p>
             <p className="plan-detail">
-              Try the solver and join circles.
+              Try the solver and join circles. Host live sessions for up to 5 people, 40 minutes each.
             </p>
             <button className="plan-cta disabled">Current Plan</button>
           </div>
@@ -148,7 +148,8 @@ export default function Upgrade() {
               <li><CheckIcon /> More follow-up questions on every solution</li>
               <li><CheckIcon /> Create more circles</li>
               <li><CheckIcon /> More boards in every circle you run</li>
-              <li><CheckIcon /> Long live study sessions</li>
+              <li><CheckIcon /> Live sessions for up to 10 people, 2 hours each</li>
+              <li><CheckIcon /> Camera and screen share: 600 video minutes a month, then audio-only</li>
               <li><CheckIcon /> Built for exam nights and deep focus</li>
             </ul>
             <button

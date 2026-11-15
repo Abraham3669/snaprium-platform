@@ -74,6 +74,31 @@ workflows:
       - name: Apply provisioning profiles
         script: xcode-project use-profiles
 
+      - name: Link entitlements file to the app target (push)
+        script: |
+          set -e
+          python3 - <<'PY'
+          import glob, os, re
+          proj = "ios/App/App.xcodeproj/project.pbxproj"
+          cands = [e for e in sorted(glob.glob("ios/App/**/*.entitlements", recursive=True)) if "/Pods/" not in e]
+          ent = next((e for e in cands if e.endswith("App/App.entitlements")), cands[0] if cands else None)
+          if not ent:
+              raise SystemExit("No .entitlements file found under ios/App")
+          rel = os.path.relpath(ent, "ios/App")
+          src = open(proj).read()
+          def fix(m):
+              block = m.group(0)
+              if not re.search(r'PRODUCT_BUNDLE_IDENTIFIER = "?com\.snaprium\.app"?;', block):
+                  return block
+              if "CODE_SIGN_ENTITLEMENTS" in block:
+                  return re.sub(r'CODE_SIGN_ENTITLEMENTS = [^;]*;', 'CODE_SIGN_ENTITLEMENTS = "%s";' % rel, block)
+              return block.replace("buildSettings = {", 'buildSettings = {\n\t\t\t\tCODE_SIGN_ENTITLEMENTS = "%s";' % rel, 1)
+          new = re.sub(r"buildSettings = \{.*?\n\t\t\t\};", fix, src, flags=re.S)
+          open(proj, "w").write(new)
+          print("Entitlements file used:", rel)
+          PY
+          grep -n "CODE_SIGN_ENTITLEMENTS" ios/App/App.xcodeproj/project.pbxproj
+
       - name: Show signing profile (push check)
         script: |
           for p in "$HOME"/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision; do
@@ -104,6 +129,24 @@ workflows:
             echo "=========================================="
           fi
           exit $STATUS
+
+      - name: Verify push is inside the built app
+        script: |
+          IPA=$(find "$CM_BUILD_DIR/build/ios/ipa" -name "*.ipa" -type f | head -1)
+          echo "IPA: $IPA"
+          rm -rf /tmp/ipa_check && mkdir -p /tmp/ipa_check
+          unzip -q "$IPA" -d /tmp/ipa_check
+          APP=$(ls -d /tmp/ipa_check/Payload/*.app | head -1)
+          echo "== Entitlements the signed app really carries"
+          codesign -d --entitlements :- "$APP" 2>/dev/null | tee /tmp/ent.txt
+          echo "== Entitlements inside the provisioning profile"
+          security cms -D -i "$APP/embedded.mobileprovision" | plutil -p - | grep -E 'aps-environment|"Name"' || true
+          if ! grep -q "aps-environment" /tmp/ent.txt; then
+            echo "!!! PUSH IS MISSING from this build (no aps-environment in the signed app)."
+            echo "!!! Check: Push Notifications is ticked on the App ID in Apple Developer, the profile was re-created after that and re-uploaded to Codemagic."
+            exit 1
+          fi
+          echo "OK: push entitlement is present in the signed app."
 
       - name: Find IPA (debug)
         script: |

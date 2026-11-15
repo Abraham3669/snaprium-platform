@@ -38,6 +38,7 @@ countBoardUnread,
 } from "../lib/communities";
 import { notifyUser, notifyCircleSession } from "../lib/notifications";
 import QuestionBoard from "../components/QuestionBoard";
+import { tinyPhoto } from "../lib/publicProfile";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
@@ -1089,14 +1090,14 @@ useEffect(() => {
       type: imageUrl ? "image" : "text",
       uid: user.uid,
       displayName: user.displayName || "Member",
-      photoURL: user.photoURL || "",
+      photoURL: tinyPhoto(user.photoURL),
       isAI: false,
       replyTo: quoted
         ? {
             id: quoted.id,
             uid: quoted.uid || "",
             displayName: liveName(quoted),
-            photoURL: livePhoto(quoted) || "",
+            photoURL: tinyPhoto(livePhoto(quoted)),
             text: String(quoted.text || "").slice(0, 140),
           }
         : null,
@@ -1209,7 +1210,7 @@ useEffect(() => {
         type: kind, // "gif" or "sticker"
         uid: user.uid,
         displayName: user.displayName || "Member",
-        photoURL: user.photoURL || "",
+        photoURL: tinyPhoto(user.photoURL),
         isAI: false,
       });
     } catch {

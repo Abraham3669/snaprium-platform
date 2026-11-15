@@ -303,6 +303,7 @@ async function deliver(db, notes) {
   const results = await sendApns(jobs);
   let sent = 0;
   let failed = 0;
+  let logged = 0;
   for (const r of results) {
     if (r.status === 200) {
       sent += 1;
@@ -310,6 +311,13 @@ async function deliver(db, notes) {
     }
     failed += 1;
     console.warn("[push] apns", r.status, r.reason);
+    // Keep Apple's answer where you can read it: Firestore > pushLog (server only, apps cannot read it).
+    if (logged < 5) {
+      logged += 1;
+      db.collection("pushLog")
+        .add({ at: Timestamp.now(), status: r.status, reason: r.reason || "", tokenTail: String(r.token).slice(-8), host: APNS_HOST })
+        .catch(() => {});
+    }
     // Phone no longer has the app / token is dead: forget it.
     if (r.status === 410 || r.reason === "Unregistered") {
       db.collection("pushTokens").doc(r.token).delete().catch(() => {});
@@ -369,6 +377,33 @@ export async function handlePush(req, res) {
 
       const out = await deliver(db, [{ uid: body.to, id: body.id, data: claimed }]);
       return res.status(200).json({ ok: true, ...out });
+    }
+
+    /* ---------- test alert to my own phone(s) ---------- */
+    if (action === "test") {
+      const configured = Boolean(process.env.APNS_KEY_ID && process.env.APNS_TEAM_ID && readApnsKey());
+      const tokenMap = await tokensFor(db, [uid]);
+      const tokens = tokenMap.get(uid) || [];
+      if (!configured) return res.status(200).json({ ok: false, configured, tokens: tokens.length, error: "Server is missing APNS_KEY_ID, APNS_TEAM_ID or APNS_KEY" });
+      if (!tokens.length) return res.status(200).json({ ok: false, configured, tokens: 0, error: "No phone is registered for this account yet" });
+      const results = await sendApns(
+        tokens.map((token) => ({
+          token,
+          collapseId: "test",
+          payload: { aps: { alert: { title: "Snaprium", body: "Push notifications are working." }, sound: "default" }, url: "/notifications", type: "test" },
+        }))
+      );
+      for (const r of results) {
+        if (r.status === 410 || r.reason === "Unregistered") db.collection("pushTokens").doc(r.token).delete().catch(() => {});
+      }
+      const sent = results.filter((r) => r.status === 200).length;
+      return res.status(200).json({
+        ok: sent > 0,
+        configured,
+        tokens: tokens.length,
+        sent,
+        error: sent > 0 ? "" : `Apple said: ${results[0]?.reason || results[0]?.status || "no answer"}`,
+      });
     }
 
     /* ---------- live session started in a circle ---------- */
