@@ -5,7 +5,7 @@ import { db } from "../lib/firebase";
 import { useNavigate } from "react-router-dom";
 import { Capacitor } from "@capacitor/core";
 import { useAuth } from "../context/AuthContext";
-import { describeNotification, notificationTime, sendTestPush } from "../lib/notifications";
+import { describeNotification, notificationTime } from "../lib/notifications";
 import { enablePush, getPushState, clearDeliveredPush } from "../lib/push";
 
 function TypeIcon({ type }) {
@@ -86,8 +86,6 @@ export default function Notifications({ items, loading, unread, markRead, markAl
   const navigate = useNavigate();
   const [pushState, setPushState] = useState("unsupported");
   const [asking, setAsking] = useState(false);
-  const [testing, setTesting] = useState(false);
-  const [testMsg, setTestMsg] = useState("");
   const isNative = Capacitor.isNativePlatform();
 
   useEffect(() => {
@@ -104,15 +102,6 @@ export default function Notifications({ items, loading, unread, markRead, markAl
     const next = await enablePush();
     setPushState(next);
     setAsking(false);
-  };
-
-  const runTest = async () => {
-    setTesting(true);
-    setTestMsg("");
-    const r = await sendTestPush();
-    setTesting(false);
-    if (r.ok) setTestMsg("Sent. It should reach your phone in a few seconds.");
-    else setTestMsg(r.error || `Could not send (${r.http || "no reply"})`);
   };
 
   // A notification stores the sender's name from the moment it was sent. Look up their
@@ -235,15 +224,6 @@ export default function Notifications({ items, loading, unread, markRead, markAl
             </section>
           )}
         </>
-      )}
-
-      {isNative && pushState !== "prompt" && (
-        <div className="nt-test">
-          <span>{testMsg || (pushState === "granted" ? "Phone alerts are on." : `Phone alerts: ${pushState}`)}</span>
-          <button type="button" className="nt-link" onClick={runTest} disabled={testing}>
-            {testing ? "Sending…" : "Send test"}
-          </button>
-        </div>
       )}
     </div>
   );

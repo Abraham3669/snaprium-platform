@@ -104,7 +104,7 @@ export default async function handler(req, res) {
         return handlePush(req, res);
       } catch (err) {
         console.error("[push] could not load", err);
-        return res.status(500).json({ ok: false, error: "Push is unavailable" });
+        return res.status(500).json({ ok: false, error: "Push is unavailable", detail: String(err?.message || err).slice(0, 240) });
       }
     }
 

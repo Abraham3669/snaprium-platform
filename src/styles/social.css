@@ -177,8 +177,11 @@
   width: 100%;
   max-width: 640px;
   margin: 0 auto auto;
-  align-self: start;
+  align-self: stretch;
+  flex: 1 0 auto;
   justify-self: center;
+  min-height: 100vh;
+  min-height: 100dvh;
   box-sizing: border-box;
   padding: 20px 16px 120px;
   color: var(--text-primary);
@@ -573,4 +576,24 @@
   html:not(.native-app) .pf-page {
     padding-top: max(16px, calc(var(--snaprium-header-h, 0px) - var(--snaprium-main-pad, 0px) + 12px));
   }
+}
+
+/* Headings on this page always line up left (a global heading rule was centring them) */
+.nt-page .nt-head h1,
+.nt-page .nt-head p,
+.nt-page .nt-section { text-align: left; }
+.nt-page .nt-empty,
+.nt-page .nt-empty * { text-align: center; }
+
+/* ================= Notifications page: top spacing =================
+   Two separate rules, so changing one never affects the other. */
+
+/* BROWSER (phone or computer): the page wrapper adds no space, so leave room for the real header */
+html:not(.native-app) .nt-page {
+  padding-top: calc(var(--snaprium-header-h, 72px) - var(--snaprium-main-pad, 0px) + 20px);
+}
+
+/* iPHONE APP: the wrapper already leaves room for the notch + header */
+html.native-app .nt-page {
+  padding-top: 20px;
 }
