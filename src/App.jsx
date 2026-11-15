@@ -70,6 +70,29 @@ function App() {
     syncPush(user?.uid, (url) => navigate(url));
   }, [user?.uid]);
 
+  // Page content always starts exactly below the real header height (it changes with the bell,
+  // small phones, wrapped buttons and the iPhone notch), so nothing hides underneath it.
+  useEffect(() => {
+    const root = document.documentElement;
+    const header = document.querySelector(".snaprium-header");
+    if (!header) {
+      root.style.removeProperty("--snaprium-header-h");
+      return undefined;
+    }
+    const apply = () => root.style.setProperty("--snaprium-header-h", `${Math.ceil(header.getBoundingClientRect().height)}px`);
+    apply();
+    let ro;
+    if (typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(apply);
+      ro.observe(header);
+    }
+    window.addEventListener("resize", apply);
+    return () => {
+      if (ro) ro.disconnect();
+      window.removeEventListener("resize", apply);
+    };
+  }, [location.pathname, user?.uid]);
+
   // Public name + photo card (publicProfiles/{uid}). Other people read this to show your CURRENT
   // name in notifications and chat, so renaming yourself updates everywhere.
   useEffect(() => {
