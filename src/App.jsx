@@ -77,9 +77,16 @@ function App() {
     const header = document.querySelector(".snaprium-header");
     if (!header) {
       root.style.removeProperty("--snaprium-header-h");
+      root.style.removeProperty("--snaprium-main-pad");
       return undefined;
     }
-    const apply = () => root.style.setProperty("--snaprium-header-h", `${Math.ceil(header.getBoundingClientRect().height)}px`);
+    const apply = () => {
+      root.style.setProperty("--snaprium-header-h", `${Math.ceil(header.getBoundingClientRect().height)}px`);
+      // How much space the page wrapper already leaves for the header (differs between setups)
+      const main = document.querySelector("main");
+      const pad = main ? parseFloat(getComputedStyle(main).paddingTop) || 0 : 0;
+      root.style.setProperty("--snaprium-main-pad", `${Math.round(pad)}px`);
+    };
     apply();
     let ro;
     if (typeof ResizeObserver !== "undefined") {

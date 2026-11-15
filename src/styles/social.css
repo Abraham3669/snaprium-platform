@@ -571,6 +571,6 @@
    Computers, the iPhone app and every other page are not touched. */
 @media (max-width: 899px) {
   html:not(.native-app) .pf-page {
-    padding-top: max(16px, calc(var(--snaprium-header-h, 0px) - 56px));
+    padding-top: max(16px, calc(var(--snaprium-header-h, 0px) - var(--snaprium-main-pad, 0px) + 12px));
   }
 }
