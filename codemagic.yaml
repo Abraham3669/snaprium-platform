@@ -74,6 +74,13 @@ workflows:
       - name: Apply provisioning profiles
         script: xcode-project use-profiles
 
+      - name: Show signing profile (push check)
+        script: |
+          for p in "$HOME"/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision; do
+            echo "== $p"
+            security cms -D -i "$p" | plutil -p - | grep -E '"Name"|aps-environment|application-identifier' || true
+          done
+
       - name: Increment build number
         script: |
           cd ios/App
@@ -84,11 +91,19 @@ workflows:
 
       - name: Build IPA
         script: |
+          set +e
           xcode-project build-ipa \
             --project "$CM_BUILD_DIR/$XCODE_PROJECT" \
             --scheme "$XCODE_SCHEME" \
             --ipa-directory "$CM_BUILD_DIR/build/ios/ipa" \
             --archive-flags="-destination 'generic/platform=iOS'"
+          STATUS=$?
+          if [ $STATUS -ne 0 ]; then
+            echo "=========== XCODEBUILD ERRORS ==========="
+            grep -h -B2 -A8 -E "error:|Provisioning profile|entitlement" /tmp/xcodebuild_logs/*.log 2>/dev/null | head -120
+            echo "=========================================="
+          fi
+          exit $STATUS
 
       - name: Find IPA (debug)
         script: |
