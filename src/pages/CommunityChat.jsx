@@ -473,7 +473,9 @@ const recentRank = useMemo(() => {
   return rank;
 }, [messages]);
 
-const canMentionEveryone = !!user?.uid && (community?.admins || []).includes(user.uid);
+// Same idea as the circle rules: the person who made the circle, or anyone they made an admin.
+const canMentionEveryone =
+  !!user?.uid && (community?.createdBy === user.uid || (community?.admins || []).includes(user.uid));
 
 const suggestions = useMemo(() => {
   const list = mentionSuggestions(mentionQuery, mentionable, user?.uid, recentRank);
