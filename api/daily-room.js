@@ -171,6 +171,17 @@ export default async function handler(req, res) {
       }
     }
 
+    // Subscription checks share this endpoint too (api/_billing.js). Same lazy loading as push.
+    if (req.body && String(req.body.action || "").startsWith("billing:")) {
+      try {
+        const { handleBilling } = await import("./_billing.js");
+        return handleBilling(req, res);
+      } catch (err) {
+        console.error("[billing] could not load", err);
+        return res.status(500).json({ ok: false, error: "Billing is unavailable" });
+      }
+    }
+
     const body = req.body || {};
     const roomId = body.roomId;
     const userName = String(body.userName || "Student").slice(0, 40);

@@ -20,8 +20,18 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { userId } = req.body;
-  if (!userId) return res.status(400).json({ error: 'User ID is required' });
+  // The person must be signed in, and they can only open THEIR OWN billing portal.
+  // (Before, anyone who knew a user id could open that person's portal.)
+  const idToken = typeof req.body?.idToken === 'string' ? req.body.idToken : '';
+  if (!idToken) return res.status(401).json({ error: 'Sign in required' });
+
+  let userId;
+  try {
+    const decoded = await admin.auth().verifyIdToken(idToken);
+    userId = decoded.uid;
+  } catch {
+    return res.status(401).json({ error: 'Sign in required' });
+  }
 
   try {
     const userDoc = await db.collection('users').doc(userId).get();

@@ -1,8 +1,7 @@
 // src/lib/iap.js
 import { Capacitor } from "@capacitor/core";
 import { Purchases } from "@revenuecat/purchases-capacitor";
-import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
-import { db } from "./firebase";
+import { auth } from "./firebase";
 
 export const IAP_PRODUCT_ID = "snaprium_unlimited_monthly";
 export const IAP_ENTITLEMENT = "unlimited";
@@ -84,13 +83,49 @@ export function initIAP(uid) {
   return initPromise;
 }
 
-async function activateUnlimited(uid) {
-  await updateDoc(doc(db, "users", uid), {
-    plan: "unlimited",
-    subscriptionStatus: "active",
-    subscriptionSource: Capacitor.getPlatform(),
-    updatedAt: serverTimestamp(),
+function apiBase() {
+  return (import.meta.env.VITE_API_URL || "https://snaprium.com").replace(/\/$/, "");
+}
+
+// Asks OUR SERVER to check the subscription with RevenueCat and update the plan.
+// The phone never writes the plan itself, so nobody can give themselves a paid plan.
+async function callBillingSync() {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Please sign in first.");
+  const idToken = await user.getIdToken();
+  const res = await fetch(`${apiBase()}/api/daily-room`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+    body: JSON.stringify({ action: "billing:sync" }),
   });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || json.ok === false) throw new Error(json.error || "Could not check your subscription right now.");
+  return json;
+}
+
+// Right after a purchase / restore. RevenueCat can take a moment to catch up, so try a few times.
+async function activateUnlimited() {
+  let last = null;
+  for (let i = 0; i < 4; i += 1) {
+    last = await callBillingSync();
+    if (last.active) return true;
+    await new Promise((r) => setTimeout(r, 1500));
+  }
+  throw new Error("Your purchase went through, but your plan is still updating. Please wait a moment, then tap Restore purchases.");
+}
+
+// Quiet check when the app or Profile opens: picks up renewals, cancellations and refunds.
+// Runs at most once every 5 minutes and never shows an error.
+let lastQuietSync = 0;
+export async function syncSubscriptionQuietly() {
+  if (!Capacitor.isNativePlatform()) return;
+  if (Date.now() - lastQuietSync < 5 * 60 * 1000) return;
+  lastQuietSync = Date.now();
+  try {
+    await callBillingSync();
+  } catch (err) {
+    console.debug("[iap] quiet sync skipped", err?.message || err);
+  }
 }
 
 function hasUnlimited(customerInfo) {
@@ -125,7 +160,7 @@ export async function purchaseUnlimited(uid) {
   if (!hasUnlimited(customerInfo)) {
     throw new Error("Your purchase went through, but your plan is still updating. Please wait a moment, then tap Restore purchases.");
   }
-  await activateUnlimited(uid);
+  await activateUnlimited();
   return true;
 }
 
@@ -142,7 +177,7 @@ export async function restoreUnlimited(uid) {
         : "No active subscription was found for this Google account."
     );
   }
-  await activateUnlimited(uid);
+  await activateUnlimited();
   return true;
 }
 

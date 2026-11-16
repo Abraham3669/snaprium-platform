@@ -8,7 +8,7 @@ import { Capacitor } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
 import { useAuth } from "../context/AuthContext";
 import { auth, db } from "../lib/firebase";
-import { restoreUnlimited } from "../lib/iap";
+import { restoreUnlimited, syncSubscriptionQuietly } from "../lib/iap";
 import "../styles/profile.css";
 
 function compressImage(file, max = 400, quality = 0.7) {
@@ -157,6 +157,12 @@ export default function Profile() {
   const isApp = Capacitor.isNativePlatform();
   const isIosApp = Capacitor.getPlatform() === "ios";
 
+  // In the iPhone app, double-check the subscription with the server (renewals, cancellations, refunds).
+  useEffect(() => {
+    if (isIosApp && user?.uid) syncSubscriptionQuietly();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid]);
+
   useEffect(() => {
     if (loading) return;
     if (!user) {
@@ -180,12 +186,9 @@ export default function Profile() {
   const shownName = user.displayName || user.email?.split("@")[0] || "Your profile";
   const banned = user.banned === true || user.isBanned === true;
   const dirty = name.trim() !== (user.displayName || "");
-  const isSubscribed =
-    user.subscription === "pro" ||
-    user.subscription === "premium" ||
-    user.plan === "unlimited" ||
-    user.plan === "premium" ||
-    user.subscriptionStatus === "active";
+  // Same rule as the rest of the app (the premium icon, limits, Upgrade page): only the plan counts.
+  // Old fields like subscription / subscriptionStatus can stay behind after a cancel, so they are not used.
+  const isSubscribed = user.plan === "unlimited" || user.plan === "premium" || user.isUnlimited === true;
 
   const providerId = auth.currentUser?.providerData?.[0]?.providerId || "";
   const signInLabel =
@@ -263,7 +266,7 @@ export default function Profile() {
       const response = await fetch(`${apiBase}/api/customer-portal`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.uid }),
+        body: JSON.stringify({ idToken: await auth.currentUser.getIdToken() }),
       });
       const data = await response.json();
       if (!data.url) {

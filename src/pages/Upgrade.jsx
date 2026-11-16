@@ -117,7 +117,7 @@ export default function Upgrade() {
     <div className="upgrade-page">
       <div className="upgrade-header">
         <h2>Upgrade to Unlimited</h2>
-        <p>Solve freely. Build more circles. Stay in longer sessions when it matters.</p>
+        <p>Build more circles. Stay in longer sessions when it matters. Solve freely.</p>
       </div>
 
       {!showCheckout && (
@@ -128,10 +128,10 @@ export default function Upgrade() {
               $0 <span>per month</span>
             </div>
             <p className="plan-desc">
-              <strong>10 solves / day</strong>
+              <strong>Circles and live sessions</strong>
             </p>
             <p className="plan-detail">
-              Try the solver and join circles. Host live sessions for up to 5 people, 40 minutes each.
+              Join circles and host live sessions for up to 5 people, 40 minutes each. Try the solver with 10 solves a day.
             </p>
             <button className="plan-cta disabled">Current Plan</button>
           </div>
@@ -140,16 +140,16 @@ export default function Upgrade() {
             <div className="popular-badge">RECOMMENDED</div>
             <h3>Unlimited</h3>
             <div className="plan-price">
-              {isNative && storePrice ? storePrice : "$12.99"} <span>per month</span>
+              {isNative ? storePrice || "…" : "$12.99"} <span>per month</span>
             </div>
             <p className="plan-desc">For students who study every day</p>
             <ul className="plan-features">
-              <li><CheckIcon /> Unlimited photo solves</li>
-              <li><CheckIcon /> More follow-up questions on every solution</li>
               <li><CheckIcon /> Create more circles</li>
               <li><CheckIcon /> More boards in every circle you run</li>
               <li><CheckIcon /> Live sessions for up to 10 people, 2 hours each</li>
               <li><CheckIcon /> Camera and screen share: 600 video minutes a month, then audio-only</li>
+              <li><CheckIcon /> Unlimited photo solves</li>
+              <li><CheckIcon /> More follow-up questions on every solution</li>
               <li><CheckIcon /> Built for exam nights and deep focus</li>
             </ul>
             <button

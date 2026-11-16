@@ -1,5 +1,5 @@
 import { initializeApp, getApps, cert } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
+import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import crypto from "crypto";
 
 export const config = {
@@ -82,7 +82,13 @@ function pickEmail(data) {
   ).toLowerCase();
 }
 
+// Paddle statuses that mean "not paying right now"
+const NOT_PAYING = ["canceled", "paused", "past_due"];
+
 function pickPlan(data, eventType) {
+  // A late "updated" event for a subscription that has already ended must never switch the plan back on.
+  if (NOT_PAYING.includes(String(data?.status || ""))) return "free";
+
   const productName = String(data?.product?.name || "").toLowerCase();
   const priceName = String(data?.items?.[0]?.price?.name || "").toLowerCase();
   const priceId = String(data?.items?.[0]?.price?.id || "").toLowerCase();
@@ -98,7 +104,7 @@ function pickPlan(data, eventType) {
     "subscription.updated",
     "transaction.completed",
   ];
-  if (paidEvents.includes(eventType) && data?.status !== "canceled") {
+  if (paidEvents.includes(eventType)) {
     return "unlimited";
   }
   return "free";
@@ -144,7 +150,9 @@ async function handleSubscriptionEvent(data, eventType) {
         data?.id ||
         null,
       plan,
-      subscriptionStatus: status === "canceled" ? "inactive" : "active",
+      subscriptionStatus: NOT_PAYING.includes(String(status)) ? "inactive" : "active",
+      // Marks this plan as coming from the website, so the App Store check never switches it off.
+      subscriptionSource: plan === "free" ? FieldValue.delete() : "web",
       nextBillingDate: data?.next_billed_at
         ? new Date(data.next_billed_at)
         : null,
@@ -205,7 +213,16 @@ export default async function handler(req, res) {
       ["subscription.canceled", "subscription.past_due"].includes(eventType)
     ) {
       const userRef = await findUserRef(pickUserId(data), pickEmail(data));
+      // Only the subscription this person actually has can switch their plan off. Otherwise someone could
+      // start a checkout with another person's user id, cancel it, and downgrade that person.
+      let ownsIt = false;
       if (userRef) {
+        const current = await userRef.get();
+        const storedSub = current.exists ? current.data()?.paddleSubscriptionId : null;
+        ownsIt = !storedSub || storedSub === data?.id || storedSub === data?.subscription_id;
+        if (!ownsIt) console.warn("Ignored cancel for a different subscription", userRef.id);
+      }
+      if (userRef && ownsIt) {
         await userRef.set(
           {
             plan: "free",
