@@ -1,14 +1,46 @@
 // src/components/CameraInput.jsx
-import { useRef, useState } from "react";
-import { Capacitor } from "@capacitor/core";
-import { isStandaloneApp } from "../lib/firebase";
+import { useLayoutEffect, useRef, useState } from "react";
 
 export default function CameraInput({ onFileSelect }) {
   const cameraInputRef = useRef();
   const galleryInputRef = useRef();
   const dropZoneRef = useRef();
   const [isDragging, setIsDragging] = useState(false);
-  const isNative = Capacitor.isNativePlatform() || isStandaloneApp();
+  const titleRef = useRef(null);
+  const lineRef = useRef(null);
+
+  // One title for every device (iPhone app, phone browser, tablet, PC): the CSS sets the size,
+  // then this measures the first line on the real screen and shrinks it only if it would not fit.
+  useLayoutEffect(() => {
+    const fit = () => {
+      const h = titleRef.current;
+      const line = lineRef.current;
+      if (!h || !line) return;
+      h.style.removeProperty("font-size");
+      const cs = window.getComputedStyle(h);
+      const avail = h.clientWidth - parseFloat(cs.paddingLeft || 0) - parseFloat(cs.paddingRight || 0);
+      if (avail <= 0) return;
+      let size = parseFloat(cs.fontSize) || 24;
+      for (let i = 0; i < 8; i += 1) {
+        const w = line.getBoundingClientRect().width;
+        if (w <= avail) break;
+        size = Math.floor(size * (avail / w) * 0.98 * 10) / 10;
+        h.style.setProperty("font-size", `${size}px`, "important");
+      }
+    };
+    fit();
+    const raf = requestAnimationFrame(fit);
+    const t = setTimeout(fit, 300);
+    window.addEventListener("resize", fit);
+    window.addEventListener("orientationchange", fit);
+    if (document.fonts?.ready) document.fonts.ready.then(fit).catch(() => {});
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(t);
+      window.removeEventListener("resize", fit);
+      window.removeEventListener("orientationchange", fit);
+    };
+  }, []);
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -64,34 +96,12 @@ export default function CameraInput({ onFileSelect }) {
     <main className="camera-main">
       <section className="hero">
         <div className="container text-center">
-          <h1
-            className={`hero-title${!isNative ? " hero-title-web" : ""}`}
-            style={
-              !isNative
-                ? {
-                    width: "100%",
-                    maxWidth: "100%",
-                    boxSizing: "border-box",
-                    textAlign: "center",
-                    paddingLeft: 16,
-                    paddingRight: 16,
-                  }
-                : {
-                    // iPhone app: use the full screen width and scale the text with it,
-                    // so the first line always fits and stays centered on every phone.
-                    width: "100%",
-                    maxWidth: "100%",
-                    boxSizing: "border-box",
-                    textAlign: "center",
-                    marginLeft: 0,
-                    marginRight: 0,
-                    paddingLeft: 12,
-                    paddingRight: 12,
-                    fontSize: "clamp(1.2rem, 6.5vw, 1.9rem)",
-                  }
-            }
-          >
-            <span className="no-break">Understand Math & Physics </span>
+          <h1 ref={titleRef} className="snap-title">
+            <span className="snap-title-line">
+              <span ref={lineRef} style={{ display: "inline-block", whiteSpace: "nowrap" }}>
+                Understand Math &amp; Physics
+              </span>
+            </span>
             step by step
           </h1>
 
