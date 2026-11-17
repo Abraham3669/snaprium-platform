@@ -9,6 +9,7 @@ import { Browser } from "@capacitor/browser";
 import { useAuth } from "../context/AuthContext";
 import { auth, db } from "../lib/firebase";
 import { restoreUnlimited, syncSubscriptionQuietly } from "../lib/iap";
+import { useBlocked } from "../lib/moderation";
 import "../styles/profile.css";
 
 function compressImage(file, max = 400, quality = 0.7) {
@@ -133,6 +134,15 @@ function MailIcon() {
   );
 }
 
+function BlockIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M5.6 5.6l12.8 12.8" />
+    </svg>
+  );
+}
+
 function readTheme() {
   return (
     localStorage.getItem("theme") ||
@@ -154,6 +164,8 @@ export default function Profile() {
   const [delText, setDelText] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [restoring, setRestoring] = useState(false);
+  const [blockedOpen, setBlockedOpen] = useState(false);
+  const { list: blockedList, unblock } = useBlocked(user?.uid);
   const isApp = Capacitor.isNativePlatform();
   const isIosApp = Capacitor.getPlatform() === "ios";
 
@@ -469,6 +481,15 @@ setPreview(photoURL);
               <ChevronIcon />
             </button>
 
+            <button type="button" className="pf-link" onClick={() => setBlockedOpen(true)}>
+              <span className="pf-link-icon"><BlockIcon /></span>
+              <span className="pf-link-text">
+                <strong>Blocked users</strong>
+                <small>{blockedList.length > 0 ? `${blockedList.length} blocked` : "People you've blocked"}</small>
+              </span>
+              <ChevronIcon />
+            </button>
+
             {isSubscribed ? (
               <button
                 type="button"
@@ -573,6 +594,50 @@ setPreview(photoURL);
       </div>
 
       <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPhoto} />
+
+      {blockedOpen && (
+        <div className="pf-modal" onClick={() => setBlockedOpen(false)}>
+          <div
+            className="pf-modal-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pf-blk-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="pf-blk-title">Blocked users</h2>
+            {blockedList.length === 0 ? (
+              <p className="pf-blocked-empty">You haven't blocked anyone.</p>
+            ) : (
+              <ul className="pf-blocked-list">
+                {blockedList.map((b) => (
+                  <li key={b.uid} className="pf-blocked-row">
+                    <span className="pf-blocked-av">
+                      {b.photo ? <img src={b.photo} alt="" /> : (b.name || "?").slice(0, 1).toUpperCase()}
+                    </span>
+                    <span className="pf-blocked-name">{b.name || "Member"}</span>
+                    <button
+                      type="button"
+                      className="pf-btn pf-btn-out"
+                      onClick={() =>
+                        unblock(b.uid)
+                          .then(() => toast.success("Unblocked"))
+                          .catch(() => toast.error("Could not unblock"))
+                      }
+                    >
+                      Unblock
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="pf-modal-actions">
+              <button type="button" className="pf-btn pf-btn-out" onClick={() => setBlockedOpen(false)}>
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {delOpen && (
         <div className="pf-modal" onClick={closeDelete}>

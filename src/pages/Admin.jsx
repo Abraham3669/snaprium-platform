@@ -7,6 +7,7 @@ import {
   limit,
   query,
   updateDoc,
+  deleteDoc,
   doc,
   orderBy,
   serverTimestamp,
@@ -209,7 +210,7 @@ export default function Admin() {
         const closed = r.status === "closed";
         if (filters.reports === "open" && closed) return false;
         if (filters.reports === "closed" && !closed) return false;
-        return matches([r.communityName, r.communityId, r.reason, r.reporterName, r.reporterId]);
+        return matches([r.communityName, r.communityId, r.reason, r.reporterName, r.reporterId, r.type, r.contentName, r.preview, r.details]);
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [reports, filters.reports, q]
@@ -301,6 +302,28 @@ export default function Admin() {
     setReports((rows) => rows.map((r) => (r.id === id ? { ...r, status: "closed" } : r)));
     toast.success("Report closed");
   };
+
+  // Remove the reported message, question or reply, then close the report.
+  const deleteReported = async (r) => {
+    const cid = r.communityId;
+    if (!cid || !r.contentId) throw new Error("missing ids");
+    let ref;
+    if (r.type === "message") ref = doc(db, "communities", cid, "messages", r.contentId);
+    else if (r.type === "question") ref = doc(db, "communities", cid, "boards", r.boardId, "questions", r.contentId);
+    else ref = doc(db, "communities", cid, "boards", r.boardId, "questions", r.questionId, "replies", r.contentId);
+    await deleteDoc(ref);
+    await closeReport(r.id);
+    toast.success("Content deleted");
+  };
+
+  const askDeleteReported = (r) =>
+    ask({
+      title: `Delete this ${r.type}?`,
+      body: "It is removed for everyone and the report is closed. This can't be undone.",
+      label: "Delete",
+      danger: true,
+      run: () => deleteReported(r),
+    });
 
   const askBan = (target) =>
     ask({
@@ -480,24 +503,45 @@ export default function Admin() {
           {tab === "reports" &&
             filteredReports.map((r) => {
               const closed = r.status === "closed";
+              const kind = r.type || "community";
+              const isContent = kind === "message" || kind === "question" || kind === "reply";
               const circle = communities.find((c) => c.id === r.communityId);
               const circleName = r.communityName || circle?.name || r.communityId || "Unknown circle";
-              const by = r.reporterName || r.reportedByName || r.reporterId || r.userId;
+              const reporter = users.find((u) => u.id === r.reporterId);
+              const by =
+                r.reporterName || r.reportedByName || reporter?.displayName || reporter?.email || r.reporterId || r.userId;
+              const target = r.contentUid
+                ? users.find((u) => u.id === r.contentUid) || { id: r.contentUid, displayName: r.contentName }
+                : null;
+              const targetName = target?.displayName || target?.email || r.contentName || "Member";
+              const title = kind === "community" ? circleName : `${kind[0].toUpperCase()}${kind.slice(1)} by ${targetName}`;
+              const line = [r.reason || "No reason given", r.preview ? `"${r.preview.slice(0, 160)}"` : ""]
+                .filter(Boolean)
+                .join(" · ");
               return (
                 <li key={r.id} className="ad-row">
                   <span className="ad-avatar tone-warn">
                     <Flag size={18} aria-hidden="true" />
                   </span>
                   <div className="ad-main">
-                    <div className="ad-name">{circleName}</div>
-                    <div className="ad-line">{r.reason || "No reason given"}</div>
+                    <div className="ad-name">{title}</div>
+                    <div className="ad-line">{line}</div>
+                    {r.details ? <div className="ad-line">Note: {r.details}</div> : null}
                     <div className="ad-meta">
-                      {[by ? `Reported by ${by}` : "", fmtDate(r.createdAt)].filter(Boolean).join(" · ")}
+                      {[
+                        kind !== "community" && circleName !== "Unknown circle" ? `In ${circleName}` : "",
+                        by ? `Reported by ${by}` : "",
+                        fmtDate(r.createdAt),
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
                     </div>
                   </div>
                   <div className="ad-tags">
                     <span className={`ad-badge ${closed ? "" : "amber"}`}>{closed ? "Closed" : "Open"}</span>
+                    <span className="ad-badge">{kind === "user" ? "Person" : kind}</span>
                     {circle?.deleted && <span className="ad-badge red">Unlisted</span>}
+                    {target?.banned && <span className="ad-badge red">Banned</span>}
                   </div>
                   <div className="ad-actions">
                     {!closed && (
@@ -505,7 +549,22 @@ export default function Admin() {
                         Close
                       </button>
                     )}
-                    {r.communityId && !circle?.deleted && (
+                    {isContent && !closed && (
+                      <button type="button" className="ad-btn small danger" onClick={() => askDeleteReported(r)}>
+                        Delete content
+                      </button>
+                    )}
+                    {target && !target.banned && !ADMIN_UIDS.includes(target.id) && kind !== "community" && (
+                      <button type="button" className="ad-btn small danger" onClick={() => askBan(target)}>
+                        Ban user
+                      </button>
+                    )}
+                    {target?.banned && kind !== "community" && !ADMIN_UIDS.includes(target.id) && (
+                      <button type="button" className="ad-btn small" onClick={() => askUnban(target)}>
+                        Unban user
+                      </button>
+                    )}
+                    {kind === "community" && r.communityId && !circle?.deleted && (
                       <button
                         type="button"
                         className="ad-btn small danger"

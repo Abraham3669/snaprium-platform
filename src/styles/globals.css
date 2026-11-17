@@ -7114,8 +7114,7 @@ html.native-app .result-panel-content {
 
 
 
-
-/* Camera page title: centered and scaled to fit every phone (app only) */
+/* iPhone app only: keep the Snap/solver page title full-width, centered and scaled to the phone */
 html.native-app .camera-main .hero-title {
   width: 100%;
   max-width: 100%;
@@ -7125,5 +7124,5 @@ html.native-app .camera-main .hero-title {
   margin-right: 0 !important;
   padding-left: 12px !important;
   padding-right: 12px !important;
-  font-size: clamp(1.25rem, 6.7vw, 1.9rem);
+  font-size: clamp(1.2rem, 6.5vw, 1.9rem);
 }

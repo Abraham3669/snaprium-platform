@@ -20,6 +20,10 @@ markQuestionRead,
 import { notifyUser } from "../lib/notifications";
 import { tinyPhoto, useLiveProfiles } from "../lib/publicProfile";
 import { handleOf, resolveMentions, mentionSuggestions } from "../lib/mentions";
+import ImageViewer from "./ImageViewer";
+import { ReportDialog, BlockDialog } from "./ModerationDialogs";
+import { useBlocked } from "../lib/moderation";
+import { isClean, FILTER_MESSAGE } from "../lib/contentFilter";
 import "../styles/question-board.css";
 
 
@@ -188,7 +192,10 @@ function compressImage(file, max = 900, quality = 0.65) {
 }
 
 export default function QuestionBoard({ communityId, boardId, user, isMember, communityName = "", initialQuestionId = "", circlePeople = [] }) {
-  const [questions, setQuestions] = useState([]);
+  const [rawQuestions, setQuestions] = useState([]);
+  // Questions from people you blocked are hidden for you.
+  const { blocked } = useBlocked(user?.uid);
+  const questions = useMemo(() => rawQuestions.filter((q) => !blocked.has(q.uid)), [rawQuestions, blocked]);
   const questionUids = useMemo(() => questions.map((x) => x.uid), [questions]);
   const liveAuthors = useLiveProfiles(questionUids);
   const [openId, setOpenId] = useState(null);
@@ -254,6 +261,10 @@ const [seen, setSeen] = useState({});
     if (!user || !isMember || posting) return;
     const cleanTitle = title.trim();
     if (!cleanTitle) return;
+    if (!isClean(cleanTitle) || !isClean(body)) {
+      toast.error(FILTER_MESSAGE);
+      return;
+    }
     setPosting(true);
     try {
       await createQuestion(communityId, boardId, {
@@ -380,7 +391,11 @@ const [seen, setSeen] = useState({});
 }
 
 function QuestionDetail({ communityId, communityName = "", boardId, question, user, isMember, onBack, circlePeople = [] }) {
-  const [replies, setReplies] = useState([]);
+  const [rawReplies, setReplies] = useState([]);
+  const { blocked, block: blockPerson } = useBlocked(user?.uid);
+  const replies = useMemo(() => rawReplies.filter((x) => !blocked.has(x.uid)), [rawReplies, blocked]);
+  const [reportInfo, setReportInfo] = useState(null);
+  const [blockInfo, setBlockInfo] = useState(null);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const liked = !!(user && (question.likedBy || []).includes(user.uid));
@@ -516,6 +531,10 @@ function QuestionDetail({ communityId, communityName = "", boardId, question, us
     e?.preventDefault?.();
     const clean = text.trim();
     if (!clean || !user || !isMember || sending) return;
+    if (!isClean(clean)) {
+      toast.error(FILTER_MESSAGE);
+      return;
+    }
     setSending(true);
     try {
       const mentionIds = resolveMentions(clean, people).filter((id) => id !== user.uid);
@@ -633,6 +652,10 @@ function QuestionDetail({ communityId, communityName = "", boardId, question, us
   const savePost = async () => {
     const title = postTitle.trim();
     if (!title) return;
+    if (!isClean(title) || !isClean(postBody)) {
+      toast.error(FILTER_MESSAGE);
+      return;
+    }
     try {
       await editQuestion(communityId, boardId, question.id, { title, body: postBody.trim() });
       setEditingPost(false);
@@ -644,6 +667,10 @@ function QuestionDetail({ communityId, communityName = "", boardId, question, us
   const saveReply = async (replyId) => {
     const next = editReplyText.trim();
     if (!next) return;
+    if (!isClean(next)) {
+      toast.error(FILTER_MESSAGE);
+      return;
+    }
     try {
       await editQuestionReply(communityId, boardId, question.id, replyId, next);
       setEditingReplyId(null);
@@ -675,18 +702,7 @@ function QuestionDetail({ communityId, communityName = "", boardId, question, us
             <strong>{nameFor(question.uid, question.displayName)}</strong>
             <time>{timeLabel(question.createdAt)}</time>
           </div>
-                {lightboxUrl && (
-        <div className="cc-lightbox" role="dialog" aria-modal="true" onClick={() => setLightboxUrl("")}>
-          <div className="cc-lightbox-bar" onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={() => setLightboxUrl("")}>
-              Close
-            </button>
-          </div>
-          <div className="cc-lightbox-stage" onClick={(e) => e.stopPropagation()}>
-            <img src={lightboxUrl} alt="" />
-          </div>
-        </div>
-      )}
+                <ImageViewer url={lightboxUrl} onClose={() => setLightboxUrl("")} />
         </div>
         {editingPost ? (
           <div className="qb-edit">
@@ -746,6 +762,58 @@ function QuestionDetail({ communityId, communityName = "", boardId, question, us
             </button>
           )}
 
+          {!mine && !!user && (
+            <div className="qb-menu-wrap">
+              <button
+                type="button"
+                className="qb-more"
+                onClick={() => setMenuId(menuId === "question" ? null : "question")}
+                aria-label="More actions"
+                aria-expanded={menuId === "question"}
+              >
+                ⋯
+              </button>
+              {menuId === "question" && (
+                <div className="qb-menu" role="menu">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setMenuId(null);
+                      setReportInfo({
+                        kind: "question",
+                        communityId,
+                        boardId,
+                        questionId: question.id,
+                        contentId: question.id,
+                        contentUid: question.uid || "",
+                        contentName: nameFor(question.uid, question.displayName),
+                        preview: `${question.title || ""}. ${question.body || ""}`,
+                      });
+                    }}
+                  >
+                    Report
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="qb-menu-danger"
+                    onClick={() => {
+                      setMenuId(null);
+                      setBlockInfo({
+                        uid: question.uid,
+                        name: nameFor(question.uid, question.displayName),
+                        photo: photoFor(question.uid, question.photoURL),
+                      });
+                    }}
+                  >
+                    Block user
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {mine && !editingPost && (
             <div className="qb-menu-wrap">
               <button
@@ -796,8 +864,8 @@ function QuestionDetail({ communityId, communityName = "", boardId, question, us
                       )}
                     </span>
                     <div className="qb-quote-body">
-                      <strong>{qName}</strong>
-                      <span>{r.replyTo.text}</span>
+                      <strong>{qUid && blocked.has(qUid) ? "Blocked user" : qName}</strong>
+                      <span>{qUid && blocked.has(qUid) ? "Message hidden" : r.replyTo.text}</span>
                     </div>
                   </div>
                 );
@@ -838,6 +906,57 @@ function QuestionDetail({ communityId, communityName = "", boardId, question, us
                   );
                 })()}
                 <button type="button" onClick={() => startReply(r)}>Reply</button>
+                {!!user && user.uid !== r.uid && (
+                  <div className="qb-menu-wrap">
+                    <button
+                      type="button"
+                      className="qb-more"
+                      onClick={() => setMenuId(menuId === r.id ? null : r.id)}
+                      aria-label="More actions"
+                      aria-expanded={menuId === r.id}
+                    >
+                      ⋯
+                    </button>
+                    {menuId === r.id && (
+                      <div className="qb-menu" role="menu">
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={() => {
+                            setMenuId(null);
+                            setReportInfo({
+                              kind: "reply",
+                              communityId,
+                              boardId,
+                              questionId: question.id,
+                              contentId: r.id,
+                              contentUid: r.uid || "",
+                              contentName: nameFor(r.uid, r.displayName),
+                              preview: r.text || "",
+                            });
+                          }}
+                        >
+                          Report
+                        </button>
+                        <button
+                          type="button"
+                          role="menuitem"
+                          className="qb-menu-danger"
+                          onClick={() => {
+                            setMenuId(null);
+                            setBlockInfo({
+                              uid: r.uid,
+                              name: nameFor(r.uid, r.displayName),
+                              photo: photoFor(r.uid, r.photoURL),
+                            });
+                          }}
+                        >
+                          Block user
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
                 {user?.uid === r.uid && (
                   <div className="qb-menu-wrap">
                     <button
@@ -914,6 +1033,22 @@ function QuestionDetail({ communityId, communityName = "", boardId, question, us
           </button>
         </form>
       </div>
+      {reportInfo && (
+        <ReportDialog
+          info={reportInfo}
+          user={user}
+          onClose={() => setReportInfo(null)}
+          onAlsoBlock={(i) =>
+            blockPerson(
+              { uid: i.contentUid, name: i.contentName, photo: photoFor(i.contentUid, "") },
+              communityId
+            )
+          }
+        />
+      )}
+      {blockInfo && (
+        <BlockDialog person={blockInfo} onClose={() => setBlockInfo(null)} onConfirm={(p) => blockPerson(p, communityId)} />
+      )}
     </div>
   );
 }

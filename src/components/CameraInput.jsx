@@ -76,7 +76,19 @@ export default function CameraInput({ onFileSelect }) {
                     paddingLeft: 16,
                     paddingRight: 16,
                   }
-                : undefined
+                : {
+                    // iPhone app: use the full screen width and scale the text with it,
+                    // so the first line always fits and stays centered on every phone.
+                    width: "100%",
+                    maxWidth: "100%",
+                    boxSizing: "border-box",
+                    textAlign: "center",
+                    marginLeft: 0,
+                    marginRight: 0,
+                    paddingLeft: 12,
+                    paddingRight: 12,
+                    fontSize: "clamp(1.2rem, 6.5vw, 1.9rem)",
+                  }
             }
           >
             <span className="no-break">Understand Math & Physics </span>

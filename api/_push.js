@@ -267,6 +267,21 @@ async function tokensFor(db, uids) {
   return out;
 }
 
+// Which of these people have blocked the sender? (users/{them}/blocked/{sender})
+async function blockedBy(db, toUids, fromUid) {
+  const out = new Set();
+  const list = [...new Set(toUids)].filter(Boolean);
+  for (let i = 0; i < list.length; i += 100) {
+    const chunk = list.slice(i, i + 100);
+    const refs = chunk.map((t) => db.collection("users").doc(t).collection("blocked").doc(fromUid));
+    const snaps = await db.getAll(...refs);
+    snaps.forEach((snap, k) => {
+      if (snap.exists) out.add(chunk[k]);
+    });
+  }
+  return out;
+}
+
 async function deliver(db, notes) {
   // notes: [{ uid, id, data }]
   const uids = [...new Set(notes.map((n) => n.uid))];
@@ -362,6 +377,11 @@ export async function handlePush(req, res) {
     if (action === "notify") {
       if (!safe(body.to) || !safe(body.id)) return res.status(400).json({ ok: false, error: "Bad request" });
 
+      // Someone who blocked you never gets an alert from you.
+      if ((await blockedBy(db, [body.to], uid)).has(body.to)) {
+        return res.status(200).json({ ok: true, skipped: "blocked" });
+      }
+
       const ref = db.collection("users").doc(body.to).collection("notifications").doc(body.id);
       const claimed = await db.runTransaction(async (tx) => {
         const snap = await tx.get(ref);
@@ -435,7 +455,9 @@ export async function handlePush(req, res) {
       const url = `/community/${body.communityId}/chat${boardId ? `?board=${boardId}` : ""}`;
       const bucket = Math.floor(Date.now() / SESSION_COOLDOWN_MS);
 
-      const targets = members.filter((m) => m !== uid).slice(0, SESSION_MAX_MEMBERS);
+      const candidates = members.filter((m) => m !== uid).slice(0, SESSION_MAX_MEMBERS);
+      const blockers = await blockedBy(db, candidates, uid);
+      const targets = candidates.filter((m) => !blockers.has(m));
       const notes = [];
       let batch = db.batch();
       let inBatch = 0;
@@ -507,7 +529,9 @@ export async function handlePush(req, res) {
       const url = `/community/${body.communityId}/chat?board=${boardId}&m=${body.messageId}`;
       const preview = String(msg.text || "").replace(/\s+/g, " ").trim().slice(0, 140);
 
-      const targets = members.filter((m) => m !== uid).slice(0, EVERYONE_MAX_MEMBERS);
+      const candidates = members.filter((m) => m !== uid).slice(0, EVERYONE_MAX_MEMBERS);
+      const blockers = await blockedBy(db, candidates, uid);
+      const targets = candidates.filter((m) => !blockers.has(m));
       const notes = [];
       let batch = db.batch();
       let inBatch = 0;

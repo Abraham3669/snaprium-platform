@@ -674,3 +674,62 @@ html.native-app .nt-page .nt-row.unread:hover { background: color-mix(in srgb, v
 html.native-app .nt-page .nt-row:active {
   background: color-mix(in srgb, var(--text-primary) 10%, transparent);
 }
+
+
+
+
+
+
+
+/* ===== Photo viewer (Questions board) ===== */
+.iv-root { position: fixed; inset: 0; z-index: 10000; background: rgba(0,0,0,.94); display: flex; flex-direction: column; }
+.iv-bar { display: flex; justify-content: flex-end; padding: 12px 14px; flex: 0 0 auto; position: relative; z-index: 2; }
+.iv-close { background: rgba(255,255,255,.16); color: #fff; border: 0; border-radius: 999px; padding: 10px 18px; font-size: 15px; font-weight: 600; }
+.iv-stage { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
+.iv-stage img { max-width: 100%; max-height: 100%; object-fit: contain; transform-origin: center center; will-change: transform; -webkit-user-drag: none; -webkit-touch-callout: none; }
+/* iPhone app only: keep Close below the status bar / Dynamic Island, and clear the home bar */
+html.native-app .iv-bar { padding-top: max(env(safe-area-inset-top, 0px), 56px); }
+html.native-app .iv-stage { padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px); }
+
+/* ===== Report / Block dialogs and Blocked users list ===== */
+.mod-backdrop { position: fixed; inset: 0; z-index: 10001; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; padding: 20px; }
+.mod-card { width: 100%; max-width: 420px; max-height: 88vh; overflow-y: auto; background: var(--surface); color: var(--text-primary); border: 1px solid var(--border); border-radius: 18px; padding: 20px 18px 16px; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+.mod-card h3 { margin: 0 0 6px; font-size: 1.1rem; }
+.mod-sub { margin: 0 0 14px; font-size: .88rem; line-height: 1.45; color: var(--text-secondary); }
+.mod-reasons { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.mod-reason { text-align: left; padding: 11px 14px; border-radius: 12px; border: 1px solid var(--border); background: transparent; color: var(--text-primary); font-size: .95rem; }
+.mod-reason.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; font-weight: 600; }
+.mod-details { width: 100%; box-sizing: border-box; border-radius: 12px; border: 1px solid var(--border); background: transparent; color: var(--text-primary); padding: 10px 12px; font: inherit; font-size: .92rem; resize: none; }
+.mod-check { display: flex; align-items: center; gap: 10px; margin: 12px 0 0; font-size: .92rem; }
+.mod-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+.mod-btn { height: 40px; padding: 0 18px; border-radius: 12px; border: 1px solid var(--border); background: transparent; color: var(--text-primary); font-weight: 600; }
+.mod-btn.mod-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.mod-btn.mod-danger { background: #d92d20; border-color: #d92d20; color: #fff; }
+.mod-btn:disabled { opacity: .55; }
+
+.pf-blocked-list { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; max-height: 50vh; overflow-y: auto; }
+.pf-blocked-row { display: flex; align-items: center; gap: 12px; padding: 8px 2px; }
+.pf-blocked-av { width: 38px; height: 38px; border-radius: 50%; background: var(--icon-bg); display: grid; place-items: center; font-weight: 700; overflow: hidden; flex: 0 0 auto; }
+.pf-blocked-av img { width: 100%; height: 100%; object-fit: cover; }
+.pf-blocked-name { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pf-blocked-empty { margin: 8px 0 0; color: var(--text-secondary); font-size: .92rem; }
+html.native-app .mod-backdrop { padding-top: max(env(safe-area-inset-top, 0px), 20px); padding-bottom: max(env(safe-area-inset-bottom, 0px), 20px); }
+
+
+
+
+
+
+
+/* iPhone app only: keep the Snap/solver page title full-width, centered and scaled to the phone */
+html.native-app .camera-main .hero-title {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+  font-size: clamp(1.2rem, 6.5vw, 1.9rem);
+}

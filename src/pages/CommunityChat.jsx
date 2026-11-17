@@ -38,6 +38,10 @@ countBoardUnread,
 } from "../lib/communities";
 import { notifyUser, notifyCircleSession, notifyEveryone } from "../lib/notifications";
 import QuestionBoard from "../components/QuestionBoard";
+import ImageViewer from "../components/ImageViewer";
+import { ReportDialog, BlockDialog } from "../components/ModerationDialogs";
+import { useBlocked } from "../lib/moderation";
+import { isClean, FILTER_MESSAGE } from "../lib/contentFilter";
 import { tinyPhoto } from "../lib/publicProfile";
 import { handleOf, resolveMentions, mentionSuggestions, hasEveryone, EVERYONE_ENTRY } from "../lib/mentions";
 import ReactMarkdown from "react-markdown";
@@ -356,7 +360,12 @@ export default function CommunityChat() {
   const [community, setCommunity] = useState(null);
   const [boards, setBoards] = useState([]);
   const [boardId, setBoardId] = useState(params.get("board") || "");
-  const [messages, setMessages] = useState([]);
+  const [rawMessages, setMessages] = useState([]);
+  // People you blocked never show up for you.
+  const { blocked, block: blockPerson } = useBlocked(user?.uid);
+  const messages = useMemo(() => rawMessages.filter((m) => !blocked.has(m.uid)), [rawMessages, blocked]);
+  const [reportInfo, setReportInfo] = useState(null);
+  const [blockInfo, setBlockInfo] = useState(null);
   const [input, setInput] = useState("");
   const [callOpen, setCallOpen] = useState(false);
 const [callFocus, setCallFocus] = useState(false);
@@ -458,11 +467,12 @@ const mentionable = useMemo(() => {
     map.set(p.uid, { uid: p.uid, name: p.name });
   }
   for (const uid of community?.members || []) {
+    if (blocked.has(uid)) continue;
     const name = profiles[uid]?.displayName;
     if (name) map.set(uid, { uid, name });
   }
   return [...map.values()].filter((p) => p.name && p.name !== "Member" && handleOf(p.name));
-}, [boardPeople, community?.members, profiles]);
+}, [boardPeople, community?.members, profiles, blocked]);
 
 // People who spoke most recently come first in the list.
 const recentRank = useMemo(() => {
@@ -1065,6 +1075,10 @@ useEffect(() => {
   const text = input.trim();
   const imageUrl = pendingImage;
   if ((!text && !imageUrl) || !user || !isMember) return;
+  if (!isClean(text)) {
+    toast.error(FILTER_MESSAGE);
+    return;
+  }
   setInput("");
   setPendingImage("");
   clearTyping();
@@ -1161,6 +1175,10 @@ useEffect(() => {
   const saveEdit = async (msg) => {
     const text = editText.trim();
     if (!text) return;
+    if (!isClean(text)) {
+      toast.error(FILTER_MESSAGE);
+      return;
+    }
     try {
       await editCommunityMessage(communityId, msg.id, text);
       cancelEdit();
@@ -1525,6 +1543,37 @@ useEffect(() => {
                       {msg.uid === user?.uid && (
                         <button type="button" className="danger" onClick={() => { removeMessage(msg); setMenuFor(null); }}>Delete</button>
                       )}
+                      {msg.uid !== user?.uid && !!user && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setReportInfo({
+                                kind: "message",
+                                communityId,
+                                boardId: msg.boardId || activeBoardId,
+                                contentId: msg.id,
+                                contentUid: msg.uid || "",
+                                contentName: name,
+                                preview: msg.text || (msg.imageUrl ? "[photo]" : ""),
+                              });
+                              setMenuFor(null);
+                            }}
+                          >
+                            Report
+                          </button>
+                          <button
+                            type="button"
+                            className="danger"
+                            onClick={() => {
+                              setBlockInfo({ uid: msg.uid, name, photo });
+                              setMenuFor(null);
+                            }}
+                          >
+                            Block user
+                          </button>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1535,6 +1584,7 @@ useEffect(() => {
               const original =
                 messages.find((m) => m.id === msg.replyTo.id) || null;
               const qUid = msg.replyTo.uid || original?.uid || "";
+              const qBlocked = !!qUid && blocked.has(qUid);
               const qName =
                 msg.replyTo.displayName ||
                 (original ? liveName(original) : "") ||
@@ -1554,8 +1604,8 @@ useEffect(() => {
                     )}
                   </span>
                   <div className="cc-quote-body">
-                    <strong>{qName}</strong>
-                    <span>{msg.replyTo.text}</span>
+                    <strong>{qBlocked ? "Blocked user" : qName}</strong>
+                    <span>{qBlocked ? "Message hidden" : msg.replyTo.text}</span>
                   </div>
                 </div>
               );
@@ -1831,28 +1881,21 @@ useEffect(() => {
 
 
 
-              {lightbox &&
-          createPortal(
-            <div className="cc-lightbox" onClick={() => setLightbox(null)}>
-              <div className="cc-lightbox-bar" onClick={(e) => e.stopPropagation()}>
-                <button type="button" onClick={() => setZoom((z) => Math.max(1, z - 0.5))}>−</button>
-                <button type="button" onClick={() => setZoom(1)}>Fit</button>
-                <button type="button" onClick={() => setZoom((z) => Math.min(4, z + 0.5))}>+</button>
-                <button type="button" onClick={() => setLightbox(null)}>Close</button>
-              </div>
-              <div
-                className="cc-lightbox-stage"
-                onClick={(e) => e.stopPropagation()}
-                onWheel={(e) => {
-                  e.preventDefault();
-                  setZoom((z) => Math.min(4, Math.max(1, z + (e.deltaY < 0 ? 0.2 : -0.2))));
-                }}
-              >
-                <img src={lightbox} alt="" style={{ transform: `scale(${zoom})` }} />
-              </div>
-            </div>,
-            document.body
-          )}
+      <ImageViewer url={lightbox || ""} onClose={() => setLightbox(null)} />
+
+{reportInfo && (
+  <ReportDialog
+    info={reportInfo}
+    user={user}
+    onClose={() => setReportInfo(null)}
+    onAlsoBlock={(i) =>
+      blockPerson({ uid: i.contentUid, name: i.contentName, photo: profiles[i.contentUid]?.photoURL || "" }, communityId)
+    }
+  />
+)}
+{blockInfo && (
+  <BlockDialog person={blockInfo} onClose={() => setBlockInfo(null)} onConfirm={(p) => blockPerson(p, communityId)} />
+)}
 
 {confirmDelete && (
   <div className="cc-confirm" onClick={() => setConfirmDelete(null)}>

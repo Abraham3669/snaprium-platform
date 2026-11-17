@@ -1,13 +1,20 @@
 // src/lib/useNotifications.js
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   subscribeToNotifications,
   markNotificationRead,
   markAllNotificationsRead,
 } from "./notifications";
+import { useBlocked } from "./moderation";
 
 export default function useNotifications(uid) {
-  const [items, setItems] = useState([]);
+  const [rawItems, setItems] = useState([]);
+  const { blocked } = useBlocked(uid);
+  // Alerts from people you blocked never show (and never count as unread).
+  const items = useMemo(
+    () => rawItems.filter((n) => !n.fromUid || !blocked.has(n.fromUid)),
+    [rawItems, blocked]
+  );
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
