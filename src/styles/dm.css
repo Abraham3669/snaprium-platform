@@ -1,40 +1,13 @@
-/* src/styles/dm.css  Direct messages + conversation list.
-   1) shared  2) phone (≤700px: full screen)  3) PC (≥701px: tall window)  + iPhone app only */
-.dm-frame { position: fixed; inset: 0; z-index: 9990; display: flex; background: rgba(0,0,0,.55); }
-.dm-window { display: flex; flex-direction: column; width: 100%; background: var(--surface); color: var(--text-primary); }
-.dm-head { display: flex; align-items: center; gap: 6px; padding: 10px 12px; border-bottom: 1px solid var(--border); }
-.dm-back { display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 50%; background: none; color: inherit; cursor: pointer; }
-.dm-who { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 4px 8px; border: 0; border-radius: 12px; background: none; color: inherit; font: inherit; cursor: pointer; }
-.dm-av { display: grid; place-items: center; flex: 0 0 auto; width: 38px; height: 38px; overflow: hidden; border-radius: 13px; background: linear-gradient(135deg, var(--accent), var(--accent-dark)); color: #fff; font-weight: 700; }
-.dm-av img { width: 100%; height: 100%; object-fit: cover; }
-.dm-feed { flex: 1; min-height: 0; padding: 14px 14px 8px; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 6px; }
-.dm-note { margin: auto; color: var(--text-secondary); text-align: center; font-size: .92rem; }
-.dm-day { display: flex; justify-content: center; margin: 10px 0 4px; }
-.dm-day span { padding: 3px 12px; border-radius: 999px; background: var(--icon-bg); color: var(--text-secondary); font-size: .76rem; font-weight: 600; }
-.dm-row { display: flex; flex-direction: column; align-items: flex-start; }
-.dm-row.mine { align-items: flex-end; }
-.dm-bubble { max-width: min(78%, 460px); padding: 9px 12px 6px; border-radius: 18px 18px 18px 6px; background: var(--icon-bg); cursor: pointer; word-break: break-word; }
-.dm-row.mine .dm-bubble { border-radius: 18px 18px 6px 18px; background: var(--accent); color: #fff; }
-.dm-bubble p { margin: 0; white-space: pre-wrap; line-height: 1.4; font-size: .96rem; }
-.dm-bubble time { display: block; margin-top: 2px; font-size: .68rem; opacity: .65; text-align: right; }
-.dm-img { display: block; margin: 0 0 6px; padding: 0; border: 0; background: none; cursor: zoom-in; }
-.dm-img img { display: block; max-width: 100%; max-height: 260px; border-radius: 12px; }
-.dm-tools { margin-top: 4px; }
-.dm-tools button { padding: 5px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text-primary); font: inherit; font-size: .8rem; cursor: pointer; }
-.dm-tools button.danger { color: #ef4444; }
-.dm-composer { padding: 8px 12px 10px; border-top: 1px solid var(--border); }
-.dm-composer-row { display: flex; align-items: flex-end; gap: 8px; }
-.dm-composer textarea { flex: 1; min-height: 42px; max-height: 120px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 21px; background: transparent; color: var(--text-primary); font: inherit; font-size: 16px; line-height: 1.35; resize: none; }
-.dm-composer textarea:focus { outline: none; border-color: var(--accent); }
-.dm-icon, .dm-send { display: grid; place-items: center; flex: 0 0 auto; width: 42px; height: 42px; border: 0; border-radius: 50%; cursor: pointer; }
-.dm-icon { background: none; color: var(--text-secondary); }
-.dm-send { background: var(--accent); color: #fff; }
-.dm-send:disabled { opacity: .45; cursor: default; }
-.dm-attach { position: relative; display: inline-block; margin-bottom: 8px; }
-.dm-attach img { display: block; width: 64px; height: 64px; object-fit: cover; border-radius: 12px; }
-.dm-attach button { position: absolute; top: -6px; right: -6px; width: 22px; height: 22px; border: 0; border-radius: 50%; background: #0f172a; color: #fff; cursor: pointer; }
-.dm-locked { margin: 0; padding: 14px; border-top: 1px solid var(--border); color: var(--text-secondary); text-align: center; font-size: .9rem; }
-/* conversation list */
+/* src/styles/dm.css  Direct messages.
+   The chat screen itself reuses your community-chat.css (same header, rows, composer),
+   so it looks like a circle chat. Only the bits below are new.
+   1) shared  2) phone  3) PC  + iPhone app only */
+
+/* sits above the Profile page and the Messages list */
+.cc-frame.dm-frame { z-index: 9990; }
+.dm-confirm { z-index: 10002; }
+
+/* conversation list (Messages window) */
 .ms-conv { width: 100%; }
 .ms-copy { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .ms-last { overflow: hidden; color: var(--text-secondary); font-size: .85rem; text-overflow: ellipsis; white-space: nowrap; }
@@ -43,15 +16,21 @@
 .ms-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
 .pc-btn.pc-msg { border-color: transparent; background: var(--accent); color: #fff; }
 
-/* phone: full screen */
-@media (max-width: 700px) {
-  .dm-frame { background: var(--surface); }
-  .dm-composer { padding-bottom: max(env(safe-area-inset-bottom, 0px), 10px); }
-}
-/* PC: tall centred window */
+/* phone: nothing extra, the circle-chat phone rules already apply */
+
+/* the close button only shows on PC (phone and iPhone app use the back arrow) */
+.dm-close { display: none; }
+
+/* PC and big tablets: a full page like a circle chat, with an exit button top right */
 @media (min-width: 701px) {
-  .dm-frame { align-items: center; justify-content: center; padding: 24px; }
-  .dm-window { max-width: 560px; height: min(760px, 92dvh); overflow: hidden; border: 1px solid var(--border); border-radius: 22px; box-shadow: var(--shadow-md); }
+  .cc-frame.dm-frame { flex-direction: column; }
+  .dm-frame .cc-top { grid-template-columns: 44px minmax(0, 1fr) auto; }
+  .dm-frame .cc-faces { display: flex; align-items: center; gap: 10px; }
+  .dm-frame .dm-close { display: grid; }
 }
-/* iPhone app only: keep clear of the notch */
-html.native-app .dm-head { padding-top: max(env(safe-area-inset-top, 0px), 10px); }
+
+/* iPhone app only: keep the header clear of the notch (a circle gets this from its boards row) */
+html.native-app .cc-frame.dm-frame .cc-top { padding-top: calc(8px + env(safe-area-inset-top, 0px)); }
+
+/* the small picture in the header */
+.dm-frame .cc-face { display: grid; place-items: center; margin-left: 0; }
