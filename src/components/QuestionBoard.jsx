@@ -191,7 +191,7 @@ function compressImage(file, max = 900, quality = 0.65) {
   });
 }
 
-export default function QuestionBoard({ communityId, boardId, user, isMember, communityName = "", initialQuestionId = "", circlePeople = [] }) {
+export default function QuestionBoard({ communityId, boardId, user, isMember, communityName = "", initialQuestionId = "", circlePeople = [], onOpenProfile }) {
   const [rawQuestions, setQuestions] = useState([]);
   // Questions from people you blocked are hidden for you.
   const { blocked } = useBlocked(user?.uid);
@@ -383,6 +383,7 @@ const [seen, setSeen] = useState({});
           user={user}
           isMember={isMember}
           circlePeople={circlePeople}
+          onOpenProfile={onOpenProfile}
           onBack={() => setOpenId(null)}
         />
       )}
@@ -390,7 +391,7 @@ const [seen, setSeen] = useState({});
   );
 }
 
-function QuestionDetail({ communityId, communityName = "", boardId, question, user, isMember, onBack, circlePeople = [] }) {
+function QuestionDetail({ communityId, communityName = "", boardId, question, user, isMember, onBack, circlePeople = [], onOpenProfile }) {
   const [rawReplies, setReplies] = useState([]);
   const { blocked, block: blockPerson } = useBlocked(user?.uid);
   const replies = useMemo(() => rawReplies.filter((x) => !blocked.has(x.uid)), [rawReplies, blocked]);
@@ -697,9 +698,22 @@ function QuestionDetail({ communityId, communityName = "", boardId, question, us
       </button>
       <article className="qb-question">
         <div className="qb-person">
-          <Avatar photo={photoFor(question.uid, question.photoURL)} name={nameFor(question.uid, question.displayName)} />
+          <button
+            type="button"
+            className="qb-person-btn"
+            aria-label={`Open ${nameFor(question.uid, question.displayName)}'s profile`}
+            onClick={() => question.uid && onOpenProfile?.(question.uid, nameFor(question.uid, question.displayName), photoFor(question.uid, question.photoURL))}
+          >
+            <Avatar photo={photoFor(question.uid, question.photoURL)} name={nameFor(question.uid, question.displayName)} />
+          </button>
           <div>
-            <strong>{nameFor(question.uid, question.displayName)}</strong>
+            <button
+              type="button"
+              className="qb-name-btn"
+              onClick={() => question.uid && onOpenProfile?.(question.uid, nameFor(question.uid, question.displayName), photoFor(question.uid, question.photoURL))}
+            >
+              <strong>{nameFor(question.uid, question.displayName)}</strong>
+            </button>
             <time>{timeLabel(question.createdAt)}</time>
           </div>
                 <ImageViewer url={lightboxUrl} onClose={() => setLightboxUrl("")} />
@@ -845,9 +859,22 @@ function QuestionDetail({ communityId, communityName = "", boardId, question, us
         {replies.length === 0 && <p className="cc-muted">No replies yet.</p>}
         {replies.map((r) => (
           <article key={r.id} className="qb-reply">
-            <Avatar photo={photoFor(r.uid, r.photoURL)} name={nameFor(r.uid, r.displayName)} />
+            <button
+              type="button"
+              className="qb-person-btn"
+              aria-label={`Open ${nameFor(r.uid, r.displayName)}'s profile`}
+              onClick={() => r.uid && onOpenProfile?.(r.uid, nameFor(r.uid, r.displayName), photoFor(r.uid, r.photoURL))}
+            >
+              <Avatar photo={photoFor(r.uid, r.photoURL)} name={nameFor(r.uid, r.displayName)} />
+            </button>
             <div>
-              <strong>{nameFor(r.uid, r.displayName)}</strong>
+              <button
+                type="button"
+                className="qb-name-btn"
+                onClick={() => r.uid && onOpenProfile?.(r.uid, nameFor(r.uid, r.displayName), photoFor(r.uid, r.photoURL))}
+              >
+                <strong>{nameFor(r.uid, r.displayName)}</strong>
+              </button>
               <time>{timeLabel(r.createdAt)}{r.edited ? " · edited" : ""}</time>
               {r.replyTo && (() => {
                 const original = replies.find((x) => x.id === r.replyTo.id) || null;

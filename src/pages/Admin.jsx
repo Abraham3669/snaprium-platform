@@ -306,6 +306,13 @@ export default function Admin() {
   // Remove the reported message, question or reply, then close the report.
   const deleteReported = async (r) => {
     const cid = r.communityId;
+    if (r.type === "dm") {
+      if (!r.boardId || !r.contentId) throw new Error("missing ids");
+      await deleteDoc(doc(db, "dms", r.boardId, "messages", r.contentId));
+      await closeReport(r.id);
+      toast.success("Message deleted");
+      return;
+    }
     if (!cid || !r.contentId) throw new Error("missing ids");
     let ref;
     if (r.type === "message") ref = doc(db, "communities", cid, "messages", r.contentId);
@@ -315,6 +322,27 @@ export default function Admin() {
     await closeReport(r.id);
     toast.success("Content deleted");
   };
+
+  // A reported profile: clear the banner and bio from the person's public card, then close the report.
+  const clearReportedProfile = async (r) => {
+    if (!r.contentUid) throw new Error("missing uid");
+    await updateDoc(doc(db, "publicProfiles", r.contentUid), {
+      banner: "",
+      bio: "",
+      updatedAt: serverTimestamp(),
+    });
+    await closeReport(r.id);
+    toast.success("Banner and bio removed");
+  };
+
+  const askClearProfile = (r) =>
+    ask({
+      title: "Remove banner and bio?",
+      body: "Their banner and bio are cleared for everyone and the report is closed. Their name and photo stay. They can add new ones.",
+      label: "Remove",
+      danger: true,
+      run: () => clearReportedProfile(r),
+    });
 
   const askDeleteReported = (r) =>
     ask({
@@ -504,7 +532,7 @@ export default function Admin() {
             filteredReports.map((r) => {
               const closed = r.status === "closed";
               const kind = r.type || "community";
-              const isContent = kind === "message" || kind === "question" || kind === "reply";
+              const isContent = kind === "message" || kind === "question" || kind === "reply" || kind === "dm";
               const circle = communities.find((c) => c.id === r.communityId);
               const circleName = r.communityName || circle?.name || r.communityId || "Unknown circle";
               const reporter = users.find((u) => u.id === r.reporterId);
@@ -539,7 +567,7 @@ export default function Admin() {
                   </div>
                   <div className="ad-tags">
                     <span className={`ad-badge ${closed ? "" : "amber"}`}>{closed ? "Closed" : "Open"}</span>
-                    <span className="ad-badge">{kind === "user" ? "Person" : kind}</span>
+                    <span className="ad-badge">{kind === "user" ? "Person" : kind === "profile" ? "Profile" : kind}</span>
                     {circle?.deleted && <span className="ad-badge red">Unlisted</span>}
                     {target?.banned && <span className="ad-badge red">Banned</span>}
                   </div>
@@ -547,6 +575,11 @@ export default function Admin() {
                     {!closed && (
                       <button type="button" className="ad-btn small" onClick={() => closeReport(r.id)}>
                         Close
+                      </button>
+                    )}
+                    {kind === "profile" && !closed && (
+                      <button type="button" className="ad-btn small danger" onClick={() => askClearProfile(r)}>
+                        Remove banner and bio
                       </button>
                     )}
                     {isContent && !closed && (

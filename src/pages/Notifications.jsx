@@ -23,6 +23,20 @@ function TypeIcon({ type }) {
         <path d="M16 12v1.5a2.5 2.5 0 0 0 5 0V12a9 9 0 1 0-3.5 7.1" strokeLinecap="round" />
       </svg>
     );
+  if (type === "dm")
+    return (
+      <svg {...common}>
+        <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" strokeLinejoin="round" />
+      </svg>
+    );
+  if (type === "friend_request" || type === "friend_accept")
+    return (
+      <svg {...common}>
+        <circle cx="9" cy="8" r="3.5" />
+        <path d="M2.5 20v-1a5 5 0 0 1 5-5h3a5 5 0 0 1 5 5v1" strokeLinecap="round" />
+        <path d="M19 8v6M16 11h6" strokeLinecap="round" />
+      </svg>
+    );
   if (type === "session")
     return (
       <svg {...common}>
@@ -131,7 +145,7 @@ function Row({ n, onOpen }) {
         <strong>{groupTitle(n)}</strong>
         {n.count > 1 ? <span className="nt-preview">{n.count} {groupNoun(n.type)}{n.preview ? ` · latest: ${n.preview}` : ""}</span> : n.preview ? <span className="nt-preview">{n.preview}</span> : null}
         <span className="nt-meta">
-          {n.communityName || "Circle"}
+          {n.type === "friend_request" || n.type === "friend_accept" ? "Friends" : n.type === "dm" ? "Message" : n.communityName || "Circle"}
           <span aria-hidden="true"> · </span>
           {notificationTime(n.createdAt)}
         </span>
@@ -201,7 +215,7 @@ export default function Notifications({ items, loading, unread, markRead, markAl
 
   const openItem = (n) => {
     if (!n.read) (n.ids || [n.id]).forEach((id) => markRead(id));
-    if (typeof n.url === "string" && n.url.startsWith("/community/")) navigate(n.url);
+    if (typeof n.url === "string" && (n.url.startsWith("/community/") || n.url.startsWith("/profile"))) navigate(n.url);
   };
 
   if (!authLoading && !user) {

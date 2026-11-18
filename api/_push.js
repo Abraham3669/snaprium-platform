@@ -233,6 +233,12 @@ function headline(n, communityName) {
       return { title: `${who} mentioned everyone in ${communityName}`, body: n.preview || "Tap to read" };
     case "session":
       return { title: `Live session in ${communityName}`, body: `${who} started a session. Tap to join.` };
+    case "dm":
+      return { title: `${who} sent you a message`, body: n.preview || "Tap to read" };
+    case "friend_request":
+      return { title: `${who} sent you a friend request`, body: "Tap to accept or decline" };
+    case "friend_accept":
+      return { title: `${who} accepted your friend request`, body: "You are now friends on Snaprium" };
     default:
       return { title: "Snaprium", body: n.preview || "You have a new notification" };
   }

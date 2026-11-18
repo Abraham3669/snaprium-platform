@@ -38,6 +38,7 @@ countBoardUnread,
 } from "../lib/communities";
 import { notifyUser, notifyCircleSession, notifyEveryone } from "../lib/notifications";
 import QuestionBoard from "../components/QuestionBoard";
+import ProfileCard from "../components/ProfileCard";
 import ImageViewer from "../components/ImageViewer";
 import { ReportDialog, BlockDialog } from "../components/ModerationDialogs";
 import { useBlocked } from "../lib/moderation";
@@ -366,6 +367,8 @@ export default function CommunityChat() {
   const messages = useMemo(() => rawMessages.filter((m) => !blocked.has(m.uid)), [rawMessages, blocked]);
   const [reportInfo, setReportInfo] = useState(null);
   const [blockInfo, setBlockInfo] = useState(null);
+  // Whose profile card is open (tap a name or picture).
+  const [cardFor, setCardFor] = useState(null);
   const [input, setInput] = useState("");
   const [callOpen, setCallOpen] = useState(false);
 const [callFocus, setCallFocus] = useState(false);
@@ -1340,7 +1343,7 @@ useEffect(() => {
                   type="button"
                   className="cc-face"
                   title={p.name}
-                  onClick={() => p.uid === user?.uid && navigate("/profile")}
+                  onClick={() => setCardFor({ uid: p.uid, name: p.name, photo: p.photo })}
                 >
                   {p.photo ? (
                     <img src={p.photo} alt="" />
@@ -1421,6 +1424,7 @@ useEffect(() => {
     communityName={community?.name || ""}
     initialQuestionId={params.get("q") || ""}
     circlePeople={mentionable}
+    onOpenProfile={(uid, name, photo) => setCardFor({ uid, name, photo })}
   />
 ) : (
   <>
@@ -1492,7 +1496,8 @@ useEffect(() => {
                 <button
                   type="button"
                   className="cc-avatar-btn"
-                  onClick={() => msg.uid === user?.uid && navigate("/profile")}
+                  aria-label={`Open ${name}'s profile`}
+                  onClick={() => !msg.isAI && msg.uid && setCardFor({ uid: msg.uid, name, photo })}
                 >
                   {photo ? (
                     <img className="cc-avatar" src={photo} alt="" />
@@ -1505,7 +1510,17 @@ useEffect(() => {
               )}
               {!grouped && (
                 <span className="cc-name-line">
-                  <strong>{name}{msg.isAI ? " · AI" : ""}</strong>
+                  {msg.isAI || !msg.uid ? (
+                    <strong>{name}{msg.isAI ? " · AI" : ""}</strong>
+                  ) : (
+                    <button
+                      type="button"
+                      className="cc-name-btn"
+                      onClick={() => setCardFor({ uid: msg.uid, name, photo })}
+                    >
+                      <strong>{name}</strong>
+                    </button>
+                  )}
                   {time ? <time>{time}</time> : null}
                   {msg.edited ? <em className="cc-edited">edited</em> : null}
                 </span>
@@ -1882,6 +1897,16 @@ useEffect(() => {
 
 
       <ImageViewer url={lightbox || ""} onClose={() => setLightbox(null)} />
+
+{cardFor && (
+  <ProfileCard
+    uid={cardFor.uid}
+    fallback={{ name: cardFor.name, photo: cardFor.photo }}
+    user={user}
+    communityId={communityId}
+    onClose={() => setCardFor(null)}
+  />
+)}
 
 {reportInfo && (
   <ReportDialog

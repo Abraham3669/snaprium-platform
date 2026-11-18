@@ -1,0 +1,310 @@
+/* src/styles/profile-card.css
+   Profile card (tap a name or picture), Friends window, banner + bio on the Profile page.
+   Imported by ProfileCard.jsx and Profile.jsx, so nothing else needs to change.
+   Three separate blocks:  1) all screens   2) phone width (≤700px)   3) PC (≥701px)
+   plus  html.native-app  rules for the iPhone app only. */
+
+/* ───────────── 1. Shared (colours and shapes, no layout that differs per device) ───────────── */
+
+/* tappable names and pictures in chat and Questions */
+.cc-name-btn,
+.qb-name-btn {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.cc-name-btn:hover strong,
+.qb-name-btn:hover strong { text-decoration: underline; }
+.qb-person-btn {
+  display: inline-flex;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+}
+
+/* the card */
+.pc-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  background: rgba(0, 0, 0, 0.55);
+  -webkit-tap-highlight-color: transparent;
+}
+.pc-card {
+  position: relative;
+  width: 100%;
+  max-height: 92dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+}
+.pc-banner {
+  position: relative;
+  aspect-ratio: 3 / 1;
+  overflow: visible;
+  background: linear-gradient(135deg, #3b82f6, #93c5fd);
+}
+.pc-banner img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.pc-x,
+.pc-more {
+  position: absolute;
+  top: 10px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.55);
+  color: #fff;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.pc-x { right: 10px; }
+.pc-more-wrap { position: absolute; top: 0; left: 0; }
+.pc-more { left: 10px; font-size: 1.3rem; }
+.pc-menu {
+  position: absolute;
+  top: 50px;
+  left: 10px;
+  z-index: 3;
+  min-width: 168px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+.pc-menu button {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.92rem;
+  text-align: left;
+  cursor: pointer;
+}
+.pc-menu button:hover { background: var(--icon-bg); }
+.pc-menu button.danger { color: #ef4444; }
+
+.pc-body {
+  position: relative;
+  padding: 0 20px 22px;
+  text-align: center;
+}
+.pc-avatar {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  margin: -44px auto 10px;
+  overflow: hidden;
+  border: 4px solid var(--surface);
+  border-radius: 28px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 700;
+  position: relative;
+}
+.pc-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pc-name { margin: 0; font-size: 1.25rem; font-weight: 700; word-break: break-word; }
+.pc-bio {
+  margin: 8px auto 0;
+  max-width: 34ch;
+  color: var(--text-secondary);
+  font-size: 0.94rem;
+  line-height: 1.5;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+.pc-bio-empty { opacity: 0.7; font-size: 0.88rem; }
+.pc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+.pc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.94rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pc-btn:disabled { opacity: 0.6; cursor: default; }
+.pc-btn.pc-primary { border-color: transparent; background: var(--accent); color: #fff; }
+.pc-btn.pc-primary:hover:not(:disabled) { background: var(--accent-dark); }
+.pc-btn.pc-danger { border-color: transparent; background: #ef4444; color: #fff; }
+.pc-btn.pc-ghost { border-color: transparent; color: var(--text-secondary); }
+.pc-btn.pc-friends { border-color: rgba(34, 197, 94, 0.45); color: #16a34a; }
+[data-theme="dark"] .pc-btn.pc-friends { color: #4ade80; }
+.pc-pill {
+  padding: 9px 14px;
+  border-radius: 999px;
+  background: var(--icon-bg);
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+.pc-pill.warn { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+
+/* Profile page: banner, bio, friends row */
+.pf-page .pf-cover { pointer-events: auto; height: 112px; }
+.pf-cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.pf-cover-tools { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 8px; z-index: 1; }
+.pf-cover-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.58);
+  color: #fff;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.pf-cover-btn:disabled { opacity: 0.6; }
+.pf-bio { margin: 6px 0 0; max-width: 40ch; color: var(--text-secondary); font-size: 0.92rem; line-height: 1.45; word-break: break-word; }
+.pf-bio-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  resize: none;
+}
+.pf-bio-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.pf-badge-count {
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* Friends window */
+.fr-card { width: min(440px, 100%); max-height: 86dvh; display: flex; flex-direction: column; }
+.fr-tabs { display: flex; gap: 6px; margin: 4px 0 12px; padding: 4px; border-radius: 12px; background: var(--icon-bg); }
+.fr-tabs button {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.fr-tabs button.on { background: var(--surface); color: var(--text-primary); box-shadow: var(--shadow-sm); }
+.fr-badge { display: grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: #ef4444; color: #fff; font-size: 0.7rem; }
+.fr-list { flex: 1; min-height: 0; margin: 0; padding: 0; overflow-y: auto; list-style: none; }
+.fr-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+.fr-person { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.fr-av { display: grid; place-items: center; flex: 0 0 auto; width: 42px; height: 42px; overflow: hidden; border-radius: 14px; background: linear-gradient(135deg, var(--accent), var(--accent-dark)); color: #fff; font-weight: 700; }
+.fr-av img { width: 100%; height: 100%; object-fit: cover; }
+.fr-name { overflow: hidden; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.fr-actions { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+.fr-actions .pf-btn { min-height: 36px; padding: 0 12px; font-size: 0.85rem; }
+.fr-sent { color: var(--text-secondary); font-size: 0.82rem; }
+
+/* ───────────── 2. Phone width: card slides up from the bottom ───────────── */
+@media (max-width: 700px) {
+  .pc-backdrop { align-items: flex-end; }
+  .pc-card {
+    border-radius: 24px 24px 0 0;
+    border-bottom: 0;
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 6px);
+    animation: pc-up 0.26s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .pc-banner { border-radius: 24px 24px 0 0; }
+  .pc-banner img { border-radius: 24px 24px 0 0; }
+  .pc-actions .pc-btn.pc-primary { flex: 1 1 100%; }
+  .fr-card { max-height: 80dvh; }
+}
+@keyframes pc-up {
+  from { transform: translateY(40px); opacity: 0.6; }
+  to { transform: none; opacity: 1; }
+}
+
+/* ───────────── 3. PC: centred card ───────────── */
+@media (min-width: 701px) {
+  .pc-backdrop { align-items: center; justify-content: center; padding: 24px; }
+  .pc-card { max-width: 400px; border-radius: 22px; animation: pc-pop 0.18s ease-out; }
+  .pc-banner { border-radius: 21px 21px 0 0; }
+  .pc-banner img { border-radius: 21px 21px 0 0; }
+  .pf-page .pf-cover { height: 150px; }
+}
+@keyframes pc-pop {
+  from { transform: scale(0.96); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+/* ───────────── iPhone app only ───────────── */
+html.native-app .pc-card { padding-bottom: max(env(safe-area-inset-bottom, 0px), 14px); }
+html.native-app .pc-x,
+html.native-app .pc-more { top: max(10px, 0px); }
+html.native-app .fr-card { padding-bottom: max(env(safe-area-inset-bottom, 0px), 18px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .pc-card { animation: none; }
+}

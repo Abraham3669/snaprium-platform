@@ -1,6 +1,6 @@
 // src/pages/Profile.jsx
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { updateProfile } from "firebase/auth";
@@ -10,7 +10,15 @@ import { useAuth } from "../context/AuthContext";
 import { auth, db } from "../lib/firebase";
 import { restoreUnlimited, syncSubscriptionQuietly } from "../lib/iap";
 import { useBlocked } from "../lib/moderation";
+import { isClean, FILTER_MESSAGE } from "../lib/contentFilter";
+import { BIO_MAX, compressBanner, fetchProfileCard, saveProfileExtras } from "../lib/publicProfile";
+import { useFriendships } from "../lib/friends";
+import FriendsPanel from "../components/FriendsPanel";
+import MessagesPanel from "../components/MessagesPanel";
+import DmPanel from "../components/DmPanel";
+import { useInbox } from "../lib/dms";
 import "../styles/profile.css";
+import "../styles/profile-card.css";
 
 function compressImage(file, max = 400, quality = 0.7) {
   return new Promise((resolve, reject) => {
@@ -143,6 +151,24 @@ function BlockIcon() {
   );
 }
 
+function FriendsIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="9" cy="8" r="3.5" />
+      <path d="M2.5 20v-1a5 5 0 0 1 5-5h3a5 5 0 0 1 5 5v1" />
+      <path d="M19 8v6M16 11h6" />
+    </svg>
+  );
+}
+
+function MessageIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" />
+    </svg>
+  );
+}
+
 function readTheme() {
   return (
     localStorage.getItem("theme") ||
@@ -154,8 +180,27 @@ function readTheme() {
 export default function Profile() {
   const { user, loading, refreshUser, signOutUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const fileRef = useRef(null);
+  const bannerRef = useRef(null);
   const [name, setName] = useState("");
+  const [bio, setBio] = useState("");
+  const [savedBio, setSavedBio] = useState("");
+  const [banner, setBanner] = useState("");
+  const [friendsOpen, setFriendsOpen] = useState(
+    () => new URLSearchParams(window.location.search).get("friends") === "1"
+  );
+  const { friends: friendUids, incoming: friendRequests } = useFriendships(user?.uid);
+  const { unread: unreadChats } = useInbox(user?.uid);
+  const [messagesOpen, setMessagesOpen] = useState(false);
+  const [dmWith, setDmWith] = useState("");
+
+  // Opened from a "friend request" notification while already on this page.
+  useEffect(() => {
+    const q = new URLSearchParams(location.search);
+    if (q.get("friends") === "1") setFriendsOpen(true);
+    if (q.get("dm")) setDmWith(q.get("dm"));
+  }, [location.search]);
   const [saving, setSaving] = useState(false);
   const [preview, setPreview] = useState("");
   const [theme, setTheme] = useState(readTheme);
@@ -173,6 +218,21 @@ export default function Profile() {
   useEffect(() => {
     if (isIosApp && user?.uid) syncSubscriptionQuietly();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid]);
+
+  // Your bio and banner live on your public card.
+  useEffect(() => {
+    if (!user?.uid) return undefined;
+    let cancelled = false;
+    fetchProfileCard(user.uid).then((c) => {
+      if (cancelled || !c) return;
+      setBio(c.bio || "");
+      setSavedBio(c.bio || "");
+      setBanner(c.banner || "");
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [user?.uid]);
 
   useEffect(() => {
@@ -197,7 +257,7 @@ export default function Profile() {
 
   const shownName = user.displayName || user.email?.split("@")[0] || "Your profile";
   const banned = user.banned === true || user.isBanned === true;
-  const dirty = name.trim() !== (user.displayName || "");
+  const dirty = name.trim() !== (user.displayName || "") || bio.trim() !== savedBio.trim();
   // Same rule as the rest of the app (the premium icon, limits, Upgrade page): only the plan counts.
   // Old fields like subscription / subscriptionStatus can stay behind after a cancel, so they are not used.
   const isSubscribed = user.plan === "unlimited" || user.plan === "premium" || user.isUnlimited === true;
@@ -340,6 +400,11 @@ export default function Profile() {
       toast.warning("Enter a display name");
       return;
     }
+    const cleanBio = bio.replace(/\s+/g, " ").trim().slice(0, BIO_MAX);
+    if (!isClean(clean) || !isClean(cleanBio)) {
+      toast.error(FILTER_MESSAGE);
+      return;
+    }
     setSaving(true);
     try {
       await setDoc(
@@ -354,6 +419,9 @@ export default function Profile() {
       if (auth.currentUser) {
         await updateProfile(auth.currentUser, { displayName: clean });
       }
+      await saveProfileExtras({ ...user, displayName: clean }, { bio: cleanBio, displayName: clean });
+      setBio(cleanBio);
+      setSavedBio(cleanBio);
       await refreshUser?.();
       toast.success("Profile updated");
     } catch (err) {
@@ -388,6 +456,37 @@ setPreview(photoURL);
     }
   };
 
+  const onBanner = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setSaving(true);
+    try {
+      const img = await compressBanner(file);
+      await saveProfileExtras(user, { banner: img });
+      setBanner(img);
+      toast.success("Banner updated");
+    } catch (err) {
+      console.error(err);
+      toast.error("Could not update banner");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const removeBanner = async () => {
+    setSaving(true);
+    try {
+      await saveProfileExtras(user, { banner: "" });
+      setBanner("");
+      toast.success("Banner removed");
+    } catch {
+      toast.error("Could not remove banner");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="pf-page">
       {banned && (
@@ -397,7 +496,20 @@ setPreview(photoURL);
       )}
 
       <section className="pf-hero">
-        <div className="pf-cover" aria-hidden="true" />
+        <div className="pf-cover">
+          {banner ? <img className="pf-cover-img" src={banner} alt="" /> : null}
+          <div className="pf-cover-tools">
+            <button type="button" className="pf-cover-btn" onClick={() => bannerRef.current?.click()} disabled={saving}>
+              <CameraIcon />
+              {banner ? "Change banner" : "Add banner"}
+            </button>
+            {banner && (
+              <button type="button" className="pf-cover-btn" onClick={removeBanner} disabled={saving}>
+                Remove
+              </button>
+            )}
+          </div>
+        </div>
         <div className="pf-hero-body">
           <button
             type="button"
@@ -414,6 +526,7 @@ setPreview(photoURL);
           <div className="pf-who">
             <h1 className="pf-name">{shownName}</h1>
             <p className="pf-email">{user.email}</p>
+            {savedBio ? <p className="pf-bio">{savedBio}</p> : null}
             <div className="pf-chips">
               <span className={isSubscribed ? "pf-chip pf-chip-pro" : "pf-chip"}>
                 {isSubscribed ? "Unlimited plan" : "Free plan"}
@@ -428,7 +541,7 @@ setPreview(photoURL);
         <form className="pf-card" onSubmit={save}>
           <div className="pf-card-head">
             <h2>Account</h2>
-            <p>This name and photo show in circles.</p>
+            <p>Your name, photo, banner and bio show when someone opens your profile.</p>
           </div>
           <label className="pf-field">
             <span>Display name</span>
@@ -441,6 +554,18 @@ setPreview(photoURL);
             />
             <small>{name.length}/40</small>
           </label>
+          <label className="pf-field">
+            <span>Bio</span>
+            <textarea
+              className="pf-bio-input"
+              value={bio}
+              onChange={(e) => setBio(e.target.value.replace(/\n/g, " "))}
+              maxLength={BIO_MAX}
+              rows={3}
+              placeholder="What are you studying? (optional)"
+            />
+            <small>{bio.length}/{BIO_MAX}</small>
+          </label>
           <button
             type="submit"
             className="pf-btn pf-btn-primary"
@@ -452,6 +577,32 @@ setPreview(photoURL);
 
         <aside className="pf-side">
           <div className="pf-card pf-links">
+            <button type="button" className="pf-link" onClick={() => setMessagesOpen(true)}>
+              <span className="pf-link-icon"><MessageIcon /></span>
+              <span className="pf-link-text">
+                <strong>Messages</strong>
+                <small>{unreadChats > 0 ? `${unreadChats} unread` : "Chat privately with friends"}</small>
+              </span>
+              {unreadChats > 0 && <span className="pf-badge-count">{unreadChats}</span>}
+              <ChevronIcon />
+            </button>
+
+            <button type="button" className="pf-link" onClick={() => setFriendsOpen(true)}>
+              <span className="pf-link-icon"><FriendsIcon /></span>
+              <span className="pf-link-text">
+                <strong>Friends</strong>
+                <small>
+                  {friendRequests.length > 0
+                    ? `${friendRequests.length} new request${friendRequests.length === 1 ? "" : "s"}`
+                    : friendUids.length > 0
+                    ? `${friendUids.length} friend${friendUids.length === 1 ? "" : "s"}`
+                    : "Add people you study with"}
+                </small>
+              </span>
+              {friendRequests.length > 0 && <span className="pf-badge-count">{friendRequests.length}</span>}
+              <ChevronIcon />
+            </button>
+
             <button type="button" className="pf-link" onClick={() => navigate("/community")}>
               <span className="pf-link-icon"><UsersIcon /></span>
               <span className="pf-link-text">
@@ -594,6 +745,30 @@ setPreview(photoURL);
       </div>
 
       <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPhoto} />
+      <input ref={bannerRef} type="file" accept="image/*" hidden onChange={onBanner} />
+
+      {messagesOpen && <MessagesPanel onClose={() => setMessagesOpen(false)} />}
+      {dmWith && (
+        <DmPanel
+          other={dmWith}
+          onClose={() => {
+            setDmWith("");
+            if (new URLSearchParams(location.search).get("dm")) navigate("/profile", { replace: true });
+          }}
+        />
+      )}
+
+      {friendsOpen && (
+        <FriendsPanel
+          initialTab={friendRequests.length > 0 ? "requests" : "friends"}
+          onClose={() => {
+            setFriendsOpen(false);
+            if (new URLSearchParams(location.search).get("friends")) {
+              navigate("/profile", { replace: true });
+            }
+          }}
+        />
+      )}
 
       {blockedOpen && (
         <div className="pf-modal" onClick={() => setBlockedOpen(false)}>

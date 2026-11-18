@@ -134,6 +134,71 @@ export async function notifyUser({
   callPushApi({ action: "push:notify", to, id });
 }
 
+/**
+ * Friend request / request accepted. Not tied to a circle, so the circle fields stay empty.
+ *   type  "friend_request" | "friend_accept"
+ * One per person per day at most (the id carries the date), so repeated tapping never spams.
+ */
+export async function notifyFriend({ to, type, from }) {
+  if (!to || !from?.uid || to === from.uid) return;
+  if (type !== "friend_request" && type !== "friend_accept") return;
+  const day = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  const id = `${type}_${from.uid}_${day}`;
+  if (readSent().includes(id)) return;
+  rememberSent(id);
+  try {
+    await setDoc(doc(db, "users", to, "notifications", id), {
+      type,
+      fromUid: from.uid,
+      fromName: clean(from.displayName || "Someone", 60),
+      fromPhoto: from.photoURL && from.photoURL.length < 400 ? from.photoURL : "",
+      communityId: "",
+      communityName: "",
+      boardId: "",
+      targetId: "",
+      preview: "",
+      emoji: "",
+      url: "/profile?friends=1",
+      read: false,
+      createdAt: serverTimestamp(),
+    });
+  } catch {
+    return;
+  }
+  callPushApi({ action: "push:notify", to, id });
+}
+
+/**
+ * A new direct message. At most one alert per sender every 10 minutes, so a long chat never floods.
+ * Opens the conversation (/profile?dm=SENDER_UID).
+ */
+export async function notifyDm({ to, from, preview = "" }) {
+  if (!to || !from?.uid || to === from.uid) return;
+  const id = `dm_${from.uid}_${Math.floor(Date.now() / 600000)}`;
+  if (readSent().includes(id)) return;
+  rememberSent(id);
+  try {
+    await setDoc(doc(db, "users", to, "notifications", id), {
+      type: "dm",
+      fromUid: from.uid,
+      fromName: clean(from.displayName || "Someone", 60),
+      fromPhoto: from.photoURL && from.photoURL.length < 400 ? from.photoURL : "",
+      communityId: "",
+      communityName: "",
+      boardId: "",
+      targetId: "",
+      preview: clean(preview, 140),
+      emoji: "",
+      url: `/profile?dm=${from.uid}`,
+      read: false,
+      createdAt: serverTimestamp(),
+    });
+  } catch {
+    return;
+  }
+  callPushApi({ action: "push:notify", to, id });
+}
+
 /** Tell the circle a live session just started (server fans it out). */
 export function notifyCircleSession(communityId, boardId = "") {
   if (!communityId) return;
@@ -196,6 +261,12 @@ export function describeNotification(n) {
       return `${who} started a live session`;
     case "everyone":
       return `${who} mentioned everyone`;
+    case "dm":
+      return `${who} sent you a message`;
+    case "friend_request":
+      return `${who} sent you a friend request`;
+    case "friend_accept":
+      return `${who} accepted your friend request`;
     default:
       return `${who} sent you an update`;
   }

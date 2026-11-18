@@ -1,12 +1,15 @@
 // src/lib/publicProfile.js
 //
-// One small public card per person: publicProfiles/{uid} = { displayName, photoURL, updatedAt }.
+// One small public card per person: publicProfiles/{uid} = { displayName, photoURL, bio, banner, updatedAt }.
 // Everyone who signs in can read it, only the owner can write it. Chat, questions and notifications
 // read it, so a new name or photo shows up everywhere instead of the one saved inside each old message.
 //
 //  - publishPublicProfile(user)  keeps YOUR card current (App.jsx calls it whenever your profile changes)
 //  - useLiveProfiles(uids)       gives { [uid]: { displayName, photoURL } } for the people on screen
 //  - tinyPhoto(url)              what to store inside a message: a short link only, never a big picture
+//  - fetchProfileCard(uid)       the full card (name, photo, bio, banner), always fresh. Used by the profile card.
+//  - saveProfileExtras(user, x)  saves YOUR bio and/or banner (and name) on your card
+//  - compressBanner(file)        turns a picture into a small 3:1 banner (JPEG data URL)
 
 import { useEffect, useMemo, useState } from "react";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
@@ -58,6 +61,78 @@ export async function publishPublicProfile(user) {
   if (photo !== null) data.photoURL = photo;
   await setDoc(doc(db, "publicProfiles", user.uid), data, { merge: true });
   cache.set(user.uid, { name, photo: photo === null ? cache.get(user.uid)?.photo || "" : photo, at: Date.now() });
+}
+
+export const BIO_MAX = 160;
+export const BANNER_MAX_CHARS = 90000;
+
+// Centre-crops any picture to a 3:1 banner and shrinks it, so it always stays small (about 20-40 KB).
+export function compressBanner(file, width = 720, height = 240, quality = 0.7) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const scale = Math.max(width / img.width, height / img.height);
+          const w = img.width * scale;
+          const h = img.height * scale;
+          canvas.getContext("2d").drawImage(img, (width - w) / 2, (height - h) / 2, w, h);
+          let out = canvas.toDataURL("image/jpeg", quality);
+          if (out.length > BANNER_MAX_CHARS) out = canvas.toDataURL("image/jpeg", 0.5);
+          resolve(out);
+        } catch (err) {
+          reject(err);
+        }
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// The whole public card for one person, read fresh (not from the short-lived cache).
+export async function fetchProfileCard(uid) {
+  if (!uid) return null;
+  try {
+    const snap = await getDoc(doc(db, "publicProfiles", uid));
+    if (!snap.exists()) return null;
+    const d = snap.data();
+    return {
+      displayName: d.displayName || "",
+      photoURL: d.photoURL || "",
+      bio: d.bio || "",
+      banner: d.banner || "",
+    };
+  } catch {
+    return null;
+  }
+}
+
+// Save your own bio and/or banner. `extra` can hold { bio, banner }. Name and photo are sent along so
+// the card is always complete, even the first time it is written.
+export async function saveProfileExtras(user, extra = {}) {
+  if (!user?.uid) throw new Error("Sign in required");
+  const data = { updatedAt: serverTimestamp() };
+  const name = String(user.displayName || "").trim().slice(0, 80);
+  if (name) data.displayName = name;
+  const photo = await avatarFor(user.photoURL || "");
+  if (photo !== null) data.photoURL = photo;
+  if (typeof extra.bio === "string") data.bio = extra.bio.replace(/\s+/g, " ").trim().slice(0, BIO_MAX);
+  if (typeof extra.banner === "string") data.banner = extra.banner;
+  if (extra.displayName) data.displayName = String(extra.displayName).trim().slice(0, 80);
+  await setDoc(doc(db, "publicProfiles", user.uid), data, { merge: true });
+  const old = cache.get(user.uid);
+  cache.set(user.uid, {
+    name: data.displayName || old?.name || "",
+    photo: data.photoURL ?? old?.photo ?? "",
+    at: Date.now(),
+  });
 }
 
 const fromCache = (uids) => {
