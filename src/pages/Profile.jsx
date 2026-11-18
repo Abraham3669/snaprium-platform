@@ -13,9 +13,6 @@ import { useBlocked } from "../lib/moderation";
 import { isClean, FILTER_MESSAGE } from "../lib/contentFilter";
 import { BIO_MAX, compressBanner, fetchProfileCard, saveProfileExtras } from "../lib/publicProfile";
 import { useFriendships } from "../lib/friends";
-import FriendsPanel from "../components/FriendsPanel";
-import MessagesPanel from "../components/MessagesPanel";
-import DmPanel from "../components/DmPanel";
 import { useInbox } from "../lib/dms";
 import "../styles/profile.css";
 import "../styles/profile-card.css";
@@ -187,20 +184,17 @@ export default function Profile() {
   const [bio, setBio] = useState("");
   const [savedBio, setSavedBio] = useState("");
   const [banner, setBanner] = useState("");
-  const [friendsOpen, setFriendsOpen] = useState(
-    () => new URLSearchParams(window.location.search).get("friends") === "1"
-  );
   const { friends: friendUids, incoming: friendRequests } = useFriendships(user?.uid);
   const { unread: unreadChats } = useInbox(user?.uid);
-  const [messagesOpen, setMessagesOpen] = useState(false);
-  const [dmWith, setDmWith] = useState("");
 
-  // Opened from a "friend request" notification while already on this page.
+  // Friends and Messages are real pages now (/friends, /messages/<person>). Older links and
+  // notifications that still point here (?friends=1, ?dm=<person>) are sent on to them.
   useEffect(() => {
     const q = new URLSearchParams(location.search);
-    if (q.get("friends") === "1") setFriendsOpen(true);
-    if (q.get("dm")) setDmWith(q.get("dm"));
-  }, [location.search]);
+    const dm = q.get("dm");
+    if (dm) navigate(`/messages/${dm}`, { replace: true });
+    else if (q.get("friends") === "1") navigate("/friends", { replace: true });
+  }, [location.search, navigate]);
   const [saving, setSaving] = useState(false);
   const [preview, setPreview] = useState("");
   const [theme, setTheme] = useState(readTheme);
@@ -537,6 +531,33 @@ setPreview(photoURL);
         </div>
       </section>
 
+      <section className="pf-social" aria-label="Friends and messages">
+        <button type="button" className="pf-social-tile" onClick={() => navigate("/friends")}>
+          <span className="pf-social-icon"><FriendsIcon /></span>
+          <span className="pf-social-text">
+            <strong>Friends</strong>
+            <small>
+              {friendRequests.length > 0
+                ? `${friendRequests.length} new request${friendRequests.length === 1 ? "" : "s"}`
+                : friendUids.length > 0
+                ? `${friendUids.length} friend${friendUids.length === 1 ? "" : "s"}`
+                : "Add people you study with"}
+            </small>
+          </span>
+          {friendRequests.length > 0 && <span className="pf-social-badge">{friendRequests.length}</span>}
+          <ChevronIcon />
+        </button>
+        <button type="button" className="pf-social-tile" onClick={() => navigate("/messages")}>
+          <span className="pf-social-icon"><MessageIcon /></span>
+          <span className="pf-social-text">
+            <strong>Messages</strong>
+            <small>{unreadChats > 0 ? `${unreadChats} unread` : "Chat privately with friends"}</small>
+          </span>
+          {unreadChats > 0 && <span className="pf-social-badge">{unreadChats}</span>}
+          <ChevronIcon />
+        </button>
+      </section>
+
       <div className="pf-grid">
         <form className="pf-card" onSubmit={save}>
           <div className="pf-card-head">
@@ -577,32 +598,6 @@ setPreview(photoURL);
 
         <aside className="pf-side">
           <div className="pf-card pf-links">
-            <button type="button" className="pf-link" onClick={() => setMessagesOpen(true)}>
-              <span className="pf-link-icon"><MessageIcon /></span>
-              <span className="pf-link-text">
-                <strong>Messages</strong>
-                <small>{unreadChats > 0 ? `${unreadChats} unread` : "Chat privately with friends"}</small>
-              </span>
-              {unreadChats > 0 && <span className="pf-badge-count">{unreadChats}</span>}
-              <ChevronIcon />
-            </button>
-
-            <button type="button" className="pf-link" onClick={() => setFriendsOpen(true)}>
-              <span className="pf-link-icon"><FriendsIcon /></span>
-              <span className="pf-link-text">
-                <strong>Friends</strong>
-                <small>
-                  {friendRequests.length > 0
-                    ? `${friendRequests.length} new request${friendRequests.length === 1 ? "" : "s"}`
-                    : friendUids.length > 0
-                    ? `${friendUids.length} friend${friendUids.length === 1 ? "" : "s"}`
-                    : "Add people you study with"}
-                </small>
-              </span>
-              {friendRequests.length > 0 && <span className="pf-badge-count">{friendRequests.length}</span>}
-              <ChevronIcon />
-            </button>
-
             <button type="button" className="pf-link" onClick={() => navigate("/community")}>
               <span className="pf-link-icon"><UsersIcon /></span>
               <span className="pf-link-text">
@@ -746,29 +741,6 @@ setPreview(photoURL);
 
       <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPhoto} />
       <input ref={bannerRef} type="file" accept="image/*" hidden onChange={onBanner} />
-
-      {messagesOpen && <MessagesPanel onClose={() => setMessagesOpen(false)} />}
-      {dmWith && (
-        <DmPanel
-          other={dmWith}
-          onClose={() => {
-            setDmWith("");
-            if (new URLSearchParams(location.search).get("dm")) navigate("/profile", { replace: true });
-          }}
-        />
-      )}
-
-      {friendsOpen && (
-        <FriendsPanel
-          initialTab={friendRequests.length > 0 ? "requests" : "friends"}
-          onClose={() => {
-            setFriendsOpen(false);
-            if (new URLSearchParams(location.search).get("friends")) {
-              navigate("/profile", { replace: true });
-            }
-          }}
-        />
-      )}
 
       {blockedOpen && (
         <div className="pf-modal" onClick={() => setBlockedOpen(false)}>

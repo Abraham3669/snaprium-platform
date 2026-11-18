@@ -1,13 +1,144 @@
-/* src/styles/dm.css  Direct messages.
-   The chat screen itself reuses your community-chat.css (same header, rows, composer),
-   so it looks like a circle chat. Only the bits below are new.
-   1) shared  2) phone  3) PC  + iPhone app only */
+/* src/styles/dm.css  Messages page: friend's profile | chat | conversations and friends.
+   The chat itself (header, rows, composer) reuses your community-chat.css so it looks like a circle chat.
+   1) shared   2) phone (≤700px)   3) PC (≥701px)   4) iPhone app only */
 
-/* sits above the Profile page and the Messages list */
-.cc-frame.dm-frame { z-index: 9990; }
+/* ───────────── 1. Shared ───────────── */
+
 .dm-confirm { z-index: 10002; }
 
-/* conversation list (Messages window) */
+/* your own profile shortcut: a "Profile" pill at the top right of a chat on phones, a bar at the bottom of the list on PC */
+.dm-me-bar, .dm-me-pill { display: none; }
+.dm-me-av {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--icon-bg);
+  color: var(--accent);
+  font-weight: 700;
+}
+.dm-me-av img { width: 100%; height: 100%; object-fit: cover; }
+
+/* buttons in the friends list (own styles, so they look right on every page) */
+.dm-btn {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 650;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.12s, opacity 0.12s;
+}
+.dm-btn:hover { background: var(--icon-bg); }
+.dm-btn-primary { border-color: var(--accent); background: var(--accent); color: #fff; }
+.dm-btn-primary:hover { background: var(--accent-dark, var(--accent)); opacity: 0.92; }
+.dm-btn:disabled { opacity: 0.5; cursor: default; }
+
+/* the page: one column here, the phone and PC blocks below decide how many show */
+.cc-frame.dm-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  flex-direction: row;
+}
+.dm-page > * { min-width: 0; min-height: 0; }
+
+.dm-main { display: flex; flex-direction: column; background: var(--bg); }
+.dm-main > .cc-main { flex: 1; min-height: 0; }
+
+.dm-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+.dm-empty strong { color: var(--text-primary); font-size: 1.05rem; }
+.dm-empty p { max-width: 280px; margin: 0; }
+
+/* header buttons: the arrow (phone) and the cross (PC) swap in the blocks below */
+.dm-close, .dm-side-x { display: none; }
+.dm-who {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+.dm-face-btn { padding: 0; border: 0; cursor: pointer; }
+.dm-who:hover h1 { text-decoration: underline; }
+.dm-frame .cc-face, .dm-chat .cc-face { display: grid; place-items: center; margin-left: 0; }
+
+/* right column: conversations and friends */
+.dm-side {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+}
+.dm-side-top {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.dm-side-top h1 { margin: 0; font-size: 1.05rem; line-height: 1.2; }
+.dm-side-tabs { margin: 12px 14px 10px; }
+.dm-side-tabs button { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
+.dm-side-search {
+  position: relative;
+  flex: 0 0 auto;
+  margin: 0 14px 6px;
+  color: var(--text-secondary);
+}
+.dm-side-search svg { position: absolute; top: 50%; left: 12px; transform: translateY(-50%); pointer-events: none; }
+.dm-side-search input {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px 0 36px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.92rem;
+}
+.dm-side-search input:focus { outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset: 1px; }
+.dm-side-list { flex: 1; min-height: 0; overflow-y: auto; padding: 0 8px 12px; overscroll-behavior: contain; }
+.dm-side-list .fr-list { overflow: visible; }
+.dm-side-note { margin: 18px 12px; color: var(--text-secondary); text-align: center; }
+.dm-side-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; margin: 28px 14px; color: var(--text-secondary); text-align: center; }
+.dm-side-empty p { margin: 0; }
+/* Friends | Circles switch: phone only (PC has the circles in the left column) */
+.dm-switch, .dm-circles { display: none; }
+.dm-circ-av { background-size: cover; background-position: center; font-weight: 700; }
+.dm-browse {
+  display: block; width: calc(100% - 20px); margin: 10px; padding: 10px; border: 1px solid var(--border);
+  border-radius: 12px; background: none; color: var(--text-primary); font: inherit; font-weight: 600; cursor: pointer;
+}
+.dm-side .dm-row { padding: 8px 10px; border-radius: 14px; }
+.dm-side .dm-row:hover { background: var(--icon-bg); }
+.dm-side .dm-row.active { background: var(--icon-bg); }
+
+/* conversation rows (also used by the list inside Chats) */
 .ms-conv { width: 100%; }
 .ms-copy { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .ms-last { overflow: hidden; color: var(--text-secondary); font-size: .85rem; text-overflow: ellipsis; white-space: nowrap; }
@@ -16,21 +147,134 @@
 .ms-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
 .pc-btn.pc-msg { border-color: transparent; background: var(--accent); color: #fff; }
 
-/* phone: nothing extra, the circle-chat phone rules already apply */
+/* left column: the person you are talking to */
+.dm-prof {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  overscroll-behavior: contain;
+}
+.dm-prof-banner { position: relative; flex: 0 0 auto; aspect-ratio: 3 / 1; overflow: hidden; }
+.dm-prof-banner img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dm-prof-body { display: flex; flex-direction: column; align-items: flex-start; padding: 0 18px 20px; }
+.dm-prof-avatar { margin-top: -36px; }
+.dm-prof-body .pc-name { margin: 10px 0 0; }
+.dm-prof-body .pc-bio { margin: 6px 0 0; }
+.dm-prof-actions { width: 100%; margin-top: 14px; justify-content: flex-start; flex-wrap: wrap; }
+.dm-friends-pill { background: rgba(34, 197, 94, 0.12); color: #16a34a; }
+.dm-prof-section { width: 100%; margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--border); }
+.dm-prof-section h3 { margin: 0 0 8px; color: var(--text-secondary); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+.dm-shared { margin: 0; padding: 0; list-style: none; }
+.dm-shared button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.dm-shared button:hover { background: var(--icon-bg); }
+.dm-shared-av {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: var(--icon-bg) center / cover no-repeat;
+  color: var(--accent);
+  font-weight: 700;
+}
+.dm-shared-copy { display: flex; flex-direction: column; min-width: 0; }
+.dm-shared-copy strong { overflow: hidden; font-size: 0.92rem; text-overflow: ellipsis; white-space: nowrap; }
+.dm-shared-copy small { color: var(--text-secondary); }
+.dm-prof-foot { width: 100%; display: flex; gap: 16px; margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--border); }
+.dm-prof-link { padding: 0; border: 0; background: none; color: var(--text-secondary); font: inherit; font-size: 0.88rem; cursor: pointer; }
+.dm-prof-link:hover { color: var(--text-primary); text-decoration: underline; }
+.dm-prof-link.danger { color: #ef4444; }
 
-/* the close button only shows on PC (phone and iPhone app use the back arrow) */
-.dm-close { display: none; }
-
-/* PC and big tablets: a full page like a circle chat, with an exit button top right */
-@media (min-width: 701px) {
-  .cc-frame.dm-frame { flex-direction: column; }
-  .dm-frame .cc-top { grid-template-columns: 44px minmax(0, 1fr) auto; }
-  .dm-frame .cc-faces { display: flex; align-items: center; gap: 10px; }
-  .dm-frame .dm-close { display: grid; }
+/* ───────────── 2. Phone width: the list, then one chat at a time ───────────── */
+@media (max-width: 700px) {
+  .dm-page.has-chat .dm-side { display: none; }
+  .dm-page.no-chat .dm-main { display: none; }
+  .dm-side { border-left: 0; }
+  .dm-chat .cc-top { grid-template-columns: 40px minmax(0, 1fr) auto; }
+  .dm-chat .cc-top .cc-face { display: none; }
+  .dm-me-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 40px;
+    padding: 0 12px 0 5px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 650;
+    cursor: pointer;
+  }
+  .dm-me-pill .dm-me-av { width: 30px; height: 30px; font-size: 0.8rem; }
+  .dm-switch { display: flex; gap: 4px; margin: 12px 14px 0; padding: 4px; border-radius: 14px; background: var(--icon-bg); }
+  .dm-switch button {
+    flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 12px;
+    border: 0; border-radius: 10px; background: none; color: var(--text-secondary); font: inherit; font-weight: 700; cursor: pointer;
+  }
+  .dm-switch button.on { background: var(--surface); color: var(--text-primary); box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+  .dm-circles { display: block; }
+  .dm-side .dm-hide-phone { display: none !important; }
+  .dm-side-list { padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px); }
 }
 
-/* iPhone app only: keep the header clear of the notch (a circle gets this from its boards row) */
-html.native-app .cc-frame.dm-frame .cc-top { padding-top: calc(8px + env(safe-area-inset-top, 0px)); }
+/* ───────────── 3. PC: chat in the middle, list on the right, profile on the left (wide screens) ───────────── */
+@media (min-width: 701px) {
+  .cc-frame.dm-page { grid-template-columns: minmax(0, 1fr) 340px; }
+  .cc-frame.dm-page.with-prof { grid-template-columns: 300px minmax(0, 1fr) 340px; }
 
-/* the small picture in the header */
-.dm-frame .cc-face { display: grid; place-items: center; margin-left: 0; }
+  /* the list is always beside the chat, so the back arrow is not needed; the cross leaves Messages */
+  .dm-back, .dm-side-back { display: none; }
+  .dm-close { display: grid; }
+  .dm-chat .cc-top { grid-template-columns: minmax(0, 1fr) auto; }
+  .dm-chat .cc-faces { display: flex; align-items: center; gap: 10px; }
+  .dm-side-top { grid-template-columns: minmax(0, 1fr) 44px; }
+  /* with no chat open the list's own cross is the way out */
+  .dm-side-x { display: grid; }
+  .dm-me-bar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 10px 14px;
+    border: 0;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-primary);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .dm-me-bar:hover { background: var(--icon-bg); }
+  .dm-me-bar .dm-me-av { width: 38px; height: 38px; font-size: 0.95rem; }
+  .dm-me-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .dm-me-text strong { overflow: hidden; font-size: 0.93rem; text-overflow: ellipsis; white-space: nowrap; }
+  .dm-me-text small { color: var(--text-secondary); font-size: 0.78rem; }
+  .dm-page.has-chat .dm-side-x { display: none; }
+
+  /* messages stay a comfortable reading width instead of stretching across a big screen */
+  .dm-chat .cc-feed,
+  .dm-chat .cc-composer-wrap { padding-inline: max(16px, calc((100% - 820px) / 2)); }
+}
+
+/* ───────────── 4. iPhone app only: keep the headers clear of the notch ───────────── */
+html.native-app .dm-page .cc-top,
+html.native-app .dm-page .dm-side-top { padding-top: calc(8px + env(safe-area-inset-top, 0px)); }

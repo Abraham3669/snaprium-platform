@@ -39,6 +39,7 @@ countBoardUnread,
 import { notifyUser, notifyCircleSession, notifyEveryone } from "../lib/notifications";
 import QuestionBoard from "../components/QuestionBoard";
 import ProfileCard from "../components/ProfileCard";
+import { ChatNavList, ChatNavSheet, CirclesGlyph, ChatGlyph, NavAvatar, useChatNav } from "../components/ChatNav";
 import ImageViewer from "../components/ImageViewer";
 import { ReportDialog, BlockDialog } from "../components/ModerationDialogs";
 import { useBlocked } from "../lib/moderation";
@@ -349,7 +350,7 @@ function sameRun(a, b) {
 
 
 
-export default function CommunityChat() {
+function CommunityChatInner() {
   const { communityId } = useParams();
   const [params, setParams] = useSearchParams();
   const { user, refreshUser } = useAuth();
@@ -397,6 +398,11 @@ const [pendingImage, setPendingImage] = useState("");
   const [chatSheet, setChatSheet] = useState(false);
   const [callUnread, setCallUnread] = useState(0);
   const knownIds = useRef(new Set());
+
+  // Quick jump to your circles / friends: sidebar panel on PC, bottom sheet on phones.
+  const [navOpen, setNavOpen] = useState(null); // null | "circles" | "friends" | "members"
+  const [isWide, setIsWide] = useState(() => window.matchMedia?.("(min-width: 960px)").matches ?? false);
+  const nav = useChatNav({ me: user?.uid || "", communityId, blocked });
   
 
   const [boardUnread, setBoardUnread] = useState({ chat: 0, questions: 0 });
@@ -735,6 +741,14 @@ const next =
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 700px)");
     const onChange = (e) => setIsPhone(e.matches);
+    mq.addEventListener?.("change", onChange);
+    return () => mq.removeEventListener?.("change", onChange);
+  }, []);
+
+  // Wide (PC) layout shows the sidebar panel; narrower layouts show the bottom sheet
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 960px)");
+    const onChange = (e) => setIsWide(e.matches);
     mq.addEventListener?.("change", onChange);
     return () => mq.removeEventListener?.("change", onChange);
   }, []);
@@ -1264,10 +1278,40 @@ useEffect(() => {
     );
   }
 
+  const membersList = (
+      <ul className="cn-members">
+        {(community.members || [])
+          .filter((uid) => !blocked.has(uid) && profiles[uid]?.displayName)
+          .map((uid) => ({ uid, name: profiles[uid].displayName, photo: profiles[uid].photoURL || "" }))
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((p) => (
+            <li key={p.uid}>
+              <button
+                type="button"
+                className="cn-row"
+                onClick={() => {
+                  setNavOpen(null);
+                  setCardFor({ uid: p.uid, name: p.name, photo: p.photo });
+                }}
+              >
+                <NavAvatar name={p.name} photo={p.photo} />
+                <span className="cn-copy">
+                  <strong>{p.name}{p.uid === user?.uid ? " (you)" : ""}</strong>
+                </span>
+              </button>
+            </li>
+          ))}
+      </ul>
+  );
+
+  const myPhoto = user?.photoURL || "";
+  const myInitial = (user?.displayName || "?").slice(0, 1).toUpperCase();
+
   return frame(
     <>
       <aside className="cc-rail">
         <p className="cc-rail-label">Boards</p>
+        <div className="cc-rail-boards">
         {boards.map((board) => (
                     <button
             key={board.id}
@@ -1293,6 +1337,44 @@ useEffect(() => {
 })()}
           </button>
         ))}
+        </div>
+
+        {isWide && navOpen && (
+          <div className="cc-rail-panel">
+            <div className="cc-rail-panel-head">
+              <strong>{navOpen === "circles" ? "Your circles" : navOpen === "friends" ? "Friends" : `Members · ${(community.members || []).length}`}</strong>
+              <button type="button" className="cn-x" onClick={() => setNavOpen(null)} aria-label="Close">×</button>
+            </div>
+            <div className="cc-rail-panel-body">
+              {navOpen === "members" ? membersList : (
+                <ChatNavList nav={nav} kind={navOpen} communityId={communityId} onDone={() => setNavOpen(null)} />
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="cc-rail-foot">
+          <button
+            type="button"
+            className={`cc-foot-btn ${navOpen === "circles" ? "on" : ""}`}
+            onClick={() => setNavOpen((v) => (v === "circles" ? null : "circles"))}
+            aria-expanded={navOpen === "circles"}
+          >
+            <CirclesGlyph />
+            Circles
+            {nav.circleDots > 0 && <span className="cn-badge">{nav.circleDots}</span>}
+          </button>
+          <button
+            type="button"
+            className={`cc-foot-btn ${navOpen === "friends" ? "on" : ""}`}
+            onClick={() => setNavOpen((v) => (v === "friends" ? null : "friends"))}
+            aria-expanded={navOpen === "friends"}
+          >
+            <ChatGlyph />
+            Friends
+            {nav.friendDots > 0 && <span className="cn-badge">{nav.friendDots}</span>}
+          </button>
+        </div>
       </aside>
            <section className={`cc-main ${focusMode ? "call-focus" : ""} ${liveBoard && callOpen && !focusMode ? "with-call" : ""} ${phoneCall && chatSheet ? "sheet-open" : ""}`}>
         <header className="cc-top">
@@ -1304,11 +1386,24 @@ useEffect(() => {
           >
             <IconBack />
           </button>
-          <div className="cc-top-copy">
+          <button
+            type="button"
+            className="cc-top-copy cc-top-btn"
+            onClick={() => setNavOpen((v) => (v === "members" ? null : "members"))}
+            aria-label="Show members"
+          >
             <h1>{community.name}</h1>
-            <p>{activeBoard?.name || "Board"}</p>
-          </div>
-                   {liveBoard ? (
+            <p>
+              <span className="cc-sub-board">{activeBoard?.name || "Board"}</span>
+              {(community.members || []).length ? (
+                <>
+                  <span className="cc-sub-dot"> · </span>
+                  {(community.members || []).length} members
+                </>
+              ) : null}
+            </p>
+          </button>
+          {liveBoard ? (
             <div className="cc-session-actions">
               <button
                 type="button"
@@ -1336,25 +1431,24 @@ useEffect(() => {
               )}
             </div>
           ) : (
-                                                <div className="cc-faces">
-              {boardPeople.slice(0, 6).map((p) => (
-                <button
-                  key={p.uid}
-                  type="button"
-                  className="cc-face"
-                  title={p.name}
-                  onClick={() => setCardFor({ uid: p.uid, name: p.name, photo: p.photo })}
-                >
-                  {p.photo ? (
-                    <img src={p.photo} alt="" />
-                  ) : (
-                    (p.name || "?").slice(0, 1).toUpperCase()
-                  )}
-                </button>
-              ))}
-              {boardPeople.length > 6 && (
-                <span className="cc-face cc-face-more">+{boardPeople.length - 6}</span>
-              )}
+                                                <div className="cc-top-right">
+            <button type="button" className="cc-me-pill" onClick={() => navigate("/profile")} aria-label="Your profile" title="Your profile">
+              <span className="cc-me-av">{myPhoto ? <img src={myPhoto} alt="" /> : myInitial}</span>
+              Profile
+            </button>
+            <div className="cc-nav-btns">
+              <button type="button" className="cc-nav-btn" onClick={() => setNavOpen("circles")} aria-label="Your circles" title="Your circles">
+                <CirclesGlyph />
+                {nav.circleDots > 0 && <i className="cc-nav-dot" aria-hidden="true" />}
+              </button>
+              <button type="button" className="cc-nav-btn" onClick={() => setNavOpen("friends")} aria-label="Friends and messages" title="Friends and messages">
+                <ChatGlyph />
+                {nav.friendDots > 0 && <i className="cc-nav-dot" aria-hidden="true" />}
+              </button>
+              <button type="button" className="cc-nav-btn cc-nav-me" onClick={() => navigate("/profile")} aria-label="Your profile" title="Your profile">
+                <span className="cc-me-av">{myPhoto ? <img src={myPhoto} alt="" /> : myInitial}</span>
+              </button>
+            </div>
             </div>
           )}
         </header>
@@ -1896,6 +1990,22 @@ useEffect(() => {
 
 
 
+      {!isWide && navOpen && (
+        <ChatNavSheet
+          view={navOpen}
+          setView={setNavOpen}
+          title={`Members · ${(community.members || []).length}`}
+          nav={nav}
+          onClose={() => setNavOpen(null)}
+        >
+          {navOpen === "members" ? (
+            membersList
+          ) : (
+            <ChatNavList nav={nav} kind={navOpen} communityId={communityId} onDone={() => setNavOpen(null)} />
+          )}
+        </ChatNavSheet>
+      )}
+
       <ImageViewer url={lightbox || ""} onClose={() => setLightbox(null)} />
 
 {cardFor && (
@@ -1965,4 +2075,10 @@ useEffect(() => {
       )}
     </>
   );
+}
+
+// A new circle gets a fresh page (boards, messages, typing) instead of reusing the old one.
+export default function CommunityChat() {
+  const { communityId } = useParams();
+  return <CommunityChatInner key={communityId} />;
 }

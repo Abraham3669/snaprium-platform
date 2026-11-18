@@ -16,6 +16,7 @@ import CommunityDetail from "./pages/CommunityDetail";
 import CommunityChat from "./pages/CommunityChat";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
+import MessagesPage from "./pages/MessagesPage";
 
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -48,6 +49,8 @@ import { Capacitor } from "@capacitor/core";
 import { StatusBar, Style } from "@capacitor/status-bar";
 import useNotifications from "./lib/useNotifications";
 import PushPrompt from "./components/PushPrompt";
+import { useInbox } from "./lib/dms";
+import { useFriendships } from "./lib/friends";
 import { syncPush, clearDeliveredPush } from "./lib/push";
 import { publishPublicProfile } from "./lib/publicProfile";
 import "./styles/social.css";
@@ -66,6 +69,11 @@ function App() {
 
   // Notifications (bell + page) and iPhone push
   const notifications = useNotifications(user?.uid);
+
+  // Friends badge (bottom bar): unread chats plus friend requests waiting for you
+  const { unread: unreadChats } = useInbox(user?.uid);
+  const { incoming: friendRequests } = useFriendships(user?.uid);
+  const socialBadge = unreadChats + friendRequests.length;
 
   useEffect(() => {
     syncPush(user?.uid, (url) => navigate(url));
@@ -373,6 +381,15 @@ useEffect(() => {
     }
   };
 
+  // Full-screen pages (study room, solo, circle chat, circle page, messages and friends) have their own top bar.
+  const hideChrome =
+    location.pathname.startsWith("/study") ||
+    location.pathname.includes("/chat") ||
+    location.pathname === "/solo" ||
+    location.pathname.startsWith("/messages") ||
+    location.pathname === "/friends" ||
+    /^\/community\/[^/]+$/.test(location.pathname);
+
   return (
   <div className="App min-h-screen">
     <ErrorBanner />
@@ -390,12 +407,7 @@ useEffect(() => {
       theme={theme}
     />
 
-    {!(
-  location.pathname.startsWith("/study") ||
-  location.pathname.includes("/chat") ||
-  location.pathname === "/solo" ||
-  /^\/community\/[^/]+$/.test(location.pathname)
-) && (
+    {!hideChrome && (
   <header className="snaprium-header">
       <div className="snaprium-header-inner">
                 <button
@@ -607,6 +619,9 @@ useEffect(() => {
 <Route path="/community/:communityId" element={<CommunityDetail />} />
 <Route path="/community/:communityId/chat" element={<CommunityChat />} />
 <Route path="/profile" element={<Profile />} />
+<Route path="/messages" element={<MessagesPage />} />
+<Route path="/messages/:uid" element={<MessagesPage />} />
+<Route path="/friends" element={<MessagesPage />} />
 <Route
   path="/notifications"
   element={
@@ -632,16 +647,12 @@ useEffect(() => {
       />
     )}
 
-      {!(
-  location.pathname.startsWith("/study") ||
-  location.pathname.includes("/chat") ||
-  location.pathname === "/solo" ||
-  /^\/community\/[^/]+$/.test(location.pathname)
-) && (
+      {!hideChrome && (
   <BottomNav
     toggleTheme={toggleTheme}
     theme={theme}
     isResultOpen={isResultOpen}
+    socialBadge={socialBadge}
       />
     )}
   </div>

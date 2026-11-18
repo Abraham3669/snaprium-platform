@@ -2,15 +2,19 @@
 //
 // Direct messages between friends.
 //   dms/{uidA_uidB}                  { users, lastText, lastAt, lastFrom }       the conversation
-//   dms/{uidA_uidB}/messages/{id}    { uid, text, imageUrl, createdAt }          the messages
+//   dms/{uidA_uidB}/messages/{id}    { uid, text, imageUrl, createdAt,           the messages
+//                                      replyTo?, reactions?, edited?, updatedAt? }
+//                                    reactions looks like { "👍": [uid, ...] } (same as circle chat)
 //   users/{me}/dmReads/{uidA_uidB}   { at }                                      when YOU last opened it
 //
 //  - useInbox(me)            your conversations (newest first) and how many are unread
 //  - useDmMessages(me, them) live messages of one conversation
-//  - sendDm / deleteDm / markDmRead
+//  - sendDm / editDm / toggleDmReaction / deleteDm / markDmRead
 // Rules only allow sending between accepted friends who have not blocked each other.
 import { useEffect, useMemo, useState } from "react";
 import {
+  arrayRemove,
+  arrayUnion,
   collection,
   deleteDoc,
   doc,
@@ -20,6 +24,7 @@ import {
   query,
   serverTimestamp,
   setDoc,
+  updateDoc,
   where,
   writeBatch,
 } from "firebase/firestore";
@@ -100,15 +105,25 @@ export async function markDmRead(me, other) {
   await setDoc(doc(db, "users", me, "dmReads", pairId(me, other)), { at: serverTimestamp() });
 }
 
-export async function sendDm(meInfo, other, { text = "", imageUrl = "" }) {
+export async function sendDm(meInfo, other, { text = "", imageUrl = "", replyTo = null }) {
   const body = String(text || "").trim().slice(0, 2000);
   if (!meInfo?.uid || !other || (!body && !imageUrl)) throw new Error("Nothing to send");
   const pid = pairId(meInfo.uid, other);
   const batch = writeBatch(db);
+  // A quoted message is stored as a small snapshot so it still reads well if the original is deleted.
+  const quote = replyTo?.id
+    ? {
+        id: String(replyTo.id).slice(0, 40),
+        uid: String(replyTo.uid || "").slice(0, 64),
+        displayName: String(replyTo.displayName || "").slice(0, 80),
+        text: String(replyTo.text || "").slice(0, 140),
+      }
+    : null;
   batch.set(doc(collection(db, "dms", pid, "messages")), {
     uid: meInfo.uid,
     text: body,
     imageUrl: imageUrl || "",
+    ...(quote ? { replyTo: quote } : {}),
     createdAt: serverTimestamp(),
   });
   batch.set(
@@ -128,4 +143,23 @@ export async function sendDm(meInfo, other, { text = "", imageUrl = "" }) {
 export async function deleteDm(me, other, messageId) {
   if (!me || !other || !messageId) return;
   await deleteDoc(doc(db, "dms", pairId(me, other), "messages", messageId));
+}
+
+// Change the text of your own message.
+export async function editDm(me, other, messageId, text) {
+  const body = String(text || "").trim().slice(0, 2000);
+  if (!me || !other || !messageId || !body) throw new Error("Nothing to save");
+  await updateDoc(doc(db, "dms", pairId(me, other), "messages", messageId), {
+    text: body,
+    edited: true,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+// Add or remove your emoji reaction on a message (either person can react to any message).
+export async function toggleDmReaction(me, other, messageId, emoji, alreadyReacted) {
+  if (!me || !other || !messageId || !emoji) return;
+  await updateDoc(doc(db, "dms", pairId(me, other), "messages", messageId), {
+    [`reactions.${emoji}`]: alreadyReacted ? arrayRemove(me) : arrayUnion(me),
+  });
 }

@@ -1,0 +1,128 @@
+/* src/styles/circles-menu.css  "Circles" button in the top bar and the list it opens.
+   1) shared   2) phone (≤700px): bottom sheet   3) PC (≥701px): dropdown   4) iPhone app only */
+
+/* ───────────── 1. Shared ───────────── */
+.cm-btn { gap: 6px; }
+.cm-btn.on { background: var(--icon-bg); color: var(--accent); }
+.cm-btn-label { display: none; font-size: 0.88rem; font-weight: 600; }
+
+.cm-backdrop { position: fixed; inset: 0; z-index: 9000; background: transparent; }
+.cm-pop {
+  position: fixed;
+  z-index: 9001;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md, 0 18px 50px rgba(0, 0, 0, 0.28));
+}
+.cm-grab { display: none; }
+.cm-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px 8px; }
+.cm-head h2 { margin: 0; font-size: 1rem; }
+.cm-total { padding: 2px 9px; border-radius: 999px; background: var(--icon-bg); color: var(--accent); font-size: 0.75rem; font-weight: 700; }
+.cm-list { flex: 1; min-height: 0; overflow-y: auto; padding: 0 8px 8px; overscroll-behavior: contain; }
+.cm-list ul { margin: 0; padding: 0; list-style: none; }
+.cm-note { margin: 18px 8px; color: var(--text-secondary); text-align: center; }
+.cm-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 8px;
+  border: 0;
+  border-radius: 14px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.cm-item:hover, .cm-item:focus-visible { background: var(--icon-bg); outline: none; }
+.cm-av {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  background: var(--icon-bg) center / cover no-repeat;
+  color: var(--accent);
+  font-weight: 700;
+}
+.cm-copy { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.cm-copy strong { overflow: hidden; font-size: 0.95rem; text-overflow: ellipsis; white-space: nowrap; }
+.cm-copy small { color: var(--text-secondary); }
+.cm-badge { display: grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: #ef4444; color: #fff; font-size: 0.72rem; font-weight: 700; }
+.cm-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; margin: 20px 12px; color: var(--text-secondary); text-align: center; }
+.cm-empty p { margin: 0; }
+.cm-btn-main, .cm-btn-soft {
+  min-height: 40px;
+  padding: 0 18px;
+  border-radius: 12px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.cm-btn-main { border: 0; background: var(--accent); color: #fff; }
+.cm-btn-soft { border: 1px solid var(--border); background: var(--bg); color: var(--text-primary); }
+.cm-foot { padding: 6px 8px 8px; border-top: 1px solid var(--border); }
+.cm-foot button {
+  width: 100%;
+  min-height: 42px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.cm-foot button:hover { background: var(--icon-bg); }
+
+/* ───────────── 2. Phone width: bottom sheet ───────────── */
+@media (max-width: 700px) {
+  .cm-backdrop { background: rgba(0, 0, 0, 0.5); }
+  .cm-pop {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-height: 78dvh;
+    border-radius: 22px 22px 0 0;
+    border-bottom: 0;
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 6px);
+    animation: cm-up 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .cm-grab { display: block; width: 38px; height: 4px; margin: 8px auto 0; border-radius: 4px; background: var(--border); }
+  .cm-item { min-height: 56px; }
+}
+@keyframes cm-up {
+  from { transform: translateY(40px); opacity: 0.6; }
+  to { transform: none; opacity: 1; }
+}
+
+/* ───────────── 3. PC: dropdown under the button ───────────── */
+@media (min-width: 701px) {
+  .snaprium-menu-btn.cm-btn { width: auto; padding-inline: 12px; }
+  .cm-btn-label { display: inline; }
+  .cm-pop {
+    top: var(--cm-top, 60px);
+    right: var(--cm-right, 12px);
+    width: 340px;
+    max-height: min(520px, calc(100dvh - var(--cm-top, 60px) - 16px));
+    border-radius: 18px;
+    animation: cm-pop 0.16s ease-out;
+  }
+}
+@keyframes cm-pop {
+  from { transform: translateY(-6px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+/* ───────────── 4. iPhone app only ───────────── */
+html.native-app .cm-pop { padding-bottom: max(env(safe-area-inset-bottom, 0px), 14px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .cm-pop { animation: none; }
+}

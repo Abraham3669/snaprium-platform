@@ -18,7 +18,6 @@ import { fetchProfileCard } from "../lib/publicProfile";
 import { acceptFriendRequest, removeFriendship, sendFriendRequest, useFriendship } from "../lib/friends";
 import { useBlocked } from "../lib/moderation";
 import { BlockDialog, ReportDialog } from "./ModerationDialogs";
-import DmPanel from "./DmPanel";
 import "../styles/profile-card.css";
 
 // A calm, steady colour for people who have no banner yet (same person = same colour).
@@ -54,7 +53,6 @@ export default function ProfileCard({ uid, fallback = {}, user, communityId = ""
   const [busy, setBusy] = useState(false);
   const [menu, setMenu] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
-  const [dmOpen, setDmOpen] = useState(false);
   const [reportInfo, setReportInfo] = useState(null);
   const [blockInfo, setBlockInfo] = useState(null);
   const { status, loading: relLoading } = useFriendship(me, uid);
@@ -176,7 +174,7 @@ export default function ProfileCard({ uid, fallback = {}, user, communityId = ""
       </>
     ) : (
       <>
-        <button type="button" className="pc-btn pc-msg" onClick={() => setDmOpen(true)}>
+        <button type="button" className="pc-btn pc-msg" onClick={() => { onClose(); navigate(`/messages/${uid}`); }}>
           <Icon d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" /> Message
         </button>
         <button type="button" className="pc-btn pc-friends" onClick={() => setConfirmRemove(true)}>
@@ -185,9 +183,6 @@ export default function ProfileCard({ uid, fallback = {}, user, communityId = ""
       </>
     );
   }
-
-  // Message opens the conversation in place of the card; closing it closes both.
-  if (dmOpen) return <DmPanel other={uid} fallback={{ name, photo }} onClose={onClose} />;
 
   return createPortal(
     <>

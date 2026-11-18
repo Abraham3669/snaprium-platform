@@ -1,0 +1,354 @@
+/* src/styles/chat-nav.css  Circles and Friends quick jump inside a circle chat.
+   Imported by ChatNav.jsx, so it loads after community-chat.css.
+   1) shared   2) phone and tablet (below 960px): header buttons + bottom sheet
+   3) PC (960px and up): footer under the boards sidebar + panel   4) phone only (700px and below)
+   5) iPhone app only */
+
+/* ───────────── 1. Shared ───────────── */
+
+.cn-av {
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--icon-bg);
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+.cn-av img { width: 100%; height: 100%; object-fit: cover; }
+.cn-av.square { border-radius: 11px; background-size: cover; background-position: center; }
+
+.cn-list ul { margin: 0; padding: 0; list-style: none; }
+.cn-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.cn-row:hover { background: var(--icon-bg); }
+.cn-row.on { background: var(--icon-bg); }
+.cn-copy { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.cn-copy strong { overflow: hidden; font-size: 0.93rem; text-overflow: ellipsis; white-space: nowrap; }
+.cn-copy small { overflow: hidden; color: var(--text-secondary); font-size: 0.78rem; text-overflow: ellipsis; white-space: nowrap; }
+.cn-copy small.unread { color: var(--text-primary); font-weight: 650; }
+.cn-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; color: var(--text-secondary); font-size: 0.72rem; }
+.cn-dot { flex: 0 0 auto; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+.cn-here { color: var(--accent); font-size: 0.75rem; font-weight: 700; }
+.cn-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.cn-request {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+.cn-link {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+.cn-link:hover { background: var(--icon-bg); }
+.cn-primary {
+  padding: 9px 16px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+.cn-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; margin: 20px 10px; color: var(--text-secondary); text-align: center; }
+.cn-empty p { margin: 0; }
+.cn-note { margin: 18px 10px; color: var(--text-secondary); text-align: center; }
+
+/* header buttons and sidebar footer: hidden until the right block below turns them on */
+.cc-nav-btns { display: none; align-items: center; gap: 6px; }
+.cc-rail-foot, .cc-rail-panel { display: none; }
+.cc-top-right { display: flex; align-items: center; gap: 10px; }
+.cc-me-pill, .cc-nav-me { display: none; }
+.cc-me-av { flex: 0 0 auto; display: grid; place-items: center; overflow: hidden; border-radius: 50%; background: var(--icon-bg); color: var(--accent); font-weight: 700; }
+.cc-me-av img { width: 100%; height: 100%; object-fit: cover; }
+.cc-top-btn {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+
+/* ───────────── 2. Phone and tablet (below 960px): header buttons + bottom sheet ───────────── */
+
+@media (max-width: 959px) {
+  .cc-rail-boards { display: contents; }
+
+  .cc-nav-btns { display: flex; }
+  .cc-nav-btn {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg);
+    color: var(--text-primary);
+    line-height: 0;
+    cursor: pointer;
+  }
+  .cc-nav-btn svg { width: 20px; height: 20px; display: block; }
+  .cc-nav-dot {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ef4444;
+    box-shadow: 0 0 0 2px var(--surface);
+  }
+
+  .cn-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1500;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background: rgba(5, 9, 18, 0.5);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+    animation: cn-fade 0.15s ease-out;
+  }
+  .cn-sheet {
+    width: 100%;
+    max-width: 520px;
+    max-height: min(78dvh, 620px);
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    border-bottom: 0;
+    border-radius: 22px 22px 0 0;
+    background: var(--surface);
+    color: var(--text-primary);
+    box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.3);
+    animation: cn-rise 0.2s ease-out;
+  }
+  .cn-sheet-top { position: relative; flex: 0 0 auto; padding: 16px 14px 10px; border-bottom: 1px solid var(--border); }
+  .cn-grab { position: absolute; top: 7px; left: 50%; width: 40px; height: 4px; border-radius: 4px; background: var(--border); transform: translateX(-50%); }
+  .cn-sheet-head { display: flex; align-items: center; gap: 10px; }
+  .cn-sheet-title { flex: 1; font-size: 1rem; }
+  .cn-seg { flex: 1; display: flex; gap: 4px; padding: 4px; border-radius: 14px; background: var(--icon-bg); }
+  .cn-seg button {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 10px;
+    background: none;
+    color: var(--text-secondary);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .cn-seg button.on { background: var(--surface); color: var(--text-primary); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15); }
+  .cn-x {
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 10px;
+    background: var(--icon-bg);
+    color: var(--text-primary);
+    font-size: 1.3rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .cn-sheet-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 8px 10px max(16px, env(safe-area-inset-bottom, 0px));
+  }
+  .cn-sheet .cn-row { padding: 10px; }
+
+  @keyframes cn-fade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes cn-rise { from { transform: translateY(24px); opacity: 0.6; } to { transform: none; opacity: 1; } }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cn-backdrop, .cn-sheet { animation: none; }
+}
+
+/* ───────────── 3. PC (960px and up): boards on top, Circles and Friends pinned below ───────────── */
+
+@media (min-width: 960px) {
+  /* the sidebar no longer scrolls as a whole: boards scroll in their own area, the footer stays put */
+  .cc-rail { gap: 0; overflow: hidden; padding-bottom: 12px; }
+  .cc-rail-boards {
+    flex: 1 1 0;
+    min-height: 96px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  .cc-rail-boards > .cc-board-chip { flex: 0 0 auto; }
+
+  .cc-rail-panel {
+    flex: 0 1 50%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    margin-top: 8px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--bg);
+    overflow: hidden;
+    animation: cn-fade 0.12s ease-out;
+  }
+  .cc-rail-panel-head { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 8px 8px 8px 14px; border-bottom: 1px solid var(--border); }
+  .cc-rail-panel-head strong { font-size: 0.82rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-secondary); }
+  .cc-rail-panel-head .cn-x {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    cursor: pointer;
+  }
+  .cc-rail-panel-head .cn-x:hover { background: var(--icon-bg); }
+  .cc-rail-panel-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 6px; scrollbar-width: thin; }
+
+  .cc-rail-foot { display: flex; gap: 8px; width: 100%; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .cc-foot-btn {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 0;
+    height: 40px;
+    padding: 0 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    white-space: nowrap;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg);
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 650;
+    cursor: pointer;
+    transition: background-color 0.12s, color 0.12s;
+  }
+  .cc-foot-btn svg { flex: 0 0 20px; width: 20px; height: 20px; min-width: 20px; display: block; }
+  .cc-foot-btn:hover { background: var(--icon-bg); color: var(--text-primary); }
+  .cc-foot-btn.on { border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); background: var(--icon-bg); color: var(--accent); }
+  .cc-foot-btn .cn-badge { min-width: 16px; height: 16px; font-size: 0.64rem; }
+
+  @keyframes cn-fade { from { opacity: 0; } to { opacity: 1; } }
+}
+
+/* ───────────── 4. Tablet and PC (701px and up): "Profile" pill at the top right ───────────── */
+
+@media (min-width: 701px) {
+  .cc-main:not(.dm-chat) > .cc-top .cc-me-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 14px 0 5px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 650;
+    cursor: pointer;
+  }
+  .cc-main:not(.dm-chat) > .cc-top .cc-me-pill:hover { background: var(--icon-bg); }
+  .cc-me-pill .cc-me-av { width: 30px; height: 30px; font-size: 0.8rem; }
+  .cc-nav-btn.cc-nav-me { display: none; }
+}
+
+/* ───────────── 4b. Phone only (700px and below): three small header buttons, last one is your profile ───────────── */
+
+@media (max-width: 700px) {
+  .cc-main:not(.dm-chat) > .cc-top .cc-faces { display: none; }
+  .cc-top-right { gap: 0; }
+  .cc-nav-btns { gap: 4px; }
+  .cc-nav-btn { width: 36px; height: 36px; border-radius: 11px; }
+  .cc-nav-btn svg { width: 18px; height: 18px; }
+  .cc-nav-btn.cc-nav-me { display: grid; border-radius: 50%; padding: 0; }
+  .cc-nav-me .cc-me-av { width: 28px; height: 28px; font-size: 0.78rem; }
+  .cc-nav-dot { top: 3px; right: 3px; }
+}
+
+/* very narrow phones: keep the line under the name short ("15 members") */
+@media (max-width: 380px) {
+  .cc-top-btn .cc-sub-board, .cc-top-btn .cc-sub-dot { display: none; }
+}
+
+/* ───────────── 5. iPhone app only ───────────── */
+
+html.native-app .cn-sheet-body { padding-bottom: max(20px, env(safe-area-inset-bottom, 0px)); }
