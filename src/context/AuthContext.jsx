@@ -7,6 +7,7 @@ import { Capacitor } from "@capacitor/core";
 import { App as CapApp } from "@capacitor/app";
 import { ensureUserDocument } from "../lib/userProfile";
 import { trackAppOpen } from "../lib/track";
+import { touchPresence } from "../lib/publicProfile";
 
 const AuthContext = createContext();
 
@@ -220,6 +221,26 @@ export function AuthProvider({ children }) {
     return () => document.removeEventListener("visibilitychange", onVisible);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.uid, user?.banned]);
+
+  // "online" dot for friends: while the app is open and visible, note that you are active (about every 2 minutes)
+  useEffect(() => {
+    if (!user?.uid || user.banned || user.profileLoaded !== true) return undefined;
+    const uid = user.uid;
+    let last = 0;
+    const beat = () => {
+      if (document.visibilityState !== "visible") return;
+      if (Date.now() - last < 30 * 1000) return;
+      last = Date.now();
+      touchPresence(uid).catch(() => {});
+    };
+    beat();
+    const id = setInterval(beat, 2 * 60 * 1000);
+    document.addEventListener("visibilitychange", beat);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", beat);
+    };
+  }, [user?.uid, user?.banned, user?.profileLoaded]);
 
   const signOutUser = async () => {
     try {

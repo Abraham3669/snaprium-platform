@@ -13,7 +13,7 @@ import { useAuth } from "../context/AuthContext";
 import { acceptFriendRequest, removeFriendship, useFriendships } from "../lib/friends";
 import { countCommunityUnread, listMyCommunities } from "../lib/communities";
 import { useInbox } from "../lib/dms";
-import { useLiveProfiles } from "../lib/publicProfile";
+import { useLiveProfiles, useOnline } from "../lib/publicProfile";
 import { useBlocked } from "../lib/moderation";
 import ProfileCard from "./ProfileCard";
 
@@ -27,9 +27,14 @@ function ago(t) {
   return d.toLocaleDateString([], { month: "short", day: "numeric" });
 }
 
-function Av({ profile }) {
+function Av({ profile, online }) {
   const n = profile?.displayName || "Member";
-  return <span className="fr-av">{profile?.photoURL ? <img src={profile.photoURL} alt="" /> : n.slice(0, 1).toUpperCase()}</span>;
+  return (
+    <span className="dm-av-wrap">
+      <span className="fr-av">{profile?.photoURL ? <img src={profile.photoURL} alt="" /> : n.slice(0, 1).toUpperCase()}</span>
+      {online ? <i className="dm-online" role="img" aria-label="Online" title="Online" /> : null}
+    </span>
+  );
 }
 
 export default function DmSidebar({ initialTab = "chats", activeUid = "", onOpen, onLeave }) {
@@ -86,6 +91,7 @@ export default function DmSidebar({ initialTab = "chats", activeUid = "", onOpen
     [convsAll, friends, incoming, outgoing, blocked]
   );
   const profiles = useLiveProfiles(ids);
+  const online = useOnline(useMemo(() => [...convs.map((c) => c.other), ...fr], [convsAll, friends, blocked])); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Coming from a "friend request" link or the Friends button: open on the tab that helps most.
   useEffect(() => {
@@ -212,7 +218,7 @@ export default function DmSidebar({ initialTab = "chats", activeUid = "", onOpen
               {chats.map((c) => (
                 <li key={c.id} className="fr-row">
                   <button type="button" className={`fr-person ms-conv dm-row ${activeUid === c.other ? "active" : ""}`} onClick={() => onOpen(c.other)}>
-                    <Av profile={profiles[c.other]} />
+                    <Av profile={profiles[c.other]} online={online[c.other]} />
                     <span className="ms-copy">
                       <span className="fr-name">{nameOf(c.other)}</span>
                       <span className={`ms-last ${c.unread ? "unread" : ""}`}>
@@ -239,7 +245,7 @@ export default function DmSidebar({ initialTab = "chats", activeUid = "", onOpen
               {friendRows.map((uid) => (
                 <li key={uid} className="fr-row">
                   <button type="button" className={`fr-person dm-row ${activeUid === uid ? "active" : ""}`} onClick={() => onOpen(uid)}>
-                    <Av profile={profiles[uid]} />
+                    <Av profile={profiles[uid]} online={online[uid]} />
                     <span className="fr-name">{nameOf(uid)}</span>
                   </button>
                   <span className="fr-actions">

@@ -10,6 +10,8 @@
 //  - fetchProfileCard(uid)       the full card (name, photo, bio, banner), always fresh. Used by the profile card.
 //  - saveProfileExtras(user, x)  saves YOUR bio and/or banner (and name) on your card
 //  - compressBanner(file)        turns a picture into a small 3:1 banner (JPEG data URL)
+//  - touchPresence(uid)          saves "last active" on YOUR card (App keeps calling it while the app is open)
+//  - useOnline(uids)             gives { [uid]: true } for friends who were active in the last few minutes
 
 import { useEffect, useMemo, useState } from "react";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
@@ -61,6 +63,59 @@ export async function publishPublicProfile(user) {
   if (photo !== null) data.photoURL = photo;
   await setDoc(doc(db, "publicProfiles", user.uid), data, { merge: true });
   cache.set(user.uid, { name, photo: photo === null ? cache.get(user.uid)?.photo || "" : photo, at: Date.now() });
+}
+
+// ----- online dot -----
+const ONLINE_MS = 4 * 60 * 1000; // active within the last 4 minutes = online
+const ONLINE_POLL_MS = 60 * 1000;
+
+// Saves "last active" on your own card. Quietly does nothing if it is not allowed (yet).
+export async function touchPresence(uid) {
+  if (!uid) return;
+  await setDoc(doc(db, "publicProfiles", uid), { lastActive: serverTimestamp() }, { merge: true });
+}
+
+// { [uid]: true } for the people who are online right now. Looks again every minute while the screen is open.
+export function useOnline(uids) {
+  const key = useMemo(
+    () => [...new Set((uids || []).filter(Boolean))].sort().slice(0, MAX_UIDS).join(","),
+    [uids]
+  );
+  const [online, setOnline] = useState({});
+
+  useEffect(() => {
+    const list = key ? key.split(",") : [];
+    if (!list.length) {
+      setOnline({});
+      return undefined;
+    }
+    let cancelled = false;
+    const look = async () => {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+      const next = {};
+      await Promise.all(
+        list.map(async (uid) => {
+          try {
+            const snap = await getDoc(doc(db, "publicProfiles", uid));
+            const t = snap.exists() ? snap.data().lastActive?.toMillis?.() || 0 : 0;
+            if (t && Date.now() - t < ONLINE_MS) next[uid] = true;
+          } catch {}
+        })
+      );
+      if (!cancelled) setOnline(next);
+    };
+    look();
+    const id = setInterval(look, ONLINE_POLL_MS);
+    const onVisible = () => document.visibilityState === "visible" && look();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [key]);
+
+  return online;
 }
 
 export const BIO_MAX = 160;

@@ -53,6 +53,7 @@ import "katex/dist/katex.min.css";
 
  
 
+const MENU_HEIGHT = 260; // room the message menu needs, in px
 const QUICK_REACTIONS = ["👍", "❤️", "😂", "🔥", "🙏", "🎉"];
 
 // [["👍", [uid, ...]], ...] with empty ones removed
@@ -383,6 +384,7 @@ const [pendingImage, setPendingImage] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState("");
   const [menuFor, setMenuFor] = useState(null);
+  const [menuUp, setMenuUp] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const menuRef = useRef(null);
   const longPressTimer = useRef(null);
@@ -445,8 +447,24 @@ const questionsBoard = isQuestionsBoard(activeBoard);
   };
 
 
-    const startLongPress = (msg) => {
-    longPressTimer.current = setTimeout(() => setMenuFor(msg.id), 450);
+    const startLongPress = (msg, el) => {
+    longPressTimer.current = setTimeout(() => openMenu(msg.id, el), 450);
+  };
+
+  // Open the message menu. Near the bottom (next to the message box) it opens upwards so it is never hidden.
+  const openMenu = (id, el) => {
+    if (menuFor === id) return setMenuFor(null);
+    let up = false;
+    const feed = feedRef.current;
+    if (feed && el) {
+      const r = el.getBoundingClientRect();
+      const f = feed.getBoundingClientRect();
+      const below = f.bottom - r.top;
+      const above = r.top - f.top;
+      up = below < MENU_HEIGHT && above > below;
+    }
+    setMenuUp(up);
+    setMenuFor(id);
   };
   const cancelLongPress = () => {
     clearTimeout(longPressTimer.current);
@@ -603,6 +621,21 @@ const next =
   
 
 
+
+  // If the menu still sticks out of the message area, scroll the area so it is fully in view.
+  useEffect(() => {
+    if (!menuFor) return undefined;
+    const id = requestAnimationFrame(() => {
+      const m = menuRef.current;
+      const f = feedRef.current;
+      if (!m || !f) return;
+      const mr = m.getBoundingClientRect();
+      const fr = f.getBoundingClientRect();
+      if (mr.bottom > fr.bottom) f.scrollTop += mr.bottom - fr.bottom + 8;
+      else if (mr.top < fr.top) f.scrollTop -= fr.top - mr.top + 8;
+    });
+    return () => cancelAnimationFrame(id);
+  }, [menuFor, menuUp]);
 
     useEffect(() => {
     if (!menuFor) return;
@@ -1566,7 +1599,7 @@ useEffect(() => {
             } ${(msg.mentions || []).includes(user?.uid) ? "mentioned" : ""} ${
               menuFor === msg.id ? "menu-open" : ""
             }`}
-            onTouchStart={() => !msg.isAI && startLongPress(msg)}
+            onTouchStart={(e) => !msg.isAI && startLongPress(msg, e.currentTarget)}
             onTouchEnd={cancelLongPress}
             onTouchMove={cancelLongPress}
           >
@@ -1625,13 +1658,13 @@ useEffect(() => {
                   <button
                     type="button"
                     className="cc-more-btn"
-                    onClick={() => setMenuFor(menuFor === msg.id ? null : msg.id)}
+                    onClick={(e) => openMenu(msg.id, e.currentTarget)}
                     aria-label="Message actions"
                   >
                     ⋯
                   </button>
                   {menuFor === msg.id && (
-                    <div className="cc-post-menu" ref={menuRef}>
+                    <div className={`cc-post-menu ${menuUp ? "up" : ""}`} ref={menuRef}>
                       <div className="cc-rx-menu">
                         {QUICK_REACTIONS.map((emoji) => (
                           <button

@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useFriendship, pairId } from "../lib/friends";
 import { deleteDm, editDm, markDmRead, sendDm, toggleDmReaction, useDmMessages } from "../lib/dms";
-import { useLiveProfiles } from "../lib/publicProfile";
+import { useLiveProfiles, useOnline } from "../lib/publicProfile";
 import { useBlocked } from "../lib/moderation";
 import { isClean, FILTER_MESSAGE } from "../lib/contentFilter";
 import { ReportDialog } from "./ModerationDialogs";
@@ -66,6 +66,7 @@ function sameRun(a, b) {
   return !!ta && !!tb && tb - ta < 4 * 60 * 1000 && dayKey(a.createdAt) === dayKey(b.createdAt);
 }
 
+const MENU_HEIGHT = 260; // room the message menu needs, in px
 const QUICK_REACTIONS = ["👍", "❤️", "😂", "🔥", "🙏", "🎉"];
 // [["👍", [uid, ...]], ...] with the empty ones removed
 const reactionList = (m) =>
@@ -92,6 +93,7 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
   const navigate = useNavigate();
   const me = user?.uid || "";
   const profiles = useLiveProfiles([other]);
+  const online = !!useOnline(useMemo(() => (other ? [other] : []), [other]))[other];
   const name = profiles[other]?.displayName || fallback.name || "Member";
   const photo = profiles[other]?.photoURL || fallback.photo || "";
   const { status } = useFriendship(me, other);
@@ -108,6 +110,7 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [menuUp, setMenuUp] = useState(false);
   const feedRef = useRef(null);
   const fileRef = useRef(null);
   const menuRef = useRef(null);
@@ -277,11 +280,45 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
     setTimeout(() => el.classList.remove("flash"), 1400);
   };
 
+  // Open the message menu. Near the bottom (next to the message box) it opens upwards so it is never hidden.
+  const openMenu = (id, el) => {
+    if (menuFor === id) return setMenuFor(null);
+    let up = false;
+    const feed = feedRef.current;
+    if (feed && el) {
+      const r = el.getBoundingClientRect();
+      const f = feed.getBoundingClientRect();
+      const below = f.bottom - r.top;
+      const above = r.top - f.top;
+      up = below < MENU_HEIGHT && above > below;
+    }
+    setMenuUp(up);
+    setMenuFor(id);
+  };
+
+  // If the menu still sticks out of the message area, scroll the area so it is fully in view.
+  useEffect(() => {
+    if (!menuFor) return undefined;
+    const id = requestAnimationFrame(() => {
+      const m = menuRef.current;
+      const f = feedRef.current;
+      if (!m || !f) return;
+      const mr = m.getBoundingClientRect();
+      const fr = f.getBoundingClientRect();
+      if (mr.bottom > fr.bottom) f.scrollTop += mr.bottom - fr.bottom + 8;
+      else if (mr.top < fr.top) f.scrollTop -= fr.top - mr.top + 8;
+    });
+    return () => cancelAnimationFrame(id);
+  }, [menuFor, menuUp]);
+
   const visible = messages.filter((m) => m.uid === me || !blocked.has(m.uid));
 
   const titleCopy = (
     <>
-      <h1>{name}</h1>
+      <h1>
+        {name}
+        {online ? <i className="dm-online-inline" role="img" aria-label="Online" title="Online" /> : null}
+      </h1>
       <p>Direct message</p>
     </>
   );
@@ -312,7 +349,7 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
               )}
               <button type="button" className="dm-me-pill" onClick={() => navigate("/profile")} aria-label="Your profile" title="Your profile">
                 <span className="dm-me-av">{myPhoto ? <img src={myPhoto} alt="" /> : (myName || "Me").trim().charAt(0).toUpperCase()}</span>
-                Profile
+                <span className="dm-me-label">Profile</span>
               </button>
               {onClose && (
                 <button type="button" className="cc-icon-btn dm-close" onClick={onClose} aria-label="Close messages">
@@ -350,7 +387,10 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
                     <article
                       data-mid={m.id}
                       className={`cc-post ${mine ? "mine" : ""} ${grouped ? "grouped" : ""} ${menuFor === m.id ? "menu-open" : ""}`}
-                      onTouchStart={() => { longPress.current = setTimeout(() => setMenuFor(m.id), 450); }}
+                      onTouchStart={(e) => {
+                        const el = e.currentTarget;
+                        longPress.current = setTimeout(() => openMenu(m.id, el), 450);
+                      }}
                       onTouchEnd={() => clearTimeout(longPress.current)}
                       onTouchMove={() => clearTimeout(longPress.current)}
                     >
@@ -371,21 +411,31 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
                       )}
                       <header className="cc-post-head">
                         {!grouped && (
-                          <span className="cc-avatar-btn" aria-hidden="true">
-                            {ph ? <img className="cc-avatar" src={ph} alt="" /> : <span className="cc-avatar cc-avatar-fallback">{nm.slice(0, 1).toUpperCase()}</span>}
-                          </span>
+                          !mine && onOpenProfile ? (
+                            <button type="button" className="cc-avatar-btn" onClick={onOpenProfile} aria-label={`Open ${nm}'s profile`}>
+                              {ph ? <img className="cc-avatar" src={ph} alt="" /> : <span className="cc-avatar cc-avatar-fallback">{nm.slice(0, 1).toUpperCase()}</span>}
+                            </button>
+                          ) : (
+                            <span className="cc-avatar-btn" aria-hidden="true">
+                              {ph ? <img className="cc-avatar" src={ph} alt="" /> : <span className="cc-avatar cc-avatar-fallback">{nm.slice(0, 1).toUpperCase()}</span>}
+                            </span>
+                          )
                         )}
                         {!grouped && (
                           <span className="cc-name-line">
-                            <strong>{nm}</strong>
+                            {!mine && onOpenProfile ? (
+                              <button type="button" className="dm-name-btn" onClick={onOpenProfile}>{nm}</button>
+                            ) : (
+                              <strong>{nm}</strong>
+                            )}
                             {time ? <time>{time}</time> : null}
                             {m.edited ? <em className="cc-edited">edited</em> : null}
                           </span>
                         )}
                         <div className="cc-post-menu-wrap">
-                          <button type="button" className="cc-more-btn" aria-label="Message actions" onClick={() => setMenuFor(menuFor === m.id ? null : m.id)}>⋯</button>
+                          <button type="button" className="cc-more-btn" aria-label="Message actions" onClick={(e) => openMenu(m.id, e.currentTarget)}>⋯</button>
                           {menuFor === m.id && (
-                            <div className="cc-post-menu" ref={menuRef}>
+                            <div className={`cc-post-menu ${menuUp ? "up" : ""}`} ref={menuRef}>
                               {canSend && (
                                 <div className="cc-rx-menu">
                                   {QUICK_REACTIONS.map((emoji) => (
