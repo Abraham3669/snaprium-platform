@@ -6,10 +6,12 @@
 //                                      replyTo?, reactions?, edited?, updatedAt? }
 //                                    reactions looks like { "👍": [uid, ...] } (same as circle chat)
 //   users/{me}/dmReads/{uidA_uidB}   { at }                                      when YOU last opened it
+//   dms/{uidA_uidB}/typing/{uid}     { uid, at }                                  "is typing…" (one tiny doc per person)
 //
 //  - useInbox(me)            your conversations (newest first) and how many are unread
 //  - useDmMessages(me, them) live messages of one conversation
 //  - sendDm / editDm / toggleDmReaction / deleteDm / markDmRead
+//  - useDmTyping(me, them) true while they are typing; setDmTyping / clearDmTyping for your own side
 // Rules only allow sending between accepted friends who have not blocked each other.
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -98,6 +100,52 @@ export function useDmMessages(me, other) {
     );
   }, [me, other]);
   return { messages, loading };
+}
+
+// "Typing…". They write { uid, at } while they type and delete it when they stop or send.
+// A leftover doc (phone closed mid-sentence) never shows: it is ignored when you open the chat and hides itself after a few seconds.
+const TYPING_MS = 5000;
+export function useDmTyping(me, other) {
+  const [typing, setTyping] = useState(false);
+  useEffect(() => {
+    setTyping(false);
+    if (!me || !other) return undefined;
+    let timer = null;
+    let first = true;
+    let lastT = 0;
+    const unsub = onSnapshot(
+      doc(db, "dms", pairId(me, other), "typing", other),
+      (snap) => {
+        if (snap.metadata?.fromCache) return;
+        const d = snap.exists() ? snap.data() : null;
+        const t = ms(d?.at);
+        if (t && t === lastT) return; // the same write again, nothing new
+        lastT = t;
+        clearTimeout(timer);
+        let live = !!d && !!t;
+        if (live && first) live = Math.abs(Date.now() - t) < TYPING_MS;
+        first = false;
+        setTyping(live);
+        if (live) timer = setTimeout(() => setTyping(false), TYPING_MS);
+      },
+      () => setTyping(false)
+    );
+    return () => {
+      clearTimeout(timer);
+      unsub();
+    };
+  }, [me, other]);
+  return typing;
+}
+
+export function setDmTyping(me, other) {
+  if (!me || !other) return Promise.resolve();
+  return setDoc(doc(db, "dms", pairId(me, other), "typing", me), { uid: me, at: serverTimestamp() }).catch(() => {});
+}
+
+export function clearDmTyping(me, other) {
+  if (!me || !other) return Promise.resolve();
+  return deleteDoc(doc(db, "dms", pairId(me, other), "typing", me)).catch(() => {});
 }
 
 export async function markDmRead(me, other) {

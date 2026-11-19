@@ -9,7 +9,7 @@ import EmojiPicker from "emoji-picker-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useFriendship, pairId } from "../lib/friends";
-import { deleteDm, editDm, markDmRead, sendDm, toggleDmReaction, useDmMessages } from "../lib/dms";
+import { clearDmTyping, deleteDm, editDm, markDmRead, sendDm, setDmTyping, toggleDmReaction, useDmMessages, useDmTyping } from "../lib/dms";
 import { useLiveProfiles, useOnline } from "../lib/publicProfile";
 import { useBlocked } from "../lib/moderation";
 import { isClean, FILTER_MESSAGE } from "../lib/contentFilter";
@@ -99,6 +99,7 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
   const { status } = useFriendship(me, other);
   const { blocked } = useBlocked(me);
   const { messages, loading } = useDmMessages(me, other);
+  const theyTyping = useDmTyping(me, other);
   const [text, setText] = useState("");
   const [image, setImage] = useState("");
   const [sending, setSending] = useState(false);
@@ -116,8 +117,11 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
   const menuRef = useRef(null);
   const longPress = useRef(null);
   const pickerRef = useRef(null);
+  const typingTimer = useRef(null);
+  const lastTypingWrite = useRef(0);
 
   const canSend = status === "friends" && !blocked.has(other);
+  const otherTyping = theyTyping && canSend;
   const meInfo = useMemo(
     () => ({ uid: me, displayName: user?.displayName || "Member", photoURL: user?.photoURL || "" }),
     [me, user?.displayName, user?.photoURL]
@@ -134,6 +138,40 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
     const el = feedRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages.length, loading]);
+
+  // Your own "typing…": written at most every 2 seconds while you type, removed when you stop, send or leave.
+  const stopTyping = () => {
+    clearTimeout(typingTimer.current);
+    if (lastTypingWrite.current) {
+      lastTypingWrite.current = 0;
+      clearDmTyping(me, other);
+    }
+  };
+  const pulseTyping = () => {
+    if (!canSend || !me || !other) return;
+    clearTimeout(typingTimer.current);
+    typingTimer.current = setTimeout(stopTyping, 2500);
+    const now = Date.now();
+    if (lastTypingWrite.current && now - lastTypingWrite.current < 2000) return;
+    lastTypingWrite.current = now;
+    setDmTyping(me, other);
+  };
+  useEffect(
+    () => () => {
+      clearTimeout(typingTimer.current);
+      if (lastTypingWrite.current) {
+        lastTypingWrite.current = 0;
+        clearDmTyping(me, other);
+      }
+    },
+    [me, other]
+  );
+
+  // When their "typing…" line appears and you are at the bottom, stay at the bottom.
+  useEffect(() => {
+    const el = feedRef.current;
+    if (el && otherTyping && el.scrollHeight - el.scrollTop - el.clientHeight < 140) el.scrollTop = el.scrollHeight;
+  }, [otherTyping]);
 
   // Esc closes the small things first (menu, emoji picker, reply, edit) and only then leaves Messages.
   useEffect(() => {
@@ -184,6 +222,7 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
       return;
     }
     setSending(true);
+    stopTyping();
     const keepText = text;
     const keepImage = image;
     const quoted = replyTo;
@@ -567,6 +606,13 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
             )}
           </div>
 
+          {otherTyping && (
+            <p className="cc-typing-label dm-typing" role="status" aria-live="polite">
+              <span className="dm-typing-dots" aria-hidden="true"><i /><i /><i /></span>
+              <span className="dm-typing-text">{name} is typing…</span>
+            </p>
+          )}
+
           {canSend ? (
             <div className="cc-composer-wrap">
               {replyTo && (
@@ -609,6 +655,8 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
                   placeholder={`Message ${name}…`}
                   onChange={(e) => {
                     setText(e.target.value);
+                    if (e.target.value.trim()) pulseTyping();
+                    else stopTyping();
                     e.target.style.height = "auto";
                     e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
                   }}
