@@ -53,6 +53,9 @@ import "katex/dist/katex.min.css";
 
  
 
+// The Snaprium owner account (same uid as in firestore.rules). Only this account can delete other people's messages;
+// the rules are what actually enforce it, this just decides whether to show the button.
+const OWNER_UIDS = ["csFXC9p3lLcmzmyP2YjFT42yMSw1"];
 const MENU_HEIGHT = 260; // room the message menu needs, in px
 const QUICK_REACTIONS = ["👍", "❤️", "😂", "🔥", "🙏", "🎉"];
 
@@ -1682,7 +1685,7 @@ useEffect(() => {
                       {msg.uid === user?.uid && msg.text && !msg.imageUrl && (
                         <button type="button" onClick={() => { startEdit(msg); setMenuFor(null); }}>Edit</button>
                       )}
-                      {msg.uid === user?.uid && (
+                      {(msg.uid === user?.uid || OWNER_UIDS.includes(user?.uid)) && (
                         <button type="button" className="danger" onClick={() => { removeMessage(msg); setMenuFor(null); }}>Delete</button>
                       )}
                       {msg.uid !== user?.uid && !!user && (
