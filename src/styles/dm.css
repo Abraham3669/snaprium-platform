@@ -20,7 +20,7 @@
 }
 .dm-me-av img { width: 100%; height: 100%; object-fit: cover; }
 
-/* green "online" dot: on a friend's picture in the lists, and next to their name in the chat header */
+/* green "online" / grey "offline" dot: on a friend's picture in the lists, and next to their name in the chat header */
 .dm-av-wrap { position: relative; display: inline-flex; flex: 0 0 auto; }
 .dm-online {
   position: absolute;
@@ -41,6 +41,9 @@
   background: #22c55e;
   vertical-align: middle;
 }
+
+/* offline = grey dot */
+.dm-online.off, .dm-online-inline.off { background: #9ca3af; }
 
 /* a friend's name in the chat opens their profile */
 .dm-name-btn { margin: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 700; cursor: pointer; }

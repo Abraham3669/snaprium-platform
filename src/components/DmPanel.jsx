@@ -93,7 +93,7 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
   const navigate = useNavigate();
   const me = user?.uid || "";
   const profiles = useLiveProfiles([other]);
-  const online = !!useOnline(useMemo(() => (other ? [other] : []), [other]))[other];
+  const online = useOnline(useMemo(() => (other ? [other] : []), [other]))[other]; // true | false | undefined (not known yet)
   const name = profiles[other]?.displayName || fallback.name || "Member";
   const photo = profiles[other]?.photoURL || fallback.photo || "";
   const { status } = useFriendship(me, other);
@@ -317,7 +317,7 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
     <>
       <h1>
         {name}
-        {online ? <i className="dm-online-inline" role="img" aria-label="Online" title="Online" /> : null}
+        {online === undefined ? null : <i className={`dm-online-inline ${online ? "" : "off"}`} role="img" aria-label={online ? "Online" : "Offline"} title={online ? "Online" : "Offline"} />}
       </h1>
       <p>Direct message</p>
     </>

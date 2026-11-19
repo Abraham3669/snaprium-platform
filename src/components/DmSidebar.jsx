@@ -32,7 +32,7 @@ function Av({ profile, online }) {
   return (
     <span className="dm-av-wrap">
       <span className="fr-av">{profile?.photoURL ? <img src={profile.photoURL} alt="" /> : n.slice(0, 1).toUpperCase()}</span>
-      {online ? <i className="dm-online" role="img" aria-label="Online" title="Online" /> : null}
+      {online === undefined ? null : <i className={`dm-online ${online ? "" : "off"}`} role="img" aria-label={online ? "Online" : "Offline"} title={online ? "Online" : "Offline"} />}
     </span>
   );
 }

@@ -11,7 +11,7 @@
 //  - saveProfileExtras(user, x)  saves YOUR bio and/or banner (and name) on your card
 //  - compressBanner(file)        turns a picture into a small 3:1 banner (JPEG data URL)
 //  - touchPresence(uid)          saves "last active" on YOUR card (App keeps calling it while the app is open)
-//  - useOnline(uids)             gives { [uid]: true } for friends who were active in the last few minutes
+//  - useOnline(uids)             gives { [uid]: true | false } (online or not) once it has looked; no entry yet = unknown
 
 import { useEffect, useMemo, useState } from "react";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
@@ -75,7 +75,7 @@ export async function touchPresence(uid) {
   await setDoc(doc(db, "publicProfiles", uid), { lastActive: serverTimestamp() }, { merge: true });
 }
 
-// { [uid]: true } for the people who are online right now. Looks again every minute while the screen is open.
+// { [uid]: true | false } for the people on screen: true = online right now, false = not. Looks again every minute while the screen is open.
 export function useOnline(uids) {
   const key = useMemo(
     () => [...new Set((uids || []).filter(Boolean))].sort().slice(0, MAX_UIDS).join(","),
@@ -98,7 +98,7 @@ export function useOnline(uids) {
           try {
             const snap = await getDoc(doc(db, "publicProfiles", uid));
             const t = snap.exists() ? snap.data().lastActive?.toMillis?.() || 0 : 0;
-            if (t && Date.now() - t < ONLINE_MS) next[uid] = true;
+            next[uid] = !!t && Date.now() - t < ONLINE_MS;
           } catch {}
         })
       );
