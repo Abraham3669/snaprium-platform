@@ -61,7 +61,7 @@ const isNativeApp = Capacitor.isNativePlatform();
 const getToday = () => new Date().toISOString().split("T")[0];
 
 function App() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -78,6 +78,19 @@ function App() {
   useEffect(() => {
     syncPush(user?.uid, (url) => navigate(url));
   }, [user?.uid]);
+
+  // While the app is still signing you in (after a refresh) show a small spinner where "Sign in" would be,
+  // so it never looks like you were logged out. If it takes unusually long, show the normal button again.
+  const [authSlow, setAuthSlow] = useState(false);
+  const signingIn = !!authLoading && !user && !authSlow;
+  useEffect(() => {
+    if (!authLoading || user) {
+      setAuthSlow(false);
+      return undefined;
+    }
+    const t = setTimeout(() => setAuthSlow(true), 8000);
+    return () => clearTimeout(t);
+  }, [authLoading, user]);
 
   // Page content always starts exactly below the real header height (it changes with the bell,
   // small phones, wrapped buttons and the iPhone notch), so nothing hides underneath it.
@@ -516,6 +529,11 @@ useEffect(() => {
                 </span>
               )}
             </button>
+          ) : signingIn ? (
+            <span className="header-auth-wait" role="status" aria-live="polite">
+              <span className="header-auth-spin" aria-hidden="true" />
+              <span className="header-auth-text">Signing you in…</span>
+            </span>
           ) : (
             <button
               type="button"

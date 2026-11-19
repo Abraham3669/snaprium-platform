@@ -7145,3 +7145,53 @@ html.native-app .result-panel-content {
     font-size: clamp(2rem, 4vw, 4.5rem);
   }
 }
+
+
+
+
+
+
+/* ───── "Signing you in…" spinner in the header (shows only while the app is restoring a sign-in) ───── */
+
+/* shared: PC, tablet and phone browsers */
+.header-auth-wait {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 14px 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.header-auth-spin {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: header-auth-spin 0.8s linear infinite;
+}
+@keyframes header-auth-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .header-auth-spin { animation-duration: 2.4s; }
+}
+
+/* phone (700px and below): only the round spinner, no words (the words stay for screen readers) */
+@media (max-width: 700px) {
+  .header-auth-wait { width: 40px; padding: 0; justify-content: center; gap: 0; }
+  .header-auth-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
