@@ -280,10 +280,10 @@
   .cc-rail-panel-head .cn-x:hover { background: var(--icon-bg); }
   .cc-rail-panel-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 6px; scrollbar-width: thin; }
 
-  .cc-rail-foot { display: flex; gap: 8px; width: 100%; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .cc-rail-foot { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
   .cc-foot-btn {
     position: relative;
-    flex: 1 1 0;
+    flex: 1 1 calc(50% - 4px);
     min-width: 0;
     height: 40px;
     padding: 0 6px;

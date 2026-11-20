@@ -140,7 +140,7 @@ export default function CirclesMenu({ user }) {
                       const n = unread[c.id] || 0;
                       return (
                         <li key={c.id}>
-                          <button type="button" className="cm-item" onClick={() => go(`/community/${c.id}`)}>
+                          <button type="button" className="cm-item" onClick={() => go(`/community/${c.id}/chat`)}>
                             <span className="cm-av" style={c.photoUrl ? { backgroundImage: `url(${c.photoUrl})` } : undefined}>
                               {!c.photoUrl && (c.name || "?").trim().charAt(0).toUpperCase()}
                             </span>
@@ -159,7 +159,7 @@ export default function CirclesMenu({ user }) {
 
               {list.length > 0 && (
                 <footer className="cm-foot">
-                  <button type="button" onClick={() => go("/community")}>Browse all circles</button>
+                  <button type="button" onClick={() => go("/community")}>Discover circles</button>
                 </footer>
               )}
             </div>

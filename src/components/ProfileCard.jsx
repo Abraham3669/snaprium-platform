@@ -17,6 +17,7 @@ import { toast } from "react-toastify";
 import { fetchProfileCard } from "../lib/publicProfile";
 import { acceptFriendRequest, removeFriendship, sendFriendRequest, useFriendship } from "../lib/friends";
 import { useBlocked } from "../lib/moderation";
+import { useSharedCircle } from "../lib/dms";
 import { BlockDialog, ReportDialog } from "./ModerationDialogs";
 import "../styles/profile-card.css";
 
@@ -58,6 +59,14 @@ export default function ProfileCard({ uid, fallback = {}, user, communityId = ""
   const { status, loading: relLoading } = useFriendship(me, uid);
   const { blocked, block: blockPerson, unblock } = useBlocked(me);
   const iBlocked = blocked.has(uid);
+  // Not friends yet? You can still send a message request when you share a circle (the circle you opened this from counts).
+  const lookup = useSharedCircle(me, uid, !isMe && !!me && !communityId && status !== "friends" && !iBlocked);
+  const canRequest = !isMe && status !== "friends" && !!(communityId || lookup.circleId);
+  const messageBtn = canRequest ? (
+    <button type="button" className="pc-btn pc-msg" onClick={() => { onClose(); navigate(`/messages/${uid}`); }}>
+      <Icon d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" /> Message
+    </button>
+  ) : null;
 
   useEffect(() => {
     let cancelled = false;
@@ -144,14 +153,18 @@ export default function ProfileCard({ uid, fallback = {}, user, communityId = ""
     actions = <button type="button" className="pc-btn" disabled>…</button>;
   } else if (status === "none") {
     actions = (
-      <button type="button" className="pc-btn pc-primary" disabled={busy} onClick={add}>
-        <Icon d="M2.5 20v-1a5 5 0 0 1 5-5h3a5 5 0 0 1 5 5v1" extra={<><circle cx="9" cy="8" r="3.5" /><path d="M19 8v6M16 11h6" /></>} />
-        Add friend
-      </button>
+      <>
+        {messageBtn}
+        <button type="button" className="pc-btn pc-primary" disabled={busy} onClick={add}>
+          <Icon d="M2.5 20v-1a5 5 0 0 1 5-5h3a5 5 0 0 1 5 5v1" extra={<><circle cx="9" cy="8" r="3.5" /><path d="M19 8v6M16 11h6" /></>} />
+          Add friend
+        </button>
+      </>
     );
   } else if (status === "sent") {
     actions = (
       <>
+        {messageBtn}
         <span className="pc-pill">Request sent</span>
         <button type="button" className="pc-btn pc-ghost" disabled={busy} onClick={() => remove("Request cancelled")}>
           Cancel

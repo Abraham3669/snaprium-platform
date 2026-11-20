@@ -28,6 +28,24 @@ export function CirclesGlyph() {
   );
 }
 
+export function DiscoverGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="m15.5 8.5-2 5-5 2 2-5 5-2z" />
+    </svg>
+  );
+}
+
+export function GearGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
+    </svg>
+  );
+}
+
 export function ChatGlyph() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -60,7 +78,8 @@ export function NavAvatar({ name = "", photo = "", square = false }) {
 
 // Everything the buttons and lists need. Call it once at the top of the chat page.
 export function useChatNav({ me, communityId, blocked }) {
-  const { list: convsAll } = useInbox(me);
+  const { list: inboxAll } = useInbox(me);
+  const convsAll = inboxAll.filter((c) => !c.incomingRequest); // message requests wait in Messages, not here
   const { friends, incoming } = useFriendships(me);
   const [circles, setCircles] = useState(null); // null = still loading
   const [circleUnread, setCircleUnread] = useState({});
@@ -104,7 +123,7 @@ export function useChatNav({ me, communityId, blocked }) {
   return { circles, circleUnread, circleDots, chats, friendIds, requestCount, profiles, friendDots };
 }
 
-export function ChatNavList({ nav, kind, communityId, onDone }) {
+export function ChatNavList({ nav, kind, communityId, onDone, showActions = true, settingsTo = "" }) {
   const navigate = useNavigate();
   const go = (to) => {
     onDone?.();
@@ -118,7 +137,7 @@ export function ChatNavList({ nav, kind, communityId, onDone }) {
         {nav.circles.length === 0 ? (
           <div className="cn-empty">
             <p>You have not joined a circle yet.</p>
-            <button type="button" className="cn-primary" onClick={() => go("/community")}>Find a circle</button>
+            <button type="button" className="cn-primary" onClick={() => go("/community")}>Discover circles</button>
           </div>
         ) : (
           <ul>
@@ -144,8 +163,14 @@ export function ChatNavList({ nav, kind, communityId, onDone }) {
             })}
           </ul>
         )}
-        {nav.circles.length > 0 && (
-          <button type="button" className="cn-link" onClick={() => go("/community")}>Browse all circles</button>
+        {nav.circles.length > 0 && showActions && (
+          <div className="cn-actions">
+            <button type="button" className="cn-link" onClick={() => go("/community")}>Discover circles</button>
+            <button type="button" className="cn-link" onClick={() => go("/community?create=1")}>Create a circle</button>
+            {settingsTo ? (
+              <button type="button" className="cn-link" onClick={() => go(settingsTo)}>Circle settings</button>
+            ) : null}
+          </div>
         )}
       </div>
     );

@@ -1,7 +1,8 @@
 // src/lib/dms.js
 //
 // Direct messages between friends.
-//   dms/{uidA_uidB}                  { users, lastText, lastAt, lastFrom }       the conversation
+//   dms/{uidA_uidB}                  { users, lastText, lastAt, lastFrom,        the conversation
+//                                      request?, viaCircle?, accepted?, declined? } request = who asked (a message request)
 //   dms/{uidA_uidB}/messages/{id}    { uid, text, imageUrl, createdAt,           the messages
 //                                      replyTo?, reactions?, edited?, updatedAt? }
 //                                    reactions looks like { "👍": [uid, ...] } (same as circle chat)
@@ -12,7 +13,10 @@
 //  - useDmMessages(me, them) live messages of one conversation
 //  - sendDm / editDm / toggleDmReaction / deleteDm / markDmRead
 //  - useDmTyping(me, them) true while they are typing; setDmTyping / clearDmTyping for your own side
-// Rules only allow sending between accepted friends who have not blocked each other.
+// Rules allow sending between accepted friends who have not blocked each other, and "message requests":
+// a person who shares a circle with you can send ONE first message. They can send more only after you accept.
+//  - useDmMeta(me, them)     the state of one conversation (request pending / accepted / declined)
+//  - acceptDmRequest / declineDmRequest   answer a request someone sent you
 import { useEffect, useMemo, useState } from "react";
 import {
   arrayRemove,
@@ -20,6 +24,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   limit,
   onSnapshot,
   orderBy,
@@ -32,6 +37,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { pairId } from "./friends";
+import { listMyCommunities } from "./communities";
 import { notifyDm } from "./notifications";
 
 const ms = (t) => t?.toMillis?.() || (t instanceof Date ? t.getTime() : 0);
@@ -73,12 +79,82 @@ export function useInbox(me) {
       .map((r) => {
         const other = (r.users || []).find((u) => u !== me) || "";
         const unread = r.lastFrom !== me && ms(r.lastAt) > (reads[r.id] || 0);
-        return { ...r, other, unread };
+        // a message request that is waiting for YOU to answer (you did not send it, and have not accepted)
+        const incomingRequest = !!r.request && r.request !== me && !r.accepted;
+        const outgoingRequest = !!r.request && r.request === me && !r.accepted;
+        return { ...r, other, unread, incomingRequest, outgoingRequest };
       })
-      .filter((r) => r.other)
+      // a request you declined disappears for you
+      .filter((r) => r.other && !(r.incomingRequest && r.declined))
       .sort((a, b) => ms(b.lastAt) - ms(a.lastAt));
     return { list, unread: list.filter((r) => r.unread).length };
   }, [rows, reads, me]);
+}
+
+// The conversation document itself: is there one, is it a request, who sent it, was it accepted.
+export function useDmMeta(me, other) {
+  const [meta, setMeta] = useState({ loading: true, exists: false });
+  useEffect(() => {
+    if (!me || !other) return undefined;
+    setMeta({ loading: true, exists: false });
+    return onSnapshot(
+      doc(db, "dms", pairId(me, other)),
+      (snap) => {
+        const d = snap.exists() ? snap.data() : {};
+        setMeta({
+          loading: false,
+          exists: snap.exists(),
+          request: d.request || "",
+          viaCircle: d.viaCircle || "",
+          accepted: d.accepted === true,
+          declined: d.declined === true,
+        });
+      },
+      () => setMeta({ loading: false, exists: false })
+    );
+  }, [me, other]);
+  return meta;
+}
+
+// A circle you and this person are both in (its id), or "" if there is none.
+// Message requests are only allowed between people who share a circle.
+export async function sharedCircleWith(me, other) {
+  if (!me || !other) return "";
+  try {
+    const mine = (await listMyCommunities(me)) || [];
+    const hit = mine.find((c) => !c.deleted && Array.isArray(c.members) && c.members.includes(other));
+    return hit?.id || "";
+  } catch {
+    return "";
+  }
+}
+
+// Same thing as a hook. circleId is "" until it is known (loading=true) or when you share no circle.
+export function useSharedCircle(me, other, enabled = true) {
+  const [state, setState] = useState({ loading: true, circleId: "" });
+  useEffect(() => {
+    if (!enabled || !me || !other) {
+      setState({ loading: false, circleId: "" });
+      return undefined;
+    }
+    let cancelled = false;
+    setState({ loading: true, circleId: "" });
+    sharedCircleWith(me, other).then((id) => !cancelled && setState({ loading: false, circleId: id }));
+    return () => {
+      cancelled = true;
+    };
+  }, [me, other, enabled]);
+  return state;
+}
+
+// The person who got a request says yes (they can now chat both ways) or no (it disappears for them).
+export async function acceptDmRequest(me, other) {
+  if (!me || !other) throw new Error("Missing person");
+  await updateDoc(doc(db, "dms", pairId(me, other)), { accepted: true });
+}
+export async function declineDmRequest(me, other) {
+  if (!me || !other) throw new Error("Missing person");
+  await updateDoc(doc(db, "dms", pairId(me, other)), { declined: true });
 }
 
 export function useDmMessages(me, other) {
@@ -153,10 +229,23 @@ export async function markDmRead(me, other) {
   await setDoc(doc(db, "users", me, "dmReads", pairId(me, other)), { at: serverTimestamp() });
 }
 
-export async function sendDm(meInfo, other, { text = "", imageUrl = "", replyTo = null }) {
+// viaCircle: pass the id of a circle you both are in ONLY when you are not friends. If there is no conversation yet,
+// this sends a message request (one first message, text only). If a conversation already exists it is a normal send.
+export async function sendDm(meInfo, other, { text = "", imageUrl = "", replyTo = null, viaCircle = "" }) {
   const body = String(text || "").trim().slice(0, 2000);
   if (!meInfo?.uid || !other || (!body && !imageUrl)) throw new Error("Nothing to send");
   const pid = pairId(meInfo.uid, other);
+  let asRequest = false;
+  if (viaCircle) {
+    let exists = false;
+    try {
+      exists = (await getDoc(doc(db, "dms", pid))).exists();
+    } catch {
+      exists = false;
+    }
+    asRequest = !exists;
+  }
+  if (asRequest && imageUrl) throw new Error("A first message can only be text");
   const batch = writeBatch(db);
   // A quoted message is stored as a small snapshot so it still reads well if the original is deleted.
   const quote = replyTo?.id
@@ -167,7 +256,7 @@ export async function sendDm(meInfo, other, { text = "", imageUrl = "", replyTo 
         text: String(replyTo.text || "").slice(0, 140),
       }
     : null;
-  batch.set(doc(collection(db, "dms", pid, "messages")), {
+  batch.set(asRequest ? doc(db, "dms", pid, "messages", "request") : doc(collection(db, "dms", pid, "messages")), {
     uid: meInfo.uid,
     text: body,
     imageUrl: imageUrl || "",
@@ -181,11 +270,13 @@ export async function sendDm(meInfo, other, { text = "", imageUrl = "", replyTo 
       lastText: (body || "Photo").slice(0, 200),
       lastAt: serverTimestamp(),
       lastFrom: meInfo.uid,
+      ...(asRequest ? { request: meInfo.uid, viaCircle: String(viaCircle).slice(0, 64) } : {}),
     },
     { merge: true }
   );
   await batch.commit();
-  notifyDm({ to: other, from: meInfo, preview: body || "sent a photo" });
+  // A request stays quiet: no alert, it just shows up under Requests. Normal messages notify as before.
+  if (!asRequest) notifyDm({ to: other, from: meInfo, preview: body || "sent a photo" });
 }
 
 export async function deleteDm(me, other, messageId) {

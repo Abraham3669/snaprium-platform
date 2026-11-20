@@ -9,11 +9,11 @@ import EmojiPicker from "emoji-picker-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useFriendship, pairId } from "../lib/friends";
-import { clearDmTyping, deleteDm, editDm, markDmRead, sendDm, setDmTyping, toggleDmReaction, useDmMessages, useDmTyping } from "../lib/dms";
+import { acceptDmRequest, clearDmTyping, declineDmRequest, deleteDm, editDm, markDmRead, sendDm, setDmTyping, toggleDmReaction, useDmMessages, useDmMeta, useDmTyping, useSharedCircle } from "../lib/dms";
 import { useLiveProfiles, useOnline } from "../lib/publicProfile";
 import { useBlocked } from "../lib/moderation";
 import { isClean, FILTER_MESSAGE } from "../lib/contentFilter";
-import { ReportDialog } from "./ModerationDialogs";
+import { BlockDialog, ReportDialog } from "./ModerationDialogs";
 import ImageViewer from "./ImageViewer";
 import "../styles/community-chat.css";
 import "../styles/dm.css";
@@ -96,8 +96,9 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
   const online = useOnline(useMemo(() => (other ? [other] : []), [other]))[other]; // true | false | undefined (not known yet)
   const name = profiles[other]?.displayName || fallback.name || "Member";
   const photo = profiles[other]?.photoURL || fallback.photo || "";
-  const { status } = useFriendship(me, other);
-  const { blocked } = useBlocked(me);
+  const { status, loading: relLoading } = useFriendship(me, other);
+  const { blocked, block: blockPerson } = useBlocked(me);
+  const meta = useDmMeta(me, other);
   const { messages, loading } = useDmMessages(me, other);
   const theyTyping = useDmTyping(me, other);
   const [text, setText] = useState("");
@@ -106,6 +107,9 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
   const [menuFor, setMenuFor] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [report, setReport] = useState(null);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [blockInfo, setBlockInfo] = useState(null);
+  const moreRef = useRef(null);
   const [lightbox, setLightbox] = useState("");
   const [replyTo, setReplyTo] = useState(null);
   const [editingId, setEditingId] = useState(null);
@@ -120,7 +124,35 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
   const typingTimer = useRef(null);
   const lastTypingWrite = useRef(0);
 
-  const canSend = status === "friends" && !blocked.has(other);
+  // Who can write here:
+  //  - friends, or a request the other person accepted: normal chat
+  //  - nobody talked yet and you share a circle: your ONE first message goes out as a message request
+  //  - you sent a request and they have not answered: you wait
+  //  - they sent you a request: you accept or decline before replying
+  const settled = !relLoading && !meta.loading;
+  const isFriend = status === "friends";
+  const normalChat = isFriend || (meta.exists && meta.accepted);
+  const incomingReq = settled && !isFriend && !!meta.request && meta.request !== me && !meta.accepted;
+  const waitingReq = settled && !isFriend && !!meta.request && meta.request === me && !meta.accepted;
+  const shared = useSharedCircle(me, other, settled && !isFriend && !meta.exists);
+  const firstRequest = settled && !isFriend && !meta.exists && !!shared.circleId;
+  const canSend = !blocked.has(other) && settled && (normalChat || firstRequest);
+  const [answering, setAnswering] = useState(false);
+  const answer = async (accept) => {
+    if (answering) return;
+    setAnswering(true);
+    try {
+      if (accept) await acceptDmRequest(me, other);
+      else {
+        await declineDmRequest(me, other);
+        onBack?.();
+      }
+    } catch {
+      toast.error("Could not update. Please try again.");
+    } finally {
+      setAnswering(false);
+    }
+  };
   const otherTyping = theyTyping && canSend;
   const meInfo = useMemo(
     () => ({ uid: me, displayName: user?.displayName || "Member", photoURL: user?.photoURL || "" }),
@@ -176,7 +208,8 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
   // Esc closes the small things first (menu, emoji picker, reply, edit) and only then leaves Messages.
   useEffect(() => {
     const onKey = (e) => {
-      if (e.key !== "Escape" || report || lightbox || confirmDelete) return;
+      if (e.key !== "Escape" || report || blockInfo || lightbox || confirmDelete) return;
+      if (moreOpen) return setMoreOpen(false);
       if (menuFor) return setMenuFor(null);
       if (pickerOpen) return setPickerOpen(false);
       if (editingId) return;
@@ -185,7 +218,7 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [onClose, report, lightbox, confirmDelete, menuFor, pickerOpen, editingId, replyTo]);
+  }, [onClose, report, blockInfo, moreOpen, lightbox, confirmDelete, menuFor, pickerOpen, editingId, replyTo]);
 
   useEffect(() => {
     if (!pickerOpen) return undefined;
@@ -199,6 +232,20 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
       document.removeEventListener("touchstart", away);
     };
   }, [pickerOpen]);
+
+  // The header ⋯ menu closes when you tap anywhere else.
+  useEffect(() => {
+    if (!moreOpen) return undefined;
+    const away = (e) => {
+      if (moreRef.current && !moreRef.current.contains(e.target)) setMoreOpen(false);
+    };
+    document.addEventListener("mousedown", away);
+    document.addEventListener("touchstart", away);
+    return () => {
+      document.removeEventListener("mousedown", away);
+      document.removeEventListener("touchstart", away);
+    };
+  }, [moreOpen]);
 
   useEffect(() => {
     if (!menuFor) return undefined;
@@ -234,6 +281,7 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
       await sendDm(meInfo, other, {
         text: body,
         imageUrl: keepImage,
+        viaCircle: firstRequest ? shared.circleId : "",
         replyTo: quoted
           ? {
               id: quoted.id,
@@ -247,7 +295,7 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
       setText(keepText);
       setImage(keepImage);
       setReplyTo(quoted);
-      toast.error("Could not send. You can only message friends.");
+      toast.error(firstRequest ? "Could not send the request. Please try again." : "Could not send. You can only message friends or people who accepted your request.");
     } finally {
       setSending(false);
     }
@@ -377,6 +425,22 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
               <div className="cc-top-copy">{titleCopy}</div>
             )}
             <div className="cc-faces">
+              {onOpenProfile && (
+                <div className="dm-more" ref={moreRef}>
+                  <button type="button" className={`dm-more-btn ${moreOpen ? "on" : ""}`} onClick={() => setMoreOpen((v) => !v)} aria-label="More options" aria-haspopup="menu" aria-expanded={moreOpen}>
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.9" /><circle cx="12" cy="12" r="1.9" /><circle cx="19" cy="12" r="1.9" /></svg>
+                  </button>
+                  {moreOpen && (
+                    <div className="dm-more-menu" role="menu">
+                      <button type="button" role="menuitem" onClick={() => { setMoreOpen(false); onOpenProfile(); }}>View profile</button>
+                      <button type="button" role="menuitem" onClick={() => { setMoreOpen(false); setReport({ kind: "profile", communityId: "", contentId: other, contentUid: other, contentName: name, preview: "" }); }}>Report profile</button>
+                      {!blocked.has(other) && (
+                        <button type="button" role="menuitem" className="danger" onClick={() => { setMoreOpen(false); setBlockInfo({ uid: other, name, photo }); }}>Block user</button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
               {onOpenProfile ? (
                 <button type="button" className="cc-face dm-face-btn" title={`${name}'s profile`} onClick={onOpenProfile} aria-label={`Open ${name}'s profile`}>
                   {photo ? <img src={photo} alt="" /> : name.slice(0, 1).toUpperCase()}
@@ -615,6 +679,11 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
 
           {canSend ? (
             <div className="cc-composer-wrap">
+              {firstRequest && (
+                <p className="dm-req-hint" role="note">
+                  This is a message request. {name} needs to accept before you can send more.
+                </p>
+              )}
               {replyTo && (
                 <div className="cc-replying">
                   <span>
@@ -644,9 +713,9 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
               )}
               <form className="cc-composer" onSubmit={send}>
                 <input ref={fileRef} type="file" accept="image/*" hidden onChange={pickPhoto} />
-                <button type="button" className="cc-icon-btn" onClick={() => fileRef.current?.click()} aria-label="Photo">
+                {!firstRequest && <button type="button" className="cc-icon-btn" onClick={() => fileRef.current?.click()} aria-label="Photo">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="10" r="1.6" /><path d="M21 16l-5.5-5-6.5 7" /></svg>
-                </button>
+                </button>}
                 <textarea
                   className="cc-composer-input"
                   rows={1}
@@ -675,10 +744,25 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
                 </button>
               </form>
             </div>
+          ) : incomingReq && !blocked.has(other) ? (
+            <div className="cc-composer-wrap dm-req">
+              <p className="dm-req-text"><strong>{name}</strong> wants to message you. You are both in a circle. They can send more once you accept.</p>
+              <div className="dm-req-actions">
+                <button type="button" className="dm-btn dm-btn-primary" disabled={answering} onClick={() => answer(true)}>Accept</button>
+                <button type="button" className="dm-btn dm-btn-out" disabled={answering} onClick={() => answer(false)}>Decline</button>
+                <button type="button" className="dm-btn dm-btn-danger" disabled={answering} onClick={() => setBlockInfo({ uid: other, name, photo })}>Block</button>
+              </div>
+            </div>
           ) : (
             <div className="cc-composer-wrap">
               <p className="cc-muted" style={{ textAlign: "center" }}>
-                {blocked.has(other) ? "You blocked this person." : "You can only message people who are your friends."}
+                {blocked.has(other)
+                  ? "You blocked this person."
+                  : waitingReq
+                    ? `Request sent. You can send more once ${name} accepts.`
+                    : !settled || shared.loading
+                      ? ""
+                      : "You can message friends, or people you share a circle with."}
               </p>
             </div>
           )}
@@ -686,6 +770,7 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
 
       <ImageViewer url={lightbox} onClose={() => setLightbox("")} />
       {report && <ReportDialog info={report} user={user} onClose={() => setReport(null)} />}
+      {blockInfo && <BlockDialog person={blockInfo} onClose={() => setBlockInfo(null)} onConfirm={(p) => blockPerson(p, "")} />}
       {confirmDelete && (
         <div className="cc-confirm dm-confirm" onClick={() => setConfirmDelete(null)}>
           <div className="cc-confirm-card" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>

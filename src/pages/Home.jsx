@@ -2,6 +2,8 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Capacitor } from "@capacitor/core";
 import { isStandaloneApp } from "../lib/firebase";
+import { useAuth } from "../context/AuthContext";
+import { openCircles } from "../lib/circleNav";
 
 const isNative = Capacitor.isNativePlatform() || isStandaloneApp();
 
@@ -47,6 +49,7 @@ function IconArrow() {
 
 export default function Home() {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   return (
     <div className="hub-page">
@@ -59,7 +62,7 @@ export default function Home() {
         <button
           type="button"
           className="hub-card hub-card-wide"
-          onClick={() => navigate("/community")}
+          onClick={() => openCircles(navigate, user?.uid)}
         >
           <span className="hub-icon-wrap">
             <IconCommunity />

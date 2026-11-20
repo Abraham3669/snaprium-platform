@@ -3,7 +3,7 @@
 // The right-hand column of the Messages page (the whole screen on a phone):
 //   Chats      your conversations, newest first, unread ones marked
 //   Friends    everyone you are friends with, tap to start or open a chat
-//   Requests   people who asked to be your friend, and requests you sent
+//   Requests   message requests (first messages from people in your circles), friend requests, and requests you sent
 // A search box filters whichever list is showing.
 // On a phone a Friends | Circles switch sits on top, so your circles are one tap away (PC shows them in the left column).
 import { useEffect, useMemo, useState } from "react";
@@ -12,7 +12,7 @@ import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
 import { acceptFriendRequest, removeFriendship, useFriendships } from "../lib/friends";
 import { countCommunityUnread, listMyCommunities } from "../lib/communities";
-import { useInbox } from "../lib/dms";
+import { acceptDmRequest, declineDmRequest, useInbox } from "../lib/dms";
 import { useLiveProfiles, useOnline } from "../lib/publicProfile";
 import { useBlocked } from "../lib/moderation";
 import ProfileCard from "./ProfileCard";
@@ -79,14 +79,16 @@ export default function DmSidebar({ initialTab = "chats", activeUid = "", onOpen
   }, [me]);
   const circleDots = Object.values(circleUnread).filter((n) => n > 0).length;
 
-  const convs = convsAll.filter((c) => !blocked.has(c.other));
   const fr = friends.filter((u) => !blocked.has(u));
+  // A message request waiting for you sits under Requests (unless you are already friends, then it is a normal chat).
+  const msgReqs = convsAll.filter((c) => c.incomingRequest && !blocked.has(c.other) && !fr.includes(c.other));
+  const convs = convsAll.filter((c) => !blocked.has(c.other) && !msgReqs.includes(c));
   const inc = incoming.filter((u) => !blocked.has(u));
   const out = outgoing.filter((u) => !blocked.has(u));
   const unreadCount = convs.filter((c) => c.unread).length;
 
   const ids = useMemo(
-    () => [...new Set([...convs.map((c) => c.other), ...fr, ...inc, ...out])],
+    () => [...new Set([...convs.map((c) => c.other), ...msgReqs.map((c) => c.other), ...fr, ...inc, ...out])],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [convsAll, friends, incoming, outgoing, blocked]
   );
@@ -97,8 +99,8 @@ export default function DmSidebar({ initialTab = "chats", activeUid = "", onOpen
   useEffect(() => {
     if (pickedAuto || loading) return;
     setPickedAuto(true);
-    if (initialTab === "friends" && inc.length > 0) setTab("requests");
-  }, [loading, initialTab, inc.length, pickedAuto]);
+    if (initialTab === "friends" && inc.length + msgReqs.length > 0) setTab("requests");
+  }, [loading, initialTab, inc.length, msgReqs.length, pickedAuto]);
 
   const meInfo = { uid: me, displayName: user?.displayName || "Member", photoURL: user?.photoURL || "" };
   const nameOf = (uid) => profiles[uid]?.displayName || "Member";
@@ -120,6 +122,7 @@ export default function DmSidebar({ initialTab = "chats", activeUid = "", onOpen
 
   const chats = convs.filter((c) => match(c.other));
   const friendRows = fr.filter(match);
+  const requestMsgs = msgReqs.filter((c) => match(c.other));
   const requestIn = inc.filter(match);
   const requestOut = out.filter(match);
 
@@ -144,7 +147,7 @@ export default function DmSidebar({ initialTab = "chats", activeUid = "", onOpen
 
       <div className="dm-switch" role="tablist" aria-label="Friends or circles">
         <button type="button" role="tab" aria-selected={section === "friends"} className={section === "friends" ? "on" : ""} onClick={() => setSection("friends")}>
-          Friends{unreadCount + inc.length > 0 && <span className="fr-badge">{unreadCount + inc.length}</span>}
+          Friends{unreadCount + inc.length + msgReqs.length > 0 && <span className="fr-badge">{unreadCount + inc.length + msgReqs.length}</span>}
         </button>
         <button type="button" role="tab" aria-selected={section === "circles"} className={section === "circles" ? "on" : ""} onClick={() => setSection("circles")}>
           Circles{circleDots > 0 && <span className="fr-badge">{circleDots}</span>}
@@ -164,7 +167,7 @@ export default function DmSidebar({ initialTab = "chats", activeUid = "", onOpen
             <ul className="fr-list">
               {circles.map((c) => (
                 <li key={c.id} className="fr-row">
-                  <button type="button" className="fr-person dm-row" onClick={() => navigate(`/community/${c.id}`)}>
+                  <button type="button" className="fr-person dm-row" onClick={() => navigate(`/community/${c.id}/chat`)}>
                     <span className="fr-av dm-circ-av" style={c.photoUrl ? { backgroundImage: `url(${c.photoUrl})` } : undefined}>
                       {!c.photoUrl && (c.name || "?").trim().charAt(0).toUpperCase()}
                     </span>
@@ -178,7 +181,7 @@ export default function DmSidebar({ initialTab = "chats", activeUid = "", onOpen
               ))}
             </ul>
           )}
-          <button type="button" className="dm-browse" onClick={() => navigate("/community")}>Browse all circles</button>
+          <button type="button" className="dm-browse" onClick={() => navigate("/community")}>Discover circles</button>
         </div>
       )}
 
@@ -190,7 +193,7 @@ export default function DmSidebar({ initialTab = "chats", activeUid = "", onOpen
           Friends{fr.length ? ` · ${fr.length}` : ""}
         </button>
         <button type="button" role="tab" aria-selected={tab === "requests"} className={tab === "requests" ? "on" : ""} onClick={() => setTab("requests")}>
-          Requests{inc.length > 0 && <span className="fr-badge">{inc.length}</span>}
+          Requests{inc.length + msgReqs.length > 0 && <span className="fr-badge">{inc.length + msgReqs.length}</span>}
         </button>
       </div>
 
@@ -255,10 +258,27 @@ export default function DmSidebar({ initialTab = "chats", activeUid = "", onOpen
               ))}
             </ul>
           )
-        ) : requestIn.length + requestOut.length === 0 ? (
+        ) : requestMsgs.length + requestIn.length + requestOut.length === 0 ? (
           q ? empty("No requests match your search.") : empty("No requests right now.")
         ) : (
           <ul className="fr-list">
+            {requestMsgs.length > 0 && <li className="dm-side-sub">Message requests</li>}
+            {requestMsgs.map((c) => (
+              <li key={c.id} className="fr-row">
+                <button type="button" className="fr-person dm-row" onClick={() => onOpen(c.other)}>
+                  <Av profile={profiles[c.other]} />
+                  <span className="ms-copy">
+                    <span className="fr-name">{nameOf(c.other)}</span>
+                    <span className="dm-req-preview">{c.lastText}</span>
+                  </span>
+                </button>
+                <span className="fr-actions">
+                  <button type="button" className="dm-btn dm-btn-primary" disabled={busyUid === c.other} onClick={() => act(c.other, () => acceptDmRequest(me, c.other).then(() => onOpen(c.other)))}>Accept</button>
+                  <button type="button" className="dm-btn dm-btn-out" disabled={busyUid === c.other} onClick={() => act(c.other, () => declineDmRequest(me, c.other))}>Decline</button>
+                </span>
+              </li>
+            ))}
+            {requestMsgs.length > 0 && requestIn.length + requestOut.length > 0 && <li className="dm-side-sub">Friend requests</li>}
             {requestIn.map((uid) => (
               <li key={uid} className="fr-row">
                 <button type="button" className="fr-person" onClick={() => setCardUid(uid)}>

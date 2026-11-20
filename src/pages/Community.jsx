@@ -1,17 +1,19 @@
 // src/pages/Community.jsx
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
 import UpgradeModal from "../components/UpgradeModal";
 import "../styles/community.css";
 import { collection, onSnapshot, orderBy, query, limit } from "firebase/firestore";
 import { db } from "../lib/firebase";
+import { circleCardPath, circleChatPath, rememberCircle } from "../lib/circleNav";
 import {
   COMMUNITY_TAGS,
   createCommunity,
   listPublicCommunities,
   listMyCommunities,
+  joinCommunity,
   joinCommunityByCode,
   countCommunityUnread,
 } from "../lib/communities";
@@ -72,22 +74,17 @@ function BackIcon() {
   );
 }
 
-function Avatar({ c, size = "md" }) {
-  const initial = (c.name || "?").trim().charAt(0).toUpperCase();
-  return (
-    <span
-      className={`cx-avatar cx-avatar-${size}`}
-      style={c.photoUrl ? { backgroundImage: `url(${c.photoUrl})` } : undefined}
-      aria-hidden="true"
-    >
-      {!c.photoUrl && initial}
-    </span>
-  );
+// A circle without a cover picture gets a calm colour made from its name.
+function hueOf(name = "") {
+  let h = 0;
+  for (let i = 0; i < name.length; i += 1) h = (h * 31 + name.charCodeAt(i)) % 360;
+  return h;
 }
 
 export default function Community() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
 
   const [tag, setTag] = useState("");
   const [search, setSearch] = useState("");
@@ -107,6 +104,7 @@ export default function Community() {
   const [saving, setSaving] = useState(false);
 
   const [unread, setUnread] = useState({});
+  const [joiningId, setJoiningId] = useState("");
 
   const load = async (selectedTag = tag) => {
     setLoading(true);
@@ -158,6 +156,18 @@ if (user?.uid && own.length) {
 
   
 
+  // /community?create=1 opens the create dialog (the "Create a circle" row in the chat switcher)
+  useEffect(() => {
+    if (params.get("create") !== "1") return;
+    if (!user) {
+      toast.info("Sign in to create a circle");
+      navigate("/login", { replace: true });
+      return;
+    }
+    setShowCreate(true);
+    setParams({}, { replace: true });
+  }, [params, user, navigate, setParams]);
+
   // Close the create dialog with Escape and lock page scroll while it is open
   useEffect(() => {
     if (!showCreate) return undefined;
@@ -199,7 +209,9 @@ if (user?.uid && own.length) {
       const community = await joinCommunityByCode(code, user.uid);
       toast.success("Joined circle");
       setJoinCode("");
-      navigate(`/community/${community.id}`);
+      sessionStorage.setItem(`circle-welcome:${community.id}`, "1");
+      rememberCircle(user.uid, community.id);
+      navigate(circleChatPath(community.id));
     } catch (err) {
       toast.error(err.message || "Invalid or expired code");
     } finally {
@@ -232,7 +244,8 @@ if (user?.uid && own.length) {
       toast.success("Circle created");
       setShowCreate(false);
       setName("");
-      navigate(`/community/${created.id}`);
+      rememberCircle(user.uid, created.id);
+      navigate(circleChatPath(created.id));
     } catch (err) {
       toast.error(err.message || "Could not create circle");
     } finally {
@@ -245,44 +258,101 @@ if (user?.uid && own.length) {
     return `${n} ${n === 1 ? "member" : "members"}`;
   };
 
+  const myIds = useMemo(() => new Set(mine.map((c) => c.id)), [mine]);
+
+  const openCard = (c) => {
+    const member = myIds.has(c.id);
+    if (member) rememberCircle(user?.uid, c.id);
+    navigate(circleCardPath(c, member));
+  };
+
+  // "Join" on a card: join, then go straight into the circle's chat (the welcome card shows there).
+  const joinFromCard = async (c) => {
+    if (!user) {
+      toast.info("Sign in to join a circle");
+      navigate("/login");
+      return;
+    }
+    setJoiningId(c.id);
+    try {
+      await joinCommunity(c.id, user.uid);
+      sessionStorage.setItem(`circle-welcome:${c.id}`, "1");
+      rememberCircle(user.uid, c.id);
+      navigate(circleChatPath(c.id));
+    } catch (err) {
+      toast.error(err.message || "Could not join");
+    } finally {
+      setJoiningId("");
+    }
+  };
+
   const renderCard = (c, showBadge = false) => {
-  const n = showBadge ? unread[c.id] || 0 : 0;
-  return (
-    <button
-      key={c.id}
-      type="button"
-      className="cx-card"
-      onClick={() => navigate(`/community/${c.id}`)}
-    >
-      <div className="cx-card-top">
-        <Avatar c={c} size="lg" />
-        {n > 0 && <span className="cx-badge">{n > 9 ? "9+" : n}</span>}
-        {c.visibility === "private" && (
-          <span className="cx-card-lock" title="Private">
-            <LockIcon />
-          </span>
-        )}
-      </div>
-      <div className="cx-card-body">
-        <strong className="cx-card-name">{c.name}</strong>
-        <div className="cx-card-meta">
-          <span className="cx-pill">{c.tag}</span>
-          <span className="cx-members">
-            <UsersIcon />
-            {memberLabel(c)}
-          </span>
+    const member = myIds.has(c.id);
+    const n = showBadge ? unread[c.id] || 0 : 0;
+    const initial = (c.name || "?").trim().charAt(0).toUpperCase();
+    return (
+      <article
+        key={c.id}
+        className="cx-card cx-c"
+        role="link"
+        tabIndex={0}
+        onClick={() => openCard(c)}
+        onKeyDown={(e) => {
+          if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
+            e.preventDefault();
+            openCard(c);
+          }
+        }}
+      >
+        <div
+          className={`cx-c-banner ${c.coverUrl ? "has-img" : ""}`}
+          style={c.coverUrl ? { backgroundImage: `url(${c.coverUrl})` } : { "--h": hueOf(c.name) }}
+        >
+          {n > 0 && <span className="cx-badge">{n > 9 ? "9+" : n}</span>}
+          {c.visibility === "private" && (
+            <span className="cx-card-lock" title="Private">
+              <LockIcon />
+            </span>
+          )}
         </div>
-      </div>
-     </button>
-  );
-};
+        <div className="cx-c-body">
+          <span
+            className="cx-c-avatar"
+            style={c.photoUrl ? { backgroundImage: `url(${c.photoUrl})` } : undefined}
+            aria-hidden="true"
+          >
+            {!c.photoUrl && initial}
+          </span>
+          <strong className="cx-card-name">{c.name}</strong>
+          <div className="cx-card-meta">
+            <span className="cx-pill">{c.tag}</span>
+            <span className="cx-members">
+              <UsersIcon />
+              {memberLabel(c)}
+            </span>
+          </div>
+          <button
+            type="button"
+            className={member ? "cx-btn cx-btn-ghost cx-c-act" : "cx-btn cx-btn-primary cx-c-act"}
+            disabled={joiningId === c.id}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (member) openCard(c);
+              else joinFromCard(c);
+            }}
+          >
+            {member ? "Open" : joiningId === c.id ? "Joining…" : "Join"}
+          </button>
+        </div>
+      </article>
+    );
+  };
 
   const skeletons = Array.from({ length: 8 }, (_, i) => (
-    <div key={i} className="cx-card cx-skeleton" aria-hidden="true">
-      <div className="cx-card-top">
-        <span className="cx-avatar cx-avatar-lg" />
-      </div>
-      <div className="cx-card-body">
+    <div key={i} className="cx-card cx-c cx-skeleton" aria-hidden="true">
+      <div className="cx-c-banner cx-sk-line" />
+      <div className="cx-c-body">
+        <span className="cx-c-avatar cx-sk-line" />
         <span className="cx-sk-line cx-sk-wide" />
         <span className="cx-sk-line cx-sk-short" />
       </div>

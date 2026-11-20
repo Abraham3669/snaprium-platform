@@ -139,13 +139,12 @@ export default function DmProfile({ uid, fallback = {}, user }) {
         {bio ? <p className="pc-bio">{bio}</p> : <p className="pc-bio pc-bio-empty">{card ? "No bio yet." : " "}</p>}
         {actions && <div className="pc-actions dm-prof-actions">{actions}</div>}
 
-        {shared.length > 0 && (
-          <section className="dm-prof-section">
+        <section className="dm-prof-section">
             <h3>Your circles</h3>
-            <ul className="dm-shared">
+            {shared.length > 0 && <ul className="dm-shared">
               {shared.map((c) => (
                 <li key={c.id}>
-                  <button type="button" onClick={() => navigate(`/community/${c.id}`)}>
+                  <button type="button" onClick={() => navigate(`/community/${c.id}/chat`)}>
                     <span className="dm-shared-av" style={c.photoUrl ? { backgroundImage: `url(${c.photoUrl})` } : undefined}>
                       {!c.photoUrl && (c.name || "?").trim().charAt(0).toUpperCase()}
                     </span>
@@ -156,9 +155,15 @@ export default function DmProfile({ uid, fallback = {}, user }) {
                   </button>
                 </li>
               ))}
-            </ul>
-          </section>
-        )}
+            </ul>}
+            <button type="button" className="dm-discover" onClick={() => navigate("/community")}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" />
+                <path d="m15.5 8.5-2 5-5 2 2-5 5-2z" />
+              </svg>
+              Discover circles
+            </button>
+        </section>
 
         <div className="dm-prof-foot">
           <button

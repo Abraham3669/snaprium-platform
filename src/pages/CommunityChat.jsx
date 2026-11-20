@@ -39,7 +39,8 @@ countBoardUnread,
 import { notifyUser, notifyCircleSession, notifyEveryone } from "../lib/notifications";
 import QuestionBoard from "../components/QuestionBoard";
 import ProfileCard from "../components/ProfileCard";
-import { ChatNavList, ChatNavSheet, CirclesGlyph, ChatGlyph, NavAvatar, useChatNav } from "../components/ChatNav";
+import { forgetCircle, rememberCircle } from "../lib/circleNav";
+import { ChatNavList, ChatNavSheet, CirclesGlyph, ChatGlyph, DiscoverGlyph, GearGlyph, NavAvatar, useChatNav } from "../components/ChatNav";
 import ImageViewer from "../components/ImageViewer";
 import { ReportDialog, BlockDialog } from "../components/ModerationDialogs";
 import { useBlocked } from "../lib/moderation";
@@ -597,8 +598,8 @@ setBoards(withQuestions);
       const fromUrl = params.get("board");
 const next =
   rows.find((b) => b.id === fromUrl) ||
-  withQuestions.find((b) => b.slug === "questions" || b.kind === "questions") ||
   withQuestions.find((b) => b.slug === "general") ||
+  withQuestions.find((b) => b.slug === "questions" || b.kind === "questions") ||
   withQuestions[0];
       if (next) {
         setBoardId(next.id);
@@ -617,6 +618,13 @@ const next =
     setWelcome(true);
   }
 }, [communityId]);
+
+  // Remember the circle for the Circles tab. If you are not in it (left, removed), forget it.
+  useEffect(() => {
+    if (!user?.uid || !communityId || !community) return;
+    if ((community.members || []).includes(user.uid)) rememberCircle(user.uid, communityId);
+    else forgetCircle(user.uid, communityId);
+  }, [user?.uid, communityId, community]);
 
 
 
@@ -1308,13 +1316,28 @@ useEffect(() => {
       <>
         <p className="cc-muted">Join this circle to use boards.</p>
         <button type="button" className="cc-session-btn" onClick={() => navigate(`/community/${communityId}`)}>
-          Back
+          View circle
+        </button>
+        <button type="button" className="cc-session-btn" onClick={() => navigate("/community")}>
+          Discover circles
         </button>
       </>
     );
   }
 
   const membersList = (
+    <>
+      <button
+        type="button"
+        className="cn-link cn-settings"
+        style={{ marginTop: 0, marginBottom: 10 }}
+        onClick={() => {
+          setNavOpen(null);
+          navigate(`/community/${communityId}`);
+        }}
+      >
+        Circle settings
+      </button>
       <ul className="cn-members">
         {(community.members || [])
           .filter((uid) => !blocked.has(uid) && profiles[uid]?.displayName)
@@ -1338,6 +1361,7 @@ useEffect(() => {
             </li>
           ))}
       </ul>
+    </>
   );
 
   const myPhoto = user?.photoURL || "";
@@ -1383,7 +1407,7 @@ useEffect(() => {
             </div>
             <div className="cc-rail-panel-body">
               {navOpen === "members" ? membersList : (
-                <ChatNavList nav={nav} kind={navOpen} communityId={communityId} onDone={() => setNavOpen(null)} />
+                <ChatNavList nav={nav} kind={navOpen} communityId={communityId} onDone={() => setNavOpen(null)} showActions={false} />
               )}
             </div>
           </div>
@@ -1410,6 +1434,14 @@ useEffect(() => {
             Friends
             {nav.friendDots > 0 && <span className="cn-badge">{nav.friendDots}</span>}
           </button>
+          <button type="button" className="cc-foot-btn" onClick={() => navigate("/community")}>
+            <DiscoverGlyph />
+            Discover
+          </button>
+          <button type="button" className="cc-foot-btn" onClick={() => navigate(`/community/${communityId}`)}>
+            <GearGlyph />
+            Settings
+          </button>
         </div>
       </aside>
            <section className={`cc-main ${focusMode ? "call-focus" : ""} ${liveBoard && callOpen && !focusMode ? "with-call" : ""} ${phoneCall && chatSheet ? "sheet-open" : ""}`}>
@@ -1417,8 +1449,8 @@ useEffect(() => {
           <button
             type="button"
             className="cc-back"
-            onClick={() => navigate(`/community/${communityId}`)}
-            aria-label="Back to circle"
+            onClick={() => navigate("/community")}
+            aria-label="Back to circles"
           >
             <IconBack />
           </button>
@@ -1480,6 +1512,9 @@ useEffect(() => {
               <button type="button" className="cc-nav-btn" onClick={() => setNavOpen("friends")} aria-label="Friends and messages" title="Friends and messages">
                 <ChatGlyph />
                 {nav.friendDots > 0 && <i className="cc-nav-dot" aria-hidden="true" />}
+              </button>
+              <button type="button" className="cc-nav-btn" onClick={() => navigate(`/community/${communityId}`)} aria-label="Circle settings" title="Circle settings">
+                <GearGlyph />
               </button>
               <button type="button" className="cc-nav-btn cc-nav-me" onClick={() => navigate("/profile")} aria-label="Your profile" title="Your profile">
                 <span className="cc-me-av">{myPhoto ? <img src={myPhoto} alt="" /> : myInitial}</span>
@@ -2037,7 +2072,7 @@ useEffect(() => {
           {navOpen === "members" ? (
             membersList
           ) : (
-            <ChatNavList nav={nav} kind={navOpen} communityId={communityId} onDone={() => setNavOpen(null)} />
+            <ChatNavList nav={nav} kind={navOpen} communityId={communityId} onDone={() => setNavOpen(null)} settingsTo={`/community/${communityId}`} />
           )}
         </ChatNavSheet>
       )}

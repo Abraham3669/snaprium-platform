@@ -1190,3 +1190,120 @@ h2 {
 
 
 
+/* ───────── Circle cards: cover banner + round picture (paste at the BOTTOM of community.css) ───────── */
+
+.cx-page .cx-card.cx-c {
+  cursor: pointer;
+}
+
+.cx-c-banner {
+  position: relative;
+  height: 88px;
+  background-color: var(--cx-surface-2);
+  background-image: linear-gradient(
+    135deg,
+    hsl(var(--h, 215) 58% 44%),
+    hsl(calc(var(--h, 215) + 42) 52% 30%)
+  );
+  background-size: cover;
+  background-position: center;
+}
+
+.cx-c-banner.has-img {
+  background-image: none;
+}
+
+/* the picture is set inline as a background, so keep it covering */
+.cx-c-banner[style*="url("] {
+  background-size: cover;
+  background-position: center;
+}
+
+.cx-c-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 14px 14px;
+  text-align: left;
+}
+
+.cx-c-avatar {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  margin-top: -26px;
+  border: 3px solid var(--surface);
+  border-radius: 50%;
+  background-color: var(--cx-surface-2);
+  background-image: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--accent) 38%, var(--surface)),
+    color-mix(in srgb, var(--accent-dark) 70%, var(--surface))
+  );
+  background-size: cover;
+  background-position: center;
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 800;
+  user-select: none;
+}
+
+/* the lock sits top-right, the new-message badge top-left, both on the banner */
+.cx-c .cx-card-lock {
+  top: 10px;
+  right: 10px;
+}
+
+.cx-c .cx-badge {
+  top: 10px;
+  left: 10px;
+  right: auto;
+}
+
+.cx-c-act {
+  width: 100%;
+  min-height: 38px;
+  margin-top: 2px;
+}
+
+.cx-c:hover .cx-card-name {
+  color: var(--accent);
+}
+
+/* loading placeholders */
+.cx-c-banner.cx-sk-line {
+  height: 88px;
+  border-radius: 0;
+  background-image: linear-gradient(
+    100deg,
+    transparent 30%,
+    color-mix(in srgb, var(--text-primary) 7%, transparent) 50%,
+    transparent 70%
+  );
+  background-size: 220% 100%;
+}
+
+.cx-c-avatar.cx-sk-line {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background-image: linear-gradient(
+    100deg,
+    transparent 30%,
+    color-mix(in srgb, var(--text-primary) 7%, transparent) 50%,
+    transparent 70%
+  );
+  background-size: 220% 100%;
+}
+
+/* phone: one wide card per row, a little taller banner */
+@media (max-width: 640px) {
+  .cx-c-banner,
+  .cx-c-banner.cx-sk-line {
+    height: 96px;
+  }
+}

@@ -9,6 +9,7 @@ import "../styles/community-detail.css";
 
 import { collection, onSnapshot, orderBy, query, limit } from "firebase/firestore";
 import { db } from "../lib/firebase";
+import { forgetCircle } from "../lib/circleNav";
 
 
 
@@ -396,7 +397,7 @@ setWelcome(true);
 
   return (
     <div className="cd-page">
-      <button type="button" className="cd-back" onClick={() => navigate("/community")}>← Circles</button>
+      <button type="button" className="cd-back" onClick={() => navigate(isMember ? `/community/${community.id}/chat` : "/community")}>{isMember ? "← Back to chat" : "← Circles"}</button>
 
       <button
   type="button"
@@ -525,6 +526,7 @@ setCommunity(await getCommunity(community.id));
             onClick={async () => {
               try {
                 await leaveCommunity(community.id, user.uid);
+                forgetCircle(user.uid, community.id);
                 navigate("/community");
               } catch (err) {
                 toast.error(err.message || "Could not leave");
@@ -542,6 +544,7 @@ setCommunity(await getCommunity(community.id));
               if (!window.confirm("Remove this circle for everyone?")) return;
               try {
                 await unlistCommunity(community.id);
+                forgetCircle(user.uid, community.id);
                 navigate("/community");
               } catch (err) {
                 toast.error(err.message || "Could not delete");

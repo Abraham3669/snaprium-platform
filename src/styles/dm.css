@@ -183,7 +183,8 @@
 .dm-prof {
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  overflow: hidden;
+  min-height: 0;
   background: var(--surface);
   border-right: 1px solid var(--border);
   overscroll-behavior: contain;
@@ -341,3 +342,88 @@ html.native-app .dm-page .dm-side-top { padding-top: calc(8px + env(safe-area-in
 @media (prefers-reduced-motion: reduce) {
   .dm-typing-dots i { animation: none; opacity: 0.7; }
 }
+
+/* ───────────── Header ⋯ menu (phone and mid-size PC): View profile, Report, Block ───────────── */
+.dm-more { position: relative; }
+.dm-more-btn {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.dm-more-btn svg { width: 20px; height: 20px; }
+.dm-more-btn:hover, .dm-more-btn.on { background: var(--icon-bg); }
+.dm-more-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 60;
+  min-width: 190px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+.dm-more-menu button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 11px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.dm-more-menu button:hover { background: var(--icon-bg); }
+.dm-more-menu button.danger { color: #ef4444; }
+
+/* "Discover circles" row in the left profile column */
+.dm-discover {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  padding: 9px 8px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+.dm-discover svg { width: 20px; height: 20px; flex: 0 0 20px; }
+.dm-discover:hover { background: var(--icon-bg); color: var(--accent); border-color: var(--accent); }
+
+/* wide PC left column: profile on top and Report/Block at the bottom stay put, only the circle list scrolls */
+.dm-prof-body { flex: 1 1 auto; min-height: 0; padding-bottom: 0; }
+.dm-prof-body > * { flex: 0 0 auto; }
+.dm-prof-body > .dm-prof-section { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.dm-prof-section .dm-shared { flex: 1 1 auto; min-height: 56px; overflow-y: auto; overscroll-behavior: contain; margin-bottom: 8px; }
+.dm-prof-section .dm-discover { flex: 0 0 auto; }
+.dm-prof-body > .dm-prof-foot { margin-top: 12px; padding: 14px 0 18px; }
+
+/* message requests */
+.dm-req-hint { margin: 0 0 8px; padding: 8px 12px; border-radius: 10px; background: var(--icon-bg); color: var(--text-secondary); font-size: 0.84rem; text-align: center; }
+.dm-req { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-top: 1px solid var(--border); }
+.dm-req-text { margin: 0; color: var(--text-secondary); font-size: 0.92rem; line-height: 1.4; }
+.dm-req-text strong { color: var(--text-primary); }
+.dm-req-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.dm-btn-danger { border-color: transparent; background: none; color: #ef4444; }
+.dm-btn-danger:hover { background: rgba(239, 68, 68, 0.1); }
+.dm-side-sub { margin: 10px 4px 4px; color: var(--text-secondary); font-size: 0.74rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+.dm-req-preview { display: block; max-width: 100%; overflow: hidden; color: var(--text-secondary); font-size: 0.84rem; text-overflow: ellipsis; white-space: nowrap; }
