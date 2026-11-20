@@ -50,6 +50,7 @@ import { StatusBar, Style } from "@capacitor/status-bar";
 import useNotifications from "./lib/useNotifications";
 import PushPrompt from "./components/PushPrompt";
 import { useInbox } from "./lib/dms";
+import { useMessageAlerts } from "./lib/alerts";
 import { useFriendships } from "./lib/friends";
 import { syncPush, clearDeliveredPush } from "./lib/push";
 import { publishPublicProfile } from "./lib/publicProfile";
@@ -71,9 +72,12 @@ function App() {
   const notifications = useNotifications(user?.uid);
 
   // Friends badge (bottom bar): unread chats plus friend requests waiting for you
-  const { unread: unreadChats } = useInbox(user?.uid);
+  const { list: inboxList, unread: unreadChats } = useInbox(user?.uid);
   const { incoming: friendRequests } = useFriendships(user?.uid);
   const socialBadge = unreadChats + friendRequests.length;
+
+  // Sound (on by default) and desktop pop-ups for new messages while the tab is open
+  useMessageAlerts({ me: user?.uid || "", inbox: inboxList, items: notifications.items, pathname: location.pathname, navigate });
 
   useEffect(() => {
     syncPush(user?.uid, (url) => navigate(url));

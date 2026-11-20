@@ -1,4 +1,5 @@
 // src/pages/Profile.jsx
+import { setDesktopOn, setSoundOn, useAlertPrefs } from "../lib/alerts";
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -71,6 +72,15 @@ function HomeIcon() {
     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
       <polyline points="9 22 9 12 15 12 15 22" />
+    </svg>
+  );
+}
+
+function BellIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M11 5L6 9H2v6h4l5 4V5z" />
+      <path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" />
     </svg>
   );
 }
@@ -198,6 +208,7 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [preview, setPreview] = useState("");
   const [theme, setTheme] = useState(readTheme);
+  const alertPrefs = useAlertPrefs();
   const [portalLoading, setPortalLoading] = useState(false);
   const [delOpen, setDelOpen] = useState(false);
   const [delText, setDelText] = useState("");
@@ -626,6 +637,33 @@ setPreview(photoURL);
               </span>
               <ChevronIcon />
             </button>
+
+            <button type="button" className="pf-link" onClick={() => setSoundOn(!alertPrefs.sound)} role="switch" aria-checked={alertPrefs.sound}>
+              <span className="pf-link-icon"><BellIcon /></span>
+              <span className="pf-link-text">
+                <strong>Message sounds</strong>
+                <small>{alertPrefs.sound ? "On: a chime plays for new messages while Snaprium is open" : "Off"}</small>
+              </span>
+              <span className="pf-link-state" style={{ marginLeft: "auto", fontSize: "0.82rem", fontWeight: 700, color: alertPrefs.sound ? "var(--accent)" : "var(--text-secondary)" }}>{alertPrefs.sound ? "On" : "Off"}</span>
+            </button>
+
+            {alertPrefs.desktopSupported && (
+              <button
+                type="button"
+                className="pf-link"
+                disabled={alertPrefs.denied}
+                onClick={() => setDesktopOn(!alertPrefs.desktop)}
+                role="switch"
+                aria-checked={alertPrefs.desktop}
+              >
+                <span className="pf-link-icon"><BellIcon /></span>
+                <span className="pf-link-text">
+                  <strong>Desktop alerts</strong>
+                  <small>{alertPrefs.denied ? "Blocked in your browser settings" : alertPrefs.desktop ? "On: a pop-up when this tab is in the background" : "Off"}</small>
+                </span>
+                <span className="pf-link-state" style={{ marginLeft: "auto", fontSize: "0.82rem", fontWeight: 700, color: alertPrefs.desktop ? "var(--accent)" : "var(--text-secondary)" }}>{alertPrefs.desktop ? "On" : "Off"}</span>
+              </button>
+            )}
 
             <button type="button" className="pf-link" onClick={() => setBlockedOpen(true)}>
               <span className="pf-link-icon"><BlockIcon /></span>
