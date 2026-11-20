@@ -3,7 +3,7 @@
 // Sound and desktop pop-ups for new messages while Snaprium is open in a browser tab (like Discord).
 //   - A short chime plays when a new direct message or notification arrives. It is ON by default;
 //     Profile → "Message sounds" turns it off for this device.
-//   - A desktop pop-up shows when the tab is in the background, once the person allows it in Profile.
+//   - A desktop pop-up shows only when the tab is hidden (background tab, minimised or covered window), once the person allows it in Profile.
 //   - Message requests stay silent on purpose (they only show under Requests).
 //   - No sound for your own messages, or for the chat you are looking at right now.
 // Works while the app or tab is open. In the iPhone app only the chime plays (no desktop pop-up); when the app is
@@ -124,7 +124,16 @@ function popup({ title, body, tag, onClick }) {
 }
 
 const ms = (t) => t?.toMillis?.() || (t instanceof Date ? t.getTime() : 0);
-const looking = () => document.visibilityState === "visible" && document.hasFocus();
+// Are you actually using the app right now? On a PC that means the window has focus. The iPhone app and phone
+// browsers often report "no focus" even while you are using them, so there "visible on screen" is what counts.
+// The desktop pop-up is only for when you cannot see the app (tab in the background, window minimised or covered).
+// If the app is on your screen you get the chime only, even when another window has the keyboard focus.
+const tabHidden = () => document.visibilityState === "hidden";
+const looking = () => {
+  if (document.visibilityState !== "visible") return false;
+  if (isNative() || window.matchMedia?.("(pointer: coarse)")?.matches) return true;
+  return document.hasFocus();
+};
 
 // Call once in App. inbox = useInbox(me).list, items = useNotifications(me).items
 export function useMessageAlerts({ me, inbox, items, pathname, navigate }) {
@@ -158,7 +167,7 @@ export function useMessageAlerts({ me, inbox, items, pathname, navigate }) {
       if (latest.current.blocked?.has?.(c.other)) continue;
       if (latest.current.pathname === `/messages/${c.other}` && looking()) continue; // you are reading it
       if (soundOn()) playChime();
-      if (!looking()) {
+      if (tabHidden()) {
         fetchProfileCard(c.other)
           .catch(() => null)
           .then((card) =>
@@ -181,7 +190,7 @@ export function useMessageAlerts({ me, inbox, items, pathname, navigate }) {
       if (!armed.current || n.read || n.type === "dm") continue; // new messages already chime above
       if (latest.current.blocked?.has?.(n.fromUid)) continue;
       if (soundOn()) playChime();
-      if (!looking()) {
+      if (tabHidden()) {
         popup({
           title: n.fromName || "Snaprium",
           body: n.preview || "New notification",

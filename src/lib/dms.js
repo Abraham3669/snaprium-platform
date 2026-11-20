@@ -38,7 +38,7 @@ import {
 import { db } from "./firebase";
 import { pairId } from "./friends";
 import { listMyCommunities } from "./communities";
-import { notifyDm } from "./notifications";
+import { notifyDm, pushDm } from "./notifications";
 
 const ms = (t) => t?.toMillis?.() || (t instanceof Date ? t.getTime() : 0);
 
@@ -276,7 +276,10 @@ export async function sendDm(meInfo, other, { text = "", imageUrl = "", replyTo 
   );
   await batch.commit();
   // A request stays quiet: no alert, it just shows up under Requests. Normal messages notify as before.
-  if (!asRequest) notifyDm({ to: other, from: meInfo, preview: body || "sent a photo" });
+  if (!asRequest) {
+    notifyDm({ to: other, from: meInfo, preview: body || "sent a photo" }); // bell entry (one per sender per 10 min)
+    pushDm(other); // phone push for THIS message (the server checks everything)
+  }
 }
 
 export async function deleteDm(me, other, messageId) {

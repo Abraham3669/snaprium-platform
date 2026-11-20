@@ -169,7 +169,9 @@ export async function notifyFriend({ to, type, from }) {
 }
 
 /**
- * A new direct message. At most one alert per sender every 10 minutes, so a long chat never floods.
+ * A new direct message.
+ *  - The in-app bell entry: at most one per sender every 10 minutes, so the list never floods.
+ *  - The phone push is separate (pushDm below): one for EVERY message, stacked per sender.
  * Opens the conversation (/profile?dm=SENDER_UID).
  */
 export async function notifyDm({ to, from, preview = "" }) {
@@ -196,7 +198,14 @@ export async function notifyDm({ to, from, preview = "" }) {
   } catch {
     return;
   }
-  callPushApi({ action: "push:notify", to, id });
+  // No push here: pushDm sends it, so a message is never pushed twice.
+}
+
+/** Phone push for one new direct message. The server reads the real message and decides (friends only, never
+ *  blocked people or message requests). One push per message; they stack into one entry per sender. */
+export function pushDm(to) {
+  if (!to) return;
+  callPushApi({ action: "push:dm", to });
 }
 
 /** Tell the circle a live session just started (server fans it out). */

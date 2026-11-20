@@ -10,6 +10,10 @@
 //   { action: "push:notify",  to, id }       push for an in-app notification that already exists in
 //                                       users/{to}/notifications/{id}. The caller must be the
 //                                       person who created it (fromUid), and it only goes out once.
+//   { action: "push:dm", to }              a new direct message. One push for EVERY message (like WhatsApp), stacked
+//                                       into one lock-screen entry per sender. The server reads the real
+//                                       message from dms/{pair}; the caller must be its sender. Never for
+//                                       message requests, blocked people, or a message older than 2 minutes.
 //   { action: "push:session", communityId }  a live session just started: write a notification for every
 //                                       other member and push it. The caller must be a member.
 //                                       At most one per circle every 30 minutes.
@@ -33,6 +37,9 @@ const APNS_HOST =
   process.env.APNS_ENV === "sandbox" ? "https://api.sandbox.push.apple.com" : "https://api.push.apple.com";
 
 const MAX_NOTIFY_AGE_MS = 10 * 60 * 1000;
+const DM_MAX_AGE_MS = 2 * 60 * 1000; // a direct-message push must be for a message sent in the last 2 minutes
+const DM_WINDOW_MS = 60 * 1000;
+const DM_MAX_PER_WINDOW = 30; // at most this many pushes per conversation per minute (stops a script from flooding)
 const SESSION_COOLDOWN_MS = 30 * 60 * 1000;
 const SESSION_MAX_MEMBERS = 200;
 const EVERYONE_COOLDOWN_MS = 2 * 60 * 1000;
@@ -310,13 +317,13 @@ async function deliver(db, notes) {
     for (const token of tokens) {
       jobs.push({
         token,
-        collapseId: n.id,
+        collapseId: n.collapseId || n.id,
         payload: {
           aps: {
             alert: { title, body },
             sound: "default",
             badge: badges.get(n.uid) || 1,
-            "thread-id": n.data.communityId || "snaprium",
+            "thread-id": n.thread || n.data.communityId || "snaprium",
           },
           url: n.data.url || "/notifications",
           type: n.data.type || "",
@@ -406,6 +413,66 @@ export async function handlePush(req, res) {
       if (typeof claimed === "string") return res.status(200).json({ ok: true, skipped: claimed });
 
       const out = await deliver(db, [{ uid: body.to, id: body.id, data: claimed }]);
+      return res.status(200).json({ ok: true, ...out });
+    }
+
+    /* ---------- a new direct message: one push per message, stacked per sender ---------- */
+    if (action === "dm") {
+      if (!safe(body.to) || body.to === uid) return res.status(400).json({ ok: false, error: "Bad request" });
+      const to = body.to;
+      const pair = [uid, to].sort().join("_");
+
+      // Neither person may have blocked the other.
+      if ((await blockedBy(db, [to], uid)).has(to) || (await blockedBy(db, [uid], to)).has(uid)) {
+        return res.status(200).json({ ok: true, skipped: "blocked" });
+      }
+      const friendSnap = await db.collection("friendships").doc(pair).get();
+      const friends = friendSnap.exists && friendSnap.data().status === "accepted";
+
+      const dmRef = db.collection("dms").doc(pair);
+      const claimed = await db.runTransaction(async (tx) => {
+        const snap = await tx.get(dmRef);
+        if (!snap.exists) return null;
+        const d = snap.data();
+        const users = Array.isArray(d.users) ? d.users : [];
+        if (!users.includes(uid) || !users.includes(to)) return "forbidden";
+        if (d.lastFrom !== uid) return "forbidden"; // you can only push your own latest message
+        const at = d.lastAt?.toMillis?.() || 0;
+        if (!at || Date.now() - at > DM_MAX_AGE_MS) return "stale";
+        if (d.lastPushAt === at) return "already"; // this exact message was already pushed
+        // A message request (not friends, not accepted yet) stays quiet: it only shows under Requests.
+        if (d.request && !d.accepted && !friends) return "request";
+        if (!friends && !d.accepted) return "not-allowed";
+        // Flood guard: a burst limit per conversation.
+        let start = Number(d.pushWinStart) || 0;
+        let count = Number(d.pushWinCount) || 0;
+        if (Date.now() - start > DM_WINDOW_MS) {
+          start = Date.now();
+          count = 0;
+        }
+        if (count >= DM_MAX_PER_WINDOW) return "rate";
+        tx.update(dmRef, { lastPushAt: at, pushWinStart: start, pushWinCount: count + 1 });
+        return { text: String(d.lastText || "").slice(0, 140) };
+      });
+
+      if (claimed === null) return res.status(404).json({ ok: false, error: "Not found" });
+      if (claimed === "forbidden") return res.status(403).json({ ok: false, error: "Not allowed" });
+      if (typeof claimed === "string") return res.status(200).json({ ok: true, skipped: claimed });
+
+      const userSnap = await db.collection("users").doc(uid).get();
+      const profile = userSnap.exists ? userSnap.data() : {};
+      const fromName = String(profile.displayName || decoded.name || "Someone").slice(0, 60);
+      const data = {
+        type: "dm",
+        fromUid: uid,
+        fromName,
+        communityId: "",
+        communityName: "",
+        preview: claimed.text,
+        url: `/profile?dm=${uid}`,
+      };
+      // collapseId + thread-id = one stacked entry per sender, and a newer message replaces the older banner
+      const out = await deliver(db, [{ uid: to, id: `dm_${uid}`, collapseId: `dm_${uid}`, thread: `dm_${uid}`, data }]);
       return res.status(200).json({ ok: true, ...out });
     }
 
