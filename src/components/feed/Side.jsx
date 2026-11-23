@@ -9,6 +9,7 @@ import { waitingQuestions } from "../../lib/feedRank";
 import Avatar from "./Avatar";
 import { PlusIcon } from "./Icons";
 import { useFeed } from "./FeedContext";
+import { GuestBanner } from "./SignInGate";
 
 export function useMyCircles(uid) {
   const [circles, setCircles] = useState(null);
@@ -78,6 +79,8 @@ export function RightColumn({ uid, circles, pool }) {
 
   return (
     <aside className="fd-side" aria-label="More">
+      {feed.guest && <GuestBanner />}
+      {!feed.guest && (
       <section className="fd-panel">
         <h3>Your circles</h3>
         {circles === null ? (
@@ -98,7 +101,9 @@ export function RightColumn({ uid, circles, pool }) {
         )}
         <button type="button" className="fd-link" onClick={() => navigate("/community")}>Explore circles</button>
       </section>
+      )}
 
+      {!feed.guest && (
       <section className="fd-panel">
         <h3>Topics you follow</h3>
         <div className="fd-chips">
@@ -109,6 +114,7 @@ export function RightColumn({ uid, circles, pool }) {
           ))}
         </div>
       </section>
+      )}
 
       {waiting.length > 0 && (
         <section className="fd-panel">

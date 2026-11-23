@@ -30,7 +30,7 @@ function Inner({ uid }) {
     setDone(false);
     setLoading(true);
     fetchProfileCard(uid).then((c) => !off && setCard(c));
-    countFollowers(uid).then((n) => !off && setFollowers(n));
+    if (feed.me) countFollowers(uid).then((n) => !off && setFollowers(n)); // the follower list is for signed-in people
     fetchPostsBy(uid)
       .then((r) => {
         if (off) return;
@@ -90,7 +90,7 @@ function Inner({ uid }) {
                 ) : (
                   <button type="button" className={`fd-btn ${following ? "" : "primary"}`} onClick={async () => {
                     await feed.toggleFollow(uid);
-                    countFollowers(uid).then((n) => n !== null && setFollowers(n));
+                    if (feed.me) countFollowers(uid).then((n) => n !== null && setFollowers(n));
                   }}>
                     {following ? "Following" : "Follow"}
                   </button>
@@ -114,21 +114,10 @@ function Inner({ uid }) {
 export default function AuthorPage() {
   const { uid } = useParams();
   const { user, loading } = useAuth();
-  const navigate = useNavigate();
+  // Signed-out visitors can look at a profile and its posts; Follow asks them to sign in.
   if (loading && !user) return <FeedSkeleton />;
-  if (!user)
-    return (
-      <div className="fd-page single">
-        <div className="fd-main">
-          <div className="fd-empty">
-            <strong>Sign in to see this profile</strong>
-            <button type="button" className="fd-btn primary" onClick={() => navigate("/login")}>Sign in</button>
-          </div>
-        </div>
-      </div>
-    );
   return (
-    <FeedProvider user={user}>
+    <FeedProvider user={user || null}>
       <Inner uid={uid} />
     </FeedProvider>
   );

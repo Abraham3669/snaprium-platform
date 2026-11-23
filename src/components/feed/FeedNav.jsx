@@ -20,6 +20,13 @@ export function LeftRail({ uid, unread = 0, social = 0, onCompose }) {
       <span>{label}</span>
     </button>
   );
+  if (!uid)
+    return (
+      <nav className="fd-rail" aria-label="Main">
+        {item("Home", <HomeIcon />, pathname === "/", () => navigate("/"))}
+        {item("Circles", <CirclesIcon />, pathname.startsWith("/community"), () => navigate("/community"))}
+      </nav>
+    );
   return (
     <nav className="fd-rail" aria-label="Main">
       {item("Home", <HomeIcon />, pathname === "/", () => navigate("/"))}
@@ -46,6 +53,14 @@ export function PhoneBar({ uid, social = 0, onCompose }) {
       <span>{label}</span>
     </button>
   );
+  if (!uid)
+    return (
+      <nav className="fd-bar guest" aria-label="Main">
+        {it("Home", <HomeIcon />, pathname === "/", () => navigate("/"))}
+        {it("Circles", <CirclesIcon />, pathname.startsWith("/community"), () => navigate("/community"))}
+        {it("Sign in", <UserIcon />, false, () => navigate("/login"))}
+      </nav>
+    );
   return (
     <nav className="fd-bar" aria-label="Main">
       {it("Home", <HomeIcon />, pathname === "/", () => navigate("/"))}

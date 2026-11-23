@@ -5,6 +5,7 @@
 
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
+import SignInGate from "./SignInGate";
 import { useBlocked } from "../../lib/moderation";
 import { ReportDialog, BlockDialog } from "../ModerationDialogs";
 import { notifyPost } from "../../lib/notifications";
@@ -26,6 +27,14 @@ export function FeedProvider({ user, children }) {
   const busy = useRef(new Set());
   const [reportInfo, setReportInfo] = useState(null);
   const [blockPerson, setBlockPerson] = useState(null);
+  const [gate, setGate] = useState(""); // signed-out visitor tried something: which action
+  const guest = !me;
+  // Signed out: show the "Join Snaprium" dialog and return true (so the caller stops).
+  const requireAuth = useCallback((action) => {
+    if (me) return false;
+    setGate(action || "default");
+    return true;
+  }, [me]);
 
   const meInfo = useMemo(
     () => ({ uid: me, displayName: user?.displayName || "Someone", photoURL: user?.photoURL || "" }),
@@ -47,7 +56,7 @@ export function FeedProvider({ user, children }) {
 
   const toggleSpark = useCallback(
     async (post) => {
-      if (!me) return;
+      if (requireAuth("spark")) return;
       if (busy.current.has(post.id)) return;
       busy.current.add(post.id);
       const on = !sparked.has(post.id);
@@ -78,12 +87,13 @@ export function FeedProvider({ user, children }) {
         busy.current.delete(post.id);
       }
     },
-    [me, sparked, meInfo]
+    [me, sparked, meInfo, requireAuth]
   );
 
   const toggleFollow = useCallback(
     async (uid) => {
-      if (!me || !uid || uid === me) return;
+      if (requireAuth("follow")) return;
+      if (!uid || uid === me) return;
       try {
         if (following.has(uid)) {
           await unfollow(uid);
@@ -96,11 +106,12 @@ export function FeedProvider({ user, children }) {
         toast.error("Could not update. Please try again.");
       }
     },
-    [me, following, follow, unfollow, meInfo]
+    [me, following, follow, unfollow, meInfo, requireAuth]
   );
 
   const toggleSave = useCallback(
     async (postId) => {
+      if (requireAuth("save")) return;
       try {
         const was = saved.ids.has(postId);
         await saved.toggle(postId);
@@ -109,12 +120,14 @@ export function FeedProvider({ user, children }) {
         toast.error("Could not save. Please try again.");
       }
     },
-    [saved]
+    [saved, requireAuth]
   );
 
   const value = useMemo(
     () => ({
       me,
+      guest,
+      requireAuth,
       user,
       meInfo,
       following,
@@ -128,15 +141,16 @@ export function FeedProvider({ user, children }) {
       loadSparks,
       toggleSpark,
       toggleSave,
-      openReport: setReportInfo,
+      openReport: (info) => { if (!requireAuth("default")) setReportInfo(info); },
       openBlock: setBlockPerson,
     }),
-    [me, user, meInfo, following, followReady, toggleFollow, prefs, saved, blocked, sparked, delta, loadSparks, toggleSpark, toggleSave]
+    [me, guest, requireAuth, user, meInfo, following, followReady, toggleFollow, prefs, saved, blocked, sparked, delta, loadSparks, toggleSpark, toggleSave]
   );
 
   return (
     <Ctx.Provider value={value}>
       {children}
+      {gate && <SignInGate action={gate} onClose={() => setGate("")} />}
       <ReportDialog info={reportInfo} user={user} onClose={() => setReportInfo(null)} onAlsoBlock={(info) => block({ uid: info.contentUid, name: info.contentName, photo: "" })} />
       <BlockDialog person={blockPerson} onConfirm={(p) => block(p)} onClose={() => setBlockPerson(null)} />
     </Ctx.Provider>

@@ -57,6 +57,7 @@ import { useMessageAlerts } from "./lib/alerts";
 import { useFriendships } from "./lib/friends";
 import { syncPush, clearDeliveredPush } from "./lib/push";
 import { publishPublicProfile } from "./lib/publicProfile";
+import { clearReturn, peekReturn } from "./lib/returnTo";
 import "./styles/social.css";
 
 const GUEST_SOLVE_LIMIT = 3;
@@ -128,6 +129,16 @@ function App() {
       window.removeEventListener("resize", apply);
     };
   }, [location.pathname, user?.uid]);
+
+  // A signed-out visitor tapped Spark / Reply / Follow, signed in, and should land back where they were.
+  useEffect(() => {
+    if (!user?.uid) return;
+    if (!["/", "/login", "/signup"].includes(location.pathname)) return;
+    const back = peekReturn();
+    if (!back) return;
+    clearReturn();
+    if (back !== location.pathname) navigate(back, { replace: true });
+  }, [user?.uid, location.pathname, navigate]);
 
   // Public name + photo card (publicProfiles/{uid}). Other people read it to show your CURRENT name and
   // photo in chat, questions and notifications, so changing your profile updates it everywhere.
@@ -575,19 +586,19 @@ useEffect(() => {
         element={
           <main className="pt-16">
             <Routes>
-              {/* Signed in: the feed. Signed out: the normal home page. While we are still checking, a skeleton, so nobody sees the wrong page flash by. */}
+              {/* The feed for everyone. Signed-out visitors can read it; Spark, reply, follow and post ask them to sign in. While we are still checking, a skeleton, so nobody sees the wrong page flash by. */}
               <Route
                 path="/"
                 element={
-                  user ? (
-                    <FeedHome user={user} unread={notifications.unread} social={socialBadge} />
-                  ) : authLoading && !authSlow ? (
+                  !user && authLoading && !authSlow ? (
                     <FeedSkeleton />
                   ) : (
-                    <Home />
+                    <FeedHome user={user || null} unread={notifications.unread} social={socialBadge} />
                   )
                 }
               />
+              {/* The old home page (the tools hub) stays available here. */}
+              <Route path="/home" element={<Home />} />
               <Route path="/post/:postId" element={<PostPage />} />
               <Route path="/u/:uid" element={<AuthorPage />} />
 

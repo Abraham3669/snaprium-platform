@@ -178,7 +178,7 @@ export default function PostCard({ post, profile, expanded = false, onRemoved, t
             {post._local ? " · posting…" : ""}
           </span>
         </div>
-        {!mine && !isFollowing && feed.me && (
+        {!mine && !isFollowing && (
           <button type="button" className="fd-follow" onClick={() => feed.toggleFollow(post.uid)}>Follow</button>
         )}
         {feed.me && (
@@ -251,7 +251,6 @@ export default function PostCard({ post, profile, expanded = false, onRemoved, t
           aria-pressed={isSparked}
           aria-label={isSparked ? "Remove Spark" : "Spark: this was helpful"}
           title="Spark: this was helpful"
-          disabled={!feed.me}
           onClick={() => feed.toggleSpark(post)}
         >
           <SparkIcon filled={isSparked} />
@@ -262,7 +261,7 @@ export default function PostCard({ post, profile, expanded = false, onRemoved, t
           <span>{post.replyCount > 0 ? post.replyCount : post.kind === "question" ? "Answer" : "Reply"}</span>
         </button>
         <span className="fd-spacer" />
-        <button type="button" className={`fd-act icon ${isSaved ? "on" : ""}`} aria-pressed={isSaved} aria-label={isSaved ? "Remove from Saved" : "Save"} disabled={!feed.me} onClick={() => feed.toggleSave(post.id)}>
+        <button type="button" className={`fd-act icon ${isSaved ? "on" : ""}`} aria-pressed={isSaved} aria-label={isSaved ? "Remove from Saved" : "Save"} onClick={() => feed.toggleSave(post.id)}>
           <SaveIcon filled={isSaved} />
         </button>
         <button type="button" className="fd-act icon" aria-label="Share" onClick={share}>

@@ -54,7 +54,7 @@ function ReplyRow({ post, reply, profile, isOwnerView, onHelpful }) {
               Delete
             </button>
           )}
-          {!mine && (
+          {!mine && feed.me && (
             <button type="button" className="fd-link" onClick={() => feed.openReport({ kind: "reply", contentId: reply.id, questionId: post.id, contentUid: reply.uid, contentName: name, preview: reply.text })}>
               Report
             </button>
@@ -134,6 +134,14 @@ function Inner({ postId }) {
           <>
             <PostCard post={post} profile={profiles[post.uid]} expanded onRemoved={() => navigate("/", { replace: true })} />
             <h2 className="fd-h2">{post.replyCount > 0 ? `${post.replyCount} ${post.replyCount === 1 ? "reply" : "replies"}` : post.kind === "question" ? "Be the first to answer" : "Replies"}</h2>
+            {feed.guest ? (
+              <div className="fd-replybox guest">
+                <p>Sign in to {post.kind === "question" ? "answer" : "reply"}.</p>
+                <button type="button" className="fd-btn primary" onClick={() => feed.requireAuth("reply")}>
+                  Sign in to {post.kind === "question" ? "answer" : "reply"}
+                </button>
+              </div>
+            ) : (
             <form className="fd-replybox" onSubmit={send}>
               <textarea
                 value={text}
@@ -148,6 +156,7 @@ function Inner({ postId }) {
                 <button type="submit" className="fd-btn primary" disabled={busy || !text.trim()}>{busy ? "Sending…" : "Reply"}</button>
               </div>
             </form>
+            )}
             <ul className="fd-replies">
               {shown.map((r) => (
                 <ReplyRow key={r.id} post={post} reply={r} profile={profiles[r.uid]} isOwnerView={post.uid === feed.me} onHelpful={markHelpful} />
@@ -163,22 +172,10 @@ function Inner({ postId }) {
 export default function PostPage() {
   const { postId } = useParams();
   const { user, loading } = useAuth();
-  const navigate = useNavigate();
+  // Signed-out visitors can read the post and its replies; acting on them asks them to sign in.
   if (loading && !user) return <FeedSkeleton />;
-  if (!user)
-    return (
-      <div className="fd-page single">
-        <div className="fd-main">
-          <div className="fd-empty">
-            <strong>Sign in to read this post</strong>
-            <p>Join Snaprium to read, reply and follow people who share what they learn.</p>
-            <button type="button" className="fd-btn primary" onClick={() => navigate("/login")}>Sign in</button>
-          </div>
-        </div>
-      </div>
-    );
   return (
-    <FeedProvider user={user}>
+    <FeedProvider user={user || null}>
       <Inner postId={postId} />
     </FeedProvider>
   );

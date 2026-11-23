@@ -19,6 +19,7 @@ import Avatar from "../components/feed/Avatar";
 import { ImageIcon } from "../components/feed/Icons";
 import { LeftRail, NativeFab, PhoneBar } from "../components/feed/FeedNav";
 import { CirclesStrip, RightColumn, useMyCircles } from "../components/feed/Side";
+import { GuestBanner } from "../components/feed/SignInGate";
 import "../styles/feed.css";
 
 const PAGE = 10;
@@ -61,7 +62,7 @@ function Inner({ unread, social }) {
   const [status, setStatus] = useState("loading"); // loading | ready | error
   const [loadingMore, setLoadingMore] = useState(false);
   const [fresh, setFresh] = useState(0);
-  const [composer, setComposer] = useState(null); // null | kind
+  const [composer, setComposerRaw] = useState(null); // null | kind
   const [local, setLocal] = useState([]); // posts I just wrote
   const [removed, setRemoved] = useState(() => new Set());
   const [onboard, setOnboard] = useState(() => {
@@ -71,6 +72,18 @@ function Inner({ unread, social }) {
       return true;
     }
   });
+
+  // Signed-out visitors can read everything; writing asks them to sign in first.
+  const { requireAuth } = feed;
+  const setComposer = useCallback(
+    (kind) => {
+      if (kind && requireAuth(kind === "question" ? "ask" : "post")) return;
+      setComposerRaw(kind);
+    },
+    [requireAuth]
+  );
+  const guest = feed.guest;
+  const tabs = guest ? TABS.filter((t) => t.id === "foryou" || t.id === "questions") : TABS;
 
   const latest = useRef({});
   latest.current = { feed, tab };
@@ -139,13 +152,13 @@ function Inner({ unread, social }) {
 
   // First load, and every time the tab changes (once my follows and topics are known).
   useEffect(() => {
-    if (!ready || !me) return;
+    if (!ready) return;
     load(tab);
   }, [ready, me, tab, load]);
 
   // "N new posts" pill
   useEffect(() => {
-    if (!ready || !me || (tab !== "foryou" && tab !== "following")) return undefined;
+    if (!ready || (tab !== "foryou" && tab !== "following")) return undefined;
     const t = setInterval(async () => {
       if (document.visibilityState !== "visible" || status !== "ready") return;
       const n = await countNewerPosts(loadedAt.current, me);
@@ -202,7 +215,7 @@ function Inner({ unread, social }) {
   };
   const posted = (p) => setLocal((l) => [p, ...l]);
 
-  const needsTopics = SHOW_TOPIC_NUDGE && onboard && ready && feed.prefs.topics.size === 0 && tab === "foryou";
+  const needsTopics = SHOW_TOPIC_NUDGE && !guest && onboard && ready && feed.prefs.topics.size === 0 && tab === "foryou";
 
   // A small, skippable row of topics. It sits after the first few posts (never first), and the Topics panel on the
   // right (computers) always lets you change them later.
@@ -228,24 +241,32 @@ function Inner({ unread, social }) {
 
   return (
     <div className="fd-page">
-      <LeftRail uid={me} unread={unread} social={social} onCompose={() => setComposer("insight")} />
+      <LeftRail uid={me} unread={unread} social={social} onCompose={() => setComposer("post")} />
 
       <div className="fd-main" id="feed-main">
-        <div className="fd-only-small">
-          <CirclesStrip uid={me} circles={circles || []} />
-        </div>
+        {guest ? (
+          <div className="fd-only-small">
+            <GuestBanner compact />
+          </div>
+        ) : (
+          <>
+            <div className="fd-only-small">
+              <CirclesStrip uid={me} circles={circles || []} />
+            </div>
 
-        <div className="fd-prompt">
-          <Avatar name={user?.displayName} photo={user?.photoURL && user.photoURL.length < 400 ? user.photoURL : ""} size={42} />
-          <button type="button" className="fd-prompt-input" onClick={() => setComposer("insight")}>
-            What are you learning today?
-          </button>
-          <button type="button" className="fd-icon-btn" aria-label="Add a picture" onClick={() => setComposer("log")}><ImageIcon /></button>
-          <button type="button" className="fd-btn primary" onClick={() => setComposer("question")}>Ask</button>
-        </div>
+            <div className="fd-prompt">
+              <Avatar name={user?.displayName} photo={user?.photoURL && user.photoURL.length < 400 ? user.photoURL : ""} size={42} />
+              <button type="button" className="fd-prompt-input" onClick={() => setComposer("post")}>
+                What are you learning today?
+              </button>
+              <button type="button" className="fd-icon-btn" aria-label="Add a picture" onClick={() => setComposer("post")}><ImageIcon /></button>
+              <button type="button" className="fd-btn primary" onClick={() => setComposer("question")}>Ask</button>
+            </div>
+          </>
+        )}
 
         <div className="fd-tabs" role="tablist" aria-label="Feed">
-          {TABS.map((t) => (
+          {tabs.map((t) => (
             <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} className={`fd-tab ${tab === t.id ? "on" : ""}`} onClick={() => setTab(t.id)}>
               {t.label}
             </button>
@@ -274,7 +295,7 @@ function Inner({ unread, social }) {
             <button type="button" className="fd-btn primary" onClick={() => load(tab)}>Try again</button>
           </div>
         ) : visible.length === 0 ? (
-          <Empty tab={tab} onCompose={() => setComposer(tab === "questions" ? "question" : "insight")} goForYou={() => setTab("foryou")} />
+          <Empty tab={tab} onCompose={() => setComposer(tab === "questions" ? "question" : "post")} goForYou={() => setTab("foryou")} />
         ) : (
           <>
             {page.map((p, i) => (
@@ -295,9 +316,9 @@ function Inner({ unread, social }) {
       </div>
 
       <RightColumn uid={me} circles={circles} pool={pool} />
-      <PhoneBar uid={me} social={social} onCompose={() => setComposer("insight")} />
-      <NativeFab onCompose={() => setComposer("insight")} />
-      {composer && <Composer user={user} defaultKind={composer} onClose={() => setComposer(null)} onPosted={posted} />}
+      <PhoneBar uid={me} social={social} onCompose={() => setComposer("post")} />
+      {!guest && <NativeFab onCompose={() => setComposer("post")} />}
+      {composer && !guest && <Composer user={user} defaultKind={composer} onClose={() => setComposer(null)} onPosted={posted} />}
     </div>
   );
 }
@@ -335,7 +356,7 @@ function Empty({ tab, onCompose, goForYou }) {
   );
 }
 
-export default function FeedHome({ user, unread = 0, social = 0 }) {
+export default function FeedHome({ user = null, unread = 0, social = 0 }) {
   return (
     <FeedProvider user={user}>
       <Inner unread={unread} social={social} />
