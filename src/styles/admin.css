@@ -3,7 +3,8 @@
 .ad-page {
   width: min(1040px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 28px 0 120px;
+  /* starts exactly below the real header (same rule as the feed page), so the small "Owner only" tag never hides under it */
+  padding: calc(var(--snaprium-header-h, 64px) - var(--snaprium-main-pad, 64px) + 24px) 0 120px;
   color: var(--text-primary);
   text-align: left;
 }
@@ -120,7 +121,7 @@
 /* ---------- stat cards ---------- */
 .ad-stats {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 22px;
 }
@@ -586,7 +587,7 @@
 @media (max-width: 700px) {
   .ad-page {
     width: calc(100% - 24px);
-    padding-top: 18px;
+    padding-top: calc(var(--snaprium-header-h, 64px) - var(--snaprium-main-pad, 64px) + 16px);
   }
   .ad-head {
     align-items: flex-start;
@@ -869,5 +870,214 @@
   }
   .ad-table {
     font-size: 0.84rem;
+  }
+}
+
+/* ==========================================================
+   Posts, user details, feed insights
+   ========================================================== */
+a.ad-btn,
+.ad-mini a {
+  text-decoration: none;
+}
+.ad-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: pre-line;
+}
+.ad-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+.ad-sort select {
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.84rem;
+}
+.ad-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 14px;
+}
+.ad-avatar.big {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  font-size: 1.3rem;
+}
+.ad-section-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+.ad-section-title h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+.ad-section-title span {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+.ad-two {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.ad-mini {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.ad-mini a {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  color: var(--text-primary);
+}
+.ad-mini a:hover {
+  background: var(--icon-bg);
+}
+.ad-mini-text {
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+}
+.ad-mini-meta {
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+}
+.ad-mini li.with-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ad-mini li.with-action a {
+  flex: 1;
+}
+
+/* person window */
+.ad-overlay {
+  grid-template-columns: minmax(0, 1fr);
+}
+.ad-modal {
+  box-sizing: border-box;
+}
+.ad-modal.wide {
+  min-width: 0;
+  width: min(560px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+}
+.ad-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding-right: 28px;
+}
+.ad-detail-head h2 {
+  margin: 0 0 6px;
+  font-size: 1.2rem;
+  overflow-wrap: anywhere;
+}
+.ad-tags.left {
+  justify-content: flex-start;
+}
+.ad-detail-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.ad-detail-stats > div {
+  display: grid;
+  gap: 2px;
+  padding: 10px;
+  border-radius: 12px;
+  background: var(--icon-bg);
+  text-align: center;
+}
+.ad-detail-stats strong {
+  font-size: 1.25rem;
+  line-height: 1.1;
+}
+.ad-detail-stats span {
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.ad-detail-stats .warn strong {
+  color: #d97706;
+}
+.ad-detail-rows {
+  margin: 0 0 14px;
+  display: grid;
+  gap: 0;
+}
+.ad-detail-rows > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+  font-size: 0.88rem;
+}
+.ad-detail-rows dt {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+.ad-detail-rows dd {
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.ad-detail-rows dd.mono {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.78rem;
+  user-select: all;
+}
+.ad-detail-sub {
+  margin: 4px 0 6px;
+  font-size: 0.95rem;
+}
+.ad-modal-actions.wrap {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+.ad-toolbar .ad-btn.small {
+  margin-left: auto;
+}
+
+@media (max-width: 700px) {
+  .ad-two {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ad-detail-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ad-toolbar .ad-btn.small {
+    margin-left: 0;
+  }
+  .ad-modal.wide .ad-modal-actions .ad-btn {
+    flex: 1 1 140px;
   }
 }

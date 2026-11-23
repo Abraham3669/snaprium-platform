@@ -179,8 +179,10 @@ export default function PostCard({ post, profile, expanded = false, onRemoved, t
       aria-label={`Post by ${name}`}
       onClick={expanded ? undefined : openFromCard}
     >
+      <div className="fd-card-row">
+      <Avatar name={name} photo={photo} size={42} onClick={openAuthor} />
+      <div className="fd-card-col">
       <header className="fd-card-head">
-        <Avatar name={name} photo={photo} size={42} onClick={openAuthor} />
         <div className="fd-who">
           <button type="button" className="fd-name" onClick={openAuthor}>{name}</button>
           <span className="fd-meta">
@@ -286,6 +288,8 @@ export default function PostCard({ post, profile, expanded = false, onRemoved, t
           <ShareIcon />
         </button>
       </footer>
+      </div>
+      </div>
       {zoom && <Lightbox src={zoom} onClose={() => setZoom("")} />}
     </article>
   );
