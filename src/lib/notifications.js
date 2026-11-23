@@ -169,6 +169,43 @@ export async function notifyFriend({ to, type, from }) {
 }
 
 /**
+ * Something happened to a post in the feed (or someone followed you).
+ *   type  "post_spark" | "post_reply" | "post_answer" | "follow"
+ *   post  { id, text }  (not needed for "follow")
+ * One per person and event, so Spark, un-Spark, Spark never notifies twice. The rules check the post really
+ * belongs to the person being notified (post_spark / post_reply) or to you (post_answer), and that the follow exists.
+ */
+export async function notifyPost({ to, type, from, post, key = "", preview = "" }) {
+  if (!to || !from?.uid || to === from.uid) return;
+  if (!["post_spark", "post_reply", "post_answer", "follow"].includes(type)) return;
+  const isFollow = type === "follow";
+  if (!isFollow && !post?.id) return;
+  const id = isFollow ? `follow_${from.uid}` : `${type}_${post.id}_${String(key || from.uid).replace(/[^\w-]/g, "")}`;
+  if (readSent().includes(id)) return;
+  rememberSent(id);
+  try {
+    await setDoc(doc(db, "users", to, "notifications", id), {
+      type,
+      fromUid: from.uid,
+      fromName: clean(from.displayName || "Someone", 60),
+      fromPhoto: from.photoURL && from.photoURL.length < 400 ? from.photoURL : "",
+      communityId: "",
+      communityName: "",
+      boardId: "",
+      targetId: isFollow ? "" : post.id,
+      preview: clean(preview || post?.text || "", 140),
+      emoji: "",
+      url: isFollow ? `/u/${from.uid}` : `/post/${post.id}`,
+      read: false,
+      createdAt: serverTimestamp(),
+    });
+  } catch {
+    return;
+  }
+  callPushApi({ action: "push:notify", to, id });
+}
+
+/**
  * A new direct message.
  *  - The in-app bell entry: at most one per sender every 10 minutes, so the list never floods.
  *  - The phone push is separate (pushDm below): one for EVERY message, stacked per sender.
@@ -276,6 +313,14 @@ export function describeNotification(n) {
       return `${who} sent you a friend request`;
     case "friend_accept":
       return `${who} accepted your friend request`;
+    case "post_spark":
+      return `${who} found your post helpful`;
+    case "post_reply":
+      return `${who} replied to your post`;
+    case "post_answer":
+      return `${who} marked your reply as the helpful answer`;
+    case "follow":
+      return `${who} started following you`;
     default:
       return `${who} sent you an update`;
   }

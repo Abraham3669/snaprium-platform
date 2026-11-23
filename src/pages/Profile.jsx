@@ -158,6 +158,15 @@ function BlockIcon() {
   );
 }
 
+function SoloIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 8a2 2 0 0 1 2-2h2l1.5-2h7L17 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <circle cx="12" cy="13" r="3.5" />
+    </svg>
+  );
+}
+
 function FriendsIcon() {
   return (
     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -618,12 +627,21 @@ setPreview(photoURL);
               <ChevronIcon />
             </button>
 
+            <button type="button" className="pf-link" onClick={() => navigate("/solo")}>
+              <span className="pf-link-icon"><SoloIcon /></span>
+              <span className="pf-link-text">
+                <strong>Solo study</strong>
+                <small>Snap a homework problem for a step-by-step solution</small>
+              </span>
+              <ChevronIcon />
+            </button>
+
             {!isApp && (
               <button type="button" className="pf-link" onClick={() => navigate("/")}>
                 <span className="pf-link-icon"><HomeIcon /></span>
                 <span className="pf-link-text">
                   <strong>Home</strong>
-                  <small>Back to the solver</small>
+                  <small>Back to your feed</small>
                 </span>
                 <ChevronIcon />
               </button>
@@ -835,7 +853,7 @@ setPreview(photoURL);
           >
             <h2 id="pf-del-title">Delete your account?</h2>
             <p>
-              This permanently deletes your profile, your messages and questions, and removes you
+              This permanently deletes your profile, your posts, messages and questions, and removes you
               from your circles. It can't be undone.
             </p>
             {isSubscribed && (

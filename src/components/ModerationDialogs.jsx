@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { toast } from "react-toastify";
 import { REPORT_REASONS, reportContent } from "../lib/moderation";
 
-const KIND_LABEL = { message: "message", question: "question", reply: "reply", user: "person", profile: "profile", dm: "message" };
+const KIND_LABEL = { message: "message", question: "question", post: "post", reply: "reply", user: "person", profile: "profile", dm: "message" };
 
 export function ReportDialog({ info, user, onClose, onAlsoBlock }) {
   const [reason, setReason] = useState("");

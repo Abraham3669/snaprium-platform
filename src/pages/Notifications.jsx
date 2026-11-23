@@ -10,7 +10,7 @@ import { enablePush, getPushState, clearDeliveredPush } from "../lib/push";
 
 function TypeIcon({ type }) {
   const common = { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, "aria-hidden": true };
-  if (type === "spark")
+  if (type === "spark" || type === "post_spark")
     return (
       <svg {...common}>
         <path d="M13 2L4.5 13.5H11L10 22l8.5-11.5H13L13 2z" strokeLinejoin="round" strokeLinecap="round" />
@@ -29,7 +29,7 @@ function TypeIcon({ type }) {
         <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" strokeLinejoin="round" />
       </svg>
     );
-  if (type === "friend_request" || type === "friend_accept")
+  if (type === "friend_request" || type === "friend_accept" || type === "follow")
     return (
       <svg {...common}>
         <circle cx="9" cy="8" r="3.5" />
@@ -145,7 +145,15 @@ function Row({ n, onOpen }) {
         <strong>{groupTitle(n)}</strong>
         {n.count > 1 ? <span className="nt-preview">{n.count} {groupNoun(n.type)}{n.preview ? ` · latest: ${n.preview}` : ""}</span> : n.preview ? <span className="nt-preview">{n.preview}</span> : null}
         <span className="nt-meta">
-          {n.type === "friend_request" || n.type === "friend_accept" ? "Friends" : n.type === "dm" ? "Message" : n.communityName || "Circle"}
+          {n.type === "friend_request" || n.type === "friend_accept"
+            ? "Friends"
+            : n.type === "dm"
+            ? "Message"
+            : n.type === "follow"
+            ? "Followers"
+            : String(n.type || "").startsWith("post_")
+            ? "Feed"
+            : n.communityName || "Circle"}
           <span aria-hidden="true"> · </span>
           {notificationTime(n.createdAt)}
         </span>
@@ -215,7 +223,11 @@ export default function Notifications({ items, loading, unread, markRead, markAl
 
   const openItem = (n) => {
     if (!n.read) (n.ids || [n.id]).forEach((id) => markRead(id));
-    if (typeof n.url === "string" && (n.url.startsWith("/community/") || n.url.startsWith("/profile"))) navigate(n.url);
+    if (
+      typeof n.url === "string" &&
+      (n.url.startsWith("/community/") || n.url.startsWith("/profile") || n.url.startsWith("/post/") || n.url.startsWith("/u/"))
+    )
+      navigate(n.url);
   };
 
   if (!authLoading && !user) {

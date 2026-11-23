@@ -4,6 +4,7 @@
 :root {
   --bg: #fafcff;
   --surface: #ffffff;
+  --surface-2: #f1f5f9;
   --text-primary: #0f172a;
   --text-secondary: #475569;
   --border: rgba(203, 213, 225, 0.6);
@@ -23,20 +24,21 @@
 }
 
 [data-theme="dark"] {
-  --bg: #0a0f1a;
-  --surface: #0f172a;
-  --surface-mobile: rgba(15, 23, 42, 0.96);
-  --text-primary: #e2e8f0;
-  --text-secondary: #94a3b8;
-  --border: rgba(51, 65, 85, 0.5);
+  --bg: #000000;
+  --surface: #0c0d0f;
+  --surface-2: #141518;
+  --surface-mobile: rgba(0,0,0,0.96);
+  --surface-mobile-blur: rgba(0,0,0,0.75);
+  --text-primary: #e7e9ea;
+  --text-secondary: #868e98;
+  --border: #1f2226;
   --accent: #60a5fa;
   --accent-dark: #3b82f6;
-  --accent-glow: rgba(96, 165, 250, 0.4);
-  --shadow-sm: 0 4px 16px rgba(0,0,0,0.5);
-  --shadow-md: 0 12px 48px rgba(0,0,0,0.55);
-  --icon-bg: rgba(96, 165, 250, 0.08);
+  --accent-glow: rgba(96,165,250,0.35);
+  --shadow-sm: 0 4px 16px rgba(0,0,0,0.6);
+  --shadow-md: 0 12px 48px rgba(0,0,0,0.7);
+  --icon-bg: rgba(231,233,234,0.07);
 }
-
 /* ─────────────────────────────────────────────
    Base & Reset
 ───────────────────────────────────────────── */

@@ -4,6 +4,9 @@ import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Home from "./pages/Home";
+import FeedHome, { FeedSkeleton } from "./pages/FeedHome";
+import PostPage from "./pages/PostPage";
+import AuthorPage from "./pages/AuthorPage";
 import Community from "./pages/Community";
 import Admin from "./pages/Admin";
 import CameraInput from "./components/CameraInput";
@@ -572,7 +575,21 @@ useEffect(() => {
         element={
           <main className="pt-16">
             <Routes>
-              <Route path="/" element={<Home />} />
+              {/* Signed in: the feed. Signed out: the normal home page. While we are still checking, a skeleton, so nobody sees the wrong page flash by. */}
+              <Route
+                path="/"
+                element={
+                  user ? (
+                    <FeedHome user={user} unread={notifications.unread} social={socialBadge} />
+                  ) : authLoading && !authSlow ? (
+                    <FeedSkeleton />
+                  ) : (
+                    <Home />
+                  )
+                }
+              />
+              <Route path="/post/:postId" element={<PostPage />} />
+              <Route path="/u/:uid" element={<AuthorPage />} />
 
 <Route
   path="/solo"

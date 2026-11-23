@@ -1307,3 +1307,167 @@ h2 {
     height: 96px;
   }
 }
+
+
+/* ==========================================================
+   Circles list - bigger cards + full-width page (appended last)
+   ========================================================== */
+
+/* Page: use the real width. The extra side space came from the shared
+   .hub-page rules, so this is set with higher specificity. */
+.hub-page.cx-page {
+  width: 100%;
+  max-width: 1240px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+/* Desktop + tablet: larger cards, about 3 per row */
+.cx-page .cx-grid {
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.cx-page .cx-c-banner,
+.cx-page .cx-c-banner.cx-sk-line {
+  height: 128px;
+}
+
+.cx-page .cx-c-body {
+  gap: 12px;
+  padding: 0 20px 20px;
+}
+
+.cx-page .cx-c-avatar,
+.cx-page .cx-c-avatar.cx-sk-line {
+  width: 68px;
+  height: 68px;
+  margin-top: -34px;
+  border-width: 4px;
+  font-size: 1.5rem;
+}
+
+.cx-page .cx-card-name {
+  font-size: 1.15rem;
+  line-height: 1.25;
+}
+
+.cx-page .cx-pill {
+  padding: 4px 12px;
+  font-size: 0.8rem;
+}
+
+.cx-page .cx-members {
+  font-size: 0.85rem;
+}
+
+.cx-page .cx-c-act {
+  min-height: 44px;
+  margin-top: 4px;
+  font-size: 0.95rem;
+}
+
+.cx-page .cx-c .cx-card-lock {
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+}
+
+.cx-page .cx-c .cx-badge {
+  top: 14px;
+  left: 14px;
+  min-width: 22px;
+  height: 22px;
+  font-size: 12px;
+}
+
+/* Bigger page title and search to match */
+.cx-page .cx-title {
+  font-size: clamp(2rem, 1.5rem + 1.6vw, 2.6rem);
+}
+
+.cx-page .cx-sub {
+  font-size: 1.02rem;
+}
+
+.cx-page .cx-search input {
+  height: 50px;
+}
+
+.cx-page .cx-section-title {
+  font-size: 1.3rem;
+}
+
+.cx-page .cx-tag {
+  height: 40px;
+  padding: 0 18px;
+  font-size: 0.9rem;
+}
+
+/* Large screens */
+@media (min-width: 1400px) {
+  .hub-page.cx-page {
+    max-width: 1360px;
+  }
+  .cx-page .cx-grid {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  }
+}
+
+/* Tablet */
+@media (max-width: 900px) {
+  .cx-page .cx-grid {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 18px;
+  }
+}
+
+/* Phone: edge to edge with a small margin, one big card per row */
+@media (max-width: 640px) {
+  .hub-page.cx-page {
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  .cx-page .cx-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  .cx-page .cx-c-banner,
+  .cx-page .cx-c-banner.cx-sk-line {
+    height: 120px;
+  }
+
+  .cx-page .cx-c-body {
+    padding: 0 18px 18px;
+  }
+
+  .cx-page .cx-c-avatar,
+  .cx-page .cx-c-avatar.cx-sk-line {
+    width: 64px;
+    height: 64px;
+    margin-top: -32px;
+  }
+
+  .cx-page .cx-card-name {
+    font-size: 1.15rem !important;
+  }
+
+  .cx-page .cx-c-act {
+    min-height: 46px;
+  }
+
+  .cx-page .cx-tags {
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
