@@ -463,3 +463,23 @@ button.fd-avatar { cursor: pointer; }
     overflow-x: clip !important;
   }
 }
+
+/* Phone and iPhone app only: main reply box pinned to the bottom of the post page (PC unchanged) */
+@media (max-width: 1023.98px) {
+  .fd-replybox.dock {
+    position: fixed;
+    left: 0; right: 0;
+    bottom: calc(var(--fd-nav, 0px) + var(--fd-kb, 0px));
+    z-index: 40;
+    margin: 0;
+    border-radius: 0;
+    border-width: 1px 0 0;
+    padding: 8px 12px calc(8px + var(--fd-pad, 0px));
+    align-items: flex-end;
+    background: var(--surface);
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+  }
+  .fd-replybox.dock textarea { min-height: 36px; max-height: 120px; padding: 6px 0; }
+  .fd-replybox.dock .fd-replybox-foot { border-top: 0; margin-top: 0; padding-top: 2px; }
+  .fd-page.single.has-dock .fd-main { padding-bottom: calc(110px + var(--fd-nav, 0px) + env(safe-area-inset-bottom, 0px)); }
+}

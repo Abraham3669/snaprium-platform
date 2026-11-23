@@ -13,7 +13,7 @@ const enterSends = () => {
   }
 };
 
-export default function ReplyBox({ name, photo, placeholder, replyingTo = "", submitLabel = "Reply", busy = false, autoFocus = false, compact = false, onSend, onCancel }) {
+export default function ReplyBox({ name, photo, placeholder, replyingTo = "", submitLabel = "Reply", busy = false, autoFocus = false, compact = false, dock = false, onSend, onCancel }) {
   const [text, setText] = useState("");
   const ref = useRef(null);
 
@@ -46,7 +46,7 @@ export default function ReplyBox({ name, photo, placeholder, replyingTo = "", su
   };
 
   return (
-    <form className={`fd-replybox ${compact ? "compact" : ""}`} onSubmit={(e) => { e.preventDefault(); send(); }}>
+    <form className={`fd-replybox ${compact ? "compact" : ""} ${dock ? "dock" : ""}`} onSubmit={(e) => { e.preventDefault(); send(); }}>
       <Avatar name={name} photo={photo} size={compact ? 32 : 40} />
       <div className="fd-replybox-main">
         {replyingTo && <p className="fd-replying">Replying to <strong>{replyingTo}</strong></p>}
@@ -56,7 +56,7 @@ export default function ReplyBox({ name, photo, placeholder, replyingTo = "", su
           onChange={(e) => setText(e.target.value)}
           onKeyDown={onKey}
           maxLength={LIMITS.reply}
-          rows={compact ? 1 : 2}
+          rows={compact || dock ? 1 : 2}
           placeholder={placeholder}
           aria-label={placeholder}
         />

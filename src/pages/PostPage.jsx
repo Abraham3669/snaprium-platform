@@ -13,6 +13,7 @@ import { FeedProvider, useFeed } from "../components/feed/FeedContext";
 import PostCard from "../components/feed/PostCard";
 import Avatar from "../components/feed/Avatar";
 import ReplyBox from "../components/feed/ReplyBox";
+import useDockOffset from "../lib/useDockOffset";
 import { BackIcon, CheckIcon, SparkIcon } from "../components/feed/Icons";
 import { FeedSkeleton } from "./FeedHome";
 import "../styles/feed.css";
@@ -130,6 +131,9 @@ function Inner({ postId }) {
   const uids = useMemo(() => [post?.uid, feed.me, ...replies.map((r) => r.uid), ...replies.map((r) => r.replyToUid)].filter(Boolean), [post?.uid, feed.me, replies]);
   const profiles = useLiveProfiles(uids);
 
+  const canReply = !!post && !feed.blocked.has(post?.uid) && !feed.guest;
+  useDockOffset(canReply);
+
   const back = () => (window.history.length > 1 ? navigate(-1) : navigate("/"));
 
   const send = async (body, parent) => {
@@ -225,7 +229,7 @@ function Inner({ postId }) {
   );
 
   return (
-    <div className="fd-page single">
+    <div className={`fd-page single ${canReply ? "has-dock" : ""}`}>
       <div className="fd-main">
         <button type="button" className="fd-back" onClick={back}><BackIcon /> Back</button>
         {post === undefined ? (
@@ -249,6 +253,7 @@ function Inner({ postId }) {
               </div>
             ) : (
               <ReplyBox
+                dock
                 name={feed.user?.displayName}
                 photo={me?.photoURL || ""}
                 placeholder={post.kind === "question" ? "Write an answer" : "Write a reply"}
