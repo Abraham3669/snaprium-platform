@@ -6,6 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Home from "./pages/Home";
 import FeedHome, { FeedSkeleton } from "./pages/FeedHome";
 import PostPage from "./pages/PostPage";
+import SearchPage from "./pages/SearchPage";
 import AuthorPage from "./pages/AuthorPage";
 import Community from "./pages/Community";
 import Admin from "./pages/Admin";
@@ -601,6 +602,7 @@ useEffect(() => {
               <Route path="/home" element={<Home />} />
               <Route path="/post/:postId" element={<PostPage />} />
               <Route path="/u/:uid" element={<AuthorPage />} />
+              <Route path="/search" element={<SearchPage />} />
 
 <Route
   path="/solo"

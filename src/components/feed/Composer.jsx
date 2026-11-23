@@ -5,7 +5,9 @@ import { toast } from "react-toastify";
 import { isClean, FILTER_MESSAGE } from "../../lib/contentFilter";
 import { POST_KINDS, TOPICS } from "../../lib/topics";
 import { LIMITS, checkPostInput, compressPostImage, createPost } from "../../lib/feed";
+import { useMyHandle } from "../../lib/handles";
 import Avatar from "./Avatar";
+import HandleDialog from "./HandleDialog";
 import { CloseIcon, ImageIcon } from "./Icons";
 
 const DRAFT_KEY = "snaprium_feed_draft_v1";
@@ -26,12 +28,17 @@ export default function Composer({ user, defaultKind = "post", onClose, onPosted
   const [images, setImages] = useState([]);
   const [busy, setBusy] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [hint, setHint] = useState(""); // why Post did not go through, shown right under the text
+  const [askHandle, setAskHandle] = useState(false);
+  const mine = useMyHandle(user?.uid);
+  const askRef = useRef(false);
+  askRef.current = askHandle;
   const fileRef = useRef(null);
   const areaRef = useRef(null);
 
   useEffect(() => {
     areaRef.current?.focus();
-    const k = (e) => e.key === "Escape" && !busy && onClose();
+    const k = (e) => e.key === "Escape" && !busy && !askRef.current && onClose();
     window.addEventListener("keydown", k);
     return () => window.removeEventListener("keydown", k);
   }, [busy, onClose]);
@@ -65,10 +72,17 @@ export default function Composer({ user, defaultKind = "post", onClose, onPosted
   const err = checkPostInput({ kind, text, media: images });
   const left = LIMITS.text - text.length;
 
-  const submit = async () => {
+  const submit = async (skipHandle = false) => {
     if (busy) return;
-    if (err) return toast.error(err);
-    if (!isClean(text)) return toast.error(FILTER_MESSAGE);
+    if (err) {
+      setHint(err);
+      areaRef.current?.focus();
+      return;
+    }
+    if (!isClean(text)) return setHint(FILTER_MESSAGE);
+    // Everyone who posts has a username, so people can find them. The first time, ask for it, then carry on posting.
+    if (skipHandle !== true && mine.ready && !mine.handle) return setAskHandle(true);
+    setHint("");
     setBusy(true);
     try {
       const post = await createPost({ user, kind, text, topics, media: images });
@@ -78,8 +92,9 @@ export default function Composer({ user, defaultKind = "post", onClose, onPosted
       onPosted?.(post);
       onClose();
     } catch (e) {
-      console.warn("[post]", e?.message || e);
-      toast.error(e?.message && !/permission|insufficient/i.test(e.message) ? e.message : "Could not post. Please try again.");
+      console.warn("[post]", e?.code || "", e?.message || e);
+      const denied = /permission|insufficient/i.test(String(e?.code || "") + " " + String(e?.message || ""));
+      setHint(denied ? "Could not post right now. Please try again in a moment." : e?.message || "Could not post. Please try again.");
       setBusy(false);
     }
   };
@@ -91,7 +106,9 @@ export default function Composer({ user, defaultKind = "post", onClose, onPosted
     : kind === "insight" ? "What did you just learn or figure out?"
     : "Share something you learned, or ask a question";
 
-  return createPortal(
+  return (
+    <>
+    {createPortal(
     <div className="fd-modal-back" onClick={busy ? undefined : onClose}>
       <div className="fd-modal" role="dialog" aria-modal="true" aria-labelledby="fd-comp-title" onClick={(e) => e.stopPropagation()}>
         <div className="fd-modal-head">
@@ -113,12 +130,17 @@ export default function Composer({ user, defaultKind = "post", onClose, onPosted
             ref={areaRef}
             value={text}
             maxLength={LIMITS.text + 200}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => {
+              setText(e.target.value);
+              if (hint) setHint("");
+            }}
             placeholder={placeholder}
             rows={6}
             aria-label="Post text"
           />
         </div>
+
+        {hint && <p className="fd-compose-hint" role="alert">{hint}</p>}
 
         {images.length > 0 && (
           <div className={`fd-thumbs n${images.length}`}>
@@ -153,12 +175,25 @@ export default function Composer({ user, defaultKind = "post", onClose, onPosted
           </button>
           <span className="fd-spacer" />
           <span className={`fd-count ${left < 100 ? "warn" : ""}`}>{left}</span>
-          <button type="button" className="fd-btn primary" onClick={submit} disabled={busy || !!err}>
+          <button type="button" className="fd-btn primary" onClick={() => submit()} disabled={busy}>
             {busy ? "Posting…" : "Post"}
           </button>
         </div>
       </div>
     </div>,
     document.body
+    )}
+    {askHandle && (
+        <HandleDialog
+          user={user}
+          onClose={() => setAskHandle(false)}
+          onDone={() => {
+            mine.refresh();
+            setAskHandle(false);
+            setTimeout(() => submit(true), 0);
+          }}
+        />
+    )}
+    </>
   );
 }

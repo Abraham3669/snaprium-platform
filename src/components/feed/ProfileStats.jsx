@@ -33,14 +33,14 @@ export default function ProfileStats({ uid, refreshKey = 0 }) {
     };
   }, [uid, signedIn, refreshKey]);
 
-  const item = (n, one, many) =>
+  const item = (key, n, one, many) =>
     n === null ? null : (
-      <span className="fd-stat">
+      <span className="fd-stat" key={key}>
         <strong>{compactCount(n)}</strong> {n === 1 ? one : many}
       </span>
     );
 
-  const parts = [item(stats.posts, "Post", "Posts"), item(stats.followers, "Follower", "Followers"), item(stats.following, "Following", "Following")].filter(Boolean);
+  const parts = [item("p", stats.posts, "Post", "Posts"), item("f", stats.followers, "Follower", "Followers"), item("g", stats.following, "Following", "Following")].filter(Boolean);
   if (!parts.length) return <div className="fd-stats" aria-hidden="true" />;
   return <div className="fd-stats">{parts}</div>;
 }

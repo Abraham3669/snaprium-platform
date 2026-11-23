@@ -46,3 +46,6 @@ export const CloseIcon = () => (
 export const BackIcon = () => (
   <svg {...base}><path d="M15 18l-6-6 6-6" /></svg>
 );
+export const SearchIcon = () => (
+  <svg {...base}><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
+);

@@ -6,6 +6,7 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import SignInGate from "./SignInGate";
+import { publicName } from "../../lib/publicName";
 import { useBlocked } from "../../lib/moderation";
 import { ReportDialog, BlockDialog } from "../ModerationDialogs";
 import { notifyPost } from "../../lib/notifications";
@@ -37,7 +38,7 @@ export function FeedProvider({ user, children }) {
   }, [me]);
 
   const meInfo = useMemo(
-    () => ({ uid: me, displayName: user?.displayName || "Someone", photoURL: user?.photoURL || "" }),
+    () => ({ uid: me, displayName: publicName(user), photoURL: user?.photoURL || "" }),
     [me, user?.displayName, user?.photoURL]
   );
 

@@ -15,6 +15,7 @@
 // (type "video" with a Storage url), so no other part of the app has to change.
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { publicName } from "./publicName";
 import {
   collection,
   doc,
@@ -119,7 +120,7 @@ export async function createPost({ user, kind, text, topics = [], media = [] }) 
   const ref = doc(collection(db, "posts"));
   const data = {
     uid: user.uid,
-    authorName: clip(user.displayName || "Member", 80),
+    authorName: clip(publicName(user), 80),
     kind,
     text: clip(text, LIMITS.text),
     topics: tidyTopics(topics),
@@ -214,7 +215,7 @@ export async function addReply({ post, user, text }) {
   const batch = writeBatch(db);
   batch.set(ref, {
     uid: user.uid,
-    authorName: clip(user.displayName || "Member", 80),
+    authorName: clip(publicName(user), 80),
     text: body,
     createdAt: serverTimestamp(),
   });

@@ -15,6 +15,7 @@ import { TOPICS } from "../lib/topics";
 import { FeedProvider, useFeed } from "../components/feed/FeedContext";
 import PostCard from "../components/feed/PostCard";
 import Composer from "../components/feed/Composer";
+import SearchBox from "../components/feed/SearchBox";
 import Avatar from "../components/feed/Avatar";
 import { ImageIcon } from "../components/feed/Icons";
 import { LeftRail, NativeFab, PhoneBar } from "../components/feed/FeedNav";
@@ -244,6 +245,7 @@ function Inner({ unread, social }) {
       <LeftRail uid={me} unread={unread} social={social} onCompose={() => setComposer("post")} />
 
       <div className="fd-main" id="feed-main">
+        <div className="fd-only-small fd-searchrow"><SearchBox /></div>
         {guest ? (
           <div className="fd-only-small">
             <GuestBanner compact />

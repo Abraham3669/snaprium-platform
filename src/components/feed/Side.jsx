@@ -1,5 +1,6 @@
 // src/components/feed/Side.jsx
 // Circles strip (phone) and the right column (computer): your circles, topics, questions waiting, circles to discover.
+import SearchBox from "./SearchBox";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { listMyCommunities, listPublicCommunities } from "../../lib/communities";
@@ -79,6 +80,7 @@ export function RightColumn({ uid, circles, pool }) {
 
   return (
     <aside className="fd-side" aria-label="More">
+      <SearchBox className="side" />
       {feed.guest && <GuestBanner />}
       {!feed.guest && (
       <section className="fd-panel">

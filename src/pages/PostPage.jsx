@@ -30,7 +30,7 @@ function ReplyRow({ post, reply, profile, isOwnerView, onHelpful }) {
       <div className="fd-reply-main">
         <div className="fd-reply-head">
           <strong>{name}</strong>
-          <span className="fd-meta">{timeAgo(reply.createdAt)}</span>
+          <span className="fd-meta">{profile?.handle ? `@${profile.handle} · ` : ""}{timeAgo(reply.createdAt)}</span>
           {accepted && <span className="fd-answered"><CheckIcon /> Helpful answer</span>}
         </div>
         <p className="fd-text"><LinkedText text={reply.text} /></p>

@@ -175,7 +175,7 @@ export default function PostCard({ post, profile, expanded = false, onRemoved, t
         <div className="fd-who">
           <button type="button" className="fd-name" onClick={openAuthor}>{name}</button>
           <span className="fd-meta">
-            {timeAgo(post.createdAt)}
+            {profile?.handle ? `@${profile.handle} · ` : ""}{timeAgo(post.createdAt)}
             {post._local ? " · posting…" : ""}
           </span>
         </div>

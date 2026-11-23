@@ -16,6 +16,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { db } from "./firebase";
+import { publicName } from "./publicName";
 
 const CARD_PHOTO_MAX = 20000; // characters. Bigger pictures are shrunk to a small avatar first.
 const TTL_MS = 5 * 60 * 1000;
@@ -52,17 +53,46 @@ async function avatarFor(url) {
   return url.length <= 1000 ? url : null;
 }
 
+// Called after you claim a username so your own posts show it straight away.
+export const rememberHandle = (uid, handle) => {
+  const c = cache.get(uid) || { name: "", photo: "" };
+  cache.set(uid, { ...c, handle: handle || "", at: Date.now() });
+};
+
 export async function publishPublicProfile(user) {
   // profileLoaded is false while the app only has Google's name and picture (before your own profile
   // has loaded). Publishing then would put Google's picture back over the one you chose.
   if (!user?.uid || user.profileLoaded !== true) return;
-  const name = String(user.displayName || "").trim().slice(0, 80);
+  const name = publicName(user).slice(0, 80);
   if (!name) return;
   const photo = await avatarFor(user.photoURL || "");
   const data = { displayName: name, updatedAt: serverTimestamp() };
   if (photo !== null) data.photoURL = photo;
+  const lower = name.toLowerCase();
+  // Only people who already have a username keep a searchable lowercase name.
+  if (cache.get(user.uid)?.handle) data.nameLower = lower;
   await setDoc(doc(db, "publicProfiles", user.uid), data, { merge: true });
-  cache.set(user.uid, { name, photo: photo === null ? cache.get(user.uid)?.photo || "" : photo, at: Date.now() });
+  cache.set(user.uid, { ...cache.get(user.uid), name, photo: photo === null ? cache.get(user.uid)?.photo || "" : photo, at: Date.now() });
+  await syncHandleName(user.uid, lower);
+}
+
+// Once per visit: if the name changed, the searchable copy next to the username follows it.
+const nameSynced = new Set();
+async function syncHandleName(uid, lower) {
+  const key = uid + "|" + lower;
+  if (nameSynced.has(key)) return;
+  nameSynced.add(key);
+  try {
+    const snap = await getDoc(doc(db, "publicProfiles", uid));
+    const h = snap.exists() ? snap.data().handle : "";
+    if (!h) return;
+    cache.set(uid, { ...cache.get(uid), handle: h, at: Date.now() });
+    const hs = await getDoc(doc(db, "handles", h));
+    if (hs.exists() && hs.data().nameLower !== lower) {
+      await setDoc(doc(db, "handles", h), { nameLower: lower }, { merge: true });
+      await setDoc(doc(db, "publicProfiles", uid), { nameLower: lower }, { merge: true });
+    }
+  } catch {}
 }
 
 // ----- online dot -----
@@ -163,6 +193,7 @@ export async function fetchProfileCard(uid) {
       photoURL: d.photoURL || "",
       bio: d.bio || "",
       banner: d.banner || "",
+      handle: d.handle || "",
     };
   } catch {
     return null;
@@ -186,6 +217,7 @@ export async function saveProfileExtras(user, extra = {}) {
   cache.set(user.uid, {
     name: data.displayName || old?.name || "",
     photo: data.photoURL ?? old?.photo ?? "",
+    handle: old?.handle || "",
     at: Date.now(),
   });
 }
@@ -194,7 +226,7 @@ const fromCache = (uids) => {
   const out = {};
   for (const uid of uids) {
     const c = cache.get(uid);
-    if (c) out[uid] = { displayName: c.name, photoURL: c.photo };
+    if (c) out[uid] = { displayName: c.name, photoURL: c.photo, handle: c.handle || "" };
   }
   return out;
 };
@@ -222,7 +254,7 @@ export function useLiveProfiles(uids) {
           try {
             const snap = await getDoc(doc(db, "publicProfiles", uid));
             const d = snap.exists() ? snap.data() : {};
-            cache.set(uid, { name: d.displayName || "", photo: d.photoURL || "", at: Date.now() });
+            cache.set(uid, { name: d.displayName || "", photo: d.photoURL || "", handle: d.handle || "", at: Date.now() });
           } catch {}
         })
       );

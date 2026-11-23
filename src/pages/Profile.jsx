@@ -16,6 +16,7 @@ import { BIO_MAX, compressBanner, fetchProfileCard, saveProfileExtras } from "..
 import { useFriendships } from "../lib/friends";
 import { useInbox } from "../lib/dms";
 import ProfileStats from "../components/feed/ProfileStats";
+import HandleSetting from "../components/feed/HandleSetting";
 import "../styles/profile.css";
 import "../styles/profile-card.css";
 
@@ -542,7 +543,8 @@ setPreview(photoURL);
             <h1 className="pf-name">{shownName}</h1>
             <p className="pf-email">{user.email}</p>
             {savedBio ? <p className="pf-bio">{savedBio}</p> : null}
-            <ProfileStats uid={user.uid} />
+            <HandleSetting user={user} />
+<ProfileStats uid={user.uid} />
             <div className="pf-chips">
               <span className={isSubscribed ? "pf-chip pf-chip-pro" : "pf-chip"}>
                 {isSubscribed ? "Unlimited plan" : "Free plan"}

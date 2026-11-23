@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { fetchPostsBy } from "../lib/feed";
+import { looksLikeHandle, resolveHandle } from "../lib/handles";
 import { fetchProfileCard, useLiveProfiles } from "../lib/publicProfile";
 import { FeedProvider, useFeed } from "../components/feed/FeedContext";
 import PostCard from "../components/feed/PostCard";
@@ -54,6 +55,7 @@ function Inner({ uid }) {
   const following = feed.following.has(uid);
   const name = profiles[uid]?.displayName || card?.displayName || "Member";
   const photo = profiles[uid]?.photoURL || card?.photoURL || "";
+  const handle = profiles[uid]?.handle || card?.handle || "";
 
   const more = async () => {
     setLoading(true);
@@ -81,6 +83,7 @@ function Inner({ uid }) {
                 <Avatar name={name} photo={photo} size={72} />
                 <div className="fd-author-main">
                   <h1>{name}</h1>
+                  {handle && <p className="fd-handle">@{handle}</p>}
                   {card?.bio && <p className="fd-bio">{card.bio}</p>}
                   <ProfileStats uid={uid} refreshKey={statsKey} />
                 </div>
@@ -111,13 +114,40 @@ function Inner({ uid }) {
 }
 
 export default function AuthorPage() {
-  const { uid } = useParams();
+  const { uid: param } = useParams();
   const { user, loading } = useAuth();
+  // /u/<account id> or /u/<username>. A username is looked up first.
+  const isName = looksLikeHandle(param);
+  const [target, setTarget] = useState(isName ? undefined : param);
+  useEffect(() => {
+    let off = false;
+    if (!isName) return setTarget(param);
+    setTarget(undefined);
+    resolveHandle(param)
+      .then(async (u) => {
+        if (u) return u;
+        // Not a username: maybe a short account id that has a public card.
+        return (await fetchProfileCard(param)) ? param : "";
+      })
+      .then((u) => !off && setTarget(u || ""));
+    return () => {
+      off = true;
+    };
+  }, [param, isName]);
+
   // Signed-out visitors can look at a profile and its posts; Follow asks them to sign in.
-  if (loading && !user) return <FeedSkeleton />;
+  if ((loading && !user) || target === undefined) return <FeedSkeleton />;
   return (
     <FeedProvider user={user || null}>
-      <Inner uid={uid} />
+      {target ? (
+        <Inner uid={target} />
+      ) : (
+        <div className="fd-page single">
+          <div className="fd-main">
+            <div className="fd-empty"><strong>No one has that username</strong><p>Check the spelling, or search for the person.</p></div>
+          </div>
+        </div>
+      )}
     </FeedProvider>
   );
 }

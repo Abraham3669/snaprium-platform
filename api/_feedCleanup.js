@@ -8,7 +8,8 @@
 //     await deleteFeedData(getFirestore(), uid);
 //
 // Removes: their posts (with those posts' replies and sparks), their replies and sparks on other people's posts
-// (and fixes those counters), follows in both directions, and their saved posts / feed settings.
+// (and fixes those counters), follows in both directions, their saved posts / feed settings, and their username
+// (so it becomes free for someone else).
 
 import { FieldValue } from "firebase-admin/firestore";
 
@@ -55,4 +56,7 @@ export async function deleteFeedData(db, uid) {
   // 5. private feed data
   await db.recursiveDelete(db.collection("users").doc(uid).collection("saved")).catch(() => {});
   await db.recursiveDelete(db.collection("users").doc(uid).collection("feedPrefs")).catch(() => {});
+
+  // 6. their username, so nobody is stuck with a name that belongs to a deleted account
+  await deleteQuery(db, db.collection("handles").where("uid", "==", uid)).catch(() => {});
 }
