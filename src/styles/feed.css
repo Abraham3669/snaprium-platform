@@ -492,3 +492,10 @@ button.fd-avatar { cursor: pointer; }
 .fd-card-col .fd-tags { margin-top: 6px; }
 .fd-card-col .fd-body { padding-top: 2px; }
 .fd-card-col .fd-actions { margin-left: -10px; }
+
+/* Phone and iPhone app only: iOS zooms the whole page in when you tap a field with text smaller than 16px, and the
+   page stays shifted to the left afterwards. 16px stops that. PC keeps its size. */
+@media (max-width: 1023.98px) {
+  .fd-search input,
+  .fd-replybox.compact textarea { font-size: 16px; }
+}

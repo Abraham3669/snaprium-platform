@@ -100,7 +100,6 @@ export default function Community() {
   const [name, setName] = useState("");
   const [newTag, setNewTag] = useState("Math");
   const [visibility, setVisibility] = useState("public");
-  const [role, setRole] = useState("student");
   const [saving, setSaving] = useState(false);
 
   const [unread, setUnread] = useState({});
@@ -237,7 +236,6 @@ if (user?.uid && own.length) {
         name,
         tag: newTag,
         visibility,
-        role,
         createdBy: user.uid,
         createdByName: user.displayName || user.email?.split("@")[0] || "Member",
       });
@@ -527,7 +525,7 @@ if (user?.uid && own.length) {
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. AP Calculus"
+                placeholder="e.g. Linear algebra study group"
                 maxLength={60}
                 required
                 autoFocus
@@ -572,30 +570,6 @@ if (user?.uid && own.length) {
                   ? "Listed and searchable by everyone."
                   : "Invite only. Members join with a code."}
               </small>
-            </div>
-
-            <div className="cx-field">
-              <span>Your role</span>
-              <div className="cx-seg" role="radiogroup" aria-label="Your role">
-                <button
-                  type="button"
-                  role="radio"
-                  aria-checked={role === "student"}
-                  className={role === "student" ? "on" : ""}
-                  onClick={() => setRole("student")}
-                >
-                  Student
-                </button>
-                <button
-                  type="button"
-                  role="radio"
-                  aria-checked={role === "tutor"}
-                  className={role === "tutor" ? "on" : ""}
-                  onClick={() => setRole("tutor")}
-                >
-                  Tutor / teacher
-                </button>
-              </div>
             </div>
 
             <div className="cx-dialog-actions">
