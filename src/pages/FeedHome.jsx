@@ -16,6 +16,7 @@ import { FeedProvider, useFeed } from "../components/feed/FeedContext";
 import PostCard from "../components/feed/PostCard";
 import Composer from "../components/feed/Composer";
 import SearchBox from "../components/feed/SearchBox";
+import { useMyHandle } from "../lib/handles";
 import Avatar from "../components/feed/Avatar";
 import { ImageIcon } from "../components/feed/Icons";
 import { LeftRail, NativeFab, PhoneBar } from "../components/feed/FeedNav";
@@ -84,6 +85,7 @@ function Inner({ unread, social }) {
     [requireAuth]
   );
   const guest = feed.guest;
+  const myCard = useMyHandle(user?.uid); // your public card: its photo is the one posts show
   const tabs = guest ? TABS.filter((t) => t.id === "foryou" || t.id === "questions") : TABS;
 
   const latest = useRef({});
@@ -257,7 +259,7 @@ function Inner({ unread, social }) {
             </div>
 
             <div className="fd-prompt">
-              <Avatar name={user?.displayName} photo={user?.photoURL && user.photoURL.length < 400 ? user.photoURL : ""} size={42} />
+              <Avatar name={user?.displayName} photo={myCard.card?.photoURL || (user?.photoURL && user.photoURL.length < 400 ? user.photoURL : "")} size={42} />
               <button type="button" className="fd-prompt-input" onClick={() => setComposer("post")}>
                 What are you learning today?
               </button>

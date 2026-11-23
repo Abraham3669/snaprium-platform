@@ -14,7 +14,8 @@ export const compactCount = (n) => {
   return `${(n / 1000000).toFixed(1).replace(/\.0$/, "")}M`;
 };
 
-export default function ProfileStats({ uid, refreshKey = 0 }) {
+// onOpen("followers" | "following") makes those two numbers tappable (they open the lists).
+export default function ProfileStats({ uid, refreshKey = 0, onOpen }) {
   const { user } = useAuth();
   const signedIn = !!user?.uid;
   const [stats, setStats] = useState({ posts: null, followers: null, following: null });
@@ -33,14 +34,18 @@ export default function ProfileStats({ uid, refreshKey = 0 }) {
     };
   }, [uid, signedIn, refreshKey]);
 
-  const item = (key, n, one, many) =>
-    n === null ? null : (
+  const item = (key, n, one, many, open) =>
+    n === null ? null : open ? (
+      <button type="button" className="fd-stat link" key={key} onClick={() => onOpen(open)} aria-label={`${n} ${n === 1 ? one : many}, show the list`}>
+        <strong>{compactCount(n)}</strong> {n === 1 ? one : many}
+      </button>
+    ) : (
       <span className="fd-stat" key={key}>
         <strong>{compactCount(n)}</strong> {n === 1 ? one : many}
       </span>
     );
 
-  const parts = [item("p", stats.posts, "Post", "Posts"), item("f", stats.followers, "Follower", "Followers"), item("g", stats.following, "Following", "Following")].filter(Boolean);
+  const parts = [item("p", stats.posts, "Post", "Posts"), item("f", stats.followers, "Follower", "Followers", onOpen && signedIn ? "followers" : ""), item("g", stats.following, "Following", "Following", onOpen && signedIn ? "following" : "")].filter(Boolean);
   if (!parts.length) return <div className="fd-stats" aria-hidden="true" />;
   return <div className="fd-stats">{parts}</div>;
 }

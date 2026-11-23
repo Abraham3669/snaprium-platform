@@ -212,7 +212,9 @@ button.fd-avatar { cursor: pointer; }
 
 /* ================= COMPUTER (1024px and up) ================= */
 @media (min-width: 1024px) {
-  .fd-page { grid-template-columns: 220px minmax(0, 660px); gap: 28px; padding-bottom: 48px; }
+  /* the bottom space lives inside the feed column, so the side columns can stay stuck right to the end of the page */
+  .fd-page { grid-template-columns: 220px minmax(0, 660px); gap: 28px; padding-bottom: 0; align-items: start; }
+  .fd-page > .fd-main { padding-bottom: 48px; }
   .fd-page.single { grid-template-columns: minmax(0, 660px); }
   .fd-rail { display: flex; flex-direction: column; gap: 4px; position: sticky; top: calc(var(--snaprium-header-h, 64px) + 12px); align-self: start; }
   .fd-nav-item { display: flex; align-items: center; gap: 14px; border: 0; background: none; color: var(--text-primary); font-size: 1.02rem; font-weight: 600; padding: 12px 16px; border-radius: 999px; cursor: pointer; text-align: left; font-family: inherit; }
@@ -224,8 +226,7 @@ button.fd-avatar { cursor: pointer; }
 @media (min-width: 1180px) {
   .fd-only-small { display: none; }
   .fd-page:not(.single) { grid-template-columns: 220px minmax(0, 640px) 300px; }
-  .fd-side { display: block; position: sticky; top: calc(var(--snaprium-header-h, 64px) + 12px); align-self: start; max-height: calc(100vh - var(--snaprium-header-h, 64px) - 24px); overflow-y: auto; scrollbar-width: none; }
-  .fd-side::-webkit-scrollbar { display: none; }
+  .fd-side { display: block; position: sticky; top: calc(var(--snaprium-header-h, 64px) + 12px); align-self: start; }
 }
 
 /* topics nudge: one slim row inside the feed */
@@ -365,3 +366,100 @@ button.fd-avatar { cursor: pointer; }
 
 /* Post text always reads left-aligned, like X, whatever the page around it does. */
 .fd-page, .fd-card, .fd-text, .fd-reply, .fd-composer, .fd-modal { text-align: left; }
+
+/* ===== Reply box (a complete box: avatar, growing text area, footer) and threads ===== */
+.fd-replybox { display: flex; align-items: flex-start; gap: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 12px 14px; margin-bottom: 12px; }
+.fd-replybox:focus-within { border-color: var(--accent); }
+.fd-replybox-main { flex: 1; min-width: 0; }
+.fd-replybox textarea { display: block; width: 100%; box-sizing: border-box; border: 0; outline: none; resize: none; min-height: 44px; max-height: 220px; padding: 8px 0; background: transparent; color: var(--text-primary); font: inherit; font-size: 1rem; line-height: 1.45; overflow-y: auto; }
+.fd-replybox textarea::placeholder { color: var(--text-secondary); }
+.fd-replybox-foot { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding-top: 6px; border-top: 1px solid var(--border); margin-top: 4px; }
+.fd-replybox.compact { margin: 10px 0 4px; padding: 10px 12px; border-radius: 14px; background: var(--surface-2, var(--icon-bg)); }
+.fd-replybox.compact textarea { min-height: 36px; font-size: 0.95rem; }
+.fd-replybox.guest { display: flex; align-items: center; justify-content: space-between; }
+.fd-replying { margin: 2px 0 0; color: var(--text-secondary); font-size: 0.82rem; }
+.fd-replying strong { color: var(--accent); font-weight: 600; }
+.fd-ract { display: inline-flex; align-items: center; gap: 5px; border: 0; background: transparent; color: var(--text-secondary); font: inherit; font-size: 0.85rem; font-weight: 700; padding: 2px 8px 2px 0; cursor: pointer; border-radius: 999px; }
+.fd-ract svg { width: 16px; height: 16px; }
+.fd-ract:hover { color: var(--text-primary); }
+.fd-ract.on { color: #b9770e; }
+[data-theme="dark"] .fd-ract.on { color: var(--fd-spark); }
+.fd-ract.static { cursor: default; }
+.fd-reply-acts { align-items: center; flex-wrap: wrap; }
+.fd-thread { list-style: none; margin: 0; padding: 0 0 0 22px; border-left: 2px solid var(--border); margin-left: 17px; }
+.fd-thread ul { list-style: none; margin: 0; padding: 0; }
+.fd-thread .fd-reply { padding: 10px 4px 10px 12px; border-bottom: 0; }
+.fd-reply.flash { background: color-mix(in srgb, var(--accent) 9%, transparent); border-radius: 12px; transition: background 0.6s; }
+@media (max-width: 1023.98px) {
+  .fd-replybox { border-radius: 0; border-width: 1px 0; padding: 10px 16px; }
+  .fd-replybox.compact { border-radius: 14px; border-width: 1px; margin: 10px 0 4px; padding: 10px 12px; }
+  .fd-thread { padding-left: 12px; margin-left: 28px; }
+}
+
+/* ===== Profile: header, tabs, lists (yours and other people's) ===== */
+.pv-head { padding: 0; overflow: visible; margin-bottom: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.pv-head img.fd-banner, .pv-head div.fd-banner { border-radius: 17px 17px 0 0; }
+.pv-head img.fd-banner { display: block; width: 100%; height: auto; aspect-ratio: 3 / 1; object-fit: cover; }
+.pv-head div.fd-banner { width: 100%; height: 110px; }
+.pv-head .fd-banner.empty { background: var(--surface-2, var(--icon-bg)); }
+.pv-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; padding: 0 16px; margin-top: -38px; }
+.pv-top .fd-avatar { border: 4px solid var(--surface); flex: none; }
+.pv-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; padding-top: 44px; }
+.pv-body { padding: 8px 16px 12px; }
+.pv-name { margin: 0; font-size: 1.3rem; line-height: 1.25; overflow-wrap: anywhere; }
+.pv-body .fd-handle { margin: 1px 0 0; }
+.pv-body .fd-bio { margin: 8px 0 0; line-height: 1.5; overflow-wrap: anywhere; }
+.fd-stat.link { border: 0; background: none; padding: 0; font: inherit; color: inherit; cursor: pointer; }
+.fd-stat.link:hover { text-decoration: underline; }
+.pv-social { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.pv-chip { position: relative; display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--border); background: var(--surface-2, var(--icon-bg)); color: var(--text-primary); border-radius: 999px; padding: 7px 14px; font: inherit; font-size: 0.88rem; cursor: pointer; }
+.pv-chip:hover { background: var(--icon-bg); }
+.pv-chip strong { font-weight: 700; }
+.pv-chip span { color: var(--text-secondary); }
+.pv-dot { font-style: normal; background: #ef4444; color: #fff; min-width: 18px; height: 18px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; padding: 0 5px; }
+.pv-tabs { display: flex; border-top: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+.pv-tabs::-webkit-scrollbar { display: none; }
+.pv-tab { flex: 1 0 auto; border: 0; background: none; color: var(--text-secondary); font: inherit; font-weight: 600; font-size: 0.93rem; padding: 14px 16px; cursor: pointer; position: relative; white-space: nowrap; }
+.pv-tab:hover { background: var(--icon-bg); }
+.pv-tab.on { color: var(--text-primary); }
+.pv-tab.on::after { content: ""; position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); width: 44px; height: 3px; border-radius: 3px; background: var(--accent); }
+.pv-panel { padding-top: 12px; }
+.pv-menu-wrap { position: relative; }
+.pv-more { padding: 8px 12px; }
+.pv-menu { position: absolute; right: 0; top: calc(100% + 6px); min-width: 210px; z-index: 40; display: flex; flex-direction: column; }
+.pv-menu button { text-align: left; }
+.pv-menu button.danger { color: var(--fd-danger, #dc2626); }
+.pv-replies { list-style: none; margin: 0; padding: 0; }
+.pv-replies li { margin-bottom: 10px; }
+.pv-reply { display: flex; flex-direction: column; gap: 4px; width: 100%; text-align: left; border: 1px solid var(--border); background: var(--surface); color: var(--text-primary); border-radius: 16px; padding: 12px 14px; font: inherit; cursor: pointer; }
+.pv-reply:hover { background: var(--icon-bg); }
+.pv-reply-post { color: var(--text-secondary); font-size: 0.88rem; border-left: 3px solid var(--border); padding-left: 10px; overflow-wrap: anywhere; }
+.pv-reply-text { font-size: 0.97rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.pv-spk { display: inline-flex; align-items: center; gap: 3px; margin-left: 10px; }
+.pv-spk svg { width: 13px; height: 13px; }
+.pv-circles { margin: 0; }
+.fd-people-dialog { max-width: 460px; }
+.fd-ppl-body { max-height: 60vh; overflow-y: auto; }
+.fd-ppl { list-style: none; margin: 0; padding: 0; }
+.fd-ppl li { display: flex; align-items: center; gap: 10px; padding: 8px 2px; }
+.fd-ppl-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; border: 0; background: none; color: inherit; text-align: left; font: inherit; cursor: pointer; padding: 0; }
+.fd-ppl .fd-li-main { display: flex; flex-direction: column; min-width: 0; }
+.fd-ppl .fd-li-main em { font-style: normal; color: var(--text-secondary); font-size: 0.85rem; }
+.fd-ppl-empty { text-align: center; padding: 24px 8px; }
+.fd-ppl-of { color: var(--text-secondary); font-weight: 500; }
+@media (max-width: 1023.98px) {
+  .pv-head { border-radius: 0; border-width: 0 0 1px; }
+  .pv-head img.fd-banner, .pv-head div.fd-banner { border-radius: 0; }
+  .pv-head div.fd-banner { height: 96px; }
+  .pv-actions .fd-btn { padding: 7px 14px; }
+}
+
+/* COMPUTER ONLY: the global sheet sets `overflow-x: hidden !important` on html and body, which turns body into its own
+   scroll box and silently kills every `position: sticky` below it (the side columns, the tabs). `clip` stops sideways
+   scrolling just the same but does not create a scroll box, so sticky works again. Phones and the app are untouched. */
+@media (min-width: 1024px) {
+  html:root,
+  html:root > body {
+    overflow-x: clip !important;
+  }
+}

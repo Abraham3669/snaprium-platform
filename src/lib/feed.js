@@ -207,22 +207,67 @@ export function subscribeReplies(postId, cb) {
   );
 }
 
-export async function addReply({ post, user, text }) {
+/**
+ * Adds a reply. `parent` is the reply you are answering (or nothing for a reply to the post itself).
+ * Threads are one level deep: answering an answer to a reply files yours under the same top reply, and
+ * "Replying to @name" says who you meant.
+ */
+export async function addReply({ post, user, text, parent = null }) {
   if (!user?.uid || !post?.id) throw new Error("Sign in first");
   const body = clip(text, LIMITS.reply);
   if (!body) throw new Error("Write a reply first");
   const ref = doc(collection(db, "posts", post.id, "replies"));
+  const parentId = parent ? parent.parentId || parent.id : "";
+  const replyToUid = parent ? parent.uid || "" : "";
   const batch = writeBatch(db);
   batch.set(ref, {
     uid: user.uid,
     authorName: clip(publicName(user), 80),
     text: body,
+    parentId,
+    replyToUid,
+    sparkCount: 0,
     createdAt: serverTimestamp(),
   });
+  // Public "who wrote which reply" list for the Replies tab on profiles (same id as the reply)
+  batch.set(doc(db, "replyIndex", ref.id), { uid: user.uid, postId: post.id, createdAt: serverTimestamp() });
   // lastReplyId tells the rules which reply this +1 belongs to (they check it was really created in this same batch)
   batch.update(doc(db, "posts", post.id), { replyCount: increment(1), lastReplyId: ref.id });
   await batch.commit();
-  return { id: ref.id, text: body };
+  return { id: ref.id, text: body, parentId, replyToUid };
+}
+
+/** Spark (or un-Spark) someone's reply. The reply's counter and your private marker change together. */
+export async function setReplySpark({ postId, reply, me, on }) {
+  if (!me || !postId || !reply?.id) throw new Error("Sign in first");
+  if (reply.uid === me) throw new Error("You can't Spark your own reply");
+  const rref = doc(db, "posts", postId, "replies", reply.id);
+  const sref = doc(db, "posts", postId, "replies", reply.id, "sparks", me);
+  const batch = writeBatch(db);
+  if (on) {
+    batch.set(sref, { uid: me, createdAt: serverTimestamp() });
+    batch.update(rref, { sparkCount: increment(1) });
+  } else {
+    batch.delete(sref);
+    batch.update(rref, { sparkCount: increment(-1) });
+  }
+  await batch.commit();
+}
+
+/** Which of these replies have I Sparked? Only replies that have any Sparks are checked. */
+export async function fetchMyReplySparks(postId, me, replies) {
+  const out = new Set();
+  if (!me || !postId) return out;
+  const ids = (replies || []).filter((r) => (r.sparkCount || 0) > 0 && r.uid !== me).map((r) => r.id).slice(0, 100);
+  await Promise.all(
+    ids.map(async (id) => {
+      try {
+        const snap = await getDoc(doc(db, "posts", postId, "replies", id, "sparks", me));
+        if (snap.exists()) out.add(id);
+      } catch {}
+    })
+  );
+  return out;
 }
 
 export async function deleteReply({ post, reply, me }) {
@@ -232,6 +277,7 @@ export async function deleteReply({ post, reply, me }) {
   }
   const batch = writeBatch(db);
   batch.delete(doc(db, "posts", post.id, "replies", reply.id));
+  batch.delete(doc(db, "replyIndex", reply.id));
   batch.update(doc(db, "posts", post.id), { replyCount: increment(-1), lastReplyId: reply.id });
   await batch.commit();
 }
@@ -456,11 +502,21 @@ export async function fetchOlder({ cursor, size = 60 } = {}) {
   return { posts: rows(snap), cursor: snap.docs.length ? snap.docs[snap.docs.length - 1] : null, done: snap.docs.length < size };
 }
 
-/** A person's own posts (author page). */
+/** A person's own posts (profile page). Uses the uid + newest-first index; if that index is missing or still
+ *  building, it falls back to a plain uid query sorted on the device, so a profile never shows "no posts"
+ *  just because of an index. Real failures are thrown so the page can say so instead of looking empty. */
 export async function fetchPostsBy(uid, size = 30, cursor = null) {
-  const base = [collection(db, "posts"), where("uid", "==", uid), orderBy("createdAt", "desc")];
-  const snap = await getDocs(query(...base, ...(cursor ? [startAfter(cursor)] : []), limit(size)));
-  return { posts: rows(snap), cursor: snap.docs.length ? snap.docs[snap.docs.length - 1] : null, done: snap.docs.length < size };
+  try {
+    const base = [collection(db, "posts"), where("uid", "==", uid), orderBy("createdAt", "desc")];
+    const snap = await getDocs(query(...base, ...(cursor ? [startAfter(cursor)] : []), limit(size)));
+    return { posts: rows(snap), cursor: snap.docs.length ? snap.docs[snap.docs.length - 1] : null, done: snap.docs.length < size };
+  } catch (err) {
+    if (cursor) throw err;
+    console.warn("[feed] profile posts: using the no-index fallback", err?.code || err?.message || err);
+    const snap = await getDocs(query(collection(db, "posts"), where("uid", "==", uid), limit(200)));
+    const list = rows(snap).sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
+    return { posts: list, cursor: null, done: true };
+  }
 }
 
 /* ------------------------------------------------------------------ */

@@ -1471,3 +1471,21 @@ h2 {
     padding-right: 16px;
   }
 }
+
+
+/* ==========================================================
+   Circles list - Back button sits at the top LEFT, in line with the title
+   (it was centred because the page inherits centred text from the shared .hub-page rules)
+   ========================================================== */
+.hub-page.cx-page {
+  text-align: left;
+}
+.hub-page.cx-page .cx-back {
+  display: flex;
+  width: fit-content;
+  margin: 0 auto 14px 0;
+  padding: 8px 14px 8px 8px;
+}
+@media (max-width: 640px) {
+  .hub-page.cx-page .cx-back { margin-bottom: 8px; }
+}

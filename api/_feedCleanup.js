@@ -38,6 +38,8 @@ export async function deleteFeedData(db, uid) {
     if (postRef) await postRef.update({ replyCount: FieldValue.increment(-1) }).catch(() => {});
   }
 
+  await deleteQuery(db, db.collection("replyIndex").where("uid", "==", uid)).catch(() => {});
+
   // 3. their sparks on other people's posts (their own-post sparks went with the post)
   const sparks = await db.collectionGroup("sparks").where("uid", "==", uid).get();
   for (const s of sparks.docs) {

@@ -1,7 +1,8 @@
 // src/components/feed/Side.jsx
 // Circles strip (phone) and the right column (computer): your circles, topics, questions waiting, circles to discover.
 import SearchBox from "./SearchBox";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import useStickyColumn from "../../lib/useStickyColumn";
 import { useNavigate } from "react-router-dom";
 import { listMyCommunities, listPublicCommunities } from "../../lib/communities";
 import { circleCardPath, circleChatPath, rememberCircle } from "../../lib/circleNav";
@@ -53,6 +54,8 @@ export function CirclesStrip({ uid, circles }) {
 }
 
 export function RightColumn({ uid, circles, pool }) {
+  const sideRef = useRef(null);
+  useStickyColumn(sideRef);
   const navigate = useNavigate();
   const feed = useFeed();
   const [discover, setDiscover] = useState([]);
@@ -79,7 +82,7 @@ export function RightColumn({ uid, circles, pool }) {
   const waiting = useMemo(() => waitingQuestions(pool, { me: uid, blocked: feed.blocked, hidden: feed.prefs.hidden }, 3), [pool, uid, feed.blocked, feed.prefs.hidden]);
 
   return (
-    <aside className="fd-side" aria-label="More">
+    <aside className="fd-side" aria-label="More" ref={sideRef}>
       <SearchBox className="side" />
       {feed.guest && <GuestBanner />}
       {!feed.guest && (

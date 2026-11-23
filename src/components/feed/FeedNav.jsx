@@ -2,13 +2,17 @@
 // Navigation the feed needs on the web: a left rail on computers, a bottom bar on phone browsers.
 // (The iPhone app already has its own bottom bar, so there it only gets a round "+" button.)
 import { useNavigate, useLocation } from "react-router-dom";
+import { useRef } from "react";
 import { Capacitor } from "@capacitor/core";
+import useStickyColumn from "../../lib/useStickyColumn";
 import { openCircles } from "../../lib/circleNav";
 import { BellIcon, ChatIcon, CirclesIcon, HomeIcon, PlusIcon, UserIcon } from "./Icons";
 
 const native = Capacitor.isNativePlatform();
 
 export function LeftRail({ uid, unread = 0, social = 0, onCompose }) {
+  const railRef = useRef(null);
+  useStickyColumn(railRef, !!uid);
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const item = (label, icon, active, go, badge) => (
@@ -22,13 +26,13 @@ export function LeftRail({ uid, unread = 0, social = 0, onCompose }) {
   );
   if (!uid)
     return (
-      <nav className="fd-rail" aria-label="Main">
+      <nav className="fd-rail" aria-label="Main" ref={railRef}>
         {item("Home", <HomeIcon />, pathname === "/", () => navigate("/"))}
         {item("Circles", <CirclesIcon />, pathname.startsWith("/community"), () => navigate("/community"))}
       </nav>
     );
   return (
-    <nav className="fd-rail" aria-label="Main">
+    <nav className="fd-rail" aria-label="Main" ref={railRef}>
       {item("Home", <HomeIcon />, pathname === "/", () => navigate("/"))}
       {item("Circles", <CirclesIcon />, pathname.startsWith("/community"), () => openCircles(navigate, uid))}
       {item("Messages", <ChatIcon />, pathname.startsWith("/messages") || pathname === "/friends", () => navigate("/friends"), social)}

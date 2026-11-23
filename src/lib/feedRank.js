@@ -32,7 +32,7 @@ export const WEIGHTS = {
   seenOldFactor: 0.55,     // seen before, longer ago
   seenRecentHours: 24,
   ownPostFactor: 0.7,
-  pinOwnMinutes: 60,       // your own new posts stay at the top of For you / Questions for this long
+  pinOwnMinutes: 0,        // no pinning: right after you post, your post is shown first for this visit only (see FeedHome); after a refresh it ranks like any other
   // questions
   unansweredBoost: 1.35,   // a question still waiting for an answer
   noReplyBoost: 1.2,       // ...and nobody replied yet (and it is under 2 days old)

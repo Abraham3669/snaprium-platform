@@ -1,10 +1,10 @@
 // src/pages/PostPage.jsx  -  one post with its replies (/post/:postId)
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
 import { isClean, FILTER_MESSAGE } from "../lib/contentFilter";
-import { addReply, deleteReply, LIMITS, rememberInteraction, setHelpfulAnswer, subscribePost, subscribeReplies } from "../lib/feed";
+import { addReply, deleteReply, fetchMyReplySparks, rememberInteraction, setHelpfulAnswer, setReplySpark, subscribePost, subscribeReplies } from "../lib/feed";
 import { notifyPost } from "../lib/notifications";
 import { timeAgo } from "../lib/feedRank";
 import LinkedText from "../lib/linkify";
@@ -12,29 +12,42 @@ import { useLiveProfiles } from "../lib/publicProfile";
 import { FeedProvider, useFeed } from "../components/feed/FeedContext";
 import PostCard from "../components/feed/PostCard";
 import Avatar from "../components/feed/Avatar";
-import { BackIcon, CheckIcon } from "../components/feed/Icons";
+import ReplyBox from "../components/feed/ReplyBox";
+import { BackIcon, CheckIcon, SparkIcon } from "../components/feed/Icons";
 import { FeedSkeleton } from "./FeedHome";
 import "../styles/feed.css";
 
-function ReplyRow({ post, reply, profile, isOwnerView, onHelpful }) {
+function ReplyRow({ post, reply, profile, profiles, isOwnerView, onHelpful, onSpark, sparked, onReply, replying, replyForm, child, flash }) {
   const feed = useFeed();
   const navigate = useNavigate();
   const mine = reply.uid === feed.me;
   const name = profile?.displayName || reply.authorName || "Member";
   const accepted = post.acceptedReplyId === reply.id;
-  const canMark = post.uid === feed.me && post.kind === "question" && !mine;
+  const canMark = post.uid === feed.me && post.kind === "question" && !mine && !child;
+  const toProfile = reply.replyToUid && reply.replyToUid !== reply.uid ? profiles[reply.replyToUid] : null;
+  const toName = reply.replyToUid && child ? (toProfile?.handle ? `@${toProfile.handle}` : toProfile?.displayName || "") : "";
+  const sparks = Math.max(0, reply.sparkCount || 0); // live from the database, so it already includes your own Spark
 
   return (
-    <li className={`fd-reply ${accepted ? "accepted" : ""}`}>
-      <Avatar name={name} photo={profile?.photoURL || ""} size={34} onClick={() => navigate(mine ? "/profile" : `/u/${reply.uid}`)} />
+    <li id={`reply-${reply.id}`} className={`fd-reply ${child ? "child" : ""} ${accepted ? "accepted" : ""} ${flash ? "flash" : ""}`}>
+      <Avatar name={name} photo={profile?.photoURL || ""} size={child ? 30 : 34} onClick={() => navigate(mine ? "/profile" : `/u/${reply.uid}`)} />
       <div className="fd-reply-main">
         <div className="fd-reply-head">
           <strong>{name}</strong>
           <span className="fd-meta">{profile?.handle ? `@${profile.handle} · ` : ""}{timeAgo(reply.createdAt)}</span>
           {accepted && <span className="fd-answered"><CheckIcon /> Helpful answer</span>}
         </div>
+        {toName && <p className="fd-replying">Replying to <strong>{toName}</strong></p>}
         <p className="fd-text"><LinkedText text={reply.text} /></p>
         <div className="fd-reply-acts">
+          {!mine && (
+            <button type="button" className={`fd-ract ${sparked.on ? "on" : ""}`} aria-pressed={!!sparked.on} onClick={() => onSpark(reply)}>
+              <SparkIcon filled={!!sparked.on} />
+              <span>{sparks > 0 ? sparks : "Spark"}</span>
+            </button>
+          )}
+          {mine && sparks > 0 && <span className="fd-ract static"><SparkIcon filled /> <span>{sparks}</span></span>}
+          <button type="button" className="fd-link" onClick={() => onReply(reply)}>Reply</button>
           {canMark && (
             <button type="button" className="fd-link" onClick={() => onHelpful(accepted ? "" : reply)}>
               {accepted ? "Unmark helpful answer" : "Mark as helpful answer"}
@@ -61,6 +74,7 @@ function ReplyRow({ post, reply, profile, isOwnerView, onHelpful }) {
             </button>
           )}
         </div>
+        {replying && replyForm}
       </div>
     </li>
   );
@@ -69,10 +83,15 @@ function ReplyRow({ post, reply, profile, isOwnerView, onHelpful }) {
 function Inner({ postId }) {
   const feed = useFeed();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const [post, setPost] = useState(undefined); // undefined = loading, null = gone
   const [replies, setReplies] = useState([]);
-  const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [replyTo, setReplyTo] = useState(null); // the reply I am answering (null = answering the post)
+  const [mySparks, setMySparks] = useState(() => new Set());
+  const [fresh, setFresh] = useState(() => new Set()); // replies I wrote on this visit
+  const [flash, setFlash] = useState("");
+  const wantFocus = params.get("reply") === "1";
 
   useEffect(() => subscribePost(postId, setPost), [postId]);
   useEffect(() => subscribeReplies(postId, setReplies), [postId]);
@@ -80,34 +99,84 @@ function Inner({ postId }) {
     feed.loadSparks([postId]);
   }, [postId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const shown = useMemo(() => {
-    const list = replies.filter((r) => !feed.blocked.has(r.uid));
-    if (!post?.acceptedReplyId) return list;
-    return [...list.filter((r) => r.id === post.acceptedReplyId), ...list.filter((r) => r.id !== post.acceptedReplyId)];
-  }, [replies, feed.blocked, post?.acceptedReplyId]);
+  // Which replies did I Spark? Looked up once when the replies first arrive (and for new ones that have Sparks).
+  const checked = useRef(new Set());
+  useEffect(() => {
+    if (!feed.me || !replies.length) return;
+    const todo = replies.filter((r) => (r.sparkCount || 0) > 0 && !checked.current.has(r.id));
+    if (!todo.length) return;
+    todo.forEach((r) => checked.current.add(r.id));
+    fetchMyReplySparks(postId, feed.me, todo).then((set) => set.size && setMySparks((cur) => new Set([...cur, ...set])));
+  }, [replies, feed.me, postId]);
 
-  const uids = useMemo(() => [post?.uid, ...replies.map((r) => r.uid)].filter(Boolean), [post?.uid, replies]);
+  // Threads: top replies (best first), each followed by the answers to it (oldest first).
+  const threads = useMemo(() => {
+    const list = replies.filter((r) => !feed.blocked.has(r.uid));
+    const ids = new Set(list.map((r) => r.id));
+    const kids = new Map();
+    const roots = [];
+    for (const r of list) {
+      if (r.parentId && ids.has(r.parentId)) kids.set(r.parentId, [...(kids.get(r.parentId) || []), r]);
+      else roots.push(r); // a normal reply, or one whose parent is gone
+    }
+    const t = (r) => r.createdAt?.toMillis?.() || Date.now();
+    roots.sort((a, b) => {
+      const acc = Number(b.id === post?.acceptedReplyId) - Number(a.id === post?.acceptedReplyId);
+      return acc || Number(fresh.has(b.id)) - Number(fresh.has(a.id)) || (b.sparkCount || 0) - (a.sparkCount || 0) || t(a) - t(b);
+    });
+    return roots.map((r) => ({ root: r, kids: (kids.get(r.id) || []).sort((a, b) => t(a) - t(b)) }));
+  }, [replies, feed.blocked, post?.acceptedReplyId, fresh]);
+
+  const uids = useMemo(() => [post?.uid, feed.me, ...replies.map((r) => r.uid), ...replies.map((r) => r.replyToUid)].filter(Boolean), [post?.uid, feed.me, replies]);
   const profiles = useLiveProfiles(uids);
 
   const back = () => (window.history.length > 1 ? navigate(-1) : navigate("/"));
 
-  const send = async (e) => {
-    e.preventDefault();
-    const body = text.trim();
-    if (!body || busy || !post) return;
-    if (!isClean(body)) return toast.error(FILTER_MESSAGE);
+  const send = async (body, parent) => {
+    if (busy || !post) return false;
+    if (!isClean(body)) {
+      toast.error(FILTER_MESSAGE);
+      return false;
+    }
     setBusy(true);
     try {
-      const r = await addReply({ post, user: feed.user, text: body });
-      setText("");
+      const r = await addReply({ post, user: feed.user, text: body, parent });
+      setFresh((s) => new Set(s).add(r.id));
+      setFlash(r.id);
+      setTimeout(() => document.getElementById(`reply-${r.id}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 150);
+      setTimeout(() => setFlash(""), 2500);
       rememberInteraction(post.uid);
       notifyPost({ to: post.uid, type: "post_reply", from: feed.meInfo, post, key: r.id, preview: body });
+      if (parent && parent.uid !== post.uid) notifyPost({ to: parent.uid, type: "post_reply", from: feed.meInfo, post, key: `${r.id}_r`, preview: body, replyId: parent.id });
+      setReplyTo(null);
+      return true;
     } catch (err) {
-      console.warn("[reply]", err?.message || err);
+      console.warn("[reply]", err?.code || "", err?.message || err);
       toast.error("Could not send. Please try again.");
+      return false;
     } finally {
       setBusy(false);
     }
+  };
+
+  const sparkReply = async (reply) => {
+    if (feed.requireAuth("spark")) return;
+    const on = !mySparks.has(reply.id);
+    // show it straight away, undo if the database says no
+    setMySparks((s) => { const n = new Set(s); on ? n.add(reply.id) : n.delete(reply.id); return n; });
+    try {
+      await setReplySpark({ postId: post.id, reply, me: feed.me, on });
+      if (on) notifyPost({ to: reply.uid, type: "post_spark", from: feed.meInfo, post, key: `${reply.id}_s`, preview: reply.text, replyId: reply.id });
+    } catch (err) {
+      console.warn("[reply spark]", err?.code || "", err?.message || err);
+      setMySparks((s) => { const n = new Set(s); on ? n.delete(reply.id) : n.add(reply.id); return n; });
+      toast.error("Could not update. Please try again.");
+    }
+  };
+
+  const startReply = (reply) => {
+    if (feed.requireAuth("reply")) return;
+    setReplyTo(reply);
   };
 
   const markHelpful = async (reply) => {
@@ -119,6 +188,42 @@ function Inner({ postId }) {
     }
   };
 
+  const nameOf = (r) => {
+    const p = profiles[r.uid];
+    return p?.handle ? `@${p.handle}` : p?.displayName || r.authorName || "Member";
+  };
+  const me = profiles[feed.me];
+  const row = (r, child) => (
+    <ReplyRow
+      key={r.id}
+      post={post}
+      reply={r}
+      child={child}
+      profile={profiles[r.uid]}
+      profiles={profiles}
+      isOwnerView={post.uid === feed.me}
+      onHelpful={markHelpful}
+      onSpark={sparkReply}
+      sparked={{ on: mySparks.has(r.id) }}
+      onReply={startReply}
+      replying={replyTo?.id === r.id}
+      flash={flash === r.id}
+      replyForm={
+        <ReplyBox
+          compact
+          autoFocus
+          name={feed.user?.displayName}
+          photo={me?.photoURL || ""}
+          replyingTo={nameOf(r)}
+          placeholder="Write your reply"
+          busy={busy}
+          onSend={(body) => send(body, r)}
+          onCancel={() => setReplyTo(null)}
+        />
+      }
+    />
+  );
+
   return (
     <div className="fd-page single">
       <div className="fd-main">
@@ -129,7 +234,7 @@ function Inner({ postId }) {
           <div className="fd-empty">
             <strong>This post isn't available</strong>
             <p>It may have been deleted.</p>
-            <button type="button" className="fd-btn primary" onClick={() => navigate("/")}>Go to the feed</button>
+            <button type="button" className="fd-btn primary" onClick={() => navigate("/", { replace: true })}>Go to the feed</button>
           </div>
         ) : (
           <>
@@ -143,24 +248,22 @@ function Inner({ postId }) {
                 </button>
               </div>
             ) : (
-            <form className="fd-replybox" onSubmit={send}>
-              <textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                maxLength={LIMITS.reply}
-                rows={3}
+              <ReplyBox
+                name={feed.user?.displayName}
+                photo={me?.photoURL || ""}
                 placeholder={post.kind === "question" ? "Write an answer" : "Write a reply"}
-                aria-label="Your reply"
+                submitLabel={post.kind === "question" ? "Answer" : "Reply"}
+                busy={busy}
+                autoFocus={wantFocus}
+                onSend={(body) => send(body, null)}
               />
-              <div className="fd-replybox-foot">
-                <span className="fd-count">{LIMITS.reply - text.length}</span>
-                <button type="submit" className="fd-btn primary" disabled={busy || !text.trim()}>{busy ? "Sending…" : "Reply"}</button>
-              </div>
-            </form>
             )}
             <ul className="fd-replies">
-              {shown.map((r) => (
-                <ReplyRow key={r.id} post={post} reply={r} profile={profiles[r.uid]} isOwnerView={post.uid === feed.me} onHelpful={markHelpful} />
+              {threads.map(({ root, kids }) => (
+                <Fragment key={root.id}>
+                  {row(root, false)}
+                  {kids.length > 0 && <li className="fd-thread"><ul>{kids.map((k) => row(k, true))}</ul></li>}
+                </Fragment>
               ))}
             </ul>
           </>

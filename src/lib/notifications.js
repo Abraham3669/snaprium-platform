@@ -175,7 +175,7 @@ export async function notifyFriend({ to, type, from }) {
  * One per person and event, so Spark, un-Spark, Spark never notifies twice. The rules check the post really
  * belongs to the person being notified (post_spark / post_reply) or to you (post_answer), and that the follow exists.
  */
-export async function notifyPost({ to, type, from, post, key = "", preview = "" }) {
+export async function notifyPost({ to, type, from, post, key = "", preview = "", replyId = "" }) {
   if (!to || !from?.uid || to === from.uid) return;
   if (!["post_spark", "post_reply", "post_answer", "follow"].includes(type)) return;
   const isFollow = type === "follow";
@@ -191,7 +191,7 @@ export async function notifyPost({ to, type, from, post, key = "", preview = "" 
       fromPhoto: from.photoURL && from.photoURL.length < 400 ? from.photoURL : "",
       communityId: "",
       communityName: "",
-      boardId: "",
+      boardId: replyId ? String(replyId).slice(0, 40) : "", // the reply it is about (a reply to a reply, or a Spark on a reply)
       targetId: isFollow ? "" : post.id,
       preview: clean(preview || post?.text || "", 140),
       emoji: "",

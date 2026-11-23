@@ -96,6 +96,14 @@ export default function PostCard({ post, profile, expanded = false, onRemoved, t
     if (window.getSelection && String(window.getSelection()).length > 0) return; // they were selecting text
     open();
   };
+  // Reply: on the feed it opens the post with the reply box ready to type in; on the post page it jumps to the box.
+  const goReply = () => {
+    if (!expanded) return navigate(`/post/${post.id}?reply=1`);
+    if (feed.guest) return feed.requireAuth("reply");
+    const box = document.querySelector(".fd-main > .fd-replybox textarea");
+    box?.scrollIntoView({ behavior: "smooth", block: "center" });
+    box?.focus({ preventScroll: true });
+  };
   const openAuthor = () => navigate(mine ? "/profile" : `/u/${post.uid}`);
 
   // "Seen": it was on screen for a moment. Next refresh it sinks, so the feed keeps feeling new.
@@ -258,19 +266,20 @@ export default function PostCard({ post, profile, expanded = false, onRemoved, t
           type="button"
           className={`fd-act spark ${isSparked ? "on" : ""}`}
           aria-pressed={isSparked}
-          aria-label={isSparked ? "Remove Spark" : "Spark: this was helpful"}
+          aria-label="Spark: this was helpful"
           title="Spark: this was helpful"
           onClick={() => feed.toggleSpark(post)}
         >
           <SparkIcon filled={isSparked} />
-          <span>{sparks > 0 ? sparks : "Spark"}</span>
+          <span>Spark</span>
+          {sparks > 0 && <span>{sparks}</span>}
         </button>
-        <button type="button" className="fd-act" aria-label={`Replies: ${post.replyCount || 0}`} onClick={expanded ? undefined : open}>
+        <button type="button" className="fd-act" aria-label={`Replies: ${post.replyCount || 0}`} onClick={goReply}>
           <ReplyIcon />
           <span>{post.replyCount > 0 ? post.replyCount : post.kind === "question" ? "Answer" : "Reply"}</span>
         </button>
         <span className="fd-spacer" />
-        <button type="button" className={`fd-act icon ${isSaved ? "on" : ""}`} aria-pressed={isSaved} aria-label={isSaved ? "Remove from Saved" : "Save"} onClick={() => feed.toggleSave(post.id)}>
+        <button type="button" className={`fd-act icon ${isSaved ? "on" : ""}`} aria-pressed={isSaved} aria-label="Save" onClick={() => feed.toggleSave(post.id)}>
           <SaveIcon filled={isSaved} />
         </button>
         <button type="button" className="fd-act icon" aria-label="Share" onClick={share}>

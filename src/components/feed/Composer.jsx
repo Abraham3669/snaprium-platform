@@ -125,7 +125,7 @@ export default function Composer({ user, defaultKind = "post", onClose, onPosted
         </div>
 
         <div className="fd-compose-row">
-          <Avatar name={user?.displayName} photo={user?.photoURL && user.photoURL.length < 400 ? user.photoURL : ""} size={40} />
+          <Avatar name={user?.displayName} photo={mine.card?.photoURL || (user?.photoURL && user.photoURL.length < 400 ? user.photoURL : "")} size={40} />
           <textarea
             ref={areaRef}
             value={text}

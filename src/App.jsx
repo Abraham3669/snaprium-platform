@@ -18,6 +18,7 @@ import UpgradeModal from "./components/UpgradeModal";
 import WelcomeModal from "./components/WelcomeModal";
 import CommunityDetail from "./pages/CommunityDetail";
 import CommunityChat from "./pages/CommunityChat";
+import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
 import MessagesPage from "./pages/MessagesPage";
@@ -671,6 +672,7 @@ useEffect(() => {
 <Route path="/community/:communityId" element={<CommunityDetail />} />
 <Route path="/community/:communityId/chat" element={<CommunityChat />} />
 <Route path="/profile" element={<Profile />} />
+<Route path="/settings" element={<Settings />} />
 <Route path="/messages" element={<MessagesPage />} />
 <Route path="/messages/:uid" element={<MessagesPage />} />
 <Route path="/friends" element={<MessagesPage />} />
