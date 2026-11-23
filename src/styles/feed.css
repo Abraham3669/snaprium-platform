@@ -74,11 +74,18 @@ button.fd-avatar { cursor: pointer; }
 .fd-body.clickable { cursor: pointer; }
 .fd-text { margin: 4px 0; font-size: 0.97rem; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
 .fd-more { background: none; border: 0; padding: 0; color: var(--accent); font-weight: 700; font-size: 0.86rem; cursor: pointer; font-family: inherit; }
-.fd-media { display: grid; gap: 4px; margin-top: 10px; border-radius: 14px; overflow: hidden; }
+.fd-media { display: grid; gap: 2px; margin-top: 10px; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); }
 .fd-media.n2 { grid-template-columns: 1fr 1fr; }
 .fd-media-item { border: 0; padding: 0; background: var(--icon-bg); cursor: zoom-in; display: block; }
-.fd-media-item img { width: 100%; height: 100%; max-height: 420px; object-fit: cover; display: block; }
-.fd-media.n1 .fd-media-item img { max-height: 520px; }
+.fd-media-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* One picture: shown in its own shape (the box is sized from the picture, only very tall or very wide ones are trimmed a little). */
+.fd-media.n1 .fd-media-item { width: 100%; }
+.fd-media.n1 .fd-media-item.noratio img { height: auto; max-height: 520px; }
+/* Two pictures side by side, same size, like X. Tap one to see it whole. */
+.fd-media.n2 .fd-media-item { aspect-ratio: 4 / 5; }
+/* Post page: the whole picture, never trimmed. */
+.fd-card.expanded .fd-media.n1 .fd-media-item { aspect-ratio: auto !important; background: var(--icon-bg); }
+.fd-card.expanded .fd-media.n1 .fd-media-item img { height: auto; max-height: 80vh; object-fit: contain; }
 .fd-confirm { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: var(--icon-bg); border-radius: 12px; padding: 8px 12px; margin: 6px 0; font-size: 0.9rem; }
 .fd-confirm span { flex: 1 1 100%; font-weight: 600; }
 .fd-actions { display: flex; align-items: center; gap: 2px; margin: 4px -8px 0; padding: 4px 0 6px; }
@@ -131,8 +138,13 @@ button.fd-avatar { cursor: pointer; }
 .fd-compose-row textarea { flex: 1; min-width: 0; border: 0; outline: none; resize: vertical; min-height: 120px; background: transparent; color: var(--text-primary); font: inherit; font-size: 1rem; line-height: 1.5; }
 .fd-thumbs { display: grid; gap: 6px; margin: 8px 0; grid-template-columns: 1fr; }
 .fd-thumbs.n2 { grid-template-columns: 1fr 1fr; }
-.fd-thumb { position: relative; border-radius: 12px; overflow: hidden; }
-.fd-thumb img { width: 100%; height: 150px; object-fit: cover; display: block; }
+.fd-thumbs { gap: 2px; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); }
+.fd-thumb { position: relative; overflow: hidden; background: var(--icon-bg); }
+.fd-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* The preview looks like the finished post: one picture in its own shape, two as equal tiles. */
+.fd-thumbs.n1 .fd-thumb { max-height: 340px; }
+.fd-thumbs.n1 .fd-thumb:not([style]) img { height: auto; max-height: 340px; }
+.fd-thumbs.n2 .fd-thumb { aspect-ratio: 4 / 5; }
 .fd-thumb button { position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: rgba(0, 0, 0, 0.6); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 .fd-thumb button svg { width: 16px; height: 16px; }
 .fd-topic-pick { margin: 8px 0 10px; }
@@ -307,3 +319,16 @@ button.fd-avatar { cursor: pointer; }
   .fd-reply { padding: 12px 16px; }
   .fd-reply.accepted { border-radius: 0; padding: 12px 16px; margin-bottom: 0; }
 }
+
+/* The "+" in the round buttons (phone bar and iPhone app): bigger and bolder, and not shrunk by global svg styles. */
+.fd-bar-post { width: 52px; height: 52px; }
+.fd-bar-post svg,
+.native-app .fd-fab svg { width: 30px !important; height: 30px !important; stroke-width: 2.6; }
+
+/* links inside posts and replies */
+.fd-ext { color: var(--accent); text-decoration: none; font-weight: 500; }
+.fd-ext:hover { text-decoration: underline; }
+
+/* profile numbers */
+.fd-stats { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 8px 0 0; min-height: 20px; color: var(--text-secondary); font-size: 0.9rem; }
+.fd-stat strong { color: var(--text-primary); font-weight: 700; }

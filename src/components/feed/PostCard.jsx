@@ -10,6 +10,7 @@ import { useFeed } from "./FeedContext";
 import { kindLabel, topicLabel } from "../../lib/topics";
 import { timeAgo } from "../../lib/feedRank";
 import { deletePost, markSeen } from "../../lib/feed";
+import LinkedText, { clampText } from "../../lib/linkify";
 
 const SITE = "https://snaprium.com";
 const CLAMP = 360;
@@ -86,7 +87,7 @@ export default function PostCard({ post, profile, expanded = false, onRemoved, t
   const isSaved = feed.saved.ids.has(post.id);
   const isFollowing = feed.following.has(post.uid);
   const long = !expanded && post.text.length > CLAMP;
-  const text = long && !more ? `${post.text.slice(0, CLAMP).trimEnd()}…` : post.text;
+  const text = long && !more ? clampText(post.text, CLAMP) : post.text;
   const open = () => navigate(`/post/${post.id}`);
   // Tapping anywhere on the card (not on a button, menu or picture) opens the post with its replies, like Twitter.
   const openFromCard = (e) => {
@@ -225,7 +226,7 @@ export default function PostCard({ post, profile, expanded = false, onRemoved, t
       </div>
 
       <div className="fd-body">
-        {text && <p className="fd-text">{text}</p>}
+        {text && <p className="fd-text"><LinkedText text={text} /></p>}
         {long && (
           <button type="button" className="fd-more" onClick={() => setMore((v) => !v)}>
             {more ? "Show less" : "Show more"}
@@ -234,7 +235,14 @@ export default function PostCard({ post, profile, expanded = false, onRemoved, t
         {media.length > 0 && (
           <div className={`fd-media n${media.length}`}>
             {media.map((m, i) => (
-              <button type="button" key={i} className="fd-media-item" onClick={() => setZoom(m.url)} aria-label="View picture">
+              <button
+                type="button"
+                key={i}
+                className={`fd-media-item ${m.w && m.h ? "" : "noratio"}`}
+                style={media.length === 1 && m.w && m.h ? { aspectRatio: String(Math.min(2.4, Math.max(0.75, m.w / m.h))) } : undefined}
+                onClick={() => setZoom(m.url)}
+                aria-label="View picture"
+              >
                 <img src={m.url} alt="" loading="lazy" />
               </button>
             ))}

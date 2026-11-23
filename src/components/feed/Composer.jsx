@@ -17,9 +17,10 @@ const loadDraft = () => {
   }
 };
 
-export default function Composer({ user, defaultKind = "insight", onClose, onPosted }) {
+// defaultKind "post" = a normal post (nothing picked). Only the Ask button opens it on "question".
+export default function Composer({ user, defaultKind = "post", onClose, onPosted }) {
   const draft = useRef(loadDraft()).current;
-  const [kind, setKind] = useState(draft.kind || defaultKind);
+  const [kind, setKind] = useState(defaultKind || "post");
   const [text, setText] = useState(draft.text || "");
   const [topics, setTopics] = useState(draft.topics || []);
   const [images, setImages] = useState([]);
@@ -38,9 +39,9 @@ export default function Composer({ user, defaultKind = "insight", onClose, onPos
   // Keep what you typed if you close the window by accident.
   useEffect(() => {
     try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify({ kind, text, topics }));
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ text, topics }));
     } catch {}
-  }, [kind, text, topics]);
+  }, [text, topics]);
 
   const toggleTopic = (id) =>
     setTopics((cur) => (cur.includes(id) ? cur.filter((t) => t !== id) : cur.length >= LIMITS.topics ? cur : [...cur, id]));
@@ -87,7 +88,8 @@ export default function Composer({ user, defaultKind = "insight", onClose, onPos
     kind === "question" ? "What are you stuck on? Add enough detail that people can help."
     : kind === "log" ? "What did you study or practise today?"
     : kind === "resource" ? "What helped you, and why?"
-    : "What did you just learn or figure out?";
+    : kind === "insight" ? "What did you just learn or figure out?"
+    : "Share something you learned, or ask a question";
 
   return createPortal(
     <div className="fd-modal-back" onClick={busy ? undefined : onClose}>
@@ -99,7 +101,7 @@ export default function Composer({ user, defaultKind = "insight", onClose, onPos
 
         <div className="fd-kinds" role="radiogroup" aria-label="Kind of post">
           {POST_KINDS.map((k) => (
-            <button key={k.id} type="button" role="radio" aria-checked={kind === k.id} className={`fd-chip ${kind === k.id ? "on" : ""}`} onClick={() => setKind(k.id)} title={k.hint}>
+            <button key={k.id} type="button" role="radio" aria-checked={kind === k.id} className={`fd-chip ${kind === k.id ? "on" : ""}`} onClick={() => setKind(kind === k.id ? "post" : k.id)} title={k.hint}>
               {k.label}
             </button>
           ))}
@@ -121,7 +123,11 @@ export default function Composer({ user, defaultKind = "insight", onClose, onPos
         {images.length > 0 && (
           <div className={`fd-thumbs n${images.length}`}>
             {images.map((m, i) => (
-              <div className="fd-thumb" key={i}>
+              <div
+                className="fd-thumb"
+                key={i}
+                style={images.length === 1 && m.w && m.h ? { aspectRatio: String(Math.min(2.4, Math.max(0.75, m.w / m.h))) } : undefined}
+              >
                 <img src={m.url} alt="" />
                 <button type="button" aria-label="Remove picture" onClick={() => setImages((c) => c.filter((_, j) => j !== i))}><CloseIcon /></button>
               </div>

@@ -2,11 +2,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { countFollowers, fetchPostsBy } from "../lib/feed";
+import { fetchPostsBy } from "../lib/feed";
 import { fetchProfileCard, useLiveProfiles } from "../lib/publicProfile";
 import { FeedProvider, useFeed } from "../components/feed/FeedContext";
 import PostCard from "../components/feed/PostCard";
 import Avatar from "../components/feed/Avatar";
+import ProfileStats from "../components/feed/ProfileStats";
 import { BackIcon } from "../components/feed/Icons";
 import { FeedSkeleton } from "./FeedHome";
 import "../styles/feed.css";
@@ -15,7 +16,7 @@ function Inner({ uid }) {
   const feed = useFeed();
   const navigate = useNavigate();
   const [card, setCard] = useState(undefined);
-  const [followers, setFollowers] = useState(null);
+  const [statsKey, setStatsKey] = useState(0);
   const [posts, setPosts] = useState([]);
   const [cursor, setCursor] = useState(null);
   const [done, setDone] = useState(false);
@@ -30,7 +31,6 @@ function Inner({ uid }) {
     setDone(false);
     setLoading(true);
     fetchProfileCard(uid).then((c) => !off && setCard(c));
-    if (feed.me) countFollowers(uid).then((n) => !off && setFollowers(n)); // the follower list is for signed-in people
     fetchPostsBy(uid)
       .then((r) => {
         if (off) return;
@@ -54,7 +54,6 @@ function Inner({ uid }) {
   const following = feed.following.has(uid);
   const name = profiles[uid]?.displayName || card?.displayName || "Member";
   const photo = profiles[uid]?.photoURL || card?.photoURL || "";
-  const shownFollowers = followers;
 
   const more = async () => {
     setLoading(true);
@@ -83,14 +82,14 @@ function Inner({ uid }) {
                 <div className="fd-author-main">
                   <h1>{name}</h1>
                   {card?.bio && <p className="fd-bio">{card.bio}</p>}
-                  <p className="fd-muted">{shownFollowers === null ? "" : `${shownFollowers} follower${shownFollowers === 1 ? "" : "s"}`}</p>
+                  <ProfileStats uid={uid} refreshKey={statsKey} />
                 </div>
                 {mine ? (
                   <button type="button" className="fd-btn" onClick={() => navigate("/profile")}>Edit profile</button>
                 ) : (
                   <button type="button" className={`fd-btn ${following ? "" : "primary"}`} onClick={async () => {
                     await feed.toggleFollow(uid);
-                    if (feed.me) countFollowers(uid).then((n) => n !== null && setFollowers(n));
+                    if (feed.me) setStatsKey((k) => k + 1);
                   }}>
                     {following ? "Following" : "Follow"}
                   </button>

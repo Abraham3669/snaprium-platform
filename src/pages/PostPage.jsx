@@ -7,6 +7,7 @@ import { isClean, FILTER_MESSAGE } from "../lib/contentFilter";
 import { addReply, deleteReply, LIMITS, rememberInteraction, setHelpfulAnswer, subscribePost, subscribeReplies } from "../lib/feed";
 import { notifyPost } from "../lib/notifications";
 import { timeAgo } from "../lib/feedRank";
+import LinkedText from "../lib/linkify";
 import { useLiveProfiles } from "../lib/publicProfile";
 import { FeedProvider, useFeed } from "../components/feed/FeedContext";
 import PostCard from "../components/feed/PostCard";
@@ -32,7 +33,7 @@ function ReplyRow({ post, reply, profile, isOwnerView, onHelpful }) {
           <span className="fd-meta">{timeAgo(reply.createdAt)}</span>
           {accepted && <span className="fd-answered"><CheckIcon /> Helpful answer</span>}
         </div>
-        <p className="fd-text">{reply.text}</p>
+        <p className="fd-text"><LinkedText text={reply.text} /></p>
         <div className="fd-reply-acts">
           {canMark && (
             <button type="button" className="fd-link" onClick={() => onHelpful(accepted ? "" : reply)}>

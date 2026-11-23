@@ -16,7 +16,7 @@ export const MoreIcon = () => (
   <svg {...base}><circle cx="5" cy="12" r="1.2" fill="currentColor" /><circle cx="12" cy="12" r="1.2" fill="currentColor" /><circle cx="19" cy="12" r="1.2" fill="currentColor" /></svg>
 );
 export const PlusIcon = () => (
-  <svg {...base}><path d="M12 5v14M5 12h14" /></svg>
+  <svg {...base}><path d="M12 4v16M4 12h16" /></svg>
 );
 export const ImageIcon = () => (
   <svg {...base}><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="8.5" cy="9.5" r="1.5" /><path d="M21 16l-5-5-8 9" /></svg>

@@ -262,6 +262,15 @@ export async function countFollowers(uid) {
     return null;
   }
 }
+/** How many posts a person has written (public). */
+export async function countPosts(uid) {
+  try {
+    const s = await getCountFromServer(query(collection(db, "posts"), where("uid", "==", uid)));
+    return s.data().count;
+  } catch {
+    return null;
+  }
+}
 export async function countFollowing(uid) {
   try {
     const s = await getCountFromServer(query(collection(db, "follows"), where("followerId", "==", uid)));
