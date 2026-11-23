@@ -41,7 +41,7 @@ import { toMillis } from "./feedRank";
 
 export const LIMITS = {
   text: 2000,
-  reply: 1000,
+  reply: 5000,
   topics: 3,
   images: 2,
   imageChars: 300000, // per picture, in the stored text form
