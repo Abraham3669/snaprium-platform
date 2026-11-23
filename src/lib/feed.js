@@ -134,7 +134,7 @@ export async function createPost({ user, kind, text, topics = [], media = [] }) 
     createdAt: serverTimestamp(),
   };
   await setDoc(ref, data);
-  return { id: ref.id, ...data, createdAt: null, _local: true };
+  return { id: ref.id, ...data, createdAt: null };
 }
 
 export async function getPost(id) {

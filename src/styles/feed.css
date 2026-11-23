@@ -2,7 +2,7 @@
 
 :root { --fd-spark: #f5b544; --fd-spark-bg: rgba(245, 181, 68, 0.14); --fd-ok: #22a06b; --fd-danger: #e5484d; }
 
-.fd-page { max-width: 1320px; margin: 0 auto; padding: calc(var(--snaprium-header-h, 64px) - var(--snaprium-main-pad, 64px) + 10px) 12px calc(96px + env(safe-area-inset-bottom)); display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; justify-content: center; color: var(--text-primary); }
+.fd-page { max-width: 1320px; margin: 0 auto; padding: calc(var(--snaprium-header-h, 64px) - var(--snaprium-main-pad, 64px) + 10px) 12px calc(96px + env(safe-area-inset-bottom)); display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; justify-content: center; color: var(--text-primary); text-align: left; }
 .fd-page.single { grid-template-columns: minmax(0, 660px); padding-bottom: 48px; }
 .fd-main { min-width: 0; width: 100%; max-width: 660px; margin: 0 auto; }
 .fd-muted { color: var(--text-secondary); font-size: 0.9rem; margin: 4px 0 0; }
@@ -362,3 +362,6 @@ button.fd-avatar { cursor: pointer; }
 .fd-people .fd-li-main { display: flex; flex-direction: column; min-width: 0; }
 .fd-people .fd-li-main em { font-style: normal; color: var(--text-secondary); font-size: 0.85rem; }
 .fd-search-none { margin: 4px 6px 12px; }
+
+/* Post text always reads left-aligned, like X, whatever the page around it does. */
+.fd-page, .fd-card, .fd-text, .fd-reply, .fd-composer, .fd-modal { text-align: left; }

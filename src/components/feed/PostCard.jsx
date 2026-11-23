@@ -10,10 +10,11 @@ import { useFeed } from "./FeedContext";
 import { kindLabel, topicLabel } from "../../lib/topics";
 import { timeAgo } from "../../lib/feedRank";
 import { deletePost, markSeen } from "../../lib/feed";
-import LinkedText, { clampText } from "../../lib/linkify";
+import LinkedText, { clampText, needsClamp } from "../../lib/linkify";
 
 const SITE = "https://snaprium.com";
-const CLAMP = 360;
+const CLAMP = 240; // characters shown before "Show more"
+const CLAMP_LINES = 5; // ...or this many lines, whichever comes first
 
 function Lightbox({ src, onClose }) {
   useEffect(() => {
@@ -86,8 +87,8 @@ export default function PostCard({ post, profile, expanded = false, onRemoved, t
   const sparks = Math.max(0, (post.sparkCount || 0) + (expanded ? 0 : feed.delta[post.id] || 0));
   const isSaved = feed.saved.ids.has(post.id);
   const isFollowing = feed.following.has(post.uid);
-  const long = !expanded && post.text.length > CLAMP;
-  const text = long && !more ? clampText(post.text, CLAMP) : post.text;
+  const long = !expanded && needsClamp(post.text, CLAMP, CLAMP_LINES);
+  const text = long && !more ? clampText(post.text, CLAMP, CLAMP_LINES) : post.text;
   const open = () => navigate(`/post/${post.id}`);
   // Tapping anywhere on the card (not on a button, menu or picture) opens the post with its replies, like Twitter.
   const openFromCard = (e) => {

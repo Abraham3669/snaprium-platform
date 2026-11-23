@@ -30,9 +30,21 @@ const shown = (url) => {
 };
 
 // Cut a long text for "Show more" without ever cutting an address in half.
-export function clampText(text, max) {
-  if (text.length <= max) return text;
-  let cut = max;
+// Shortens to `max` characters and, when given, `maxLines` lines (blank lines count), never inside a link.
+export const needsClamp = (text, max, maxLines = 0) =>
+  text.length > max || (maxLines > 0 && text.split("\n").length > maxLines);
+
+export function clampText(text, max, maxLines = 0) {
+  if (!needsClamp(text, max, maxLines)) return text;
+  let cut = Math.min(max, text.length);
+  if (maxLines > 0) {
+    let at = -1;
+    for (let i = 0; i < maxLines; i++) {
+      at = text.indexOf("\n", at + 1);
+      if (at === -1) break;
+    }
+    if (at !== -1 && at < cut) cut = at;
+  }
   for (const l of findLinks(text)) {
     if (cut > l.start && cut < l.end) {
       cut = l.start;
