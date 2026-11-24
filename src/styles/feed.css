@@ -499,3 +499,6 @@ button.fd-avatar { cursor: pointer; }
   .fd-search input,
   .fd-replybox.compact textarea { font-size: 16px; }
 }
+
+.fd-thumb button { padding: 0; line-height: 0; }
+.fd-thumb button svg { flex: none; display: block; width: 16px; height: 16px; stroke: #fff; fill: none; }

@@ -74,6 +74,23 @@ function App() {
 
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
 
+  // Wide screens (PC browser). Signed-in people get the light/dark button in the header there;
+  // on phones they keep using the switch on their Profile page.
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const on = (e) => setIsDesktop(e.matches);
+    setIsDesktop(mq.matches);
+    if (mq.addEventListener) mq.addEventListener("change", on);
+    else mq.addListener(on);
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener("change", on);
+      else mq.removeListener(on);
+    };
+  }, []);
+
   // Notifications (bell + page) and iPhone push
   const notifications = useNotifications(user?.uid);
 
@@ -233,6 +250,7 @@ useEffect(() => {
   const nextTheme = theme === "dark" ? "light" : "dark";
   setTheme(nextTheme);
   localStorage.setItem("theme", nextTheme);
+  window.dispatchEvent(new CustomEvent("snaprium-theme", { detail: nextTheme }));
 };
 
   const checkSolveLimit = async () => {
@@ -481,7 +499,7 @@ useEffect(() => {
   </span>
 )}
 
-          {!isNativeApp && !user && (
+          {!isNativeApp && (!user || isDesktop) && (
           <button
             type="button"
             className="snaprium-menu-btn"
