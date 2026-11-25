@@ -35,6 +35,14 @@ const ONBOARD_KEY = "snaprium_feed_onboard_v1";
 // Switched off for now (there are not enough posts yet). Set to true to bring the "Pick topics you like" row back.
 const SHOW_TOPIC_NUDGE = false;
 
+// Remembers the feed while the app stays open. Opening a post and tapping Back brings the same posts, in the same
+// order, at the same scroll spot, with no reload (a reload would re-rank and push the post you opened to the bottom).
+// It is cleared by a real refresh (pull to refresh, the "new posts" button, reopening the app) or after 30 minutes.
+let feedCache = null;
+const CACHE_MS = 30 * 60 * 1000;
+const readCache = (me) =>
+  feedCache && feedCache.me === me && Date.now() - feedCache.loadedAt < CACHE_MS ? feedCache : null;
+
 export function FeedSkeleton() {
   return (
     <div className="fd-page">
@@ -55,18 +63,19 @@ function Inner({ unread, social }) {
   const { me, user } = feed;
   const circles = useMyCircles(me);
 
-  const [tab, setTab] = useState("foryou");
-  const [pool, setPool] = useState([]);
-  const [order, setOrder] = useState([]);
-  const [cursor, setCursor] = useState(null);
-  const [done, setDone] = useState(false);
-  const [shown, setShown] = useState(PAGE);
-  const [status, setStatus] = useState("loading"); // loading | ready | error
+  const [cached] = useState(() => readCache(me)); // the feed I left a moment ago (Back from a post), if any
+  const [tab, setTab] = useState(cached?.tab || "foryou");
+  const [pool, setPool] = useState(cached?.pool || []);
+  const [order, setOrder] = useState(cached?.order || []);
+  const [cursor, setCursor] = useState(cached?.cursor || null);
+  const [done, setDone] = useState(cached?.done || false);
+  const [shown, setShown] = useState(cached?.shown || PAGE);
+  const [status, setStatus] = useState(cached ? "ready" : "loading"); // loading | ready | error
   const [loadingMore, setLoadingMore] = useState(false);
   const [fresh, setFresh] = useState(0);
   const [composer, setComposerRaw] = useState(null); // null | kind
-  const [local, setLocal] = useState([]); // posts I just wrote
-  const [removed, setRemoved] = useState(() => new Set());
+  const [local, setLocal] = useState(cached?.local || []); // posts I just wrote
+  const [removed, setRemoved] = useState(() => cached?.removed || new Set());
   const [onboard, setOnboard] = useState(() => {
     try {
       return localStorage.getItem(ONBOARD_KEY) !== "1";
@@ -90,8 +99,10 @@ function Inner({ unread, social }) {
 
   const latest = useRef({});
   latest.current = { feed, tab };
-  const loadedAt = useRef(0);
+  const loadedAt = useRef(cached?.loadedAt || 0);
   const reqId = useRef(0);
+  const restoredKey = useRef(cached ? `${cached.me}|${cached.tab}` : ""); // this tab's posts are already here
+  const scrollY = useRef(cached?.scrollY || 0);
   const ready = feed.followReady && feed.prefs.ready;
 
   const buildCtx = useCallback((mode, seed) => {
@@ -156,8 +167,32 @@ function Inner({ unread, social }) {
   // First load, and every time the tab changes (once my follows and topics are known).
   useEffect(() => {
     if (!ready) return;
+    if (restoredKey.current === `${me}|${tab}`) return; // coming back from a post: keep what is on screen
+    restoredKey.current = "";
     load(tab);
   }, [ready, me, tab, load]);
+
+  // Keep a copy of the feed for the next time this screen opens, and remember the scroll spot.
+  useEffect(() => {
+    if (status !== "ready" || tab === "saved") return;
+    feedCache = { me, tab, pool, order, cursor, done, shown, local, removed, loadedAt: loadedAt.current, savedAt: Date.now(), scrollY: scrollY.current };
+  }, [status, tab, pool, order, cursor, done, shown, local, removed, me]);
+
+  useEffect(() => {
+    const onScroll = () => {
+      scrollY.current = window.scrollY;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    if (cached?.scrollY) {
+      const y = cached.scrollY;
+      requestAnimationFrame(() => window.scrollTo(0, y));
+      setTimeout(() => window.scrollTo(0, y), 120);
+    }
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (feedCache && feedCache.me === me) feedCache.scrollY = scrollY.current;
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // "N new posts" pill
   useEffect(() => {
@@ -214,6 +249,7 @@ function Inner({ unread, social }) {
   const remove = useCallback((id) => setRemoved((r) => new Set(r).add(id)), []);
   const refresh = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
+    restoredKey.current = "";
     load(tab);
   };
   const posted = (p) => setLocal((l) => [p, ...l]);
