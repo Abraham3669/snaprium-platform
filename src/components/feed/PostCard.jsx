@@ -174,11 +174,29 @@ export default function PostCard({ post, profile, expanded = false, onRemoved, t
   useEffect(() => {
     if (!trackSeen || !ref.current || typeof IntersectionObserver === "undefined") return undefined;
     let timer = 0;
+    let since = 0; // when it came on screen
+    const DWELL = 250; // ms on screen that count as "seen" (a quick scroll past still counts)
+    const done = () => {
+      clearTimeout(timer);
+      since = 0;
+      markSeen([post.id]);
+    };
     const io = new IntersectionObserver(
       ([e]) => {
-        clearTimeout(timer);
-        // Seen = any part of the post is on screen for a moment (works for tall photo posts too).
-        if (e.isIntersecting && e.intersectionRect && e.intersectionRect.height >= 80) timer = setTimeout(() => markSeen([post.id]), 700);
+        const on = e.isIntersecting && e.intersectionRect && e.intersectionRect.height >= 80;
+        if (on) {
+          if (!since) {
+            since = Date.now();
+            timer = setTimeout(done, DWELL);
+          }
+        } else if (since) {
+          // it left the screen: seen if it was there long enough (the timer may not have fired yet)
+          if (Date.now() - since >= DWELL) done();
+          else {
+            clearTimeout(timer);
+            since = 0;
+          }
+        }
       },
       { threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1] }
     );
