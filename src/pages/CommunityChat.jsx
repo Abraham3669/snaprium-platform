@@ -57,6 +57,8 @@ import "katex/dist/katex.min.css";
 // The Snaprium owner account (same uid as in firestore.rules). Only this account can delete other people's messages;
 // the rules are what actually enforce it, this just decides whether to show the button.
 const OWNER_UIDS = ["csFXC9p3lLcmzmyP2YjFT42yMSw1"];
+// How a reply points at the message it answers: "rail" (straight line) or "elbow" (bent line, reply steps in).
+const REPLY_STYLE = "rail";
 const MENU_HEIGHT = 260; // room the message menu needs, in px
 const QUICK_REACTIONS = ["👍", "❤️", "😂", "🔥", "🙏", "🎉"];
 
@@ -1619,7 +1621,7 @@ useEffect(() => {
   if (msg.system || msg.type === "join" || /has joined$|joined$/i.test(msg.text || "")) return null;
   const name = liveName(msg);
   const photo = livePhoto(msg);
-        const grouped = sameRun(messages[index - 1], msg);
+        const grouped = sameRun(messages[index - 1], msg) && !msg.replyTo;
         const time = formatMsgTime(msg.createdAt);
         const prevMsg = messages[index - 1];
         const dayChanged = !prevMsg || dayKey(prevMsg.createdAt) !== dayKey(msg.createdAt);
@@ -1636,7 +1638,7 @@ useEffect(() => {
               grouped ? "grouped" : ""
             } ${(msg.mentions || []).includes(user?.uid) ? "mentioned" : ""} ${
               menuFor === msg.id ? "menu-open" : ""
-            }`}
+            } ${msg.replyTo ? `has-reply rp-${REPLY_STYLE}` : ""}`}
             onTouchStart={(e) => !msg.isAI && startLongPress(msg, e.currentTarget)}
             onTouchEnd={cancelLongPress}
             onTouchMove={cancelLongPress}
@@ -1656,6 +1658,34 @@ useEffect(() => {
                 ))}
               </div>
             )}
+            {msg.replyTo && (() => {
+              const original = messages.find((m) => m.id === msg.replyTo.id) || null;
+              const qUid = msg.replyTo.uid || original?.uid || "";
+              const qBlocked = !!qUid && blocked.has(qUid);
+              const qName = msg.replyTo.displayName || (original ? liveName(original) : "") || "Member";
+              const qPhoto =
+                msg.replyTo.photoURL ||
+                (original ? livePhoto(original) : "") ||
+                (qUid && profiles[qUid]?.photoURL) ||
+                "";
+              const qText = qBlocked ? "Message hidden" : msg.replyTo.text || (original?.imageUrl ? "Photo" : "");
+              return (
+                <div
+                  className="cc-reply"
+                  role="button"
+                  tabIndex={0}
+                  title="Show the original message"
+                  onClick={() => jumpToMessage(msg.replyTo.id)}
+                  onKeyDown={(e) => e.key === "Enter" && jumpToMessage(msg.replyTo.id)}
+                >
+                  <span className="cc-reply-av" aria-hidden="true">
+                    {qPhoto && !qBlocked ? <img src={qPhoto} alt="" /> : <span>{qName.slice(0, 1).toUpperCase()}</span>}
+                  </span>
+                  <strong>{qBlocked ? "Blocked user" : qName}</strong>
+                  <span className="cc-reply-text">{qText}</span>
+                </div>
+              );
+            })()}
             <header className="cc-post-head">
               {!grouped && (
                 <button
@@ -1760,36 +1790,6 @@ useEffect(() => {
               )}
             </header>
             {grouped && time ? <time className="cc-hover-time">{time}</time> : null}
-            {msg.replyTo && (() => {
-              const original =
-                messages.find((m) => m.id === msg.replyTo.id) || null;
-              const qUid = msg.replyTo.uid || original?.uid || "";
-              const qBlocked = !!qUid && blocked.has(qUid);
-              const qName =
-                msg.replyTo.displayName ||
-                (original ? liveName(original) : "") ||
-                "Member";
-              const qPhoto =
-                msg.replyTo.photoURL ||
-                (original ? livePhoto(original) : "") ||
-                (qUid && profiles[qUid]?.photoURL) ||
-                "";
-              return (
-                <div className="cc-quote" role="button" tabIndex={0} onClick={() => jumpToMessage(msg.replyTo.id)} onKeyDown={(e) => e.key === "Enter" && jumpToMessage(msg.replyTo.id)}>
-                  <span className="cc-quote-avatar" aria-hidden="true">
-                    {qPhoto ? (
-                      <img src={qPhoto} alt="" />
-                    ) : (
-                      <span>{qName.slice(0, 1).toUpperCase()}</span>
-                    )}
-                  </span>
-                  <div className="cc-quote-body">
-                    <strong>{qBlocked ? "Blocked user" : qName}</strong>
-                    <span>{qBlocked ? "Message hidden" : msg.replyTo.text}</span>
-                  </div>
-                </div>
-              );
-            })()}
             {msg.imageUrl && (
               <button
                 type="button"

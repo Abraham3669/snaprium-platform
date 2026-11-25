@@ -13,6 +13,8 @@
 // Pictures: stored as small compressed JPEGs inside the post (media: [{type, url, w, h}]), the same way the rest of
 // the app stores pictures. The `media` list is the single place a picture OR a video would be added later
 // (type "video" with a Storage url), so no other part of the app has to change.
+// Videos: one short clip per post, stored in Firebase Storage (see lib/video.js). The post keeps { type:"video", url, path,
+// poster, w, h, dur, mime }; a post has either one video or up to two pictures.
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { publicName } from "./publicName";
@@ -38,6 +40,7 @@ import {
 import { db } from "./firebase";
 import { KIND_IDS, TOPIC_IDS } from "./topics";
 import { toMillis } from "./feedRank";
+import { VIDEO, deleteVideoFiles } from "./video";
 
 export const LIMITS = {
   text: 2000,
@@ -96,11 +99,41 @@ export function compressPostImage(file, max = 1100) {
 /* ------------------------------------------------------------------ */
 
 const tidyTopics = (topics) => [...new Set((topics || []).filter((t) => TOPIC_IDS.includes(t)))].slice(0, LIMITS.topics);
-const tidyMedia = (media) =>
-  (media || [])
+const VIDEO_HOST = /^https:\/\/firebasestorage\.googleapis\.com\//;
+const tidyMedia = (media, uid) => {
+  const list = Array.isArray(media) ? media : [];
+  // One video (it must be a file this person put in their own Storage folder), or pictures.
+  const vid = list.find(
+    (m) =>
+      m &&
+      m.type === "video" &&
+      typeof m.url === "string" &&
+      m.url.length <= 1500 &&
+      VIDEO_HOST.test(m.url) &&
+      typeof m.path === "string" &&
+      m.path.startsWith(`${VIDEO.folder}/${uid}/`) &&
+      typeof m.poster === "string" &&
+      m.poster.length <= VIDEO.posterChars
+  );
+  if (vid) {
+    return [
+      {
+        type: "video",
+        url: vid.url,
+        path: vid.path,
+        poster: vid.poster,
+        w: Number(vid.w) || 0,
+        h: Number(vid.h) || 0,
+        dur: Number(vid.dur) || 0,
+        mime: String(vid.mime || "").slice(0, 40),
+      },
+    ];
+  }
+  return list
     .filter((m) => m && m.type === "image" && typeof m.url === "string" && m.url.length <= LIMITS.imageChars)
     .slice(0, LIMITS.images)
     .map((m) => ({ type: "image", url: m.url, w: Number(m.w) || 0, h: Number(m.h) || 0 }));
+};
 
 /** Validates what a person typed. Returns an error message or "". */
 export function checkPostInput({ kind, text, media }) {
@@ -124,7 +157,7 @@ export async function createPost({ user, kind, text, topics = [], media = [] }) 
     kind,
     text: clip(text, LIMITS.text),
     topics: tidyTopics(topics),
-    media: tidyMedia(media),
+    media: tidyMedia(media, user.uid),
     sparkCount: 0,
     replyCount: 0,
     selfSpark: false, // true while the author has Sparked their own post (shown in the number, ignored by ranking)
@@ -143,8 +176,19 @@ export async function getPost(id) {
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 }
 
-export async function deletePost(id) {
+export async function deletePost(id, media) {
+  // Pass the post's media when you have it; if not, it is read here so a video file is never left behind.
+  let files = media;
+  if (!Array.isArray(files)) {
+    try {
+      const snap = await getDoc(doc(db, "posts", id));
+      files = snap.exists() ? snap.data().media : [];
+    } catch {
+      files = [];
+    }
+  }
   await deleteDoc(doc(db, "posts", id));
+  await deleteVideoFiles(files); // never throws; does nothing for posts without a video
 }
 
 /** Live copy of one post (counters update while you look at it). */

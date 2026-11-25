@@ -502,3 +502,17 @@ button.fd-avatar { cursor: pointer; }
 
 .fd-thumb button { padding: 0; line-height: 0; }
 .fd-thumb button svg { flex: none; display: block; width: 16px; height: 16px; stroke: #fff; fill: none; }
+
+/* ===== Video in posts and in the composer ===== */
+.fd-video { position: relative; margin-top: 10px; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); background: #000; max-height: 560px; width: 100%; }
+.fd-video video, .fd-video-play, .fd-video-poster { position: absolute; inset: 0; width: 100%; height: 100%; display: block; border: 0; padding: 0; background: #000; }
+.fd-video video { object-fit: contain; }
+.fd-video-poster { object-fit: cover; opacity: 0.45; }
+.fd-video-play { cursor: pointer; }
+.fd-video-play img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.fd-video-btn { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 58px; height: 58px; border-radius: 50%; background: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; }
+.fd-video-btn svg { width: 26px; height: 26px; margin-left: 3px; fill: #fff; }
+.fd-video-play:hover .fd-video-btn { background: rgba(0, 0, 0, 0.78); }
+.fd-video-failed { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); margin: 0; padding: 0 16px; text-align: center; color: #fff; font-size: 0.9rem; font-weight: 600; }
+.fd-vbadge { position: absolute; left: 8px; bottom: 8px; background: rgba(0, 0, 0, 0.65); color: #fff; font-size: 0.74rem; font-weight: 700; border-radius: 999px; padding: 2px 8px; font-variant-numeric: tabular-nums; }
+.fd-vprog { margin: 0 4px 8px; color: var(--text-secondary); font-size: 0.86rem; }

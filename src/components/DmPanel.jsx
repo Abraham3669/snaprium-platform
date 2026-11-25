@@ -67,6 +67,8 @@ function sameRun(a, b) {
 }
 
 const MENU_HEIGHT = 260; // room the message menu needs, in px
+// How a reply points at the message it answers: "rail" or "elbow". Keep the same value as in CommunityChat.jsx.
+const REPLY_STYLE = "rail";
 const QUICK_REACTIONS = ["👍", "❤️", "😂", "🔥", "🙏", "🎉"];
 // [["👍", [uid, ...]], ...] with the empty ones removed
 const reactionList = (m) =>
@@ -477,7 +479,7 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
               visible.map((m, i) => {
                 const mine = m.uid === me;
                 const prev = visible[i - 1];
-                const grouped = sameRun(prev, m);
+                const grouped = sameRun(prev, m) && !m.replyTo;
                 const newDay = !prev || dayKey(prev.createdAt) !== dayKey(m.createdAt);
                 const nm = mine ? myName : name;
                 const ph = mine ? myPhoto : photo;
@@ -489,7 +491,7 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
                     ) : null}
                     <article
                       data-mid={m.id}
-                      className={`cc-post ${mine ? "mine" : ""} ${grouped ? "grouped" : ""} ${menuFor === m.id ? "menu-open" : ""}`}
+                      className={`cc-post ${mine ? "mine" : ""} ${grouped ? "grouped" : ""} ${menuFor === m.id ? "menu-open" : ""} ${m.replyTo ? `has-reply rp-${REPLY_STYLE}` : ""}`}
                       onTouchStart={(e) => {
                         const el = e.currentTarget;
                         longPress.current = setTimeout(() => openMenu(m.id, el), 450);
@@ -512,6 +514,27 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
                           ))}
                         </div>
                       )}
+                      {m.replyTo && (() => {
+                        const qMine = m.replyTo.uid === me;
+                        const qName = qMine ? myName : m.replyTo.displayName || name;
+                        const qPhoto = qMine ? myPhoto : photo;
+                        return (
+                          <div
+                            className="cc-reply"
+                            role="button"
+                            tabIndex={0}
+                            title="Show the original message"
+                            onClick={() => jumpTo(m.replyTo.id)}
+                            onKeyDown={(e) => e.key === "Enter" && jumpTo(m.replyTo.id)}
+                          >
+                            <span className="cc-reply-av" aria-hidden="true">
+                              {qPhoto ? <img src={qPhoto} alt="" /> : <span>{qName.slice(0, 1).toUpperCase()}</span>}
+                            </span>
+                            <strong>{qName}</strong>
+                            <span className="cc-reply-text">{m.replyTo.text}</span>
+                          </div>
+                        );
+                      })()}
                       <header className="cc-post-head">
                         {!grouped && (
                           !mine && onOpenProfile ? (
@@ -584,28 +607,6 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
                         </div>
                       </header>
                       {grouped && time ? <time className="cc-hover-time">{time}</time> : null}
-                      {m.replyTo && (() => {
-                        const qMine = m.replyTo.uid === me;
-                        const qName = qMine ? myName : m.replyTo.displayName || name;
-                        const qPhoto = qMine ? myPhoto : photo;
-                        return (
-                          <div
-                            className="cc-quote"
-                            role="button"
-                            tabIndex={0}
-                            onClick={() => jumpTo(m.replyTo.id)}
-                            onKeyDown={(e) => e.key === "Enter" && jumpTo(m.replyTo.id)}
-                          >
-                            <span className="cc-quote-avatar" aria-hidden="true">
-                              {qPhoto ? <img src={qPhoto} alt="" /> : <span>{qName.slice(0, 1).toUpperCase()}</span>}
-                            </span>
-                            <div className="cc-quote-body">
-                              <strong>{qName}</strong>
-                              <span>{m.replyTo.text}</span>
-                            </div>
-                          </div>
-                        );
-                      })()}
                       {m.imageUrl ? (
                         <button type="button" className="cc-media-btn" onClick={() => setLightbox(m.imageUrl)}>
                           <img src={m.imageUrl} alt="" className="cc-msg-photo" />

@@ -10,9 +10,73 @@ import { useFeed } from "./FeedContext";
 import { kindLabel, topicLabel } from "../../lib/topics";
 import { timeAgo } from "../../lib/feedRank";
 import { deletePost, markSeen } from "../../lib/feed";
+import { formatDuration } from "../../lib/video";
 import LinkedText, { clampText, needsClamp } from "../../lib/linkify";
 
 const SITE = "https://snaprium.com";
+
+const PlayIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l13-7.5z" /></svg>
+);
+
+// A short video: shows its cover picture with a play button, and loads the file only when someone taps it
+// (so scrolling past a video costs nothing). Plays inline on iPhone and in every browser.
+function VideoPlayer({ m }) {
+  const [playing, setPlaying] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const vref = useRef(null);
+  const ratio = Math.min(2.4, Math.max(0.56, m.w && m.h ? m.w / m.h : 16 / 9));
+
+  useEffect(() => {
+    const v = vref.current;
+    if (!playing || !v) return;
+    const p = v.play();
+    if (p && p.catch) {
+      p.catch(() => {
+        // some browsers only allow sound after a tap on the video itself: start it muted, the controls bring the sound back
+        v.muted = true;
+        const q = v.play();
+        if (q && q.catch) q.catch(() => {});
+      });
+    }
+  }, [playing]);
+
+  if (failed) {
+    return (
+      <div className="fd-video" style={{ aspectRatio: String(ratio) }}>
+        {m.poster && <img className="fd-video-poster" src={m.poster} alt="" />}
+        <p className="fd-video-failed">This video can't be played on this device.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="fd-video" style={{ aspectRatio: String(ratio) }}>
+      {playing ? (
+        <video
+          ref={vref}
+          src={m.url}
+          poster={m.poster}
+          controls
+          playsInline
+          preload="auto"
+          onError={() => setFailed(true)}
+          onPlay={(e) => {
+            // only one video plays at a time
+            document.querySelectorAll(".fd-video video").forEach((x) => {
+              if (x !== e.currentTarget) x.pause();
+            });
+          }}
+        />
+      ) : (
+        <button type="button" className="fd-video-play" aria-label="Play video" onClick={() => setPlaying(true)}>
+          {m.poster && <img src={m.poster} alt="" />}
+          <span className="fd-video-btn"><PlayIcon /></span>
+          {m.dur > 0 && <span className="fd-vbadge">{formatDuration(m.dur)}</span>}
+        </button>
+      )}
+    </div>
+  );
+}
 const CLAMP = 240; // characters shown before "Show more"
 const CLAMP_LINES = 5; // ...or this many lines, whichever comes first
 
@@ -92,7 +156,7 @@ export default function PostCard({ post, profile, expanded = false, onRemoved, t
   const open = () => navigate(`/post/${post.id}`);
   // Tapping anywhere on the card (not on a button, menu or picture) opens the post with its replies, like Twitter.
   const openFromCard = (e) => {
-    if (e.target.closest("button, a, textarea, input, .fd-menu, .fd-confirm")) return;
+    if (e.target.closest("button, a, textarea, input, video, .fd-menu, .fd-confirm")) return;
     if (window.getSelection && String(window.getSelection()).length > 0) return; // they were selecting text
     open();
   };
@@ -149,7 +213,7 @@ export default function PostCard({ post, profile, expanded = false, onRemoved, t
 
   const remove = async () => {
     try {
-      await deletePost(post.id);
+      await deletePost(post.id, post.media);
       setConfirmDelete(false);
       toast.success("Post deleted");
       onRemoved?.(post.id);
@@ -243,7 +307,8 @@ export default function PostCard({ post, profile, expanded = false, onRemoved, t
             {more ? "Show less" : "Show more"}
           </button>
         )}
-        {media.length > 0 && (
+        {media.length > 0 && media[0].type === "video" && <VideoPlayer m={media[0]} />}
+        {media.length > 0 && media[0].type !== "video" && (
           <div className={`fd-media n${media.length}`}>
             {media.map((m, i) => (
               <button
