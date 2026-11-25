@@ -28,9 +28,13 @@ export const WEIGHTS = {
   // fairness
   newPostWindowHours: 3,
   newPostBoost: 1.25,      // a fresh post with no Sparks yet gets a short head start
-  seenRecentFactor: 0.2,   // seen in the last 24 hours
-  seenOldFactor: 0.55,     // seen before, longer ago
-  seenRecentHours: 24,
+  // Posts you already saw. Like X and LinkedIn, a post you have seen goes BELOW every post you have not seen yet
+  // (unseenFirst). Among the seen ones, the longer ago you saw it, the higher it may come back, so a small feed
+  // rotates instead of repeating the same top post. Seen time is refreshed every time you see it again.
+  unseenFirst: true,
+  seenMinFactor: 0.15,     // just seen
+  seenMaxFactor: 0.75,     // seen long ago (after seenRecoverHours)
+  seenRecoverHours: 72,
   ownPostFactor: 0.7,
   pinOwnMinutes: 0,        // no pinning: right after you post, your post is shown first for this visit only (see FeedHome); after a refresh it ranks like any other
   // questions
@@ -103,9 +107,13 @@ export function scorePost(post, ctx, W = WEIGHTS) {
     if (mode === "questions" && post.answered) s *= 0.5;
   }
 
-  // seen before? (ctx.seen maps postId -> time first seen)
-  const seenAt = post.uid === ctx.me ? 0 : ctx.seen?.[post.id]; // your own posts never sink for being "seen"
-  if (seenAt) s *= now - seenAt < W.seenRecentHours * HOUR ? W.seenRecentFactor : W.seenOldFactor;
+  // seen before? (ctx.seen maps postId -> time you last saw it). Your own posts count too: right after you post,
+  // the feed page shows it first for that visit only; after that it rotates like any other.
+  const seenAt = ctx.seen?.[post.id];
+  if (seenAt) {
+    const recovered = Math.min(1, Math.max(0, now - seenAt) / (W.seenRecoverHours * HOUR));
+    s *= W.seenMinFactor + (W.seenMaxFactor - W.seenMinFactor) * recovered;
+  }
 
   if (ctx.me && post.uid === ctx.me) s *= W.ownPostFactor;
 
@@ -155,7 +163,7 @@ export function diversify(scored, W = WEIGHTS) {
  * Rank a list of candidate posts.
  *   posts  array of { id, uid, kind, topics, sparkCount, replyCount, answered, createdAt, ... }
  *   ctx    { me, mode: "foryou"|"following"|"questions", now, seed, following:Set, topics:Set, blocked:Set,
- *            hidden:Set, seen:{id:ms}, interacted:Set }
+ *            hidden:Set, seen:{id:ms last seen}, interacted:Set }
  * Returns posts in display order.
  *   following  -> plain newest first (a follow feed should be predictable)
  *   foryou / questions -> scored + diversified
@@ -182,6 +190,13 @@ export function rankFeed(posts, ctx = {}, W = WEIGHTS) {
   const rest = list.filter((p) => !isFreshOwn(p));
   const scored = rest.map((post) => ({ post, score: scorePost(post, ctx, W) }));
   scored.sort((a, b) => b.score - a.score || (a.post.id < b.post.id ? -1 : 1));
+  // Unseen first, seen after (each group keeps the normal score order and the author / topic variety rules).
+  if (W.unseenFirst && ctx.seen) {
+    const isSeen = (x) => !!ctx.seen[x.post.id];
+    const fresh = scored.filter((x) => !isSeen(x));
+    const old = scored.filter(isSeen);
+    return [...pinned, ...diversify(fresh, W).map((x) => x.post), ...diversify(old, W).map((x) => x.post)];
+  }
   return [...pinned, ...diversify(scored, W).map((x) => x.post)];
 }
 

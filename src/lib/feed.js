@@ -37,6 +37,7 @@ import {
   increment,
   getCountFromServer,
 } from "firebase/firestore";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { db } from "./firebase";
 import { KIND_IDS, TOPIC_IDS } from "./topics";
 import { toMillis } from "./feedRank";
@@ -571,6 +572,8 @@ const SEEN_KEY = "snaprium_feed_seen_v1";
 const INTERACT_KEY = "snaprium_feed_with_v1";
 const SEEN_MAX = 600;
 
+// Seen posts: { postId: time you last saw it }. Kept on this device AND in users/{uid}/feedSeen/main, so the phone,
+// the iPhone app and the PC all know what you have already seen (like X). Signed-out visitors keep it on the device.
 export function readSeen() {
   try {
     return JSON.parse(localStorage.getItem(SEEN_KEY) || "{}") || {};
@@ -578,13 +581,60 @@ export function readSeen() {
     return {};
   }
 }
+function writeSeen(map) {
+  try {
+    const entries = Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, SEEN_MAX);
+    localStorage.setItem(SEEN_KEY, JSON.stringify(Object.fromEntries(entries)));
+  } catch {}
+}
+
+let seenUid = "";
+let seenPulled = false; // we only write to the cloud after reading it once, so one device never wipes another
+let seenTimer = 0;
+const seenDoc = (uid) => doc(db, "users", uid, "feedSeen", "main");
+
+async function pushSeenNow() {
+  if (!seenUid || !seenPulled) return;
+  try {
+    await setDoc(seenDoc(seenUid), { seen: readSeen(), updatedAt: serverTimestamp() });
+  } catch {}
+}
+async function pullSeen(uid) {
+  try {
+    const snap = await getDoc(seenDoc(uid));
+    if (uid !== seenUid) return;
+    const remote = snap.exists() ? snap.data().seen || {} : {};
+    const merged = { ...readSeen() };
+    for (const [id, t] of Object.entries(remote)) if (typeof t === "number" && t > (merged[id] || 0)) merged[id] = t;
+    writeSeen(merged);
+    seenPulled = true;
+    if (!snap.exists()) pushSeenNow();
+  } catch {}
+}
+try {
+  onAuthStateChanged(getAuth(), (u) => {
+    clearTimeout(seenTimer);
+    seenUid = u?.uid || "";
+    seenPulled = false;
+    if (seenUid) pullSeen(seenUid);
+  });
+  if (typeof document !== "undefined") {
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") pushSeenNow();
+    });
+  }
+} catch {}
+
 export function markSeen(ids) {
   try {
     const cur = readSeen();
     const now = Date.now();
-    for (const id of ids) if (!cur[id]) cur[id] = now;
-    const entries = Object.entries(cur).sort((a, b) => b[1] - a[1]).slice(0, SEEN_MAX);
-    localStorage.setItem(SEEN_KEY, JSON.stringify(Object.fromEntries(entries)));
+    for (const id of ids) cur[id] = now; // last seen: seeing it again keeps it low
+    writeSeen(cur);
+    if (seenUid) {
+      clearTimeout(seenTimer);
+      seenTimer = setTimeout(pushSeenNow, 20000);
+    }
   } catch {}
 }
 export function readInteracted() {

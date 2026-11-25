@@ -7227,3 +7227,17 @@ html.native-app .result-panel-content {
   text-align: center;
   pointer-events: none;
 }
+
+
+
+
+
+
+
+.snaprium-header {
+  background: color-mix(in srgb, var(--bg) 88%, transparent) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+  backdrop-filter: blur(4px) !important;
+  border-bottom: 1px solid var(--border) !important;
+  box-shadow: none !important;
+}
