@@ -177,9 +177,10 @@ export default function PostCard({ post, profile, expanded = false, onRemoved, t
     const io = new IntersectionObserver(
       ([e]) => {
         clearTimeout(timer);
-        if (e.isIntersecting) timer = setTimeout(() => markSeen([post.id]), 1200);
+        // Seen = any part of the post is on screen for a moment (works for tall photo posts too).
+        if (e.isIntersecting && e.intersectionRect && e.intersectionRect.height >= 80) timer = setTimeout(() => markSeen([post.id]), 700);
       },
-      { threshold: 0.6 }
+      { threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1] }
     );
     io.observe(ref.current);
     return () => {

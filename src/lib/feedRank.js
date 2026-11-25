@@ -194,8 +194,10 @@ export function rankFeed(posts, ctx = {}, W = WEIGHTS) {
   if (W.unseenFirst && ctx.seen) {
     const isSeen = (x) => !!ctx.seen[x.post.id];
     const fresh = scored.filter((x) => !isSeen(x));
-    const old = scored.filter(isSeen);
-    return [...pinned, ...diversify(fresh, W).map((x) => x.post), ...diversify(old, W).map((x) => x.post)];
+    // Seen posts: the one you saw LONGEST AGO comes first, the one you just saw goes last. Likes and replies do not
+    // matter here, so a popular post you already viewed can never sit on top again while others wait.
+    const old = scored.filter(isSeen).sort((a, b) => ctx.seen[a.post.id] - ctx.seen[b.post.id] || b.score - a.score);
+    return [...pinned, ...diversify(fresh, W).map((x) => x.post), ...old.map((x) => x.post)];
   }
   return [...pinned, ...diversify(scored, W).map((x) => x.post)];
 }
