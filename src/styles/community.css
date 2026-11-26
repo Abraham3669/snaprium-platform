@@ -1489,3 +1489,101 @@ h2 {
 @media (max-width: 640px) {
   .hub-page.cx-page .cx-back { margin-bottom: 8px; }
 }
+
+
+
+/* ==========================================================
+   Circle description + edit dialog (appended last)
+   The edit dialog also opens from the circle page, so its base rules are not tied to .cx-page.
+   ========================================================== */
+
+/* Create / edit dialog: same look wherever it opens */
+.cx-overlay *,
+.cx-overlay *::before,
+.cx-overlay *::after {
+  box-sizing: border-box;
+}
+.cx-overlay button,
+.cx-overlay input,
+.cx-overlay textarea,
+.cx-overlay select {
+  font: inherit;
+  color: inherit;
+}
+.cx-overlay .cx-dialog {
+  color: var(--text-primary);
+  text-align: left;
+}
+
+.cx-field textarea {
+  width: 100%;
+  min-height: 92px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  font-size: 1rem; /* 16px+ stops iOS zoom on focus */
+  line-height: 1.45;
+  resize: vertical;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+.cx-field textarea::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.8;
+}
+.cx-field textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--cx-ring, 0 0 0 3px var(--accent-glow));
+}
+.cx-field input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.cx-field .cx-opt {
+  color: var(--text-secondary);
+  font-style: normal;
+  font-weight: 500;
+}
+.cx-field .cx-counter {
+  align-self: flex-end;
+}
+
+/* Circles list card: one short line or two under the name */
+.cx-page .cx-card-desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: -4px 0 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  text-align: left;
+}
+
+/* Circle page: description under the name, and the admin's "add" link */
+.cd-desc {
+  max-width: 60ch;
+  margin: 6px 0 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  text-align: left;
+}
+.cd-desc-add {
+  margin: 4px 0 0;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.cd-desc-add:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

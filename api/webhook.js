@@ -82,6 +82,10 @@ function pickEmail(data) {
   ).toLowerCase();
 }
 
+// Prices that are the Unlimited plan, matched by their Paddle price id. Renaming the product or the price in Paddle
+// can never change what plan someone gets. Add the id of any new Unlimited price here.
+const UNLIMITED_PRICE_IDS = ["pri_01ktdn3fppsgkgjhm8xm5ha015"];
+
 // Paddle statuses that mean "not paying right now"
 const NOT_PAYING = ["canceled", "paused", "past_due"];
 
@@ -93,6 +97,9 @@ function pickPlan(data, eventType) {
   const priceName = String(data?.items?.[0]?.price?.name || "").toLowerCase();
   const priceId = String(data?.items?.[0]?.price?.id || "").toLowerCase();
   const blob = `${productName} ${priceName} ${priceId}`;
+
+  const allPriceIds = (data?.items || []).map((i) => String(i?.price?.id || "").toLowerCase());
+  if (allPriceIds.some((id) => UNLIMITED_PRICE_IDS.includes(id))) return "unlimited";
 
   if (blob.includes("unlimited") || blob.includes("diamond")) return "unlimited";
   if (blob.includes("premium")) return "premium";

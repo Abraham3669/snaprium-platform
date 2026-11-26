@@ -35,6 +35,9 @@ import {
 markBoardRead,
 countBoardUnread,
   toggleMessageReaction,
+  subscribeToCommunityPins,
+  pinMessage,
+  unpinMessage,
 } from "../lib/communities";
 import { notifyUser, notifyCircleSession, notifyEveryone } from "../lib/notifications";
 import QuestionBoard from "../components/QuestionBoard";
@@ -210,6 +213,16 @@ function prepareMathForKaTeX(rawText) {
   text = text.replace(/\\\(([\s\S]*?)\\\)/g, "$$$1$$");
   text = text.replace(/\$\$[\s\n]+/g, "$$").replace(/[\s\n]+\$\$/g, "$$");
   return text;
+}
+
+// One clean line for the pinned bar: no markdown symbols.
+function plainPreview(text) {
+  return String(text || "")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/^\s*([-*•–]|\d+\.)\s+/gm, "")
+    .replace(/[*_`~#>]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function isLiveBoard(board) {
@@ -872,13 +885,15 @@ const next =
 
     const stickToBottom = useRef(true);
   const [unseen, setUnseen] = useState(0);
+  const [awayFromBottom, setAwayFromBottom] = useState(false);
 
   const jumpToBottom = () => {
     const el = feedRef.current;
     if (!el) return;
-    el.scrollTop = el.scrollHeight;
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
     stickToBottom.current = true;
     setUnseen(0);
+    setAwayFromBottom(false);
   };
 
     useEffect(() => {
@@ -935,6 +950,57 @@ const next =
 
 
   const isMember = user && community && (community.members || []).includes(user.uid);
+
+  // ----- Pinned messages (admins pin; everyone sees) -----
+  const [pins, setPins] = useState([]);
+  const [pinIdx, setPinIdx] = useState(0);
+  const [pinOpen, setPinOpen] = useState(false);
+  const canPin =
+    !!user?.uid &&
+    (community?.createdBy === user.uid ||
+      (community?.admins || []).includes(user.uid) ||
+      OWNER_UIDS.includes(user.uid));
+
+  useEffect(() => {
+    if (!communityId) return undefined;
+    return subscribeToCommunityPins(communityId, (rows) => setPins(Array.isArray(rows) ? rows : []));
+  }, [communityId]);
+
+  useEffect(() => {
+    if (pinIdx >= pins.length) setPinIdx(0);
+    if (!pins.length) setPinOpen(false);
+  }, [pins, pinIdx]);
+
+  const pinnedIds = useMemo(() => new Set(pins.map((p) => p.id)), [pins]);
+
+  const togglePin = async (msg) => {
+    try {
+      if (pinnedIds.has(msg.id)) {
+        await unpinMessage(communityId, msg.id);
+        toast.success("Unpinned");
+      } else {
+        await pinMessage(communityId, { ...msg, displayName: liveName(msg), photoURL: livePhoto(msg) }, user.uid);
+        setPinIdx(0);
+        toast.success("Pinned to the top");
+      }
+    } catch {
+      toast.error("Could not update pin");
+    }
+  };
+
+  const jumpToPin = (pin) => {
+    if (pin.boardId && pin.boardId !== activeBoardId) {
+      setBoardId(pin.boardId);
+      setParams({ board: pin.boardId, m: pin.id }, { replace: true });
+      return;
+    }
+    const el = feedRef.current?.querySelector(`[data-mid="${pin.id}"]`);
+    if (el) {
+      el.scrollIntoView({ block: "center", behavior: "smooth" });
+      el.classList.add("cc-flash");
+      setTimeout(() => el.classList.remove("cc-flash"), 1600);
+    }
+  };
 
   // Opened from a notification: scroll to that message once it has loaded.
   useEffect(() => {
@@ -1595,6 +1661,58 @@ useEffect(() => {
   />
 ) : (
   <>
+    {pins.length > 0 && !(liveBoard && callOpen) && (() => {
+      const pin = pins[Math.min(pinIdx, pins.length - 1)];
+      return (
+        <div className={`cc-pinbar ${pinOpen ? "open" : ""}`}>
+          <button
+            type="button"
+            className="cc-pinbar-main"
+            onClick={() => setPinOpen((v) => !v)}
+            aria-expanded={pinOpen}
+            aria-label="Pinned message"
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 17v5M9 3h6l-1 6 3 4H7l3-4-1-6z" />
+            </svg>
+            <span className="cc-pinbar-copy">
+              <strong>
+                Pinned{pins.length > 1 ? ` · ${Math.min(pinIdx, pins.length - 1) + 1} of ${pins.length}` : ""}
+              </strong>
+              <span className="cc-pinbar-text">{plainPreview(pin.text) || (pin.hasImage ? "Photo" : "Message")}</span>
+            </span>
+          </button>
+          {pins.length > 1 && (
+            <button
+              type="button"
+              className="cc-pinbar-next"
+              onClick={() => setPinIdx((i) => (i + 1) % pins.length)}
+              aria-label="Next pinned message"
+            >
+              ›
+            </button>
+          )}
+          {pinOpen && (
+            <div className="cc-pinbar-full">
+              <div className="cc-pinbar-by">{pin.name || "Member"}</div>
+              {pin.text ? (
+                <MessageText text={pin.text} people={mentionable} myUid={user?.uid} isAI={false} />
+              ) : (
+                <p>{pin.hasImage ? "Photo" : ""}</p>
+              )}
+              <div className="cc-pinbar-actions">
+                <button type="button" onClick={() => jumpToPin(pin)}>Go to message</button>
+                {canPin && (
+                  <button type="button" onClick={() => unpinMessage(communityId, pin.id).catch(() => toast.error("Could not unpin"))}>
+                    Unpin
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    })()}
     <div
       className="cc-feed"
       ref={feedRef}
@@ -1602,12 +1720,21 @@ useEffect(() => {
         const el = e.currentTarget;
         const near = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
         stickToBottom.current = near;
+        setAwayFromBottom((v) => (v === !near ? v : !near));
         if (near) setUnseen(0);
       }}
     >
-      {unseen > 0 && !stickToBottom.current && (
-        <button type="button" className="cc-jump" onClick={jumpToBottom}>
-          New messages
+      {awayFromBottom && (
+        <button
+          type="button"
+          className={`cc-jump ${unseen > 0 ? "has-new" : "arrow-only"}`}
+          onClick={jumpToBottom}
+          aria-label={unseen > 0 ? "Go to new messages" : "Scroll to the latest message"}
+        >
+          {unseen > 0 && <span>{unseen > 99 ? "99+" : unseen} new {unseen === 1 ? "message" : "messages"}</span>}
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M12 5v14M5 12l7 7 7-7" />
+          </svg>
         </button>
       )}
       {messages.length === 0 && (
@@ -1747,6 +1874,11 @@ useEffect(() => {
                         ))}
                       </div>
                       <button type="button" onClick={() => { setReplyTo(msg); setMenuFor(null); }}>Reply</button>
+                      {canPin && (msg.text || msg.imageUrl) && (
+                        <button type="button" onClick={() => { togglePin(msg); setMenuFor(null); }}>
+                          {pinnedIds.has(msg.id) ? "Unpin" : "Pin message"}
+                        </button>
+                      )}
                       {msg.uid === user?.uid && msg.text && !msg.imageUrl && (
                         <button type="button" onClick={() => { startEdit(msg); setMenuFor(null); }}>Edit</button>
                       )}

@@ -41,9 +41,9 @@ export default function UpgradeModal({
 
         <div className="upgrade-body">
           <p className="upgrade-main-text">
-            Unlimited gives you <strong>unlimited photo solves</strong>,{" "}
-            <strong>longer live sessions with more people</strong>, and more boards and
-            circles to run. Everyone in a session you host gets the longer time too.
+            Orbit gives you <strong>longer live sessions with more people</strong> and{" "}
+            <strong>more circles and boards</strong> to run. Everyone in a session you host gets
+            the longer time too.
           </p>
           {user?.email && (
             <p className="upgrade-subtitle" style={{ marginTop: 10 }}>
@@ -54,7 +54,7 @@ export default function UpgradeModal({
 
         <div className="upgrade-actions">
           <button className="upgrade-btn primary full-width" onClick={goToUpgradePage}>
-            Upgrade to Unlimited
+            Upgrade to Orbit
           </button>
         </div>
       </div>

@@ -28,13 +28,13 @@ export default function CheckoutReturn() {
         textAlign: "center",
       }}
     >
-      <h1 style={{ fontSize: 22 }}>Payment received</h1>
+      <h1 style={{ fontSize: 22 }}>You're in Orbit</h1>
       <p style={{ marginTop: 12, opacity: 0.9 }}>
-        Returning you to the Snaprium app…
+        Payment received. Returning you to Snaprium…
       </p>
       <p style={{ marginTop: 24, fontSize: 14, opacity: 0.7 }}>
-        If the app doesn’t open, switch back to Snaprium manually. Your Unlimited
-        plan will appear shortly.
+        If the app doesn’t open, switch back to Snaprium manually. Longer live
+        sessions and more circles will be ready in a moment.
       </p>
     </div>
   );

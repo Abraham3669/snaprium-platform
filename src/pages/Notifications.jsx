@@ -7,6 +7,7 @@ import { Capacitor } from "@capacitor/core";
 import { useAuth } from "../context/AuthContext";
 import { describeNotification, notificationTime } from "../lib/notifications";
 import { enablePush, getPushState, clearDeliveredPush } from "../lib/push";
+import "../styles/notifications-polish.css";
 
 function TypeIcon({ type }) {
   const common = { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, "aria-hidden": true };

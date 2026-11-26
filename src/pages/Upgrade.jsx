@@ -15,6 +15,7 @@ export default function Upgrade() {
   const [error, setError] = useState("");
   const [showCheckout, setShowCheckout] = useState(false);
   const [storePrice, setStorePrice] = useState("");
+  const [success, setSuccess] = useState("");
 
   const UNLIMITED_PRICE_ID = "pri_01ktdn3fppsgkgjhm8xm5ha015";
   const isNative = Capacitor.isNativePlatform();
@@ -68,6 +69,7 @@ export default function Upgrade() {
       if (isNative) {
         await purchaseUnlimited(user.uid);
         await refreshUser?.();
+        setSuccess("Orbit is active. Longer live sessions and more circles are ready to use.");
         return;
       }
 
@@ -100,6 +102,7 @@ export default function Upgrade() {
     try {
       await restoreUnlimited(user.uid);
       await refreshUser?.();
+      setSuccess("Your purchase was restored. Orbit is active.");
     } catch (err) {
       setError(err.message || "Could not restore purchases.");
     } finally {
@@ -116,8 +119,8 @@ export default function Upgrade() {
   return (
     <div className="upgrade-page">
       <div className="upgrade-header">
-        <h2>Upgrade to Unlimited</h2>
-        <p>Build more circles. Stay in longer sessions when it matters. Solve freely.</p>
+        <h2>Upgrade to Orbit</h2>
+        <p>Build more circles. Stay in longer live sessions when it matters.</p>
       </div>
 
       {!showCheckout && (
@@ -131,26 +134,23 @@ export default function Upgrade() {
               <strong>Circles and live sessions</strong>
             </p>
             <p className="plan-detail">
-              Join circles and host live sessions for up to 5 people, 40 minutes each. Try the solver with 10 solves a day.
+              Join circles and host live sessions for up to 5 people, 40 minutes each.
             </p>
             <button className="plan-cta disabled">Current Plan</button>
           </div>
 
           <div className="pricing-card premium">
             <div className="popular-badge">RECOMMENDED</div>
-            <h3>Unlimited</h3>
+            <h3>Orbit</h3>
             <div className="plan-price">
               {isNative ? storePrice || "…" : "$12.99"} <span>per month</span>
             </div>
-            <p className="plan-desc">For students who study every day</p>
+            <p className="plan-desc">For people who learn and work together</p>
             <ul className="plan-features">
-              <li><CheckIcon /> Create more circles</li>
-              <li><CheckIcon /> More boards in every circle you run</li>
               <li><CheckIcon /> Live sessions for up to 10 people, 2 hours each</li>
               <li><CheckIcon /> Camera and screen share: 600 video minutes a month, then audio-only</li>
-              <li><CheckIcon /> Unlimited photo solves</li>
-              <li><CheckIcon /> More follow-up questions on every solution</li>
-              <li><CheckIcon /> Built for exam nights and deep focus</li>
+              <li><CheckIcon /> Create more circles</li>
+              <li><CheckIcon /> More boards in every circle you run</li>
             </ul>
             <button
               className="plan-cta primary"
@@ -160,8 +160,8 @@ export default function Upgrade() {
               {upgrading
                 ? isNative ? "Starting store…" : "Opening Checkout..."
                 : isUnlimited
-                ? "✅ Unlimited Active"
-                : "Upgrade to Unlimited"}
+                ? "✅ Orbit Active"
+                : "Upgrade to Orbit"}
             </button>
             {isNative && !isUnlimited && (
               <button
@@ -188,7 +188,7 @@ export default function Upgrade() {
             )}
             {isNative && (
               <p className="plan-detail" style={{ fontSize: 12, lineHeight: 1.5, marginTop: 10 }}>
-                Snaprium Unlimited is a monthly subscription. It renews automatically each month
+                Snaprium Orbit is a monthly subscription. It renews automatically each month
                 unless you cancel at least 24 hours before the end of the current period. You can
                 manage or cancel it anytime in{" "}
                 {Capacitor.getPlatform() === "ios"
@@ -226,6 +226,12 @@ export default function Upgrade() {
             ← Back to Plans
           </button>
         </div>
+      )}
+
+      {success && (
+        <p className="success-message" role="status" style={{ marginTop: 20 }}>
+          {success}
+        </p>
       )}
 
       {error && (

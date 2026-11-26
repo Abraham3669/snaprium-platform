@@ -383,7 +383,7 @@ export default function Settings() {
     try {
       await restoreUnlimited(user.uid);
       await refreshUser?.();
-      toast.success("Your Unlimited plan is restored");
+      toast.success("Your Orbit plan is restored");
     } catch (err) {
       toast.error(err?.message || "Could not restore purchases. Please try again.");
     } finally {
@@ -554,7 +554,7 @@ setPreview(photoURL);
 <ProfileStats uid={user.uid} />
             <div className="pf-chips">
               <span className={isSubscribed ? "pf-chip pf-chip-pro" : "pf-chip"}>
-                {isSubscribed ? "Unlimited plan" : "Free plan"}
+                {isSubscribed ? "Orbit plan" : "Free plan"}
               </span>
               {signInLabel && <span className="pf-chip">Signed in with {signInLabel}</span>}
             </div>
@@ -638,6 +638,7 @@ setPreview(photoURL);
               <ChevronIcon />
             </button>
 
+            {/* Solo study hidden for now (the /solo page still works). Remove the comment marks to show it again.
             <button type="button" className="pf-link" onClick={() => navigate("/solo")}>
               <span className="pf-link-icon"><SoloIcon /></span>
               <span className="pf-link-text">
@@ -646,6 +647,7 @@ setPreview(photoURL);
               </span>
               <ChevronIcon />
             </button>
+            */}
 
             {!isApp && (
               <button type="button" className="pf-link" onClick={() => navigate("/")}>
@@ -722,7 +724,7 @@ setPreview(photoURL);
                 <span className="pf-link-icon pf-link-icon-accent"><SparkIcon /></span>
                 <span className="pf-link-text">
                   <strong>Upgrade plan</strong>
-                  <small>Unlimited solves and more</small>
+                  <small>Longer sessions, more circles and boards</small>
                 </span>
                 <ChevronIcon />
               </button>

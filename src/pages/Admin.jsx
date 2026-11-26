@@ -34,9 +34,15 @@ import {
   Download,
   ExternalLink,
   Trash2,
+  ChevronRight,
+  Globe,
+  Copy,
+  Pencil,
 } from "lucide-react";
 import { computeMetrics, dayKey, toMillis } from "../lib/adminMetrics";
 import { computeFeedStats, countReports, reportKey, sortUsers, toCsv, downloadCsv } from "../lib/adminFeed";
+import { computeVisits } from "../lib/adminVisits";
+import { COMMUNITY_TAGS } from "../lib/communities";
 import { countFollowers, countPosts, fetchPostsBy } from "../lib/feed";
 import { KIND_IDS, kindLabel, topicLabel } from "../lib/topics";
 import { db } from "../lib/firebase";
@@ -50,6 +56,7 @@ const REPORT_LIMIT = 200;
 const POST_LIMIT = 100;
 const EVENT_DAYS = 30;
 const EVENT_LIMIT = 5000;
+const VISIT_LIMIT = 10000;
 
 const FILTERS = {
   reports: [
@@ -126,6 +133,11 @@ export default function Admin() {
   const [filters, setFilters] = useState({ reports: "open", users: "all", circles: "all", posts: "all" });
   const [userSort, setUserSort] = useState("new");
   const [detail, setDetail] = useState(null); // { user, loading, postCount, followers, posts }
+  const [circleId, setCircleId] = useState(null); // the circle whose panel is open
+  const [visits, setVisits] = useState([]);
+  const [visitsBusy, setVisitsBusy] = useState(false);
+  const [visitsError, setVisitsError] = useState("");
+  const [visitsLoaded, setVisitsLoaded] = useState(false);
 
   const [confirm, setConfirm] = useState(null); // { title, body, label, danger, askReason, run }
   const [reason, setReason] = useState("");
@@ -217,17 +229,40 @@ export default function Admin() {
     if (allowed) load();
   }, [allowed, load]);
 
+  const loadVisits = useCallback(async () => {
+    setVisitsBusy(true);
+    setVisitsError("");
+    try {
+      const since = dayKey(Date.now() - 29 * 86400000);
+      const snap = await getDocs(
+        query(collection(db, "visits"), where("day", ">=", since), orderBy("day", "desc"), limit(VISIT_LIMIT))
+      );
+      setVisits(snap.docs.map((d) => d.data()));
+      setVisitsLoaded(true);
+    } catch (err) {
+      console.warn("[admin] visits failed", err);
+      setVisitsError("Could not read the visits. Publish the new Firestore rules first.");
+    } finally {
+      setVisitsBusy(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (allowed && tab === "visits" && !visitsLoaded && !visitsBusy) loadVisits();
+  }, [allowed, tab, visitsLoaded, visitsBusy, loadVisits]);
+
   // Esc closes the top window (the confirm window first, then the person's details)
   useEffect(() => {
-    if (!confirm && !detail) return undefined;
+    if (!confirm && !detail && !circleId) return undefined;
     const onKey = (e) => {
       if (e.key !== "Escape" || working) return;
       if (confirm) setConfirm(null);
+      else if (circleId) setCircleId(null);
       else setDetail(null);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [confirm, detail, working]);
+  }, [confirm, detail, circleId, working]);
 
   const q = search.trim().toLowerCase();
   const matches = (values) => !q || values.some((v) => String(v || "").toLowerCase().includes(q));
@@ -280,6 +315,7 @@ export default function Admin() {
   );
 
   const metrics = useMemo(() => computeMetrics({ events, users }), [events, users]);
+  const visitStats = useMemo(() => computeVisits(visits), [visits]);
 
   if (loading) return null;
   if (!allowed) return <Navigate to="/" replace />;
@@ -613,6 +649,7 @@ export default function Admin() {
     ["posts", "Posts", FileText],
     ["users", "Users", Users],
     ["circles", "Circles", Layers],
+    ["visits", "Visits", Globe],
   ];
 
   const stats = [
@@ -622,14 +659,7 @@ export default function Admin() {
       value: totals ? totals.users : users.length >= LIST_LIMIT ? `${LIST_LIMIT}+` : users.length,
       icon: Users,
     },
-    { label: "Unlimited", value: totals ? totals.paid : paidCount, icon: Crown, tone: "gold" },
-    {
-      label: "Banned",
-      value: totals ? totals.banned : bannedCount,
-      icon: Ban,
-      tone: (totals ? totals.banned : bannedCount) ? "danger" : "",
-    },
-    { label: "Active circles", value: activeCircles, icon: Layers },
+    { label: "Circles", value: activeCircles, icon: Layers },
     { label: "Posts", value: postTotal !== null ? postTotal : posts.length >= POST_LIMIT ? `${POST_LIMIT}+` : posts.length, icon: FileText },
   ];
 
@@ -690,7 +720,7 @@ export default function Admin() {
         ))}
       </nav>
 
-      {tab !== "analytics" && (
+      {tab !== "analytics" && tab !== "visits" && (
       <div className="ad-toolbar">
         <label className="ad-search">
           <Search size={16} aria-hidden="true" />
@@ -748,7 +778,9 @@ export default function Admin() {
         </div>
       )}
 
-      {tab === "analytics" ? (
+      {tab === "visits" ? (
+        <VisitsPanel stats={visitStats} busy={visitsBusy} error={visitsError} users={users} onRefresh={loadVisits} />
+      ) : tab === "analytics" ? (
         <AnalyticsPanel
           metrics={metrics}
           eventsError={eventsError}
@@ -990,38 +1022,29 @@ export default function Admin() {
 
           {tab === "circles" &&
             filteredCircles.map((c) => (
-              <li key={c.id} className={`ad-row ${c.deleted ? "is-banned" : ""}`}>
-                <span className="ad-avatar">{firstLetter(c.name)}</span>
+              <li
+                key={c.id}
+                className={`ad-row ad-row-tap ${c.deleted ? "is-banned" : ""}`}
+                role="button"
+                tabIndex={0}
+                onClick={() => setCircleId(c.id)}
+                onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setCircleId(c.id)}
+              >
+                <span className="ad-avatar">
+                  {c.photoUrl ? <img src={c.photoUrl} alt="" loading="lazy" /> : firstLetter(c.name)}
+                </span>
                 <div className="ad-main">
-                  <div className="ad-name">{c.name || c.id}</div>
-                  <div className="ad-line">
-                    {[c.tag, `${c.memberCount || 0} members`].filter(Boolean).join(" · ")}
+                  <div className="ad-name">
+                    {c.name || c.id}
+                    {c.deleted && <span className="ad-badge red">Unlisted</span>}
                   </div>
                   <div className="ad-meta">
-                    {[c.createdByName ? `By ${c.createdByName}` : "", fmtDate(c.createdAt)]
+                    {[c.tag, `${c.memberCount || (c.members || []).length || 0} members`, c.visibility === "private" ? "Private" : ""]
                       .filter(Boolean)
                       .join(" · ")}
                   </div>
                 </div>
-                <div className="ad-tags">
-                  <span className="ad-badge">{c.visibility === "private" ? "Private" : c.visibility || "Public"}</span>
-                  {c.deleted && <span className="ad-badge red">Unlisted</span>}
-                </div>
-                <div className="ad-actions">
-                  {c.deleted ? (
-                    <button type="button" className="ad-btn small" onClick={() => restoreCircle(c.id)}>
-                      Restore
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      className="ad-btn small danger"
-                      onClick={() => askUnlist(c.id, c.name)}
-                    >
-                      Unlist
-                    </button>
-                  )}
-                </div>
+                <ChevronRight size={18} className="ad-chev" aria-hidden="true" />
               </li>
             ))}
         </ul>
@@ -1035,10 +1058,11 @@ export default function Admin() {
         </div>
       )}
 
-      <p className="ad-foot">
-        Showing {users.length} users, {communities.length} circles, {posts.length} latest posts and the latest {REPORT_LIMIT} reports.
-        {tab !== "reports" && more[tab] ? " Load more for the rest." : ""}
-      </p>
+      {tab !== "visits" && tab !== "analytics" && (
+        <p className="ad-foot">
+          {list.length} shown{tab !== "reports" && more[tab] ? ". Load more for the rest." : ""}
+        </p>
+      )}
 
       {detail && (
         <UserDetail
@@ -1051,6 +1075,18 @@ export default function Admin() {
           onUnban={askUnban}
           onPlan={askPlan}
           onDeletePost={askDeletePost}
+        />
+      )}
+
+      {circleId && communities.find((c) => c.id === circleId) && (
+        <CircleDetail
+          circle={communities.find((c) => c.id === circleId)}
+          me={user.uid}
+          ask={ask}
+          onClose={() => setCircleId(null)}
+          onPatch={patchCircle}
+          onUnlist={askUnlist}
+          onRestore={restoreCircle}
         />
       )}
 
@@ -1557,6 +1593,498 @@ function UserDetail({ detail, reports, isAdminUser, isSelf, onClose, onBan, onUn
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+/* ---------- Circle panel: members, admins and controls ---------- */
+
+const uniq = (a) => [...new Set((a || []).filter(Boolean))];
+
+function CircleDetail({ circle: c, me, ask, onClose, onPatch, onUnlist, onRestore }) {
+  const [people, setPeople] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [q, setQ] = useState("");
+  const [role, setRole] = useState("all");
+  const [open, setOpen] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({ name: c.name || "", description: c.description || "", tag: c.tag || "" });
+  const [saving, setSaving] = useState(false);
+
+  const members = c.members || [];
+  const admins = c.admins || [];
+  const banned = c.banned || [];
+  const owner = c.createdBy || "";
+  const ids = useMemo(() => uniq([owner, ...members, ...admins, ...banned]).slice(0, 400), [owner, members, admins, banned]);
+  const idsKey = ids.join(",");
+
+  useEffect(() => {
+    let off = false;
+    (async () => {
+      setLoading(true);
+      const out = {};
+      for (let i = 0; i < ids.length; i += 25) {
+        await Promise.all(
+          ids.slice(i, i + 25).map(async (id) => {
+            if (people[id]) return;
+            try {
+              const snap = await getDoc(doc(db, "users", id));
+              out[id] = snap.exists() ? snap.data() : {};
+            } catch {
+              out[id] = {};
+            }
+          })
+        );
+      }
+      if (!off) {
+        setPeople((prev) => ({ ...prev, ...out }));
+        setLoading(false);
+      }
+    })();
+    return () => {
+      off = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idsKey]);
+
+  const nameOf = (id) => {
+    const u = people[id] || {};
+    return u.displayName || u.name || u.email || id.slice(0, 8);
+  };
+  const roleOf = (id) => (id === owner ? "owner" : banned.includes(id) ? "banned" : admins.includes(id) ? "admin" : "member");
+
+  const write = async (patch, done) => {
+    await updateDoc(doc(db, "communities", c.id), { ...patch, updatedAt: serverTimestamp() });
+    onPatch(c.id, patch);
+    if (done) toast.success(done);
+  };
+
+  const makeAdmin = (id) => write({ admins: uniq([...admins, id]) }, "Made admin").catch(() => toast.error("Could not change role"));
+  const removeAdmin = (id) => write({ admins: admins.filter((x) => x !== id) }, "Admin removed").catch(() => toast.error("Could not change role"));
+  const removeMember = (id) => {
+    const nextMembers = members.filter((x) => x !== id);
+    return write(
+      { members: nextMembers, admins: admins.filter((x) => x !== id), memberCount: nextMembers.length },
+      "Removed from the circle"
+    );
+  };
+  const banMember = (id) => {
+    const nextMembers = members.filter((x) => x !== id);
+    return write(
+      { members: nextMembers, admins: admins.filter((x) => x !== id), banned: uniq([...banned, id]), memberCount: nextMembers.length },
+      "Banned from the circle"
+    );
+  };
+  const unbanMember = (id) => write({ banned: banned.filter((x) => x !== id) }, "Ban lifted").catch(() => toast.error("Could not lift the ban"));
+
+  const askRemove = (id) =>
+    ask({
+      title: "Remove from this circle?",
+      body: `${nameOf(id)} is removed from "${c.name}". They can join again if the circle is open.`,
+      label: "Remove",
+      danger: true,
+      run: () => removeMember(id),
+    });
+  const askBan = (id) =>
+    ask({
+      title: "Ban from this circle?",
+      body: `${nameOf(id)} is removed and can't join "${c.name}" again until you lift the ban.`,
+      label: "Ban from circle",
+      danger: true,
+      run: () => banMember(id),
+    });
+
+  const askVisibility = () => {
+    const toPrivate = c.visibility !== "private";
+    ask({
+      title: toPrivate ? "Make this circle private?" : "Make this circle public?",
+      body: toPrivate
+        ? "It is hidden from Explore. Only people with the invite code can join."
+        : "Everyone can find it in Explore and join.",
+      label: toPrivate ? "Make private" : "Make public",
+      danger: toPrivate,
+      run: () => write({ visibility: toPrivate ? "private" : "public" }, toPrivate ? "Now private" : "Now public"),
+    });
+  };
+
+  const askClearPins = () =>
+    ask({
+      title: "Clear pinned messages?",
+      body: "All pins in this circle are removed. The messages themselves stay.",
+      label: "Clear pins",
+      danger: true,
+      run: () => write({ pinned: [] }, "Pins cleared"),
+    });
+
+  const saveInfo = async () => {
+    const name = form.name.trim();
+    if (!name) return toast.error("A circle needs a name");
+    setSaving(true);
+    try {
+      await write({ name: name.slice(0, 60), description: form.description.trim().slice(0, 160), tag: form.tag || c.tag || "" }, "Saved");
+      setEditing(false);
+    } catch {
+      toast.error("Could not save");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const copyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(c.code || "");
+      toast.success("Invite code copied");
+    } catch {
+      toast.error("Could not copy");
+    }
+  };
+
+  const term = q.trim().toLowerCase();
+  const rows = ids
+    .filter((id) => {
+      const r = roleOf(id);
+      if (role === "admin" && r !== "admin" && r !== "owner") return false;
+      if (role === "banned" && r !== "banned") return false;
+      if (role === "member" && r !== "member") return false;
+      if (role === "all" && r === "banned") return false;
+      if (!term) return true;
+      const u = people[id] || {};
+      return [u.displayName, u.name, u.email, id].some((v) => String(v || "").toLowerCase().includes(term));
+    })
+    .sort((a, b) => {
+      const rank = { owner: 0, admin: 1, member: 2, banned: 3 };
+      return rank[roleOf(a)] - rank[roleOf(b)] || nameOf(a).localeCompare(nameOf(b));
+    });
+
+  const created = fmtDate(c.createdAt);
+  const count = members.length || c.memberCount || 0;
+
+  return (
+    <div className="ad-overlay ad-side" onClick={onClose}>
+      <aside className="ad-panel-side" role="dialog" aria-modal="true" aria-label={c.name} onClick={(e) => e.stopPropagation()}>
+        <button type="button" className="ad-modal-close" aria-label="Close" onClick={onClose}>
+          <X size={18} />
+        </button>
+
+        <div className="ad-cd-head">
+          <span className="ad-avatar big">
+            {c.photoUrl ? <img src={c.photoUrl} alt="" /> : firstLetter(c.name)}
+          </span>
+          <div>
+            <h2>{c.name || c.id}</h2>
+            <div className="ad-tags left">
+              {c.tag && <span className="ad-badge">{c.tag}</span>}
+              <span className="ad-badge">{c.visibility === "private" ? "Private" : "Public"}</span>
+              {c.deleted && <span className="ad-badge red">Unlisted</span>}
+            </div>
+          </div>
+        </div>
+
+        {c.description && !editing && <p className="ad-cd-desc">{c.description}</p>}
+
+        <div className="ad-detail-stats">
+          <div><strong>{count}</strong><span>Members</span></div>
+          <div><strong>{uniq([owner, ...admins]).length}</strong><span>Admins</span></div>
+          <div><strong>{banned.length}</strong><span>Banned</span></div>
+          <div><strong>{(c.pinned || []).length}</strong><span>Pinned</span></div>
+        </div>
+
+        <p className="ad-meta ad-cd-meta">
+          {[owner ? `Created by ${nameOf(owner)}` : "", created].filter(Boolean).join(" · ")}
+        </p>
+
+        {editing ? (
+          <div className="ad-cd-edit">
+            <label>
+              <span>Name</span>
+              <input value={form.name} maxLength={60} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+            </label>
+            <label>
+              <span>Description</span>
+              <textarea rows={3} value={form.description} maxLength={160} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
+            </label>
+            <label>
+              <span>Topic</span>
+              <select value={form.tag} onChange={(e) => setForm((f) => ({ ...f, tag: e.target.value }))}>
+                {uniq([form.tag, ...COMMUNITY_TAGS]).map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </label>
+            <div className="ad-modal-actions">
+              <button type="button" className="ad-btn" onClick={() => setEditing(false)} disabled={saving}>Cancel</button>
+              <button type="button" className="ad-btn primary" onClick={saveInfo} disabled={saving}>{saving ? "Saving…" : "Save"}</button>
+            </div>
+          </div>
+        ) : (
+          <div className="ad-cd-actions">
+            <button type="button" className="ad-btn small" onClick={() => setEditing(true)}>
+              <Pencil size={14} aria-hidden="true" /><span>Edit info</span>
+            </button>
+            {c.code && (
+              <button type="button" className="ad-btn small" onClick={copyCode}>
+                <Copy size={14} aria-hidden="true" /><span>Invite code</span>
+              </button>
+            )}
+            <button type="button" className="ad-btn small" onClick={askVisibility}>
+              {c.visibility === "private" ? "Make public" : "Make private"}
+            </button>
+            {(c.pinned || []).length > 0 && (
+              <button type="button" className="ad-btn small" onClick={askClearPins}>Clear pins</button>
+            )}
+            {c.deleted ? (
+              <button type="button" className="ad-btn small" onClick={() => onRestore(c.id)}>Restore</button>
+            ) : (
+              <button type="button" className="ad-btn small danger" onClick={() => onUnlist(c.id, c.name)}>Unlist</button>
+            )}
+          </div>
+        )}
+
+        <div className="ad-cd-people">
+          <div className="ad-cd-people-head">
+            <h3>People</h3>
+            <div className="ad-chips" role="group" aria-label="Show">
+              {[["all", "All"], ["admin", "Admins"], ["member", "Members"], ["banned", "Banned"]].map(([k, l]) => (
+                <button key={k} type="button" className={`ad-chip ${role === k ? "active" : ""}`} onClick={() => setRole(k)}>{l}</button>
+              ))}
+            </div>
+          </div>
+          <label className="ad-search">
+            <Search size={16} aria-hidden="true" />
+            <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name or email" />
+          </label>
+
+          {loading && !rows.length ? (
+            <p className="ad-panel-note">Loading people…</p>
+          ) : rows.length === 0 ? (
+            <p className="ad-panel-note">{term ? "No one matches." : role === "banned" ? "No one is banned here." : "No one here yet."}</p>
+          ) : (
+            <ul className="ad-people">
+              {rows.map((id) => {
+                const u = people[id] || {};
+                const r = roleOf(id);
+                const isOpen = open === id;
+                const protectedUser = id === owner || ADMIN_UIDS.includes(id) || id === me;
+                return (
+                  <li key={id} className={isOpen ? "open" : ""}>
+                    <button type="button" className="ad-person" onClick={() => setOpen(isOpen ? "" : id)} aria-expanded={isOpen}>
+                      <span className="ad-avatar">
+                        {u.photoURL ? <img src={u.photoURL} alt="" referrerPolicy="no-referrer" /> : firstLetter(nameOf(id))}
+                      </span>
+                      <span className="ad-person-main">
+                        <span className="ad-person-name">{nameOf(id)}</span>
+                        <span className="ad-meta">{u.email || id}</span>
+                      </span>
+                      <span className={`ad-badge ${r === "owner" ? "gold" : r === "admin" ? "blue" : r === "banned" ? "red" : ""}`}>
+                        {r === "owner" ? "Owner" : r === "admin" ? "Admin" : r === "banned" ? "Banned" : "Member"}
+                      </span>
+                    </button>
+                    {isOpen && (
+                      <div className="ad-person-actions">
+                        {r === "banned" ? (
+                          <button type="button" className="ad-btn small" onClick={() => unbanMember(id)}>Lift ban</button>
+                        ) : r === "owner" ? (
+                          <span className="ad-meta">The creator can't be changed here.</span>
+                        ) : (
+                          <>
+                            {r === "admin" ? (
+                              <button type="button" className="ad-btn small" onClick={() => removeAdmin(id)}>Remove admin</button>
+                            ) : (
+                              <button type="button" className="ad-btn small" onClick={() => makeAdmin(id)}>Make admin</button>
+                            )}
+                            {!protectedUser && (
+                              <>
+                                <button type="button" className="ad-btn small danger" onClick={() => askRemove(id)}>Remove</button>
+                                <button type="button" className="ad-btn small danger" onClick={() => askBan(id)}>Ban from circle</button>
+                              </>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+/* ---------- Visits tab ---------- */
+
+function countryName(code) {
+  if (!code) return "Unknown";
+  try {
+    return new Intl.DisplayNames(["en"], { type: "region" }).of(code) || code;
+  } catch {
+    return code;
+  }
+}
+function flagOf(code) {
+  if (!/^[A-Z]{2}$/.test(code || "")) return "🌐";
+  return String.fromCodePoint(...[...code].map((ch) => 127397 + ch.charCodeAt(0)));
+}
+
+const PLATFORM_LABEL = { app: "iPhone app", phone: "Phone browser", pc: "Computer" };
+
+function VisitsPanel({ stats: v, busy, error, users, onRefresh }) {
+  const nameFor = (uid) => {
+    const u = users.find((x) => x.id === uid);
+    return u?.displayName || u?.name || "Signed in";
+  };
+  const maxPages = Math.max(1, ...v.pages.map((x) => x.views));
+  const maxRefs = Math.max(1, ...v.refs.map((x) => x.views));
+  const maxPlat = Math.max(1, ...v.platforms.map((x) => x.people));
+  const maxCountry = Math.max(1, ...v.countries.map((x) => x.people));
+
+  return (
+    <div className="ad-analytics">
+      {error ? (
+        <div className="ad-alert" role="alert">{error}</div>
+      ) : !v.hasData && !busy ? (
+        <div className="ad-infobox">
+          No visits recorded yet. Counting starts once the new version of the site is live, and this page fills in from that day.
+        </div>
+      ) : null}
+
+      <section className="ad-kpis" aria-label="Visitors">
+        <div className="ad-kpi">
+          <span className="ad-kpi-label">Visitors today</span>
+          <span className="ad-kpi-value">{v.today}</span>
+          <span className="ad-kpi-hint">{v.live} in the last 30 minutes</span>
+        </div>
+        <div className="ad-kpi">
+          <span className="ad-kpi-label">Last 7 days</span>
+          <span className="ad-kpi-value">{v.week}</span>
+          <Delta cur={v.week} prev={v.prevWeek} />
+          <span className="ad-kpi-hint">{v.views7} page views</span>
+        </div>
+        <div className="ad-kpi">
+          <span className="ad-kpi-label">Last 30 days</span>
+          <span className="ad-kpi-value">{v.month}</span>
+          <span className="ad-kpi-hint">{v.views} page views</span>
+        </div>
+        <div className="ad-kpi">
+          <span className="ad-kpi-label">Came back</span>
+          <span className="ad-kpi-value">{v.month ? `${Math.round((v.returning / v.month) * 100)}%` : "–"}</span>
+          <span className="ad-kpi-hint">{v.returning} of {v.month} visited on more than one day</span>
+        </div>
+      </section>
+
+      <section className="ad-panel">
+        <header>
+          <h3>Visitors per day</h3>
+          <span>
+            Last 30 days
+            <button type="button" className="ad-btn small" onClick={onRefresh} disabled={busy}>
+              <RefreshCw size={14} className={busy ? "ad-spin" : ""} aria-hidden="true" />
+              <span>{busy ? "Loading" : "Refresh"}</span>
+            </button>
+          </span>
+        </header>
+        <BarChart days={v.days} values={v.daily} label="Visitors per day, last 30 days" />
+      </section>
+
+      <div className="ad-two">
+        <section className="ad-panel">
+          <header><h3>Top pages</h3><span>Page views</span></header>
+          <ul className="ad-funnel">
+            {v.pages.map((p) => (
+              <li key={p.id} className="ad-funnel-row">
+                <div className="ad-funnel-top"><span className="ad-trunc">{p.id}</span><span><strong>{p.views}</strong> · {p.people} people</span></div>
+                <div className="ad-funnel-bar"><span style={{ width: `${(p.views / maxPages) * 100}%` }} /></div>
+              </li>
+            ))}
+            {!v.pages.length && <li className="ad-panel-note">Nothing yet.</li>}
+          </ul>
+        </section>
+        <section className="ad-panel">
+          <header><h3>Where they come from</h3><span>Add ?ref=name to a link to tag it</span></header>
+          <ul className="ad-funnel">
+            {v.refs.map((p) => (
+              <li key={p.id} className="ad-funnel-row">
+                <div className="ad-funnel-top"><span className="ad-trunc">{p.id === "direct" ? "Direct or unknown" : p.id}</span><span><strong>{p.people}</strong> people</span></div>
+                <div className="ad-funnel-bar"><span style={{ width: `${(p.views / maxRefs) * 100}%` }} /></div>
+              </li>
+            ))}
+            {!v.refs.length && <li className="ad-panel-note">Nothing yet.</li>}
+          </ul>
+        </section>
+      </div>
+
+      <section className="ad-panel">
+        <header><h3>Countries</h3><span>People, last 30 days</span></header>
+        <ul className="ad-funnel">
+          {v.countries.map((p) => (
+            <li key={p.id || "unknown"} className="ad-funnel-row">
+              <div className="ad-funnel-top">
+                <span>{flagOf(p.id)} {countryName(p.id)}</span>
+                <span><strong>{p.people}</strong> · {v.month ? Math.round((p.people / v.month) * 100) : 0}%</span>
+              </div>
+              <div className="ad-funnel-bar"><span style={{ width: `${(p.people / maxCountry) * 100}%` }} /></div>
+            </li>
+          ))}
+          {!v.countries.length && <li className="ad-panel-note">Nothing yet.</li>}
+        </ul>
+      </section>
+
+      <div className="ad-two">
+        <section className="ad-panel">
+          <header><h3>Devices</h3><span>People, last 30 days</span></header>
+          <ul className="ad-funnel">
+            {v.platforms.map((p) => (
+              <li key={p.id} className="ad-funnel-row">
+                <div className="ad-funnel-top"><span>{PLATFORM_LABEL[p.id] || p.id}</span><span><strong>{p.people}</strong></span></div>
+                <div className="ad-funnel-bar"><span style={{ width: `${(p.people / maxPlat) * 100}%` }} /></div>
+              </li>
+            ))}
+            {!v.platforms.length && <li className="ad-panel-note">Nothing yet.</li>}
+          </ul>
+        </section>
+        <section className="ad-panel">
+          <header><h3>Who they are</h3><span>Last 30 days</span></header>
+          <ul className="ad-funnel">
+            <li className="ad-funnel-row">
+              <div className="ad-funnel-top"><span>Signed in</span><span><strong>{v.signedIn}</strong></span></div>
+              <div className="ad-funnel-bar"><span style={{ width: `${v.month ? (v.signedIn / v.month) * 100 : 0}%` }} /></div>
+            </li>
+            <li className="ad-funnel-row">
+              <div className="ad-funnel-top"><span>Guests (not signed in)</span><span><strong>{v.guests}</strong></span></div>
+              <div className="ad-funnel-bar"><span style={{ width: `${v.month ? (v.guests / v.month) * 100 : 0}%` }} /></div>
+            </li>
+            <li className="ad-funnel-row">
+              <div className="ad-funnel-top"><span>First visit</span><span><strong>{v.fresh}</strong></span></div>
+              <div className="ad-funnel-bar"><span style={{ width: `${v.month ? (v.fresh / v.month) * 100 : 0}%` }} /></div>
+            </li>
+          </ul>
+        </section>
+      </div>
+
+      <section className="ad-panel">
+        <header><h3>Latest visits</h3><span>Newest first</span></header>
+        <table className="ad-table">
+          <thead>
+            <tr><th>When</th><th>Page</th><th>From</th><th>Device</th><th>Who</th></tr>
+          </thead>
+          <tbody>
+            {v.recent.map((r, i) => (
+              <tr key={`${r.vid}-${r.ms}-${i}`}>
+                <td>{ago(r.ms)}</td>
+                <td className="ad-trunc">{r.path}</td>
+                <td className="ad-trunc">{r.ref === "direct" ? "Direct" : r.ref}</td>
+                <td>{PLATFORM_LABEL[r.platform] || r.platform}</td>
+                <td className="ad-trunc">{r.uid ? nameFor(r.uid) : "Guest"}</td>
+              </tr>
+            ))}
+            {!v.recent.length && <tr><td colSpan={5}>No visits yet.</td></tr>}
+          </tbody>
+        </table>
+      </section>
+
+      <p className="ad-foot">Visitors are anonymous. Days are in UTC. Your own visits are not counted.</p>
     </div>
   );
 }

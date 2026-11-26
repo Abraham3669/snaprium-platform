@@ -28,7 +28,12 @@ import {
 reportCommunity,
 FREE_BOARD_LIMIT,
 countBoardUnread,
+updateCommunityInfo,
+renameLockedUntil,
+COMMUNITY_NAME_MAX,
+COMMUNITY_DESC_MAX,
 } from "../lib/communities";
+import { isClean, FILTER_MESSAGE } from "../lib/contentFilter";
 
 const isUnlimitedPlan = (plan) => plan === "unlimited" || plan === "premium";
 
@@ -192,6 +197,10 @@ export default function CommunityDetail() {
   const [welcome, setWelcome] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -280,6 +289,21 @@ useEffect(() => {
     };
   }, [menuOpen]);
 
+  // Edit dialog: Escape closes it and the page behind it does not scroll
+  useEffect(() => {
+    if (!editOpen) return undefined;
+    const onKey = (e) => {
+      if (e.key === "Escape" && !editSaving) setEditOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [editOpen, editSaving]);
+
   // "Live now" on the Session board (members only; it only looks, it never starts a session)
   const { status: sessionStatus } = useSessionStatus(
     user && community && !community.deleted && (community.members || []).includes(user.uid)
@@ -303,6 +327,37 @@ useEffect(() => {
   const isMember = user && (community.members || []).includes(user.uid);
   const isAdmin = user && (community.createdBy === user.uid || (community.admins || []).includes(user.uid));
   const paid = isUnlimitedPlan(user?.plan);
+  const nameLockedUntil = renameLockedUntil(community);
+
+  const openEdit = () => {
+    setEditName(community.name || "");
+    setEditDesc(community.description || "");
+    setEditOpen(true);
+  };
+
+  const saveEdit = async (e) => {
+    e.preventDefault();
+    if (!isAdmin || editSaving) return;
+    const nextName = editName.trim();
+    if (!nextName) {
+      toast.warning("Give the circle a name");
+      return;
+    }
+    if ((editDesc.trim() && !isClean(editDesc)) || (nextName !== (community.name || "") && !isClean(nextName))) {
+      toast.error(FILTER_MESSAGE);
+      return;
+    }
+    setEditSaving(true);
+    try {
+      setCommunity(await updateCommunityInfo(community.id, { name: nextName, description: editDesc }));
+      toast.success("Circle updated");
+      setEditOpen(false);
+    } catch (err) {
+      toast.error(err.message || "Could not save");
+    } finally {
+      setEditSaving(false);
+    }
+  };
 
 
 
@@ -431,6 +486,15 @@ setWelcome(true);
         </button>
         <div className="cd-identity-text">
           <h1 className="cd-title">{community.name}</h1>
+          {community.description ? (
+            <p className="cd-desc">{community.description}</p>
+          ) : (
+            isAdmin && (
+              <button type="button" className="cd-desc-add" onClick={openEdit}>
+                + Add a description
+              </button>
+            )
+          )}
           <div className="cd-meta-row">
             {community.tag && <span className="cd-chip accent">{community.tag}</span>}
             <span className="cd-chip">
@@ -534,6 +598,11 @@ setCommunity(await getCommunity(community.id));
             }}
           >
             Leave
+          </button>
+        )}
+        {isAdmin && (
+          <button type="button" className="cd-menu-item" onClick={openEdit}>
+            Edit name & description
           </button>
         )}
         {isAdmin && (
@@ -663,6 +732,62 @@ setCommunity(await getCommunity(community.id));
 
 
 
+
+      {editOpen && isAdmin && (
+        <div
+          className="cx-overlay"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget && !editSaving) setEditOpen(false);
+          }}
+        >
+          <form className="cx-dialog" onSubmit={saveEdit} role="dialog" aria-modal="true" aria-labelledby="cd-edit-title">
+            <div className="cx-dialog-head">
+              <h2 id="cd-edit-title">Edit circle</h2>
+              <button type="button" className="cx-close" onClick={() => setEditOpen(false)} aria-label="Close" disabled={editSaving}>
+                ×
+              </button>
+            </div>
+
+            <label className="cx-field">
+              <span>Name</span>
+              <input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                maxLength={COMMUNITY_NAME_MAX}
+                required
+                autoFocus
+                disabled={!!nameLockedUntil}
+              />
+              <small>
+                {nameLockedUntil
+                  ? `You can rename this circle again on ${new Date(nameLockedUntil).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}.`
+                  : "You can rename a circle once every 7 days. The invite code and link stay the same."}
+              </small>
+            </label>
+
+            <label className="cx-field">
+              <span>Description <em className="cx-opt">(optional)</em></span>
+              <textarea
+                value={editDesc}
+                onChange={(e) => setEditDesc(e.target.value)}
+                placeholder="What is this circle about, and who is it for?"
+                maxLength={COMMUNITY_DESC_MAX}
+                rows={3}
+              />
+              <small className="cx-counter">{editDesc.length}/{COMMUNITY_DESC_MAX}</small>
+            </label>
+
+            <div className="cx-dialog-actions">
+              <button type="button" className="cx-btn cx-btn-ghost" onClick={() => setEditOpen(false)} disabled={editSaving}>
+                Cancel
+              </button>
+              <button type="submit" className="cx-btn cx-btn-primary" disabled={editSaving || !editName.trim()}>
+                {editSaving ? "Saving…" : "Save"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {showUpgradeModal && (
         <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />

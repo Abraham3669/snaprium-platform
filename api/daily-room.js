@@ -322,7 +322,7 @@ export default async function handler(req, res) {
           "daily_limit",
           myTier === "paid"
             ? `You can start ${limit.perDay} sessions a day. You can still join sessions that others start.`
-            : `Free accounts can start ${limit.perDay} sessions a day. You can still join sessions that others start. Unlimited allows more.`
+            : `Free accounts can start ${limit.perDay} sessions a day. You can still join sessions that others start. Orbit allows more.`
         );
       }
 

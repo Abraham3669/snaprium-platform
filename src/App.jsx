@@ -60,6 +60,7 @@ import { useFriendships } from "./lib/friends";
 import { syncPush, clearDeliveredPush } from "./lib/push";
 import { publishPublicProfile } from "./lib/publicProfile";
 import { clearReturn, peekReturn } from "./lib/returnTo";
+import { usePageVisits } from "./lib/visits";
 import "./styles/social.css";
 
 const GUEST_SOLVE_LIMIT = 3;
@@ -71,6 +72,9 @@ function App() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Counts site visits for the owner Visits page (anonymous).
+  usePageVisits();
 
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
 

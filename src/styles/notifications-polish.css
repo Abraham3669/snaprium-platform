@@ -1,0 +1,27 @@
+/* src/styles/notifications-polish.css
+   Notifications: unread rows use a light tint and the blue dot only. No colored edge bar, no notched corners. */
+
+.nt-list {
+  overflow: hidden;
+}
+
+.nt-row.unread {
+  border-left: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+.nt-row.unread::before,
+.nt-row.unread::after {
+  display: none !important;
+}
+
+/* keep the first and last rows rounded with the list */
+.nt-row:first-child {
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+}
+.nt-row:last-child {
+  border-bottom-left-radius: inherit;
+  border-bottom-right-radius: inherit;
+}

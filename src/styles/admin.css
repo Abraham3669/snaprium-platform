@@ -1081,3 +1081,150 @@ a.ad-btn,
     flex: 1 1 140px;
   }
 }
+
+/* ==========================================================
+   Calmer layout, circle panel, visits
+   ========================================================== */
+.ad-stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.ad-stat {
+  padding: 12px 14px;
+  box-shadow: none;
+}
+.ad-stat-value { font-size: 1.35rem; }
+.ad-row { box-shadow: none; }
+.ad-row:hover { box-shadow: none; }
+
+.ad-row-tap {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  cursor: pointer;
+}
+.ad-row-tap:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.ad-chev { color: var(--text-secondary); }
+.ad-trunc {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 220px;
+}
+.ad-funnel-top .ad-trunc { max-width: 60%; }
+.ad-table th:nth-child(n+2),
+.ad-table td:nth-child(n+2) { text-align: left; padding-left: 12px; }
+
+/* circle side panel */
+.ad-overlay.ad-side {
+  place-items: stretch end;
+  padding: 0;
+}
+.ad-panel-side {
+  position: relative;
+  box-sizing: border-box;
+  width: min(480px, 100%);
+  height: 100%;
+  overflow-y: auto;
+  padding: 24px;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  box-shadow: -24px 0 60px rgba(0, 0, 0, 0.3);
+  color: var(--text-primary);
+  animation: ad-slide 0.2s ease;
+}
+@keyframes ad-slide {
+  from { transform: translateX(24px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.ad-cd-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+  padding-right: 32px;
+}
+.ad-cd-head h2 { margin: 0 0 6px; font-size: 1.25rem; overflow-wrap: anywhere; }
+.ad-cd-desc { margin: 0 0 14px; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; }
+.ad-cd-meta { margin: 0 0 14px; }
+.ad-cd-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.ad-cd-actions .ad-btn.small { min-height: 34px; }
+.ad-cd-edit { display: grid; gap: 10px; margin-bottom: 18px; }
+.ad-cd-edit label { display: grid; gap: 4px; }
+.ad-cd-edit span { color: var(--text-secondary); font-size: 0.8rem; font-weight: 600; }
+.ad-cd-edit input,
+.ad-cd-edit textarea,
+.ad-cd-edit select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 16px;
+}
+.ad-cd-edit input:focus,
+.ad-cd-edit textarea:focus,
+.ad-cd-edit select:focus {
+  outline: 0;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.ad-cd-people { border-top: 1px solid var(--border); padding-top: 14px; display: grid; gap: 10px; }
+.ad-cd-people-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.ad-cd-people-head h3 { margin: 0; font-size: 1rem; }
+.ad-cd-people .ad-search { max-width: none; flex: none; }
+.ad-people { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.ad-people li { border-radius: 12px; }
+.ad-people li.open { background: var(--icon-bg); }
+.ad-person {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.ad-person:hover { background: var(--icon-bg); }
+.ad-person .ad-avatar { width: 36px; height: 36px; border-radius: 10px; font-size: 0.9rem; }
+.ad-person-main { display: grid; min-width: 0; }
+.ad-person-name { font-weight: 600; font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ad-person-main .ad-meta { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ad-person-actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 2px 8px 10px 56px; }
+
+/* PC */
+@media (min-width: 701px) {
+  .ad-page { width: min(1040px, calc(100% - 48px)); }
+}
+
+/* Phones (browser and app): the panel fills the screen */
+@media (max-width: 700px) {
+  .ad-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ad-row-tap {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: none;
+    padding: 12px;
+  }
+  .ad-row-tap > .ad-avatar,
+  .ad-row-tap > .ad-main { grid-area: auto; }
+  .ad-panel-side {
+    width: 100%;
+    border-left: 0;
+    padding: 18px 16px calc(24px + env(safe-area-inset-bottom));
+    padding-top: calc(18px + env(safe-area-inset-top));
+  }
+  .ad-person-actions { padding-left: 8px; }
+  .ad-person-actions .ad-btn { flex: 1 1 120px; }
+  .ad-trunc { max-width: 140px; }
+}

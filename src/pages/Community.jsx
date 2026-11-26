@@ -8,8 +8,10 @@ import "../styles/community.css";
 import { collection, onSnapshot, orderBy, query, limit } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { circleCardPath, circleChatPath, rememberCircle } from "../lib/circleNav";
+import { isClean, FILTER_MESSAGE } from "../lib/contentFilter";
 import {
   COMMUNITY_TAGS,
+  COMMUNITY_DESC_MAX,
   createCommunity,
   listPublicCommunities,
   listMyCommunities,
@@ -98,6 +100,7 @@ export default function Community() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [newTag, setNewTag] = useState("Math");
   const [visibility, setVisibility] = useState("public");
   const [saving, setSaving] = useState(false);
@@ -185,7 +188,7 @@ if (user?.uid && own.length) {
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return list;
-    return list.filter((c) => (c.name || "").toLowerCase().includes(q));
+    return list.filter((c) => `${c.name || ""} ${c.description || ""}`.toLowerCase().includes(q));
   }, [list, search]);
 
   const hostedCount = mine.filter((c) => c.createdBy === user?.uid).length;
@@ -230,10 +233,15 @@ if (user?.uid && own.length) {
       setShowUpgradeModal(true);
       return;
     }
+    if (description.trim() && !isClean(description)) {
+      toast.error(FILTER_MESSAGE);
+      return;
+    }
     setSaving(true);
     try {
       const created = await createCommunity({
         name,
+        description,
         tag: newTag,
         visibility,
         createdBy: user.uid,
@@ -242,6 +250,7 @@ if (user?.uid && own.length) {
       toast.success("Circle created");
       setShowCreate(false);
       setName("");
+      setDescription("");
       rememberCircle(user.uid, created.id);
       navigate(circleChatPath(created.id));
     } catch (err) {
@@ -322,6 +331,7 @@ if (user?.uid && own.length) {
             {!c.photoUrl && initial}
           </span>
           <strong className="cx-card-name">{c.name}</strong>
+          {c.description && <p className="cx-card-desc">{c.description}</p>}
           <div className="cx-card-meta">
             <span className="cx-pill">{c.tag}</span>
             <span className="cx-members">
@@ -530,6 +540,18 @@ if (user?.uid && own.length) {
                 required
                 autoFocus
               />
+            </label>
+
+            <label className="cx-field">
+              <span>Description <em className="cx-opt">(optional)</em></span>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="What is this circle about, and who is it for?"
+                maxLength={COMMUNITY_DESC_MAX}
+                rows={3}
+              />
+              <small className="cx-counter">{description.length}/{COMMUNITY_DESC_MAX}</small>
             </label>
 
             <label className="cx-field">

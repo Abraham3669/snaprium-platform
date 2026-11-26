@@ -50,7 +50,7 @@ button.fd-avatar { cursor: pointer; }
 .fd-card.expanded { margin-bottom: 4px; }
 .fd-card-head { display: flex; align-items: center; gap: 10px; }
 .fd-who { min-width: 0; flex: 1; display: flex; flex-direction: column; align-items: flex-start; }
-.fd-name { border: 0; background: none; padding: 0; font-weight: 700; font-size: 0.97rem; color: var(--text-primary); cursor: pointer; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: inherit; text-align: left; }
+.fd-name { border: 0; background: none; padding: 0 2px; margin-left: -2px; font-weight: 700; font-size: 0.97rem; color: var(--text-primary); cursor: pointer; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: inherit; text-align: left; }
 .fd-name:hover { text-decoration: underline; }
 .fd-meta { color: var(--text-secondary); font-size: 0.8rem; }
 .fd-follow { border: 1px solid var(--accent); background: transparent; color: var(--accent); border-radius: 999px; padding: 5px 14px; font-weight: 700; font-size: 0.82rem; cursor: pointer; font-family: inherit; }

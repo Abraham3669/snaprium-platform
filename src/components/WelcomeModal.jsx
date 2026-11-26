@@ -70,15 +70,15 @@ export default function WelcomeModal({ plan, onClose }) {
   </svg>
 </div>
 
-<h2>Welcome to Unlimited</h2>
+<h2>Welcome to Orbit</h2>
 
 <p className="welcome-text">
-  Your subscription is active. You now have <strong>unlimited photo solves</strong>,{' '}
-  <strong>longer live study sessions</strong>, and more room to run your circles and boards.
+  Your subscription is active. You now have <strong>longer live sessions with more people</strong>,{' '}
+  plus more room to run your <strong>circles and boards</strong>.
 </p>
 
 <button className="welcome-cta" onClick={onClose}>
-  Start studying
+  Get started
 </button>
 
       </div>

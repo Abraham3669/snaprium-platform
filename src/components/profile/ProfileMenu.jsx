@@ -32,7 +32,8 @@ export default function ProfileMenu({ onSaved }) {
     ["Settings and account", () => navigate("/settings")],
     ["Saved posts", onSaved],
     ["Blocked users", () => navigate("/settings?blocked=1")],
-    ["Solo study", () => navigate("/solo")],
+    // Solo study hidden from the menu for now (the /solo page still works). Remove the // below to show it again.
+    // ["Solo study", () => navigate("/solo")],
     ["Upgrade", () => navigate("/upgrade")],
   ];
 

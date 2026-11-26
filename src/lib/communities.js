@@ -40,6 +40,19 @@ export const COMMUNITY_TAGS = [
   "Other",
 ];
 
+export const COMMUNITY_NAME_MAX = 60;
+export const COMMUNITY_DESC_MAX = 160;
+export const RENAME_COOLDOWN_DAYS = 7;
+
+const oneLine = (v, max) => String(v || "").replace(/\s+/g, " ").trim().slice(0, max);
+
+/** When this circle may be renamed again (ms since 1970), or 0 if it can be renamed now. */
+export function renameLockedUntil(community) {
+  const at = community?.nameChangedAt?.toMillis?.() || 0;
+  const until = at + RENAME_COOLDOWN_DAYS * 24 * 60 * 60 * 1000;
+  return at && until > Date.now() ? until : 0;
+}
+
 export const DEFAULT_BOARDS = [
   { slug: "questions", name: "Questions", kind: "questions", isDefault: true },
   { slug: "general", name: "General", kind: "chat", isDefault: true },
@@ -158,6 +171,36 @@ export async function updateCommunityMedia(id, fields) {
   return { id: snap.id, ...snap.data() };
 }
 
+// Change a circle's name and/or description (leaders only; the rules enforce that). A rename is allowed once every
+// RENAME_COOLDOWN_DAYS. The invite code and link never change.
+export async function updateCommunityInfo(id, { name, description }) {
+  const ref = doc(db, "communities", id);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error("Circle not found");
+  const current = snap.data();
+  const nextName = oneLine(name, COMMUNITY_NAME_MAX);
+  const nextDesc = oneLine(description, COMMUNITY_DESC_MAX);
+  if (!nextName) throw new Error("Name is required");
+
+  const fields = {};
+  if (nextName !== (current.name || "")) {
+    const until = renameLockedUntil(current);
+    if (until) {
+      throw new Error(
+        `You can rename this circle again on ${new Date(until).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`
+      );
+    }
+    fields.name = nextName;
+    fields.nameChangedAt = serverTimestamp();
+  }
+  if (nextDesc !== (current.description || "")) fields.description = nextDesc;
+  if (!Object.keys(fields).length) return { id: snap.id, ...current };
+
+  await updateDoc(ref, { ...fields, updatedAt: serverTimestamp() });
+  const next = await getDoc(ref);
+  return { id: next.id, ...next.data() };
+}
+
 export async function createCommunity({
   name,
   tag,
@@ -166,6 +209,7 @@ export async function createCommunity({
   createdByName,
   coverUrl = "",
   photoUrl = "",
+  description = "",
 }) {
   if (!name?.trim()) throw new Error("Name is required");
   if (!tag) throw new Error("Pick a subject tag");
@@ -175,6 +219,7 @@ export async function createCommunity({
     id: ref.id,
     name: name.trim(),
     tag,
+    description: oneLine(description, COMMUNITY_DESC_MAX),
     visibility: visibility === "private" ? "private" : "public",
     coverUrl,
     photoUrl,
@@ -609,4 +654,46 @@ export async function deleteQuestionReply(communityId, boardId, questionId, repl
   const snap = await getDoc(questionRef);
   const next = Math.max(0, (snap.data()?.replyCount || 0) - 1);
   await updateDoc(questionRef, { replyCount: next });
+}
+
+// ---------- Pinned messages (kept on the circle doc, up to 3) ----------
+export const MAX_PINS = 3;
+
+export function subscribeToCommunityPins(communityId, cb) {
+  return onSnapshot(
+    doc(db, "communities", communityId),
+    (snap) => cb(snap.exists() ? (snap.data().pinned || []) : []),
+    () => {}
+  );
+}
+
+export async function pinMessage(communityId, msg, by) {
+  const ref = doc(db, "communities", communityId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return [];
+  const current = (snap.data().pinned || []).filter((p) => p.id !== msg.id);
+  const entry = {
+    id: msg.id,
+    boardId: msg.boardId || "",
+    text: String(msg.text || "").slice(0, 2000),
+    hasImage: !!msg.imageUrl,
+    uid: msg.uid || "",
+    name: msg.displayName || "Member",
+    photo: msg.photoURL && !String(msg.photoURL).startsWith("data:") ? msg.photoURL : "",
+    pinnedBy: by || "",
+    pinnedAt: Date.now(),
+  };
+  // newest first; when full the oldest pin drops off
+  const next = [entry, ...current].slice(0, MAX_PINS);
+  await updateDoc(ref, { pinned: next, updatedAt: serverTimestamp() });
+  return next;
+}
+
+export async function unpinMessage(communityId, messageId) {
+  const ref = doc(db, "communities", communityId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return [];
+  const next = (snap.data().pinned || []).filter((p) => p.id !== messageId);
+  await updateDoc(ref, { pinned: next, updatedAt: serverTimestamp() });
+  return next;
 }
