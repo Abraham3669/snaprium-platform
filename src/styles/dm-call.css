@@ -113,6 +113,16 @@
 .dmc-stage { position: relative; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
 .dmc-stage .sc-root { flex: 1 1 auto; min-height: 0; width: 100%; height: 100%; max-height: none; border-radius: 0; }
 
+/* the Chat button in the call: the call keeps running out of sight and the chat comes forward with a "Return to call" bar */
+.dmc-overlay.min {
+  inset: 0 auto auto -9999px;
+  width: 360px;
+  height: 240px;
+  opacity: 0;
+  pointer-events: none;
+}
+.dmc-return { margin-top: 8px; }
+
 /* phone: slightly smaller header buttons so the name keeps room */
 @media (max-width: 700px) {
   .dmc-btns { gap: 4px; }

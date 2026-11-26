@@ -309,7 +309,8 @@ export default async function handler(req, res) {
       const tier = max >= LIMITS.paid.max ? "paid" : "free";
       return res.status(200).json({
         ok: true,
-        live: !!presence && presence.count > 0,
+        // for a friend call "live" means the OTHER person is in it, not you
+        live: !!presence && presence.count - (dm && presence.ids.includes(uid) ? 1 : 0) > 0,
         video: !!(live && live.video),
         count: presence ? presence.count : null,
         max,
@@ -332,7 +333,10 @@ export default async function handler(req, res) {
     if (room) {
       presence = await getPresence();
       const ageSec = room.created_at ? (Date.now() - Date.parse(room.created_at)) / 1000 : 0;
-      if (presence && presence.count === 0 && ageSec > 120) {
+      // Friend calls: your own entry does not count (Daily is a few seconds slow to drop someone who just left),
+      // and an empty call is replaced after 6 seconds, so ending a voice call and starting a video call works straight away.
+      const others = presence ? presence.count - (dm && presence.ids.includes(uid) ? 1 : 0) : null;
+      if (presence && others === 0 && ageSec > (dm ? 6 : 120)) {
         await meterRoom(db, name, 0);
         await daily(`/rooms/${name}`, { method: "DELETE" }).catch(() => {});
         room = null;

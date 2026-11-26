@@ -175,6 +175,33 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
   const [callKind, setCallKind] = useState(null); // null | "voice" | "video"
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [liveCall, setLiveCall] = useState(null); // { video } while your friend is in a call with the door open
+  // The call can step aside so you can type in the chat while it keeps running (the Chat button in the call).
+  const [callMin, setCallMin] = useState(false);
+  const [callBase, setCallBase] = useState(null); // id of the last message when the call screen was last in front ("" = chat was empty)
+  const lastMsgId = () => messages[messages.length - 1]?.id || "";
+  const baseIdx = callBase ? messages.findIndex((m) => m.id === callBase) : -1;
+  const callUnread =
+    callBase === null || callMin
+      ? 0
+      : callBase === ""
+      ? messages.filter((m) => m.uid !== me).length
+      : baseIdx < 0
+      ? 0
+      : messages.slice(baseIdx + 1).filter((m) => m.uid !== me).length;
+  const openCall = (kind) => {
+    setCallMin(false);
+    setCallBase(lastMsgId());
+    setCallKind(kind);
+  };
+  const closeCall = () => {
+    setCallKind(null);
+    setCallMin(false);
+    setCallBase(null);
+  };
+  const returnToCall = () => {
+    setCallBase(lastMsgId());
+    setCallMin(false);
+  };
 
   const startCall = (kind) => {
     if (!canCall || callKind) return;
@@ -182,16 +209,23 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
       setUpgradeOpen(true);
       return;
     }
-    setCallKind(kind);
+    openCall(kind);
   };
   const joinCall = () => {
     if (!canCall || callKind) return;
-    setCallKind(liveCall?.video ? "video" : "voice");
+    openCall(liveCall?.video ? "video" : "voice");
   };
   // The person who opens the call drops a line in the chat. It reaches the friend as a normal message
   // (bell + phone alert) and makes the "Join call" bar appear in their chat.
   const onCallConnected = (data) => {
-    if (!data?.created) return;
+    if (!data) return;
+    // The server decides what the call really is. If you asked for video but your friend's call is voice, say so.
+    const real = data.video ? "video" : "voice";
+    if (callKind && callKind !== real) {
+      setCallKind(real);
+      if (callKind === "video") toast.info(`${name}'s call is voice only. End it and start a video call to use video.`, { autoClose: 8000 });
+    }
+    if (!data.created) return;
     sendDm(meInfo, other, {
       text: data.video ? "📹 Started a video call" : "📞 Started a voice call",
     }).catch(() => {});
@@ -279,7 +313,7 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
   // Esc closes the small things first (menu, emoji picker, reply, edit) and only then leaves Messages.
   useEffect(() => {
     const onKey = (e) => {
-      if (e.key !== "Escape" || report || blockInfo || lightbox || confirmDelete || callKind || upgradeOpen) return;
+      if (e.key !== "Escape" || report || blockInfo || lightbox || confirmDelete || (callKind && !callMin) || upgradeOpen) return;
       if (moreOpen) return setMoreOpen(false);
       if (menuFor) return setMenuFor(null);
       if (pickerOpen) return setPickerOpen(false);
@@ -289,7 +323,7 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [onClose, report, blockInfo, moreOpen, lightbox, confirmDelete, menuFor, pickerOpen, editingId, replyTo, callKind, upgradeOpen]);
+  }, [onClose, report, blockInfo, moreOpen, lightbox, confirmDelete, menuFor, pickerOpen, editingId, replyTo, callKind, callMin, upgradeOpen]);
 
   useEffect(() => {
     if (!pickerOpen) return undefined;
@@ -543,6 +577,14 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
               )}
             </div>
           </header>
+
+          {callKind && callMin && (
+            <div className="dmc-join dmc-return" role="status">
+              <span className="dmc-join-pulse" aria-hidden="true" />
+              <span className="dmc-join-text">In a {callKind === "video" ? "video" : "voice"} call with {name}</span>
+              <button type="button" onClick={returnToCall}>Return to call</button>
+            </div>
+          )}
 
           <div className="cc-feed" ref={feedRef}>
             {loading ? (
@@ -858,7 +900,7 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
       </section>
 
       {callKind && callRoomId && (
-        <div className="dmc-overlay" role="dialog" aria-modal="true" aria-label={`${callKind === "video" ? "Video" : "Voice"} call with ${name}`}>
+        <div className={`dmc-overlay ${callMin ? "min" : ""}`} role="dialog" aria-modal={callMin ? undefined : "true"} aria-label={`${callKind === "video" ? "Video" : "Voice"} call with ${name}`}>
           <div className="dmc-top">
             <span className="dmc-av" aria-hidden="true">{photo ? <img src={photo} alt="" /> : name.slice(0, 1).toUpperCase()}</span>
             <div className="dmc-who">
@@ -872,8 +914,10 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
               video={callKind === "video"}
               roomId={callRoomId}
               user={user}
-              onClose={() => setCallKind(null)}
+              onClose={closeCall}
               onConnected={onCallConnected}
+              onOpenChat={() => setCallMin(true)}
+              chatBadge={callUnread}
             />
           </div>
         </div>
