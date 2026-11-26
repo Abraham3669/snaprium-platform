@@ -77,6 +77,11 @@ export default function WelcomeModal({ plan, onClose }) {
   plus more room to run your <strong>circles and boards</strong>.
 </p>
 
+<p className="welcome-text">
+  Good to know: Orbit includes 1,000 video minutes a month, counted for everyone in the
+  sessions you host. When they run out, sessions continue with audio until next month.
+</p>
+
 <button className="welcome-cta" onClick={onClose}>
   Get started
 </button>

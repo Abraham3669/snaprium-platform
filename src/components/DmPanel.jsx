@@ -15,8 +15,13 @@ import { useBlocked } from "../lib/moderation";
 import { isClean, FILTER_MESSAGE } from "../lib/contentFilter";
 import { BlockDialog, ReportDialog } from "./ModerationDialogs";
 import ImageViewer from "./ImageViewer";
+import StudyCall from "./StudyCall";
+import UpgradeModal from "./UpgradeModal";
+import { getAuth } from "firebase/auth";
+import { postAPI } from "../utils/apiClient";
 import "../styles/community-chat.css";
 import "../styles/dm.css";
+import "../styles/dm-call.css";
 
 function compressImage(file, max = 900, quality = 0.65) {
   return new Promise((resolve, reject) => {
@@ -163,6 +168,70 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
   const myName = user?.displayName || "Member";
   const myPhoto = user?.photoURL || "";
 
+  // ---- Calls with this friend. Voice is free for everyone; video is an Orbit feature (the server enforces it too).
+  const isPaid = user?.plan === "unlimited" || user?.plan === "premium" || user?.isUnlimited === true;
+  const canCall = normalChat && canSend && !blocked.has(other);
+  const callRoomId = me && other ? `dm-${pairId(me, other)}` : "";
+  const [callKind, setCallKind] = useState(null); // null | "voice" | "video"
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [liveCall, setLiveCall] = useState(null); // { video } while your friend is in a call with the door open
+
+  const startCall = (kind) => {
+    if (!canCall || callKind) return;
+    if (kind === "video" && !isPaid) {
+      setUpgradeOpen(true);
+      return;
+    }
+    setCallKind(kind);
+  };
+  const joinCall = () => {
+    if (!canCall || callKind) return;
+    setCallKind(liveCall?.video ? "video" : "voice");
+  };
+  // The person who opens the call drops a line in the chat. It reaches the friend as a normal message
+  // (bell + phone alert) and makes the "Join call" bar appear in their chat.
+  const onCallConnected = (data) => {
+    if (!data?.created) return;
+    sendDm(meInfo, other, {
+      text: data.video ? "📹 Started a video call" : "📞 Started a voice call",
+    }).catch(() => {});
+  };
+
+  // While a recent call line from your friend is the latest thing here, check every 15 seconds if they are still in it.
+  const lastInvite = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      const m = messages[i];
+      if (m.uid === other && /^(📞|📹) /.test(m.text || "")) return m;
+    }
+    return null;
+  }, [messages, other]);
+  const inviteId = lastInvite?.id || "";
+  const inviteAt = lastInvite?.createdAt?.toMillis?.() || 0;
+  useEffect(() => {
+    if (!canCall || callKind || !inviteId || !inviteAt || Date.now() - inviteAt > 2 * 60 * 60 * 1000) {
+      setLiveCall(null);
+      return undefined;
+    }
+    let stop = false;
+    const check = async () => {
+      if (document.visibilityState !== "visible") return;
+      try {
+        const idToken = await getAuth().currentUser?.getIdToken();
+        if (!idToken) return;
+        const r = await postAPI("/api/daily-room", { roomId: callRoomId, userName: myName, idToken, action: "status" });
+        if (!stop) setLiveCall(r?.ok && r.live ? { video: !!r.video } : null);
+      } catch {
+        if (!stop) setLiveCall(null);
+      }
+    };
+    check();
+    const timer = setInterval(check, 15000);
+    return () => {
+      stop = true;
+      clearInterval(timer);
+    };
+  }, [canCall, callKind, inviteId, inviteAt, callRoomId, myName]);
+
   useEffect(() => {
     if (!me || !other || loading) return;
     markDmRead(me, other).catch(() => {});
@@ -210,7 +279,7 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
   // Esc closes the small things first (menu, emoji picker, reply, edit) and only then leaves Messages.
   useEffect(() => {
     const onKey = (e) => {
-      if (e.key !== "Escape" || report || blockInfo || lightbox || confirmDelete) return;
+      if (e.key !== "Escape" || report || blockInfo || lightbox || confirmDelete || callKind || upgradeOpen) return;
       if (moreOpen) return setMoreOpen(false);
       if (menuFor) return setMenuFor(null);
       if (pickerOpen) return setPickerOpen(false);
@@ -220,7 +289,7 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [onClose, report, blockInfo, moreOpen, lightbox, confirmDelete, menuFor, pickerOpen, editingId, replyTo]);
+  }, [onClose, report, blockInfo, moreOpen, lightbox, confirmDelete, menuFor, pickerOpen, editingId, replyTo, callKind, upgradeOpen]);
 
   useEffect(() => {
     if (!pickerOpen) return undefined;
@@ -427,6 +496,17 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
               <div className="cc-top-copy">{titleCopy}</div>
             )}
             <div className="cc-faces">
+              {canCall && (
+                <div className="dmc-btns">
+                  <button type="button" className="dmc-btn" onClick={() => startCall("voice")} aria-label="Voice call" title="Voice call">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+                  </button>
+                  <button type="button" className={`dmc-btn ${isPaid ? "" : "locked"}`} onClick={() => startCall("video")} aria-label={isPaid ? "Video call" : "Video call (Orbit)"} title={isPaid ? "Video call" : "Video calls are part of Orbit"}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M23 7l-7 5 7 5V7z" /><rect x="1" y="5" width="15" height="14" rx="2" /></svg>
+                    {!isPaid && <span className="dmc-dot" aria-hidden="true" />}
+                  </button>
+                </div>
+              )}
               {onOpenProfile && (
                 <div className="dm-more" ref={moreRef}>
                   <button type="button" className={`dm-more-btn ${moreOpen ? "on" : ""}`} onClick={() => setMoreOpen((v) => !v)} aria-label="More options" aria-haspopup="menu" aria-expanded={moreOpen}>
@@ -678,6 +758,14 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
             </p>
           )}
 
+          {liveCall && !callKind && canCall && (
+            <div className="dmc-join" role="status">
+              <span className="dmc-join-pulse" aria-hidden="true" />
+              <span className="dmc-join-text">{name} is in a {liveCall.video ? "video" : "voice"} call</span>
+              <button type="button" onClick={joinCall}>Join call</button>
+            </div>
+          )}
+
           {canSend ? (
             <div className="cc-composer-wrap">
               {firstRequest && (
@@ -768,6 +856,36 @@ export default function DmPanel({ other, fallback = {}, onBack, onClose, onOpenP
             </div>
           )}
       </section>
+
+      {callKind && callRoomId && (
+        <div className="dmc-overlay" role="dialog" aria-modal="true" aria-label={`${callKind === "video" ? "Video" : "Voice"} call with ${name}`}>
+          <div className="dmc-top">
+            <span className="dmc-av" aria-hidden="true">{photo ? <img src={photo} alt="" /> : name.slice(0, 1).toUpperCase()}</span>
+            <div className="dmc-who">
+              <strong>{name}</strong>
+              <small>{callKind === "video" ? "Video call" : "Voice call"}</small>
+            </div>
+          </div>
+          <div className="dmc-stage">
+            <StudyCall
+              dm
+              video={callKind === "video"}
+              roomId={callRoomId}
+              user={user}
+              onClose={() => setCallKind(null)}
+              onConnected={onCallConnected}
+            />
+          </div>
+        </div>
+      )}
+      {upgradeOpen && (
+        <UpgradeModal
+          isOpen
+          onClose={() => setUpgradeOpen(false)}
+          title="Video calls are part of Orbit"
+          subtitle="Voice calls with friends are free. Upgrade to Orbit to call them with video."
+        />
+      )}
 
       <ImageViewer url={lightbox} onClose={() => setLightbox("")} />
       {report && <ReportDialog info={report} user={user} onClose={() => setReport(null)} />}

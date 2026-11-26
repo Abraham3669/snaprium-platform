@@ -45,6 +45,11 @@ export default function UpgradeModal({
             <strong>more circles and boards</strong> to run. Everyone in a session you host gets
             the longer time too.
           </p>
+          <p className="upgrade-subtitle" style={{ marginTop: 10 }}>
+            Video is shared fairly: Orbit includes 1,000 video minutes a month, counted for
+            everyone in the sessions you host. When they run out, sessions continue with audio
+            until next month.
+          </p>
           {user?.email && (
             <p className="upgrade-subtitle" style={{ marginTop: 10 }}>
               Signed in as {user.email}

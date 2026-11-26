@@ -145,10 +145,11 @@ export default function Upgrade() {
             <div className="plan-price">
               {isNative ? storePrice || "…" : "$12.99"} <span>per month</span>
             </div>
-            <p className="plan-desc">For people who learn and work together</p>
+            <p className="plan-desc">Give your circle room to grow</p>
             <ul className="plan-features">
               <li><CheckIcon /> Live sessions for up to 10 people, 2 hours each</li>
-              <li><CheckIcon /> Camera and screen share: 600 video minutes a month, then audio-only</li>
+              <li><CheckIcon /> Camera and screen share: 1,000 video minutes a month, shared by everyone in your sessions, then audio-only</li>
+              <li><CheckIcon /> Video calls with friends (voice calls are always free)</li>
               <li><CheckIcon /> Create more circles</li>
               <li><CheckIcon /> More boards in every circle you run</li>
             </ul>

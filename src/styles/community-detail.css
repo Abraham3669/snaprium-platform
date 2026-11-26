@@ -685,3 +685,20 @@ html.native-app .cd-page .cd-back {
   margin: 0 0 8px !important;
   padding: 4px 8px !important;
 }
+
+
+/* ===== PHONE and phone browser only: the circle description is shown in full, never cut off. ===== */
+@media (max-width: 700px) {
+  .cd-page .cd-identity > div:last-child { overflow: visible; }
+  .cd-page .cd-identity .cd-desc {
+    display: block !important;
+    -webkit-line-clamp: unset !important;
+    line-clamp: unset !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: pre-line !important;
+    overflow-wrap: anywhere;
+  }
+}

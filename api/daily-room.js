@@ -21,10 +21,16 @@ const LIMITS = {
   paid: { max: 10, minutes: 120, perDay: 4 },
 };
 
+// Friend calls (direct messages). Voice is free for everyone. Video is an Orbit feature and uses the host's video allowance.
+const DM_LIMITS = {
+  free: { max: 2, minutes: 60, perDay: 10 }, // perDay = calls a person can START per day
+  paid: { max: 2, minutes: 120, perDay: 20 },
+};
+
 // Daily bills every person in a room at the video rate (about 4x audio) once anyone shares a camera or screen.
 // One unit below = one person in a room for one minute.
 const VIDEO = {
-  paidMonthlyMinutes: 600, // video minutes each paid host gets per month
+  paidMonthlyMinutes: 1000, // video minutes each paid host gets per month
   paidMinToStart: 60, // a paid host needs at least this much left to open a room with video
   freeDailyMinutesAllApp: 400, // video minutes ALL free hosts share per day
 };
@@ -233,7 +239,32 @@ export default async function handler(req, res) {
       }
     }
 
-    const name = `snaprium-${String(roomId).slice(0, 40)}`;
+    // 3b. Friend calls: room "dm-{uidA}_{uidB}" (the two uids sorted, same as the chat). Only those two people may use it,
+    //     and only while they are friends or the message request was accepted.
+    const dm = /^dm-([A-Za-z0-9-]+)_([A-Za-z0-9-]+)$/.exec(String(roomId));
+    if (dm) {
+      const [, a, b] = dm;
+      if (!(a < b) || (uid !== a && uid !== b)) {
+        return refuse(res, "not_member", "This call isn't available.");
+      }
+      const otherUid = uid === a ? b : a;
+      const [fSnap, dSnap, oSnap] = await Promise.all([
+        db.doc(`friendships/${a}_${b}`).get(),
+        db.doc(`dms/${a}_${b}`).get(),
+        db.doc(`users/${otherUid}`).get(),
+      ]);
+      if (oSnap.exists && oSnap.data().banned === true) {
+        return refuse(res, "not_found", "This person isn't available.");
+      }
+      const friends = fSnap.exists && fSnap.data().status === "accepted";
+      const accepted = dSnap.exists && dSnap.data().accepted === true;
+      if (!friends && !accepted) {
+        return refuse(res, "not_friends", "You can call friends, or people who accepted your message request.");
+      }
+    }
+
+    // Friend-call room names keep the full id so two different pairs can never share a room.
+    const name = dm ? `snaprium-${roomId}` : `snaprium-${String(roomId).slice(0, 40)}`;
     const nowSec = () => Math.floor(Date.now() / 1000);
 
     // 4. Is there already a live room? Then we join it, and its limits stay as the host set them.
@@ -273,12 +304,13 @@ export default async function handler(req, res) {
         return res.status(200).json({ ok: true, live: false });
       }
       const presence = await getPresence();
-      await meterRoom(db, name, presence ? presence.count : null);
+      const live = await meterRoom(db, name, presence ? presence.count : null);
       const max = room.config.max_participants;
       const tier = max >= LIMITS.paid.max ? "paid" : "free";
       return res.status(200).json({
         ok: true,
         live: !!presence && presence.count > 0,
+        video: !!(live && live.video),
         count: presence ? presence.count : null,
         max,
         tier,
@@ -312,23 +344,38 @@ export default async function handler(req, res) {
     let createdNow = false;
     if (!room) {
       await meterRoom(db, name, 0); // close out any earlier room with this name
-      const limit = LIMITS[myTier];
+      const limit = (dm ? DM_LIMITS : LIMITS)[myTier];
       const today = todayKey();
-      const used = userData.lastLiveSessionDate === today ? userData.dailyLiveSessions || 0 : 0;
+      const countField = dm ? "dailyDmCalls" : "dailyLiveSessions";
+      const dateField = dm ? "lastDmCallDate" : "lastLiveSessionDate";
+      const used = userData[dateField] === today ? userData[countField] || 0 : 0;
+
+      // Friend calls: video belongs to Orbit. This is enforced here, not only in the app.
+      const wantVideo = body.video === true;
+      if (dm && wantVideo && myTier !== "paid") {
+        return refuse(res, "video_orbit", "Video calls are part of Orbit. Voice calls are free.");
+      }
 
       if (limit.perDay && used >= limit.perDay) {
         return refuse(
           res,
           "daily_limit",
-          myTier === "paid"
+          dm
+            ? `You can start ${limit.perDay} calls a day. You can still join calls that friends start.`
+            : myTier === "paid"
             ? `You can start ${limit.perDay} sessions a day. You can still join sessions that others start.`
             : `Free accounts can start ${limit.perDay} sessions a day. You can still join sessions that others start. Orbit allows more.`
         );
       }
 
       // Video only if the host's allowance (paid) or today's shared budget (free) has room for it.
-      const left = await videoLeft(db, myTier, uid);
-      const video = myTier === "paid" ? left >= VIDEO.paidMinToStart : left > 0;
+      // Friend calls are voice unless an Orbit host asks for video.
+      const left = dm && !wantVideo ? 0 : await videoLeft(db, myTier, uid);
+      const video = dm
+        ? myTier === "paid" && wantVideo && left >= VIDEO.paidMinToStart
+        : myTier === "paid"
+        ? left >= VIDEO.paidMinToStart
+        : left > 0;
 
       const exp = nowSec() + limit.minutes * 60;
       const createRes = await daily("/rooms", {
@@ -360,8 +407,8 @@ export default async function handler(req, res) {
         if (limit.perDay) {
           await userRef.set(
             {
-              dailyLiveSessions: used + 1,
-              lastLiveSessionDate: today,
+              [countField]: used + 1,
+              [dateField]: today,
               updatedAt: FieldValue.serverTimestamp(),
             },
             { merge: true }
@@ -372,7 +419,7 @@ export default async function handler(req, res) {
           hostUid: uid,
           hostTier: myTier,
           video,
-          offReason: video ? null : myTier === "paid" ? "allowance" : "budget",
+          offReason: video ? null : dm && !wantVideo ? "voice" : myTier === "paid" ? "allowance" : "budget",
           exp,
           lastTick: Date.now(),
           lastCount: 0,
@@ -391,7 +438,6 @@ export default async function handler(req, res) {
     const cfg = room.config || {};
     const max = cfg.max_participants || LIMITS.free.max;
     const roomExp = cfg.exp || nowSec() + LIMITS.free.minutes * 60;
-    const roomTier = max >= LIMITS.paid.max ? "paid" : "free";
 
     // 6. Full? (Daily also blocks this on its side; this just gives a clear message.)
     if (presence && !presence.ids.includes(uid) && presence.count >= max) {
@@ -407,6 +453,7 @@ export default async function handler(req, res) {
     let people = presence ? presence.count : 0;
     if (!presence || !presence.ids.includes(uid)) people += 1;
     const meta = await meterRoom(db, name, presence || createdNow ? people : null);
+    const roomTier = (meta && meta.hostTier) || (max >= LIMITS.paid.max ? "paid" : "free");
     let audioOnly = !(meta && meta.video === true);
     let audioOnlyReason = audioOnly ? (meta && meta.offReason) || "off" : null;
     if (!audioOnly && meta.hostUid && (await videoLeft(db, meta.hostTier, meta.hostUid)) <= 0) {
@@ -443,10 +490,11 @@ export default async function handler(req, res) {
       userName,
       max,
       tier: roomTier,
-      minutes: LIMITS[roomTier].minutes,
+      minutes: (dm ? DM_LIMITS : LIMITS)[roomTier].minutes,
       expiresAt: roomExp,
+      created: createdNow, // true for the person who opened the room
       video: !audioOnly,
-      audioOnlyReason, // "allowance" | "budget" | "off" | null
+      audioOnlyReason, // "allowance" | "budget" | "voice" (friend call without video) | "off" | null
     });
   } catch (err) {
     console.error("[daily-room] crash", err);

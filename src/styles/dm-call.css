@@ -1,0 +1,126 @@
+/* src/styles/dm-call.css  Calls inside a friend chat (DmPanel): voice for everyone, video for Orbit.
+   Every class here starts with dmc-, so nothing else on the site is touched. */
+
+/* the two buttons in the chat header */
+.dmc-btns { display: flex; align-items: center; gap: 6px; }
+.dmc-btn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.dmc-btn svg { width: 19px; height: 19px; }
+.dmc-btn:hover { background: var(--icon-bg); }
+.dmc-btn.locked { color: var(--text-secondary); }
+/* small dot on the video button while it is an Orbit feature the person does not have yet */
+.dmc-dot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--bg);
+}
+
+/* "Name is in a voice call  [Join call]" bar above the message box */
+.dmc-join {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 12px 8px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  color: var(--text-primary);
+  font-size: 0.92rem;
+}
+.dmc-join-pulse {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: dmc-pulse 1.4s ease-in-out infinite;
+}
+.dmc-join-text { flex: 1; min-width: 0; overflow: hidden; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.dmc-join button {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+@keyframes dmc-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5); }
+  50% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dmc-join-pulse { animation: none; }
+}
+
+/* the call screen: covers the chat while you are in the call */
+.dmc-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--text-primary);
+}
+.dmc-top {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.dmc-av {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--icon-bg);
+  color: var(--accent);
+  font-weight: 700;
+}
+.dmc-av img { width: 100%; height: 100%; object-fit: cover; }
+.dmc-who { display: flex; flex-direction: column; min-width: 0; }
+.dmc-who strong { overflow: hidden; font-size: 0.98rem; text-overflow: ellipsis; white-space: nowrap; }
+.dmc-who small { color: var(--text-secondary); font-size: 0.8rem; }
+.dmc-stage { position: relative; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.dmc-stage .sc-root { flex: 1 1 auto; min-height: 0; width: 100%; height: 100%; max-height: none; border-radius: 0; }
+
+/* phone: slightly smaller header buttons so the name keeps room */
+@media (max-width: 700px) {
+  .dmc-btns { gap: 4px; }
+  .dmc-btn { width: 36px; height: 36px; border-radius: 10px; }
+  .dmc-btn svg { width: 18px; height: 18px; }
+  .dmc-join { margin: 0 8px 8px; }
+}
+
+/* iPhone app only: keep the call header clear of the notch and the controls clear of the home bar */
+html.native-app .dmc-top { padding-top: calc(10px + env(safe-area-inset-top, 0px)); }
+html.native-app .dmc-stage .sc-controls { padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); }

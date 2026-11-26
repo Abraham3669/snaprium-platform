@@ -20,6 +20,17 @@ function fmtLeft(secs) {
   return r ? `${h}h ${r}m left` : `${h}h left`;
 }
 
+// plain-words reason why this session has no camera or screen share
+function audioOnlyMessage(reason) {
+  if (reason === "allowance") {
+    return "The host's video minutes for this month are used up. This session continues with audio only.";
+  }
+  if (reason === "budget") {
+    return "Free video for today is used up. This session continues with audio only. It resets tomorrow.";
+  }
+  return "Camera and screen share aren't available in this session. Audio works as normal.";
+}
+
 function getTrack(p, kind) {
   return p?.tracks?.[kind]?.persistentTrack || p?.tracks?.[kind]?.track || null;
 }
@@ -42,9 +53,12 @@ function applyZoom(box, z) {
 }
 
 // focus + onToggleFocus are optional. Pass them to show the full screen button in the control bar.
-export default function StudyCall({ roomId, user, onClose, focus = false, onToggleFocus, onOpenChat, chatBadge = 0 }) {
+// dm / video / onConnected are for friend calls (DmPanel): dm = a 1-on-1 call, video = ask for video (Orbit hosts only),
+// onConnected(data) runs once you are in the call (data.created = you opened the room).
+export default function StudyCall({ roomId, user, onClose, focus = false, onToggleFocus, onOpenChat, chatBadge = 0, dm = false, video = false, onConnected }) {
   const callRef = useRef(null);
   const onCloseRef = useRef(onClose);
+  const onConnectedRef = useRef(onConnected);
   const [joining, setJoining] = useState(true);
   const [error, setError] = useState("");
   const [camOn, setCamOn] = useState(false);
@@ -63,6 +77,8 @@ export default function StudyCall({ roomId, user, onClose, focus = false, onTogg
   const [now, setNow] = useState(() => Date.now());
   const [ended, setEnded] = useState(null); // { title, message, upgrade } when the session ends or can't start
   const warnedRef = useRef(false);
+  const [audioOnly, setAudioOnly] = useState(false); // server says this session has no camera or screen share
+  const [audioOnlyReason, setAudioOnlyReason] = useState(null); // "allowance" | "budget" | "off"
 
   const secsLeft = limits ? Math.max(0, Math.floor(limits.expiresAt - now / 1000)) : null;
   const lowTime = secsLeft !== null && secsLeft <= 300;
@@ -81,13 +97,17 @@ export default function StudyCall({ roomId, user, onClose, focus = false, onTogg
   }, [onClose]);
 
   useEffect(() => {
+    onConnectedRef.current = onConnected;
+  }, [onConnected]);
+
+  useEffect(() => {
     let cancelled = false;
     let endTimer;
     let nowTimer;
     let info = null; // { tier, minutes, expiresAt (ms) } once the server answered
 
     const timeUpInfo = () =>
-      info?.tier === "free"
+      info?.tier === "free" && !dm
         ? {
             title: "Session ended",
             message: `Free sessions last ${info.minutes} minutes. Upgrade to host longer sessions with more people.`,
@@ -119,6 +139,7 @@ export default function StudyCall({ roomId, user, onClose, focus = false, onTogg
           roomId,
           userName: user?.displayName || "Student",
           idToken,
+          ...(dm ? { video: !!video } : {}),
         });
 
         if (cancelled) return;
@@ -127,13 +148,15 @@ export default function StudyCall({ roomId, user, onClose, focus = false, onTogg
           setJoining(false);
           setEnded({
             title:
-              data.code === "daily_limit"
-                ? "Daily session limit"
+              data.code === "video_orbit"
+                ? "Video is part of Orbit"
+                : data.code === "daily_limit"
+                ? dm ? "Daily call limit" : "Daily session limit"
                 : data.code === "full"
                 ? "Session is full"
                 : "Can't join this session",
             message: data.error || "Could not join this session.",
-            upgrade: data.code === "daily_limit",
+            upgrade: data.code === "daily_limit" || data.code === "video_orbit",
           });
           return;
         }
@@ -197,6 +220,12 @@ export default function StudyCall({ roomId, user, onClose, focus = false, onTogg
         });
 
         info = { tier: data.tier, minutes: data.minutes, expiresAt: data.expiresAt * 1000 };
+        if (data.video === false) {
+          setAudioOnly(true);
+          setAudioOnlyReason(data.audioOnlyReason || "off");
+          // a friend call that was started as voice is audio-only on purpose: no message needed
+          if (data.audioOnlyReason !== "voice") toast.info(audioOnlyMessage(data.audioOnlyReason), { autoClose: 9000 });
+        }
         setLimits({
           max: data.max,
           minutes: data.minutes,
@@ -204,6 +233,7 @@ export default function StudyCall({ roomId, user, onClose, focus = false, onTogg
           expiresAt: data.expiresAt,
         });
         setNow(Date.now());
+        onConnectedRef.current?.(data);
         nowTimer = setInterval(() => setNow(Date.now()), 15000);
         // the server and Daily end the room for real; this just shows the end message on time
         endTimer = setTimeout(finishSession, Math.max(0, info.expiresAt - Date.now()));
@@ -258,6 +288,10 @@ export default function StudyCall({ roomId, user, onClose, focus = false, onTogg
   }, [participants, activeScreenId]);
 
   const toggleCam = async () => {
+    if (audioOnly) {
+      toast.info(audioOnlyMessage(audioOnlyReason));
+      return;
+    }
     const next = !camOn;
     try {
       await callRef.current?.setLocalVideo(next);
@@ -280,6 +314,10 @@ export default function StudyCall({ roomId, user, onClose, focus = false, onTogg
   };
 
   const toggleShare = async () => {
+    if (audioOnly && !sharing) {
+      toast.info(audioOnlyMessage(audioOnlyReason));
+      return;
+    }
     try {
       if (sharing) {
         await callRef.current?.stopScreenShare();
@@ -454,6 +492,8 @@ export default function StudyCall({ roomId, user, onClose, focus = false, onTogg
   // local person first, then everyone else
   const ordered = [...participants].sort((a, b) => Number(!!b.local) - Number(!!a.local));
   const count = Math.min(Math.max(ordered.length, 1), 10);
+  // a friend call started as voice: no camera or screen-share buttons at all
+  const voiceOnly = audioOnly && audioOnlyReason === "voice";
 
   return (
     <div className={`sc-root ${focus ? "is-focus" : ""}`}>
@@ -563,7 +603,7 @@ export default function StudyCall({ roomId, user, onClose, focus = false, onTogg
             </span>
             <span aria-hidden="true">·</span>
             <span>{fmtLeft(secsLeft)}</span>
-            {lowTime && limits.tier === "free" && (
+            {lowTime && limits.tier === "free" && !dm && (
               <button type="button" onClick={() => setShowUpgradeModal(true)}>
                 Upgrade
               </button>
@@ -596,24 +636,28 @@ export default function StudyCall({ roomId, user, onClose, focus = false, onTogg
         >
           {micOn ? <MicOnIcon /> : <MicOffIcon />}
         </button>
+        {!voiceOnly && (
         <button
           type="button"
           className={`sc-btn ${camOn ? "" : "off"}`}
           onClick={toggleCam}
-          title={camOn ? "Turn camera off" : "Turn camera on"}
+          title={audioOnly ? "Video isn't available in this session" : camOn ? "Turn camera off" : "Turn camera on"}
           aria-label={camOn ? "Turn camera off" : "Turn camera on"}
         >
           {camOn ? <CamOnIcon /> : <CamOffIcon />}
         </button>
+        )}
+        {!voiceOnly && (
         <button
           type="button"
           className={`sc-btn ${sharing ? "active" : ""}`}
           onClick={toggleShare}
-          title={sharing ? "Stop sharing" : "Share screen"}
+          title={audioOnly ? "Video isn't available in this session" : sharing ? "Stop sharing" : "Share screen"}
           aria-label={sharing ? "Stop sharing" : "Share screen"}
         >
           <ShareIcon />
         </button>
+        )}
         {onOpenChat && (
           <button type="button" className="sc-btn" onClick={onOpenChat} title="Chat" aria-label="Open chat">
             <ChatIcon />
